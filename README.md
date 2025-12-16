@@ -144,4 +144,4 @@ To contribute or modify the library locally:
 
 ## 📄 License
 
-MIT © [Your Name]
+MIT © [Anderson Fagundes]
