@@ -12,6 +12,7 @@ export * from './components/form/RadioGroup';
 export * from './components/feedback/Toast';
 export * from './components/feedback/ToastProvider';
 export * from './components/overlay/Modal';
+export * from './components/overlay/Tooltip';
 export * from './hooks/useToast';
 export * from './primitives/Surface';
 export * from './primitives/Badge';
