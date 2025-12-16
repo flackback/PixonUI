@@ -17,6 +17,7 @@ export * from './components/data-display/Accordion';
 export * from './components/navigation/Tabs';
 export * from './components/overlay/Modal';
 export * from './components/overlay/Drawer';
+export * from './components/overlay/DropdownMenu';
 export * from './components/overlay/Tooltip';
 export * from './hooks/useToast';
 export * from './primitives/Surface';

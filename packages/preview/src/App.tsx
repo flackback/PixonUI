@@ -1,5 +1,5 @@
-import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@pixonui/react';
-import { Mail, Lock, Search, AlertCircle, Info, Menu } from 'lucide-react';
+import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@pixonui/react';
+import { Mail, Lock, Search, AlertCircle, Info, Menu, User, Settings, LogOut, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 
 export default function App() {
@@ -29,8 +29,33 @@ export default function App() {
     <div className="flex min-h-screen flex-col items-center justify-center p-8 gap-8">
       <Surface className="flex w-full max-w-3xl flex-col gap-8 p-8">
         <div className="space-y-2 text-center">
-          <div className="flex justify-center gap-[-10px] mb-4">
-            <Avatar src="https://i.pravatar.cc/150?u=1" fallback="JD" />
+          <div className="flex justify-center gap-[-10px] mb-4 items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="rounded-full outline-none ring-offset-2 ring-offset-[#0A0A0A] focus:ring-2 focus:ring-white/20">
+                <Avatar src="https://i.pravatar.cc/150?u=1" fallback="JD" className="cursor-pointer hover:opacity-80 transition-opacity" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => toast({ title: "Profile clicked" })}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast({ title: "Billing clicked" })}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsDrawerOpen(true)}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => toast({ title: "Logged out", variant: "warning" })}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Avatar src="https://i.pravatar.cc/150?u=2" fallback="AB" className="-ml-3 border-2 border-[#0A0A0A]" />
             <Avatar src="https://i.pravatar.cc/150?u=3" fallback="XY" className="-ml-3 border-2 border-[#0A0A0A]" />
             <Avatar fallback="+3" className="-ml-3 border-2 border-[#0A0A0A] bg-white/10 text-xs" />
