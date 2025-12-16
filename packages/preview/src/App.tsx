@@ -1,4 +1,4 @@
-import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert } from '@pixonui/react';
+import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar } from '@pixonui/react';
 import { Mail, Lock, Search, AlertCircle, Info } from 'lucide-react';
 import { useState } from 'react';
 
@@ -28,6 +28,12 @@ export default function App() {
     <div className="flex min-h-screen flex-col items-center justify-center p-8 gap-8">
       <Surface className="flex w-full max-w-3xl flex-col gap-8 p-8">
         <div className="space-y-2 text-center">
+          <div className="flex justify-center gap-[-10px] mb-4">
+            <Avatar src="https://i.pravatar.cc/150?u=1" fallback="JD" />
+            <Avatar src="https://i.pravatar.cc/150?u=2" fallback="AB" className="-ml-3 border-2 border-[#0A0A0A]" />
+            <Avatar src="https://i.pravatar.cc/150?u=3" fallback="XY" className="-ml-3 border-2 border-[#0A0A0A]" />
+            <Avatar fallback="+3" className="-ml-3 border-2 border-[#0A0A0A] bg-white/10 text-xs" />
+          </div>
           <Heading as="h1">PixonUI</Heading>
           <Text variant="muted">Modern UI Framework Preview</Text>
         </div>
