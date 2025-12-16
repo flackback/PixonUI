@@ -7,6 +7,8 @@ export * from './components/form/TextInput';
 export * from './components/form/Checkbox';
 export * from './components/form/Switch';
 export * from './components/form/Select';
+export * from './components/form/Textarea';
+export * from './components/form/RadioGroup';
 export * from './primitives/Surface';
 export * from './primitives/Badge';
 export * from './primitives/Divider';
