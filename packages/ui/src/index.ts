@@ -4,6 +4,8 @@ export * from './components/typography/Text';
 export * from './components/typography/Heading';
 export * from './components/form/Label';
 export * from './components/form/TextInput';
+export * from './components/form/Checkbox';
+export * from './components/form/Switch';
 export * from './primitives/Surface';
 export * from './primitives/Badge';
 export * from './primitives/Divider';
