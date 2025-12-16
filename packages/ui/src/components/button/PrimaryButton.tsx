@@ -1,0 +1,1 @@
+export function PrimaryButton({children,...p}:any){return <button {...p}>{children}</button>}

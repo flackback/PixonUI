@@ -1,0 +1,2 @@
+import { cn } from '../utils/cn';
+export function Surface({children,className}:{children:any,className?:string}){return <div className={cn('rounded-2xl border border-white/10 bg-white/[0.03]',className)}>{children}</div>}
