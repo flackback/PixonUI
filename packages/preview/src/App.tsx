@@ -1,4 +1,4 @@
-import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar } from '@pixonui/react';
+import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent } from '@pixonui/react';
 import { Mail, Lock, Search, AlertCircle, Info } from 'lucide-react';
 import { useState } from 'react';
 
@@ -40,23 +40,36 @@ export default function App() {
 
         <Divider />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <MetricCard
-            title="Total Revenue"
-            value=",231.89"
-            trend={{ value: "20.1%", isPositive: true }}
-          />
-          <MetricCard
-            title="Active Users"
-            value="+2350"
-            trend={{ value: "180.1%", isPositive: true }}
-          />
-          <MetricCard
-            title="Bounce Rate"
-            value="12.23%"
-            trend={{ value: "4.1%", isPositive: false }}
-          />
-        </div>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4">
+              <MetricCard
+                title="Total Revenue"
+                value="$45,231.89"
+                trend={{ value: "20.1%", isPositive: true }}
+              />
+              <MetricCard
+                title="Active Users"
+                value="+2350"
+                trend={{ value: "180.1%", isPositive: true }}
+              />
+              <MetricCard
+                title="Bounce Rate"
+                value="12.23%"
+                trend={{ value: "4.1%", isPositive: false }}
+              />
+            </div>
+          </TabsContent>
+          <TabsContent value="analytics" className="mt-4">
+            <Alert variant="info" title="Analytics Module">
+              Detailed analytics charts will be displayed here in the future.
+            </Alert>
+          </TabsContent>
+        </Tabs>
 
         <Divider />
 
