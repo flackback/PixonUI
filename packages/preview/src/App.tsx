@@ -1,4 +1,4 @@
-import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, Progress, Slider } from '@pixonui/react';
+import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, Progress, Slider, DatePicker, Calendar, Popover, PopoverTrigger, PopoverContent, Label } from '@pixonui/react';
 import { Mail, Lock, Search, AlertCircle, Info, Menu, User, Settings, LogOut, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 
@@ -136,6 +136,11 @@ export default function App() {
                 { label: 'Guest', value: 'guest' },
               ]}
             />
+
+            <div className="space-y-2">
+              <Label>Date of Birth</Label>
+              <DatePicker placeholder="Select your birth date" />
+            </div>
 
             <Textarea 
               label="Bio" 
