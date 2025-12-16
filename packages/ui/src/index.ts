@@ -7,6 +7,7 @@ export * from './components/form/TextInput';
 export * from './components/form/Checkbox';
 export * from './components/form/Switch';
 export * from './components/form/Select';
+export * from './components/form/Combobox';
 export * from './components/form/Slider';
 export * from './components/form/DatePicker';
 export * from './components/form/Textarea';

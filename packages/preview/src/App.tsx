@@ -1,9 +1,10 @@
-import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, Progress, Slider, DatePicker, Calendar, Popover, PopoverTrigger, PopoverContent, Label } from '@pixonui/react';
+import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, Progress, Slider, DatePicker, Calendar, Popover, PopoverTrigger, PopoverContent, Label, Combobox, ComboboxTrigger, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty } from '@pixonui/react';
 import { Mail, Lock, Search, AlertCircle, Info, Menu, User, Settings, LogOut, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 
 export default function App() {
   const [role, setRole] = useState('');
+  const [framework, setFramework] = useState('');
   const [plan, setPlan] = useState('free');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -138,6 +139,27 @@ export default function App() {
             />
 
             <div className="space-y-2">
+              <Label>Framework</Label>
+              <Combobox value={framework} onValueChange={setFramework}>
+                <ComboboxTrigger>
+                  {framework ? framework.charAt(0).toUpperCase() + framework.slice(1) : "Select framework..."}
+                </ComboboxTrigger>
+                <ComboboxContent>
+                  <ComboboxInput placeholder="Search framework..." />
+                  <ComboboxList>
+                    <ComboboxEmpty>No framework found.</ComboboxEmpty>
+                    <ComboboxItem value="next.js">Next.js</ComboboxItem>
+                    <ComboboxItem value="react">React</ComboboxItem>
+                    <ComboboxItem value="vue">Vue</ComboboxItem>
+                    <ComboboxItem value="angular">Angular</ComboboxItem>
+                    <ComboboxItem value="svelte">Svelte</ComboboxItem>
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            </div>
+
+            <div className="space-y-2">
+              <Label>sName="space-y-2">
               <Label>Date of Birth</Label>
               <DatePicker placeholder="Select your birth date" />
             </div>
