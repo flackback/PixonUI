@@ -11,6 +11,7 @@ export * from './components/form/Textarea';
 export * from './components/form/RadioGroup';
 export * from './components/feedback/Toast';
 export * from './components/feedback/ToastProvider';
+export * from './components/feedback/Alert';
 export * from './components/overlay/Modal';
 export * from './components/overlay/Tooltip';
 export * from './hooks/useToast';
