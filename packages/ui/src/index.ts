@@ -2,6 +2,8 @@ export * from './components/button/PrimaryButton';
 export * from './components/card/MetricCard';
 export * from './components/typography/Text';
 export * from './components/typography/Heading';
+export * from './components/form/Label';
+export * from './components/form/TextInput';
 export * from './primitives/Surface';
 export * from './primitives/Badge';
 export * from './primitives/Divider';
