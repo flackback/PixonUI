@@ -1,11 +1,12 @@
-import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent } from '@pixonui/react';
-import { Mail, Lock, Search, AlertCircle, Info } from 'lucide-react';
+import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@pixonui/react';
+import { Mail, Lock, Search, AlertCircle, Info, Menu } from 'lucide-react';
 import { useState } from 'react';
 
 export default function App() {
   const [role, setRole] = useState('');
   const [plan, setPlan] = useState('free');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { toast } = useToast();
 
   const handleSave = () => {
@@ -180,11 +181,46 @@ export default function App() {
                 </PrimaryButton>
                 <PrimaryButton onClick={() => setIsModalOpen(true)} className="bg-white/10 hover:bg-white/20">
                   Open Modal
+                <PrimaryButton onClick={() => setIsDrawerOpen(true)} className="bg-white/10 hover:bg-white/20">
+                  <Menu size={16} className="mr-2" />
+                  Open Drawer
                 </PrimaryButton>
               </div>
             </div>
           </div>
         </div>
+      </Surface>
+
+      <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
+        <DrawerHeader>
+          <DrawerTitle>Settings</DrawerTitle>
+          <DrawerDescription>
+            Manage your account settings and preferences.
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="py-4 space-y-4">
+          <TextInput label="Username" defaultValue="johndoe" />
+          <Select
+            label="Language"
+            placeholder="Select language"
+            options={[
+              { label: 'English', value: 'en' },
+              { label: 'Portuguese', value: 'pt' },
+              { label: 'Spanish', value: 'es' },
+            ]}
+          />
+          <div className="space-y-2">
+            <Switch label="Email Notifications" defaultChecked />
+            <Switch label="Push Notifications" />
+            <Switch label="Marketing Emails" />
+          </div>
+        </div>
+        <DrawerFooter>
+          <PrimaryButton onClick={() => setIsDrawerOpen(false)} className="w-full">
+            Save Changes
+          </PrimaryButton>
+        </DrawerFooter>
+      </Drawer
       </Surface>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
