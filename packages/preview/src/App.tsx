@@ -1,4 +1,4 @@
-import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, Progress } from '@pixonui/react';
+import { PrimaryButton, Surface, Heading, Text, Badge, Divider, MetricCard, TextInput, Checkbox, Switch, Select, Textarea, RadioGroup, RadioGroupItem, useToast, Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter, Tooltip, Alert, Avatar, Tabs, TabsList, TabsTrigger, TabsContent, Drawer, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, Accordion, AccordionItem, AccordionTrigger, AccordionContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, Progress, Slider } from '@pixonui/react';
 import { Mail, Lock, Search, AlertCircle, Info, Menu, User, Settings, LogOut, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 
@@ -210,6 +210,14 @@ export default function App() {
                   <Text variant="muted">75%</Text>
                 </div>
                 <Progress value={75} />
+              </div>
+
+              <div className="w-full space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Text variant="muted">Volume</Text>
+                  <Text variant="muted">50%</Text>
+                </div>
+                <Slider defaultValue={50} max={100} step={1} />
               </div>
 
               <div className="flex flex-wrap gap-2 justify-center">
