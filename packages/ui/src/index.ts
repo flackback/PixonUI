@@ -12,6 +12,7 @@ export * from './components/form/RadioGroup';
 export * from './components/feedback/Toast';
 export * from './components/feedback/ToastProvider';
 export * from './components/feedback/Alert';
+export * from './components/feedback/Progress';
 export * from './components/data-display/Avatar';
 export * from './components/data-display/Accordion';
 export * from './components/navigation/Tabs';
