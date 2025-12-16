@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+body {
+  @apply bg-neutral-950 text-white antialiased selection:bg-white/20;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(120, 119, 198, 0.1), transparent 40%),
+    radial-gradient(circle at 0% 50%, rgba(56, 189, 248, 0.05), transparent 40%);
+  min-height: 100vh;
+}
