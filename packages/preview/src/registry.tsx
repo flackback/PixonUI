@@ -410,29 +410,36 @@ const data = [
     id: 'kanban',
     title: 'Kanban Board',
     category: 'Data Display',
-    description: 'A high-performance, drag-and-drop enabled board for task management. Inspired by Trello and Bitrix24.',
+    description: 'A high-performance, drag-and-drop enabled board with independent column scrolling, lazy loading, and a rich event API.',
     code: `import { Kanban, KanbanColumn, KanbanTask } from '@pixonui/react';
 
 const columns: KanbanColumn[] = [
   { id: 'todo', title: 'To Do', color: '#94a3b8' },
-  { id: 'in-progress', title: 'In Progress', color: '#06b6d4' }
+  { id: 'in-progress', title: 'In Progress', color: '#06b6d4', limit: 5 },
+  { id: 'done', title: 'Done', color: '#10b981' }
 ];
 
 const tasks: KanbanTask[] = [
   { id: '1', title: 'Task 1', columnId: 'todo', priority: 'high' }
 ];
 
-// Methods & Props:
-// - onTaskMove: (taskId, fromCol, toCol, index) => void
-// - onTaskClick: (task) => void
-// - onAddTask: (columnId) => void
-// - renderCard: (task) => ReactNode (Custom card rendering)
+// Ultra-performance features:
+// - pageSize: Number of items to load per scroll (default: 20)
+// - columnHeight: Independent scroll height for each column
+// - onTaskDrop: Detailed event for backend sync
+// - onTaskRemove: Event for task deletion
 
 <Kanban 
   columns={columns} 
   tasks={tasks} 
-  onTaskMove={(id, from, to) => handleMove(id, from, to)}
+  pageSize={20}
+  columnHeight="600px"
+  onTaskMove={(id, toCol, index) => handleMove(id, toCol, index)}
+  onTaskDrop={(id, from, to, idx) => syncWithBackend(id, from, to, idx)}
+  onTaskRemove={(id) => deleteTask(id)}
   onTaskClick={(task) => openDetails(task)}
+  selectable
+  showDividers
 />`,
     demo: <KanbanDemo />
   },

@@ -14,8 +14,10 @@ import {
 import { useState, useMemo } from 'react';
 import { registry, ComponentItem } from './registry';
 import { ComponentDoc } from './ComponentDoc';
+import { LandingPage } from './LandingPage';
 
 export default function App() {
+  const [view, setView] = useState<'landing' | 'gallery'>('landing');
   const [activeId, setActiveId] = useState('button');
   
   const activeComponent = useMemo(() => 
@@ -39,13 +41,24 @@ export default function App() {
     });
   }, []);
 
+  if (view === 'landing') {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
+        <LandingPage onEnterGallery={() => setView('gallery')} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
       <div className="flex h-screen w-full overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-200 bg-gray-50 text-gray-900 dark:bg-black dark:text-white">
           <Sidebar className="flex-shrink-0">
             <SidebarHeader>
               <div className="flex items-center justify-between px-2 w-full">
-                <div className="flex items-center gap-3">
+                <div 
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setView('landing')}
+                >
                   <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg shadow-purple-500/20" />
                   <div className="font-bold text-lg tracking-tight">PixonUI</div>
                 </div>
