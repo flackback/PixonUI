@@ -34,12 +34,69 @@
 
 ## ✨ Features
 
-- **Zero Heavy Dependencies**: No Radix, no Headless UI. Just pure React and DOM logic.
-- **Glassmorphism First**: Built-in support for beautiful translucent backgrounds and borders.
+- **Native-First Architecture**: Leverages native browser APIs (`<dialog>`, `ValidityState`, `IntersectionObserver`, `ResizeObserver`) for maximum performance and stability.
+- **Zero Heavy Dependencies**: No Radix, no Headless UI. Just pure React and optimized DOM logic.
+- **Advanced Motion System**: High-performance animations using WAAPI and View Transitions API, without the overhead of external libraries.
+- **Glassmorphism First**: Built-in support for beautiful translucent backgrounds, borders, and mouse-follow glow effects.
 - **Tailwind CSS**: Fully styled with Tailwind, easily customizable via utility classes.
-- **Accessible**: WAI-ARIA compliant components.
+- **Accessible**: WAI-ARIA compliant components with native focus management.
 - **TypeScript**: Written in TypeScript with strict type definitions.
-- **Dark Mode Native**: Designed primarily for dark interfaces.
+- **Dark Mode Native**: Designed primarily for modern dark interfaces.
+
+## 🧩 Components & Hooks
+
+### 🏗️ Layout & Structure
+- **Surface**: The base glassmorphic container.
+- **Card & MetricCard**: Data containers with optional glow effects.
+- **Kanban**: Advanced board with native Drag & Drop and continuous separators.
+- **Table**: Optimized with `content-visibility` for large datasets.
+
+### 🖱️ Overlays & Navigation
+- **Dialog**: Native `<dialog>` implementation for modals.
+- **DropdownMenu & Popover**: Positioned via the native-first `useFloating` hook.
+- **Tooltip**: Lightweight, portal-based tooltips.
+- **Sidebar & Tabs**: Flexible navigation structures.
+
+### 🎭 Motion & Feedback
+- **Motion & MotionGroup**: Preset-based entry animations.
+- **Reveal**: Mask-based reveal animations for text and images.
+- **Magnetic**: Cursor attraction effect for interactive elements.
+- **NumberTicker**: Smoothly animated numeric counters.
+- **ScrollProgress**: Page reading progress indicator.
+- **PageTransition**: Support for the native View Transitions API.
+
+### 🪝 Native Hooks
+- **`useFloating`**: Robust positioning for overlays.
+- **`useForm`**: Lightweight form management with native validation.
+- **`useScroll`**: Real-time scroll progress tracking.
+- **`useResponsive`**: `useMediaQuery`, `useBreakpoint`, and `useContainerQuery`.
+- **`useIntersection`**: Easy access to `IntersectionObserver`.
+
+## 🤖 AI & LLM Integration (MCP)
+
+PixonUI inclui um servidor **Model Context Protocol (MCP)**, permitindo que LLMs compreendam a estrutura, componentes e melhores práticas da biblioteca. Isso garante que o código gerado por IA seja sempre idiomático e atualizado com nossa filosofia "Native-First".
+
+### Usando com Claude Desktop
+Adicione o seguinte ao seu arquivo `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "pixonui": {
+      "command": "node",
+      "args": ["C:/PROJETOS/PixonUI/packages/mcp/dist/index.js"]
+    }
+  }
+}
+```
+*(Nota: Certifique-se de rodar `npm run mcp:build` primeiro)*
+
+### Ferramentas Disponíveis
+- `list_components`: Retorna uma lista de todos os componentes disponíveis na biblioteca.
+- `get_component_info`: Fornece o código-fonte completo e definições de props para um componente específico.
+
+### Fallback para IAs sem MCP
+Se você estiver usando uma IA que não suporta MCP (como o ChatGPT Web), você pode fornecer o arquivo `llms-full.txt` (gerado via `npm run context:generate`) ou o documento `docs/PIXONUI_CONTEXT.md` para dar à IA todo o conhecimento necessário sobre a biblioteca.
 
 ## 📦 Installation
 
@@ -100,19 +157,6 @@ function App() {
   );
 }
 ```
-
-## 🧩 Components
-
-PixonUI comes with a comprehensive set of components:
-
-| Category | Components |
-|----------|------------|
-| **Primitives** | `Surface`, `Box`, `Divider`, `Badge` |
-| **Form** | `TextInput`, `Select`, `Combobox`, `DatePicker`, `Switch`, `Slider`, `Checkbox` |
-| **Feedback** | `Toast`, `Alert`, `Progress`, `Skeleton` |
-| **Overlay** | `Modal`, `Drawer`, `Popover`, `Tooltip`, `DropdownMenu` |
-| **Navigation** | `Tabs`, `Breadcrumb` |
-| **Data Display** | `Card`, `Avatar`, `Accordion`, `Calendar` |
 
 ## 🎨 Design Philosophy
 

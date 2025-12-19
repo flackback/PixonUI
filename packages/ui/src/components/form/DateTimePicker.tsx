@@ -116,11 +116,11 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
               />
             </div>
             
-            <div className="flex flex-col p-4 w-[160px]">
+            <div className="flex flex-col p-4 w-[160px] h-[340px]">
               <div className="mb-3 text-sm font-medium text-gray-700 dark:text-white/70">Time</div>
-              <div className="flex flex-1 gap-2 min-h-0">
-                <div className="flex-1 flex flex-col gap-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                  <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1">Hr</div>
+              <div className="flex flex-1 gap-2 min-h-0 overflow-hidden">
+                <div className="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-none hover:scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1 sticky top-0 bg-white dark:bg-[#0A0A0A] py-1 z-10">Hr</div>
                   {Array.from({ length: 24 }).map((_, i) => (
                     <button
                       key={i}
@@ -137,8 +137,8 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
                   ))}
                 </div>
                 <div className="w-[1px] bg-gray-200 dark:bg-white/10" />
-                <div className="flex-1 flex flex-col gap-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                  <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1">Min</div>
+                <div className="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-none hover:scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1 sticky top-0 bg-white dark:bg-[#0A0A0A] py-1 z-10">Min</div>
                   {Array.from({ length: 60 }).map((_, i) => (
                     <button
                       key={i}
