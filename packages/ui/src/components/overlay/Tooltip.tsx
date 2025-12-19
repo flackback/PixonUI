@@ -19,7 +19,7 @@ export function Tooltip({
   className 
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showTooltip = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -64,7 +64,7 @@ export function Tooltip({
         <div
           role="tooltip"
           className={cn(
-            "absolute z-50 min-w-max max-w-xs rounded-lg border border-white/10 bg-[#0A0A0A]/90 px-3 py-1.5 text-xs text-white shadow-xl backdrop-blur-md",
+            "absolute z-50 min-w-max max-w-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 px-3 py-1.5 text-xs text-gray-900 dark:text-white shadow-xl backdrop-blur-md",
             "animate-in fade-in duration-200",
             positionClasses[position],
             animationClasses[position],

@@ -131,7 +131,7 @@ export function PopoverContent({ className, children, align = 'center', sideOffs
       ref={contentRef}
       style={{ top: position.top, left: position.left }}
       className={cn(
-        "absolute z-50 min-w-[12rem] rounded-xl border border-white/10 bg-[#0A0A0A] p-4 shadow-xl outline-none animate-in fade-in zoom-in-95 duration-200",
+        "absolute z-50 min-w-[12rem] rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-4 shadow-xl outline-none animate-in fade-in zoom-in-95 duration-200",
         className
       )}
       {...props}

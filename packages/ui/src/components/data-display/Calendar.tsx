@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '../../utils/cn';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface CalendarProps {
   className?: string;
@@ -78,10 +79,11 @@ export function Calendar({ className, value, onChange, minDate, maxDate }: Calen
           onClick={() => handleDateClick(day)}
           type="button"
           className={cn(
-            "h-9 w-9 rounded-md text-sm font-medium transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20",
-            selected && "bg-white text-black hover:bg-white/90",
-            !selected && today && "bg-white/5 text-white",
-            !selected && !today && "text-white/70"
+            "h-9 w-9 rounded-xl text-sm font-medium transition-all duration-200",
+            "hover:bg-gray-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/20",
+            selected && "bg-gray-900 text-white dark:bg-white dark:text-black shadow-md dark:shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:bg-gray-800 dark:hover:bg-white/90",
+            !selected && today && "bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10",
+            !selected && !today && "text-gray-700 dark:text-white/70 hover:text-gray-900 dark:hover:text-white"
           )}
         >
           {day}
@@ -93,37 +95,37 @@ export function Calendar({ className, value, onChange, minDate, maxDate }: Calen
   };
 
   return (
-    <div className={cn("p-3", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={handlePrevMonth}
-          type="button"
-          className="p-1 rounded-md hover:bg-white/10 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-        </button>
-        <div className="font-semibold text-sm">
-          {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
+    <div className={cn("p-4 bg-white dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl w-fit", className)}>
+      <div className="flex items-center justify-between mb-4 px-1">
+        <div className="font-semibold text-gray-900 dark:text-white">
+          {MONTHS[viewDate.getMonth()]} <span className="text-gray-500 dark:text-white/50">{viewDate.getFullYear()}</span>
         </div>
-        <button
-          onClick={handleNextMonth}
-          type="button"
-          className="p-1 rounded-md hover:bg-white/10 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={handlePrevMonth}
+            type="button"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleNextMonth}
+            type="button"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      
+      <div className="grid grid-cols-7 gap-1 mb-2 text-center">
         {DAYS.map(day => (
-          <div key={day} className="h-9 w-9 flex items-center justify-center text-xs text-white/40 font-medium">
+          <div key={day} className="h-9 w-9 flex items-center justify-center text-xs font-medium text-gray-400 dark:text-white/40">
             {day}
           </div>
         ))}
       </div>
+      
       <div className="grid grid-cols-7 gap-1">
         {renderDays()}
       </div>

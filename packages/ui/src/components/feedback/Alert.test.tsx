@@ -17,10 +17,12 @@ describe('Alert', () => {
 
   it('renders variants correctly', () => {
     const { rerender } = render(<Alert variant="error" title="Error" />);
-    expect(screen.getByRole('alert')).toHaveClass('border-rose-500/20');
+    // Check for either light or dark mode classes
+    const alert = screen.getByRole('alert');
+    expect(alert.className).toContain('rose');
 
     rerender(<Alert variant="success" title="Success" />);
-    expect(screen.getByRole('alert')).toHaveClass('border-emerald-500/20');
+    expect(screen.getByRole('alert').className).toContain('emerald');
   });
 
   it('renders custom icon', () => {

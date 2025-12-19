@@ -9,8 +9,10 @@ export interface SelectOption {
 
 export interface SelectProps {
   label?: string;
+  name?: string;
   options: SelectOption[];
   value?: string;
+  defaultValue?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
   error?: string;
@@ -19,12 +21,15 @@ export interface SelectProps {
 }
 
 export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
-  ({ label, options, value, onChange, placeholder = 'Select an option', error, disabled, className }, ref) => {
+  ({ label, name, options, value, defaultValue, onChange, placeholder = 'Select an option', error, disabled, className }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [internalValue, setInternalValue] = useState(defaultValue);
     const containerRef = useRef<HTMLDivElement>(null);
     const id = React.useId();
 
-    const selectedOption = options.find((opt) => opt.value === value);
+    const isControlled = value !== undefined;
+    const currentValue = isControlled ? value : internalValue;
+    const selectedOption = options.find((opt) => opt.value === currentValue);
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -39,6 +44,9 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
     const handleSelect = (optionValue: string) => {
       if (disabled) return;
+      if (!isControlled) {
+        setInternalValue(optionValue);
+      }
       onChange?.(optionValue);
       setIsOpen(false);
     };
@@ -80,15 +88,17 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           onClick={() => !disabled && setIsOpen(!isOpen)}
           onKeyDown={handleKeyDown}
           className={cn(
-            'flex h-10 w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition-all duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20',
-            'hover:bg-white/[0.05] cursor-pointer',
-            disabled && 'cursor-not-allowed opacity-50 hover:bg-white/[0.03]',
-            isOpen && 'border-white/20 ring-2 ring-white/10',
-            error && 'border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/20'
+            'w-full appearance-none rounded-2xl bg-gray-50 dark:bg-white/[0.04] px-4 py-3',
+            'border border-gray-200 dark:border-white/[0.10]',
+            'text-gray-900 dark:text-white flex items-center',
+            'focus:outline-none focus:ring-2 focus:ring-purple-400/30',
+            'hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer',
+            disabled && 'cursor-not-allowed opacity-50 hover:bg-gray-50 dark:hover:bg-white/[0.04]',
+            isOpen && 'border-gray-300 dark:border-white/20 ring-2 ring-purple-400/20',
+            error && 'border-rose-400/25 focus:ring-rose-300/25'
           )}
         >
-          <span className={cn(!selectedOption && "text-white/20")}>
+          <span className={cn("block truncate", !selectedOption && "text-gray-400 dark:text-white/20")}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <svg
@@ -101,48 +111,55 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={cn("text-white/40 transition-transform duration-200", isOpen && "rotate-180")}
+            className={cn(
+              "absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/40 transition-transform duration-200",
+              isOpen && "rotate-180"
+            )}
           >
             <path d="m6 9 6 6 6-6"/>
           </svg>
         </div>
 
         {isOpen && (
-          <div className="absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0A0A0A] p-1 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-xl animate-in fade-in zoom-in-95 duration-100">
             <ul
               id={`${id}-listbox`}
               role="listbox"
-              className="max-h-60 overflow-auto py-1"
+              className="max-h-60 overflow-auto p-1 flex flex-col gap-2"
             >
               {options.map((option) => (
                 <li
                   key={option.value}
                   role="option"
-                  aria-selected={value === option.value}
+                  aria-selected={currentValue === option.value}
                   onClick={() => handleSelect(option.value)}
                   className={cn(
-                    'relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-colors',
-                    'hover:bg-white/10 hover:text-white',
-                    value === option.value ? 'bg-white/10 text-white' : 'text-white/70'
+                    'w-full rounded-xl px-3 py-2 text-left text-sm transition-colors cursor-pointer',
+                    'hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white',
+                    currentValue === option.value 
+                      ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white/90' 
+                      : 'text-gray-700 dark:text-white/80'
                   )}
                 >
-                  <span className="flex-1 truncate">{option.label}</span>
-                  {value === option.value && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="ml-2 text-white"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex-1 truncate">{option.label}</span>
+                    {currentValue === option.value && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-gray-900 dark:text-white"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -154,6 +171,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             {error}
           </p>
         )}
+        <input type="hidden" name={name} value={currentValue || ''} />
       </div>
     );
   }

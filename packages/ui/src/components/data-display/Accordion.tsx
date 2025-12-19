@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { cn } from '../../utils/cn';
+import { ChevronDown } from 'lucide-react';
 
 interface AccordionContextValue {
   value: string | string[];
@@ -57,7 +58,7 @@ export function Accordion({
     <AccordionContext.Provider
       value={{ value: currentValue, onValueChange: handleValueChange, type }}
     >
-      <div className={cn("space-y-1", className)} {...props}>
+      <div className={cn("space-y-2", className)} {...props}>
         {children}
       </div>
     </AccordionContext.Provider>
@@ -65,7 +66,7 @@ export function Accordion({
 }
 
 // Helper context for Item
-const AccordionItemContext = createContext<{ value: string }>({ value: '' });
+const AccordionItemContext = createContext<{ value: string; isOpen: boolean }>({ value: '', isOpen: false });
 
 export interface AccordionItemProps extends React.HTMLAttributes<HTMLDivElement> {
   value: string;
@@ -73,10 +74,19 @@ export interface AccordionItemProps extends React.HTMLAttributes<HTMLDivElement>
 }
 
 export function AccordionItem({ className, value, children, ...props }: AccordionItemProps) {
+  const context = useContext(AccordionContext);
+  const isOpen = Array.isArray(context?.value)
+    ? context?.value.includes(value)
+    : context?.value === value;
+
   return (
-    <AccordionItemContext.Provider value={{ value }}>
+    <AccordionItemContext.Provider value={{ value, isOpen: !!isOpen }}>
       <div
-        className={cn("border-b border-white/10 last:border-0", className)}
+        className={cn(
+          "overflow-hidden rounded-xl border border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.02] transition-all duration-200",
+          isOpen && "bg-white dark:bg-white/[0.04] border-gray-300 dark:border-white/10",
+          className
+        )}
         {...props}
       >
         {children}
@@ -91,44 +101,27 @@ export interface AccordionTriggerProps extends React.ButtonHTMLAttributes<HTMLBu
 
 export function AccordionTrigger({ className, children, ...props }: AccordionTriggerProps) {
   const context = useContext(AccordionContext);
+  const { value, isOpen } = useContext(AccordionItemContext);
   
   return (
-    <AccordionItemContext.Consumer>
-      {({ value }) => {
-        const isOpen = Array.isArray(context?.value)
-          ? context?.value.includes(value)
-          : context?.value === value;
-
-        return (
-          <button
-            type="button"
-            onClick={() => context?.onValueChange(value)}
-            aria-expanded={isOpen}
-            className={cn(
-              "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:text-white/80 [&[aria-expanded=true]>svg]:rotate-180",
-              className
-            )}
-            {...props}
-          >
-            {children}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4 shrink-0 transition-transform duration-200 text-white/50"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
-        );
-      }}
-    </AccordionItemContext.Consumer>
+    <button
+      type="button"
+      onClick={() => context?.onValueChange(value)}
+      aria-expanded={isOpen}
+      className={cn(
+        "flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-gray-900 dark:text-white transition-all hover:text-gray-700 dark:hover:text-white/90 focus:outline-none",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 shrink-0 text-gray-400 dark:text-white/50 transition-transform duration-200",
+          isOpen && "rotate-180 text-gray-900 dark:text-white"
+        )}
+      />
+    </button>
   );
 }
 
@@ -137,25 +130,19 @@ export interface AccordionContentProps extends React.HTMLAttributes<HTMLDivEleme
 }
 
 export function AccordionContent({ className, children, ...props }: AccordionContentProps) {
-  const context = useContext(AccordionContext);
-  const itemContext = useContext(AccordionItemContext);
-  
-  const isOpen = Array.isArray(context?.value)
-    ? context?.value.includes(itemContext.value)
-    : context?.value === itemContext.value;
+  const { isOpen } = useContext(AccordionItemContext);
+
+  if (!isOpen) return null;
 
   return (
     <div
       className={cn(
-        "overflow-hidden text-sm transition-all duration-200 ease-in-out",
-        isOpen ? "grid-rows-[1fr] opacity-100 pb-4" : "grid-rows-[0fr] opacity-0",
-        "grid"
+        "px-4 pb-3 pt-0 text-sm text-gray-600 dark:text-white/70 animate-in slide-in-from-top-1 fade-in duration-200",
+        className
       )}
       {...props}
     >
-      <div className={cn("min-h-0", className)}>
-        {children}
-      </div>
+      {children}
     </div>
   );
 }

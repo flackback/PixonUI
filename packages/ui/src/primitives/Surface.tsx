@@ -1,23 +1,38 @@
 import React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '../utils/cn';
 
-interface SurfaceProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+const surfaceVariants = cva(
+  "rounded-2xl backdrop-blur-xl transition-colors duration-200 bg-white/80 border border-black/5 shadow-sm text-gray-900 dark:bg-white/[0.03] dark:border-white/10 dark:shadow-[0_18px_55px_rgba(0,0,0,.45)] dark:text-white",
+  {
+    variants: {
+      variant: {
+        default: "",
+        ghost: "bg-transparent border-transparent shadow-none",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+export interface SurfaceProps 
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof surfaceVariants> {
+  asChild?: boolean;
 }
 
 export const Surface = React.forwardRef<HTMLDivElement, SurfaceProps>(
-  ({ children, className, ...props }, ref) => {
+  ({ className, variant, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "div";
     return (
-      <div
+      <Comp
         ref={ref}
-        className={cn(
-          'rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md',
-          className
-        )}
+        className={cn(surfaceVariants({ variant, className }))}
         {...props}
-      >
-        {children}
-      </div>
+      />
     );
   }
 );

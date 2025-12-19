@@ -1,31 +1,40 @@
 import React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 
-interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'neutral';
+const badgeVariants = cva(
+  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-white/10 dark:text-white/70 dark:border-white/10",
+        neutral: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-white/10 dark:text-white/70 dark:border-white/10",
+        success: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-400/15 dark:text-emerald-200 dark:border-emerald-400/20",
+        warning: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-400/15 dark:text-amber-200 dark:border-amber-400/20",
+        danger: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-400/15 dark:text-rose-200 dark:border-rose-400/20",
+        info: "bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-400/15 dark:text-sky-200 dark:border-sky-400/20",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+export interface BadgeProps 
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {
   children: React.ReactNode;
 }
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ variant = 'default', className, children, ...props }, ref) => {
+  ({ className, variant, ...props }, ref) => {
     return (
       <span
         ref={ref}
-        className={cn(
-          'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors',
-          {
-            'bg-white/10 text-white ring-white/20': variant === 'default',
-            'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20': variant === 'success',
-            'bg-amber-500/10 text-amber-400 ring-amber-500/20': variant === 'warning',
-            'bg-rose-500/10 text-rose-400 ring-rose-500/20': variant === 'danger',
-            'bg-neutral-500/10 text-neutral-400 ring-neutral-500/20': variant === 'neutral',
-          },
-          className
-        )}
+        className={cn(badgeVariants({ variant }), className)}
         {...props}
-      >
-        {children}
-      </span>
+      />
     );
   }
 );

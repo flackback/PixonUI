@@ -37,7 +37,7 @@ describe('Switch', () => {
   it('renders correctly with label', () => {
     render(<Switch label="Notifications" />);
     expect(screen.getByLabelText('Notifications')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 
   it('handles change events', () => {

@@ -1,9 +1,9 @@
 import React, { createContext, useState, useCallback, useContext } from 'react';
 import { Toast, ToastProps, ToastVariant } from './Toast';
 
-type ToastOptions = Omit<ToastProps, 'id' | 'onDismiss'>;
+export type ToastOptions = Omit<ToastProps, 'id' | 'onDismiss'>;
 
-interface ToastContextType {
+export interface ToastContextType {
   toast: (options: ToastOptions) => void;
   dismiss: (id: string) => void;
 }
@@ -13,15 +13,15 @@ export const ToastContext = createContext<ToastContextType | undefined>(undefine
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastProps[]>([]);
 
+  const dismiss = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
   const toast = useCallback((options: ToastOptions) => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { ...options, id, onDismiss: dismiss }]);
     return id;
-  }, []);
-
-  const dismiss = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
+  }, [dismiss]);
 
   return (
     <ToastContext.Provider value={{ toast, dismiss }}>

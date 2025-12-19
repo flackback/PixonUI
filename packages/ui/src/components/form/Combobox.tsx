@@ -22,6 +22,7 @@ export interface ComboboxProps {
   defaultValue?: string;
   onValueChange?: (value: string) => void;
   filter?: (value: string, search: string) => boolean;
+  usePopover?: boolean;
 }
 
 export function Combobox({ 
@@ -29,7 +30,8 @@ export function Combobox({
   value: controlledValue, 
   defaultValue = '', 
   onValueChange,
-  filter = (text, search) => text.toLowerCase().includes(search.toLowerCase())
+  filter = (text, search) => text.toLowerCase().includes(search.toLowerCase()),
+  usePopover = true
 }: ComboboxProps) {
   const [internalValue, setInternalValue] = useState(defaultValue);
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,9 +85,13 @@ export function Combobox({
       isItemVisible,
       hasVisibleItems
     }}>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        {children}
-      </Popover>
+      {usePopover ? (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          {children}
+        </Popover>
+      ) : (
+        children
+      )}
     </ComboboxContext.Provider>
   );
 }
@@ -94,9 +100,10 @@ export function ComboboxTrigger({ className, children, ...props }: React.ButtonH
   return (
     <PopoverTrigger
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/10 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-10 w-full items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-white/40 dark:focus:border-white/20 dark:focus:ring-white/10",
         className
       )}
+      {...props}
       {...props}
     >
       {children}
@@ -131,7 +138,7 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
   if (!context) throw new Error('ComboboxInput must be used within Combobox');
 
   return (
-    <div className="flex items-center border-b border-white/10 px-3">
+    <div className="flex items-center border-b border-gray-200 dark:border-white/10 px-3">
       <svg
         className="mr-2 h-4 w-4 shrink-0 opacity-50"
         xmlns="http://www.w3.org/2000/svg"
@@ -149,7 +156,7 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
       </svg>
       <input
         className={cn(
-          "flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-white/40 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-10 w-full rounded-md bg-transparent py-3 text-sm text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-white/40 disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         placeholder={placeholder}
@@ -176,7 +183,7 @@ export function ComboboxEmpty({ className, children, ...props }: React.HTMLAttri
   if (context.hasVisibleItems) return null;
 
   return (
-    <div className={cn("py-6 text-center text-sm text-white/40", className)} {...props}>
+    <div className={cn("py-6 text-center text-sm text-gray-500 dark:text-white/40", className)} {...props}>
       {children}
     </div>
   );
@@ -207,8 +214,12 @@ export function ComboboxItem({ className, value, children, textValue, ...props }
     <div
       onClick={() => context.onValueChange(value)}
       className={cn(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-white/10 aria-selected:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-white/10 hover:text-white transition-colors",
-        isSelected && "bg-white/10 text-white",
+        "relative flex cursor-default select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors",
+        "text-gray-700 dark:text-white/80",
+        "aria-selected:bg-gray-100 aria-selected:text-gray-900 dark:aria-selected:bg-white/10 dark:aria-selected:text-white",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white",
+        isSelected && "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white",
         className
       )}
       {...props}

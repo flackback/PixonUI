@@ -7,7 +7,7 @@ import { Text } from '../typography/Text';
 export interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  position?: 'left' | 'right';
+  position?: 'left' | 'right' | 'bottom';
   children: React.ReactNode;
   className?: string;
 }
@@ -68,11 +68,13 @@ export function Drawer({
   const positionClasses = {
     left: "left-0 h-full w-3/4 max-w-sm border-r",
     right: "right-0 h-full w-3/4 max-w-sm border-l",
+    bottom: "bottom-0 w-full h-auto max-h-[90vh] border-t rounded-t-2xl",
   };
 
   const translateClasses = {
     left: isVisible ? "translate-x-0" : "-translate-x-full",
     right: isVisible ? "translate-x-0" : "translate-x-full",
+    bottom: isVisible ? "translate-y-0" : "translate-y-full",
   };
 
   return createPortal(
@@ -88,7 +90,7 @@ export function Drawer({
     >
       <div
         className={cn(
-          "absolute bg-[#0A0A0A] border-white/10 p-6 shadow-2xl transition-transform duration-300 ease-in-out",
+          "absolute bg-white dark:bg-[#0A0A0A] border-gray-200 dark:border-white/10 p-6 shadow-2xl transition-transform duration-300 ease-in-out",
           positionClasses[position],
           translateClasses[position],
           className

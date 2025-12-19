@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../overlay/Popover';
 import { Calendar } from '../data-display/Calendar';
 import { cn } from '../../utils/cn';
+import { Calendar as CalendarIcon } from 'lucide-react';
 
 export interface DatePickerProps {
   value?: Date;
@@ -28,28 +29,38 @@ export function DatePicker({ value, onChange, placeholder = "Pick a date", class
     });
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--x', `${x}px`);
+    e.currentTarget.style.setProperty('--y', `${y}px`);
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger
+        onMouseMove={handleMouseMove}
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/10 disabled:cursor-not-allowed disabled:opacity-50",
-          !date && "text-white/40",
+          "group relative flex h-11 w-full items-center justify-between rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.03] px-4 py-2 text-sm text-gray-900 dark:text-white transition-all duration-200 overflow-hidden",
+          "hover:bg-gray-100 dark:hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/15",
+          !date && "text-gray-400 dark:text-white/40",
           className
         )}
       >
-        <span>{date ? formatDate(date) : placeholder}</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2 opacity-50">
-          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-          <line x1="16" x2="16" y1="2" y2="6"/>
-          <line x1="8" x2="8" y1="2" y2="6"/>
-          <line x1="3" x2="21" y1="10" y2="10"/>
-        </svg>
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+             style={{
+               background: `radial-gradient(600px circle at var(--x) var(--y), rgba(255,255,255,0.06), transparent 40%)`
+             }}
+        />
+        <span className="relative z-10">{date ? formatDate(date) : placeholder}</span>
+        <CalendarIcon className="relative z-10 h-4 w-4 text-white/40" />
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" align="start">
         <Calendar
           value={date}
           onChange={handleSelect}
-          className="rounded-md border-none"
+          className="shadow-2xl shadow-black/50"
         />
       </PopoverContent>
     </Popover>

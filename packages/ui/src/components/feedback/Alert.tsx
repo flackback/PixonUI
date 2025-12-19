@@ -49,12 +49,12 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         ref={ref}
         role="alert"
         className={cn(
-          "relative w-full rounded-xl border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-white",
-          "bg-[#0A0A0A]/50 backdrop-blur-md border-white/10 text-white",
-          variant === 'error' && "border-rose-500/20 bg-rose-950/10 text-rose-50 [&>svg]:text-rose-400",
-          variant === 'success' && "border-emerald-500/20 bg-emerald-950/10 text-emerald-50 [&>svg]:text-emerald-400",
-          variant === 'warning' && "border-amber-500/20 bg-amber-950/10 text-amber-50 [&>svg]:text-amber-400",
-          variant === 'info' && "border-blue-500/20 bg-blue-950/10 text-blue-50 [&>svg]:text-blue-400",
+          "relative w-full rounded-xl border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-gray-900 dark:[&>svg]:text-white",
+          "bg-white dark:bg-[#0A0A0A]/50 backdrop-blur-md border-gray-200 dark:border-white/10 text-gray-900 dark:text-white",
+          variant === 'error' && "border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-950/10 text-rose-900 dark:text-rose-50 [&>svg]:text-rose-600 dark:[&>svg]:text-rose-400",
+          variant === 'success' && "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-900 dark:text-emerald-50 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400",
+          variant === 'warning' && "border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-950/10 text-amber-900 dark:text-amber-50 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400",
+          variant === 'info' && "border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-950/10 text-blue-900 dark:text-blue-50 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400",
           className
         )}
         {...props}

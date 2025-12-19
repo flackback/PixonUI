@@ -51,7 +51,7 @@ export function TabsList({ className, children, ...props }: TabsListProps) {
   return (
     <div
       className={cn(
-        "inline-flex h-10 items-center justify-center rounded-lg bg-white/5 p-1 text-white/60",
+        "inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-500 dark:bg-white/5 dark:text-white/60",
         className
       )}
       {...props}
@@ -79,10 +79,10 @@ export function TabsTrigger({ className, value, children, ...props }: TabsTrigge
       aria-selected={isActive}
       onClick={() => context.onValueChange(value)}
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-zinc-950 dark:focus-visible:ring-white/20",
         isActive
-          ? "bg-white/10 text-white shadow-sm backdrop-blur-sm"
-          : "hover:bg-white/5 hover:text-white",
+          ? "bg-white text-gray-900 shadow-sm dark:bg-white/10 dark:text-white dark:backdrop-blur-sm"
+          : "hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white",
         className
       )}
       {...props}

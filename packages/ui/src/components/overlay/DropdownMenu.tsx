@@ -58,9 +58,10 @@ export function DropdownMenuTrigger({ className, children, ...props }: DropdownM
 export interface DropdownMenuContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   align?: 'start' | 'end' | 'center';
+  side?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export function DropdownMenuContent({ className, children, align = 'start', ...props }: DropdownMenuContentProps) {
+export function DropdownMenuContent({ className, children, align = 'start', side = 'bottom', ...props }: DropdownMenuContentProps) {
   const context = useContext(DropdownMenuContext);
   if (!context) throw new Error('DropdownMenuContent must be used within DropdownMenu');
 
@@ -72,18 +73,37 @@ export function DropdownMenuContent({ className, children, align = 'start', ...p
       const rect = context.triggerRef.current.getBoundingClientRect();
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
+      const contentWidth = contentRef.current?.offsetWidth || 200;
+      const contentHeight = contentRef.current?.offsetHeight || 0;
 
-      let left = rect.left + scrollX;
-      if (align === 'end') {
-        left = rect.right + scrollX - (contentRef.current?.offsetWidth || 200);
-      } else if (align === 'center') {
-        left = rect.left + scrollX + rect.width / 2 - (contentRef.current?.offsetWidth || 200) / 2;
+      let top = 0;
+      let left = 0;
+
+      // Calculate Top
+      if (side === 'bottom') {
+        top = rect.bottom + scrollY + 4;
+      } else if (side === 'top') {
+        top = rect.top + scrollY - contentHeight - 4;
+      } else {
+        // left or right
+        top = rect.top + scrollY; // Default align start
+        if (align === 'end') top = rect.bottom + scrollY - contentHeight;
+        if (align === 'center') top = rect.top + scrollY + (rect.height / 2) - (contentHeight / 2);
       }
 
-      setPosition({
-        top: rect.bottom + scrollY + 4, // 4px gap
-        left: left,
-      });
+      // Calculate Left
+      if (side === 'left') {
+        left = rect.left + scrollX - contentWidth - 4;
+      } else if (side === 'right') {
+        left = rect.right + scrollX + 4;
+      } else {
+        // top or bottom
+        left = rect.left + scrollX; // Default align start
+        if (align === 'end') left = rect.right + scrollX - contentWidth;
+        if (align === 'center') left = rect.left + scrollX + (rect.width / 2) - (contentWidth / 2);
+      }
+
+      setPosition({ top, left });
 
       const handleOutsideClick = (e: MouseEvent) => {
         if (
@@ -99,7 +119,7 @@ export function DropdownMenuContent({ className, children, align = 'start', ...p
       document.addEventListener('mousedown', handleOutsideClick);
       return () => document.removeEventListener('mousedown', handleOutsideClick);
     }
-  }, [context.isOpen, align]);
+  }, [context.isOpen, align, side]);
 
   if (!context.isOpen) return null;
 
@@ -108,7 +128,7 @@ export function DropdownMenuContent({ className, children, align = 'start', ...p
       ref={contentRef}
       style={{ top: position.top, left: position.left }}
       className={cn(
-        "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-white/10 bg-[#0A0A0A] p-1 shadow-md animate-in fade-in zoom-in-95 duration-100",
+        "absolute z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-md animate-in fade-in zoom-in-95 duration-100",
         className
       )}
       {...props}
@@ -137,7 +157,11 @@ export function DropdownMenuItem({ className, children, ...props }: DropdownMenu
       role="menuitem"
       onClick={handleClick}
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-white/10 focus:bg-white/10 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex w-full cursor-pointer select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors",
+        "text-gray-700 dark:text-white/80",
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white",
+        "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-white/10 dark:focus:text-white",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}
       {...props}
@@ -149,7 +173,7 @@ export function DropdownMenuItem({ className, children, ...props }: DropdownMenu
 
 export function DropdownMenuLabel({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("px-2 py-1.5 text-sm font-semibold", className)} {...props}>
+    <div className={cn("px-2 py-1.5 text-sm font-semibold text-gray-900 dark:text-white", className)} {...props}>
       {children}
     </div>
   );
@@ -157,6 +181,6 @@ export function DropdownMenuLabel({ className, children, ...props }: React.HTMLA
 
 export function DropdownMenuSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("-mx-1 my-1 h-px bg-white/10", className)} {...props} />
+    <div className={cn("-mx-1 my-1 h-px bg-gray-200 dark:bg-white/10", className)} {...props} />
   );
 }

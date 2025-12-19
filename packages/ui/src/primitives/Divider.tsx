@@ -11,7 +11,7 @@ export const Divider = React.forwardRef<HTMLHRElement, DividerProps>(
       <hr
         ref={ref}
         className={cn(
-          'border-0 bg-white/10',
+          'border-0 bg-gray-200 dark:bg-white/10',
           {
             'h-px w-full': orientation === 'horizontal',
             'h-full w-px': orientation === 'vertical',

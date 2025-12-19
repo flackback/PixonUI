@@ -64,10 +64,16 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
 
     const handleTouchStart = (e: React.TouchEvent) => {
       if (disabled) return;
-      handleMove(e.touches[0].clientX);
+      const startTouch = e.touches[0];
+      if (startTouch) {
+        handleMove(startTouch.clientX);
+      }
 
       const handleTouchMove = (e: TouchEvent) => {
-        handleMove(e.touches[0].clientX);
+        const moveTouch = e.touches[0];
+        if (moveTouch) {
+          handleMove(moveTouch.clientX);
+        }
       };
 
       const handleTouchEnd = () => {
@@ -79,11 +85,43 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       document.addEventListener('touchend', handleTouchEnd);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (disabled) return;
+
+      let newValue = value;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        newValue = Math.min(value + step, max);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        newValue = Math.max(value - step, min);
+      } else if (e.key === 'Home') {
+        newValue = min;
+      } else if (e.key === 'End') {
+        newValue = max;
+      } else {
+        return;
+      }
+
+      e.preventDefault();
+      if (newValue !== value) {
+        if (!isControlled) {
+          setInternalValue(newValue);
+        }
+        onChange?.(newValue);
+      }
+    };
+
     return (
       <div
         ref={ref}
+        role="slider"
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        aria-disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={handleKeyDown}
         className={cn(
-          "relative flex w-full touch-none select-none items-center py-4",
+          "relative flex w-full touch-none select-none items-center py-4 group",
           disabled && "opacity-50 cursor-not-allowed",
           className
         )}
@@ -93,45 +131,18 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       >
         <div
           ref={trackRef}
-          className="relative h-2 w-full grow overflow-hidden rounded-full bg-white/10"
+          className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-gray-200 dark:bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-white/5"
         >
           <div
-            className="absolute h-full bg-white transition-none"
+            className="absolute h-full bg-gray-900 dark:bg-white transition-none dark:shadow-[0_0_10px_rgba(255,255,255,0.5)]"
             style={{ width: `${percentage}%` }}
           />
         </div>
         <div
-          role="slider"
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuenow={value}
-          aria-disabled={disabled}
-          tabIndex={disabled ? -1 : 0}
-          className={cn(
-            "absolute h-5 w-5 rounded-full border-2 border-white bg-[#0A0A0A] ring-offset-2 ring-offset-[#0A0A0A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:pointer-events-none disabled:opacity-50",
-            "hover:scale-110 transition-transform"
-          )}
+          className="absolute h-5 w-5 rounded-full border-2 border-gray-900 dark:border-white bg-white dark:bg-black shadow-md dark:shadow-[0_0_15px_rgba(255,255,255,0.5)] transition-transform hover:scale-110 focus:scale-110"
           style={{ left: `calc(${percentage}% - 10px)` }}
-          onKeyDown={(e) => {
-            if (disabled) return;
-            let newValue = value;
-            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-              newValue = Math.min(value + step, max);
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-              newValue = Math.max(value - step, min);
-            } else {
-              return;
-            }
-            e.preventDefault();
-            if (newValue !== value) {
-              if (!isControlled) setInternalValue(newValue);
-              onChange?.(newValue);
-            }
-          }}
         />
       </div>
     );
   }
 );
-
-Slider.displayName = "Slider";

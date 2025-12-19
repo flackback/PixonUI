@@ -21,7 +21,7 @@ describe('TextInput', () => {
   it('applies error styles when error is present', () => {
     render(<TextInput error="Error" placeholder="input" />);
     const input = screen.getByPlaceholderText('input');
-    expect(input).toHaveClass('border-rose-500/50');
+    expect(input).toHaveClass('border-rose-400/25');
   });
 
   it('renders icons when provided', () => {

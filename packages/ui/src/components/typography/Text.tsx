@@ -16,9 +16,9 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
         className={cn(
           'leading-relaxed',
           {
-            'text-white': variant === 'default',
-            'text-white/80': variant === 'muted',
-            'text-white/50': variant === 'subtle',
+            'text-gray-900 dark:text-white': variant === 'default',
+            'text-gray-500 dark:text-white/80': variant === 'muted',
+            'text-gray-400 dark:text-white/50': variant === 'subtle',
             'text-xs': size === 'xs',
             'text-sm': size === 'sm',
             'text-base': size === 'base',
