@@ -3553,7 +3553,7 @@ export function DataTable<T extends Record<string, unknown>>({
         const aValue = a[sortConfig.key as keyof T];
         const bValue = b[sortConfig.key as keyof T];
         
-        if (aValue === undefined || bValue === undefined) return 0;
+        if (aValue === undefined || aValue === null || bValue === undefined || bValue === null) return 0;
         if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
@@ -3617,7 +3617,7 @@ export function DataTable<T extends Record<string, unknown>>({
             >
               {columns.map((col) => (
                 <TableCell key={String(col.key)} className={col.className}>
-                  {col.render ? col.render(item) : item[col.key as keyof T]}
+                  {col.render ? col.render(item) : (item[col.key as keyof T] as React.ReactNode)}
                 </TableCell>
               ))}
             </TableRow>
@@ -6597,9 +6597,12 @@ interface ComboboxContextValue {
   setSearchTerm: (term: string) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  registerItem: (id: string, text: string) => () => void;
+  registerItem: (id: string, text: string, value: string) => () => void;
   isItemVisible: (id: string, text: string) => boolean;
   hasVisibleItems: boolean;
+  activeIndex: number;
+  setActiveIndex: React.Dispatch<React.SetStateAction<number>>;
+  visibleItems: { id: string, value: string }[];
 }
 
 const ComboboxContext = createContext<ComboboxContextValue | undefined>(undefined);
@@ -6624,7 +6627,8 @@ export function Combobox({
   const [internalValue, setInternalValue] = useState(defaultValue);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [items, setItems] = useState<Map<string, string>>(new Map());
+  const [items, setItems] = useState<Map<string, { text: string, value: string }>>(new Map());
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : internalValue;
@@ -6633,12 +6637,13 @@ export function Combobox({
     if (!isControlled) setInternalValue(newValue);
     onValueChange?.(newValue);
     setIsOpen(false);
+    setSearchTerm('');
   };
 
-  const registerItem = React.useCallback((id: string, text: string) => {
+  const registerItem = React.useCallback((id: string, text: string, value: string) => {
     setItems(prev => {
       const next = new Map(prev);
-      next.set(id, text);
+      next.set(id, { text, value });
       return next;
     });
     return () => {
@@ -6650,16 +6655,21 @@ export function Combobox({
     };
   }, []);
 
-  const isItemVisible = React.useCallback((id: string, text: string) => {
-    return filter(text, searchTerm);
-  }, [filter, searchTerm]);
-
-  const hasVisibleItems = useMemo(() => {
-    for (const [id, text] of items.entries()) {
-      if (filter(text, searchTerm)) return true;
-    }
-    return false;
+  const visibleItems = useMemo(() => {
+    return Array.from(items.entries())
+      .filter(([_, item]) => filter(item.text, searchTerm))
+      .map(([id, item]) => ({ id, value: item.value }));
   }, [items, searchTerm, filter]);
+
+  const hasVisibleItems = visibleItems.length > 0;
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(-1);
+    }
+  }, [isOpen]);
 
   return (
     <ComboboxContext.Provider value={{ 
@@ -6670,8 +6680,11 @@ export function Combobox({
       isOpen, 
       setIsOpen,
       registerItem,
-      isItemVisible,
-      hasVisibleItems
+      isItemVisible: (id, text) => filter(text, searchTerm),
+      hasVisibleItems,
+      activeIndex,
+      setActiveIndex,
+      visibleItems
     }}>
       {usePopover ? (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -6725,6 +6738,24 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
   const context = useContext(ComboboxContext);
   if (!context) throw new Error('ComboboxInput must be used within Combobox');
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      context.setActiveIndex((prev) => (prev + 1) % context.visibleItems.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      context.setActiveIndex((prev) => (prev - 1 + context.visibleItems.length) % context.visibleItems.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (context.activeIndex !== -1 && context.visibleItems[context.activeIndex]) {
+        context.onValueChange(context.visibleItems[context.activeIndex]!.value);
+      }
+    } else if (e.key === 'Escape') {
+      context.setIsOpen(false);
+    }
+    props.onKeyDown?.(e);
+  };
+
   return (
     <div className="flex items-center border-b border-gray-200 dark:border-white/10 px-3">
       <svg
@@ -6750,6 +6781,7 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
         placeholder={placeholder}
         value={context.searchTerm}
         onChange={(e) => context.setSearchTerm(e.target.value)}
+        onKeyDown={handleKeyDown}
         {...props}
       />
     </div>
@@ -6791,23 +6823,27 @@ export function ComboboxItem({ className, value, children, textValue, ...props }
   const text = textValue || (typeof children === 'string' ? children : value);
   const isVisible = context.isItemVisible(id, text);
   const isSelected = context.value === value;
+  
+  const itemIndex = context.visibleItems.findIndex(item => item.id === id);
+  const isActive = context.activeIndex === itemIndex;
 
   useEffect(() => {
-    return context.registerItem(id, text);
-  }, [id, text, context.registerItem]);
+    return context.registerItem(id, text, value);
+  }, [id, text, value, context.registerItem]);
 
   if (!isVisible) return null;
 
   return (
     <div
       onClick={() => context.onValueChange(value)}
+      onMouseEnter={() => context.setActiveIndex(itemIndex)}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors",
         "text-gray-700 dark:text-white/80",
         "aria-selected:bg-gray-100 aria-selected:text-gray-900 dark:aria-selected:bg-white/10 dark:aria-selected:text-white",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white",
-        isSelected && "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white",
+        (isSelected || isActive) && "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white",
         className
       )}
       {...props}
@@ -7727,12 +7763,22 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
   ({ label, name, options, value, defaultValue, onChange, placeholder = 'Select an option', error, disabled, className }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [internalValue, setInternalValue] = useState(defaultValue);
+    const [activeIndex, setActiveIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
     const id = React.useId();
 
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
     const selectedOption = options.find((opt) => opt.value === currentValue);
+
+    useEffect(() => {
+      if (isOpen) {
+        const index = options.findIndex(opt => opt.value === currentValue);
+        setActiveIndex(index !== -1 ? index : 0);
+      } else {
+        setActiveIndex(-1);
+      }
+    }, [isOpen, currentValue, options]);
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -7759,9 +7805,33 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        setIsOpen(!isOpen);
+        if (isOpen && activeIndex !== -1) {
+          handleSelect(options[activeIndex]!.value);
+        } else {
+          setIsOpen(true);
+        }
       } else if (e.key === 'Escape') {
         setIsOpen(false);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex((prev) => (prev + 1) % options.length);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex((prev) => (prev - 1 + options.length) % options.length);
+        }
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        if (isOpen) setActiveIndex(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        if (isOpen) setActiveIndex(options.length - 1);
       }
     };
 
@@ -7828,18 +7898,21 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             <ul
               id={`${id}-listbox`}
               role="listbox"
+              aria-activedescendant={activeIndex !== -1 ? `${id}-option-${activeIndex}` : undefined}
               className="max-h-60 overflow-auto p-1 flex flex-col gap-2"
             >
-              {options.map((option) => (
+              {options.map((option, index) => (
                 <li
                   key={option.value}
+                  id={`${id}-option-${index}`}
                   role="option"
                   aria-selected={currentValue === option.value}
                   onClick={() => handleSelect(option.value)}
+                  onMouseEnter={() => setActiveIndex(index)}
                   className={cn(
                     'w-full rounded-xl px-3 py-2 text-left text-sm transition-colors cursor-pointer',
                     'hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white',
-                    currentValue === option.value 
+                    (currentValue === option.value || activeIndex === index)
                       ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white/90' 
                       : 'text-gray-700 dark:text-white/80'
                   )}
@@ -10394,6 +10467,65 @@ Text.displayName = 'Text';
 
 
 
+=== FILE: packages\ui\src\hooks\useFloating.test.ts ===
+
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { useFloating } from './useFloating';
+
+describe('useFloating', () => {
+  beforeEach(() => {
+    // Mock ResizeObserver
+    global.ResizeObserver = vi.fn().mockImplementation(function(this: any) {
+      this.observe = vi.fn();
+      this.unobserve = vi.fn();
+      this.disconnect = vi.fn();
+    });
+  });
+
+  it('should initialize with default position', () => {
+    const triggerRef = { current: document.createElement('div') };
+    const contentRef = { current: document.createElement('div') };
+
+    const { result } = renderHook(() => useFloating(triggerRef, contentRef));
+
+    expect(result.current.position).toEqual({ top: 0, left: 0 });
+    expect(result.current.isPositioned).toBe(false);
+  });
+
+  it('should calculate position when open', () => {
+    const trigger = document.createElement('div');
+    const content = document.createElement('div');
+
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({
+      top: 100,
+      bottom: 150,
+      left: 100,
+      right: 200,
+      width: 100,
+      height: 50,
+    } as DOMRect);
+
+    vi.spyOn(content, 'getBoundingClientRect').mockReturnValue({
+      width: 80,
+      height: 40,
+    } as DOMRect);
+
+    const triggerRef = { current: trigger };
+    const contentRef = { current: content };
+
+    const { result } = renderHook(() => useFloating(triggerRef, contentRef, { isOpen: true }));
+
+    // Default side is 'bottom', align is 'center'
+    // top = trigger.bottom + sideOffset(4) = 150 + 4 = 154
+    // left = trigger.left + (trigger.width/2) - (content.width/2) = 100 + 50 - 40 = 110
+    expect(result.current.position).toEqual({ top: 154, left: 110 });
+    expect(result.current.isPositioned).toBe(true);
+  });
+});
+
+
+
 === FILE: packages\ui\src\hooks\useFloating.ts ===
 
 import { useState, useLayoutEffect, useCallback, RefObject } from 'react';
@@ -10529,6 +10661,96 @@ export function useFloating(
     updatePosition,
   };
 }
+
+
+
+=== FILE: packages\ui\src\hooks\useForm.test.ts ===
+
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { useForm } from './useForm';
+
+describe('useForm', () => {
+  const initialValues = {
+    username: '',
+    email: '',
+  };
+
+  it('should initialize with initial values', () => {
+    const { result } = renderHook(() => useForm({
+      initialValues,
+      onSubmit: vi.fn(),
+    }));
+
+    expect(result.current.values).toEqual(initialValues);
+    expect(result.current.errors).toEqual({});
+    expect(result.current.isSubmitting).toBe(false);
+  });
+
+  it('should update values on change', () => {
+    const { result } = renderHook(() => useForm({
+      initialValues,
+      onSubmit: vi.fn(),
+    }));
+
+    act(() => {
+      result.current.handleChange({
+        target: { name: 'username', value: 'johndoe', type: 'text' }
+      } as any);
+    });
+
+    expect(result.current.values.username).toBe('johndoe');
+  });
+
+  it('should handle form submission', async () => {
+    const onSubmit = vi.fn();
+    const { result } = renderHook(() => useForm({
+      initialValues: { username: 'test' },
+      onSubmit,
+    }));
+
+    const mockEvent = {
+      preventDefault: vi.fn(),
+      currentTarget: {
+        checkValidity: () => true,
+      },
+    } as any;
+
+    await act(async () => {
+      await result.current.handleSubmit(mockEvent);
+    });
+
+    expect(onSubmit).toHaveBeenCalledWith({ username: 'test' });
+    expect(result.current.isSubmitting).toBe(false);
+  });
+
+  it('should handle validation errors', async () => {
+    const { result } = renderHook(() => useForm({
+      initialValues: { username: '' },
+      onSubmit: vi.fn(),
+    }));
+
+    const mockEvent = {
+      preventDefault: vi.fn(),
+      currentTarget: {
+        checkValidity: () => false,
+        elements: [
+          {
+            name: 'username',
+            validity: { valid: false },
+            validationMessage: 'Username is required',
+          },
+        ],
+      },
+    } as any;
+
+    await act(async () => {
+      await result.current.handleSubmit(mockEvent);
+    });
+
+    expect(result.current.errors.username).toBe('Username is required');
+  });
+});
 
 
 

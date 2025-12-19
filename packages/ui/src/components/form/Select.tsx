@@ -24,12 +24,22 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
   ({ label, name, options, value, defaultValue, onChange, placeholder = 'Select an option', error, disabled, className }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [internalValue, setInternalValue] = useState(defaultValue);
+    const [activeIndex, setActiveIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
     const id = React.useId();
 
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
     const selectedOption = options.find((opt) => opt.value === currentValue);
+
+    useEffect(() => {
+      if (isOpen) {
+        const index = options.findIndex(opt => opt.value === currentValue);
+        setActiveIndex(index !== -1 ? index : 0);
+      } else {
+        setActiveIndex(-1);
+      }
+    }, [isOpen, currentValue, options]);
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -56,9 +66,33 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        setIsOpen(!isOpen);
+        if (isOpen && activeIndex !== -1) {
+          handleSelect(options[activeIndex]!.value);
+        } else {
+          setIsOpen(true);
+        }
       } else if (e.key === 'Escape') {
         setIsOpen(false);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex((prev) => (prev + 1) % options.length);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex((prev) => (prev - 1 + options.length) % options.length);
+        }
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        if (isOpen) setActiveIndex(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        if (isOpen) setActiveIndex(options.length - 1);
       }
     };
 
@@ -125,18 +159,21 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             <ul
               id={`${id}-listbox`}
               role="listbox"
+              aria-activedescendant={activeIndex !== -1 ? `${id}-option-${activeIndex}` : undefined}
               className="max-h-60 overflow-auto p-1 flex flex-col gap-2"
             >
-              {options.map((option) => (
+              {options.map((option, index) => (
                 <li
                   key={option.value}
+                  id={`${id}-option-${index}`}
                   role="option"
                   aria-selected={currentValue === option.value}
                   onClick={() => handleSelect(option.value)}
+                  onMouseEnter={() => setActiveIndex(index)}
                   className={cn(
                     'w-full rounded-xl px-3 py-2 text-left text-sm transition-colors cursor-pointer',
                     'hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white',
-                    currentValue === option.value 
+                    (currentValue === option.value || activeIndex === index)
                       ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white/90' 
                       : 'text-gray-700 dark:text-white/80'
                   )}

@@ -9,9 +9,12 @@ interface ComboboxContextValue {
   setSearchTerm: (term: string) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  registerItem: (id: string, text: string) => () => void;
+  registerItem: (id: string, text: string, value: string) => () => void;
   isItemVisible: (id: string, text: string) => boolean;
   hasVisibleItems: boolean;
+  activeIndex: number;
+  setActiveIndex: React.Dispatch<React.SetStateAction<number>>;
+  visibleItems: { id: string, value: string }[];
 }
 
 const ComboboxContext = createContext<ComboboxContextValue | undefined>(undefined);
@@ -36,7 +39,8 @@ export function Combobox({
   const [internalValue, setInternalValue] = useState(defaultValue);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [items, setItems] = useState<Map<string, string>>(new Map());
+  const [items, setItems] = useState<Map<string, { text: string, value: string }>>(new Map());
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : internalValue;
@@ -45,12 +49,13 @@ export function Combobox({
     if (!isControlled) setInternalValue(newValue);
     onValueChange?.(newValue);
     setIsOpen(false);
+    setSearchTerm('');
   };
 
-  const registerItem = React.useCallback((id: string, text: string) => {
+  const registerItem = React.useCallback((id: string, text: string, value: string) => {
     setItems(prev => {
       const next = new Map(prev);
-      next.set(id, text);
+      next.set(id, { text, value });
       return next;
     });
     return () => {
@@ -62,16 +67,21 @@ export function Combobox({
     };
   }, []);
 
-  const isItemVisible = React.useCallback((id: string, text: string) => {
-    return filter(text, searchTerm);
-  }, [filter, searchTerm]);
-
-  const hasVisibleItems = useMemo(() => {
-    for (const [id, text] of items.entries()) {
-      if (filter(text, searchTerm)) return true;
-    }
-    return false;
+  const visibleItems = useMemo(() => {
+    return Array.from(items.entries())
+      .filter(([_, item]) => filter(item.text, searchTerm))
+      .map(([id, item]) => ({ id, value: item.value }));
   }, [items, searchTerm, filter]);
+
+  const hasVisibleItems = visibleItems.length > 0;
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(-1);
+    }
+  }, [isOpen]);
 
   return (
     <ComboboxContext.Provider value={{ 
@@ -82,8 +92,11 @@ export function Combobox({
       isOpen, 
       setIsOpen,
       registerItem,
-      isItemVisible,
-      hasVisibleItems
+      isItemVisible: (id, text) => filter(text, searchTerm),
+      hasVisibleItems,
+      activeIndex,
+      setActiveIndex,
+      visibleItems
     }}>
       {usePopover ? (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -137,6 +150,24 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
   const context = useContext(ComboboxContext);
   if (!context) throw new Error('ComboboxInput must be used within Combobox');
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      context.setActiveIndex((prev) => (prev + 1) % context.visibleItems.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      context.setActiveIndex((prev) => (prev - 1 + context.visibleItems.length) % context.visibleItems.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (context.activeIndex !== -1 && context.visibleItems[context.activeIndex]) {
+        context.onValueChange(context.visibleItems[context.activeIndex]!.value);
+      }
+    } else if (e.key === 'Escape') {
+      context.setIsOpen(false);
+    }
+    props.onKeyDown?.(e);
+  };
+
   return (
     <div className="flex items-center border-b border-gray-200 dark:border-white/10 px-3">
       <svg
@@ -162,6 +193,7 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
         placeholder={placeholder}
         value={context.searchTerm}
         onChange={(e) => context.setSearchTerm(e.target.value)}
+        onKeyDown={handleKeyDown}
         {...props}
       />
     </div>
@@ -203,23 +235,27 @@ export function ComboboxItem({ className, value, children, textValue, ...props }
   const text = textValue || (typeof children === 'string' ? children : value);
   const isVisible = context.isItemVisible(id, text);
   const isSelected = context.value === value;
+  
+  const itemIndex = context.visibleItems.findIndex(item => item.id === id);
+  const isActive = context.activeIndex === itemIndex;
 
   useEffect(() => {
-    return context.registerItem(id, text);
-  }, [id, text, context.registerItem]);
+    return context.registerItem(id, text, value);
+  }, [id, text, value, context.registerItem]);
 
   if (!isVisible) return null;
 
   return (
     <div
       onClick={() => context.onValueChange(value)}
+      onMouseEnter={() => context.setActiveIndex(itemIndex)}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors",
         "text-gray-700 dark:text-white/80",
         "aria-selected:bg-gray-100 aria-selected:text-gray-900 dark:aria-selected:bg-white/10 dark:aria-selected:text-white",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white",
-        isSelected && "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white",
+        (isSelected || isActive) && "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white",
         className
       )}
       {...props}

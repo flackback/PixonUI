@@ -72,6 +72,39 @@
 - **`useResponsive`**: `useMediaQuery`, `useBreakpoint`, and `useContainerQuery`.
 - **`useIntersection`**: Easy access to `IntersectionObserver`.
 
+## 🚀 Getting Started
+
+### Installation
+
+```bash
+npm install @pixonui/react
+```
+
+### Basic Usage
+
+```tsx
+import { ThemeProvider, Button, Card } from '@pixonui/react';
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="dark">
+      <Card className="p-6">
+        <h1>Welcome to PixonUI</h1>
+        <Button variant="primary">Get Started</Button>
+      </Card>
+    </ThemeProvider>
+  );
+}
+```
+
+## 🧠 Philosophy: Native-First
+
+PixonUI is built on the belief that the modern web platform is powerful enough to handle complex UI patterns without massive external dependencies.
+
+1. **Performance**: By using native APIs like `<dialog>` and `ValidityState`, we reduce the JavaScript execution time and bundle size.
+2. **Stability**: Native APIs are maintained by browser vendors and are often more stable and accessible than custom re-implementations.
+3. **Aesthetics**: We combine this technical efficiency with a high-end "Glassmorphic" design system, proving that performance doesn't have to sacrifice beauty.
+
 ## 🤖 AI & LLM Integration (MCP)
 
 PixonUI inclui um servidor **Model Context Protocol (MCP)**, permitindo que LLMs compreendam a estrutura, componentes e melhores práticas da biblioteca. Isso garante que o código gerado por IA seja sempre idiomático e atualizado com nossa filosofia "Native-First".
