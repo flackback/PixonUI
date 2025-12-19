@@ -108,7 +108,12 @@ import { OverlaysPageDemo } from './demos/OverlaysPageDemo';
 import { PageLoaderDemo } from './demos/PageLoaderDemo';
 import { ChatDemo } from './demos/ChatDemo';
 import { KanbanDemo } from './demos/KanbanDemo';
+import { BackgroundDemo } from './demos/BackgroundDemo';
+import { HeroDemo } from './demos/HeroDemo';
 import { DashboardDemo } from './demos/DashboardDemo';
+import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
+import HeroTextSource from '../../ui/src/components/typography/HeroText.tsx?raw';
+import LetterPullupSource from '../../ui/src/components/typography/LetterPullup.tsx?raw';
 import SeparatorSource from '../../ui/src/components/data-display/Separator.tsx?raw';
 import PageLoaderSource from '../../ui/src/components/feedback/PageLoader.tsx?raw';
 import PageTransitionSource from '../../ui/src/components/feedback/PageTransition.tsx?raw';
@@ -979,6 +984,55 @@ ${PageTransitionSource}`,
 
 // See ChatDemo.tsx for full implementation`,
     demo: <ChatDemo />
+  },
+  {
+    id: 'background',
+    title: 'Background Patterns',
+    category: 'Layout',
+    description: 'Decorative background patterns including dots, grids, and mesh gradients.',
+    code: `import { Background } from '@pixonui/react';
+
+// Dot Pattern
+<div className="relative h-64 overflow-hidden">
+  <Background variant="dots" size={20} patternColor="rgba(255,255,255,0.1)" />
+  <Content />
+</div>
+
+// Grid Pattern with Mask
+<div className="relative h-64 overflow-hidden">
+  <Background variant="grid" size={32} mask="fade" />
+  <Content />
+</div>
+
+// Animated Mesh
+<div className="relative h-64 overflow-hidden">
+  <Background variant="mesh" animate />
+  <Content />
+</div>`,
+    componentSource: BackgroundSource,
+    demo: <BackgroundDemo />
+  },
+  {
+    id: 'hero',
+    title: 'Hero Sections',
+    category: 'Templates',
+    description: 'High-impact hero sections combining background patterns and creative typography.',
+    code: `import { HeroText, LetterPullup, Background } from '@pixonui/react';
+
+<div className="relative min-h-[600px] overflow-hidden">
+  <Background variant="grid" mask="fade" />
+  <HeroText 
+    title="The future of"
+    highlight="Interfaces"
+    subtitle="Experience the next generation of UI components."
+  />
+</div>`,
+    componentSource: `// HeroText.tsx
+${HeroTextSource}
+
+// LetterPullup.tsx
+${LetterPullupSource}`,
+    demo: <HeroDemo />
   },
   {
     id: 'dashboard',

@@ -24,12 +24,22 @@ export default {
         'progress-stripe': {
           'from': { backgroundPosition: '1rem 0' },
           'to': { backgroundPosition: '0 0' },
+        },
+        'shimmer': {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
+        'gradient': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
         }
       },
       animation: {
         'enter-spring': 'enter-spring 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
         'indeterminate-progress': 'indeterminate-progress 2s infinite ease-in-out',
         'progress-stripe': 'progress-stripe 1s linear infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+        'gradient': 'gradient 8s ease infinite',
       }
     },
   },
