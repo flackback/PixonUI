@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '../../utils/cn';
-
+import { cn } from '../../utils/cn';import { useFloating } from '../../hooks/useFloating';
 interface DropdownMenuContextValue {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -65,46 +64,15 @@ export function DropdownMenuContent({ className, children, align = 'start', side
   const context = useContext(DropdownMenuContext);
   if (!context) throw new Error('DropdownMenuContent must be used within DropdownMenu');
 
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   const contentRef = useRef<HTMLDivElement>(null);
+  const { position, isPositioned } = useFloating(context.triggerRef, contentRef, {
+    side,
+    align,
+    isOpen: context.isOpen,
+  });
 
   useEffect(() => {
-    if (context.isOpen && context.triggerRef.current) {
-      const rect = context.triggerRef.current.getBoundingClientRect();
-      const scrollX = window.scrollX;
-      const scrollY = window.scrollY;
-      const contentWidth = contentRef.current?.offsetWidth || 200;
-      const contentHeight = contentRef.current?.offsetHeight || 0;
-
-      let top = 0;
-      let left = 0;
-
-      // Calculate Top
-      if (side === 'bottom') {
-        top = rect.bottom + scrollY + 4;
-      } else if (side === 'top') {
-        top = rect.top + scrollY - contentHeight - 4;
-      } else {
-        // left or right
-        top = rect.top + scrollY; // Default align start
-        if (align === 'end') top = rect.bottom + scrollY - contentHeight;
-        if (align === 'center') top = rect.top + scrollY + (rect.height / 2) - (contentHeight / 2);
-      }
-
-      // Calculate Left
-      if (side === 'left') {
-        left = rect.left + scrollX - contentWidth - 4;
-      } else if (side === 'right') {
-        left = rect.right + scrollX + 4;
-      } else {
-        // top or bottom
-        left = rect.left + scrollX; // Default align start
-        if (align === 'end') left = rect.right + scrollX - contentWidth;
-        if (align === 'center') left = rect.left + scrollX + (rect.width / 2) - (contentWidth / 2);
-      }
-
-      setPosition({ top, left });
-
+    if (context.isOpen) {
       const handleOutsideClick = (e: MouseEvent) => {
         if (
           contentRef.current &&
@@ -117,18 +85,49 @@ export function DropdownMenuContent({ className, children, align = 'start', side
       };
 
       document.addEventListener('mousedown', handleOutsideClick);
-      return () => document.removeEventListener('mousedown', handleOutsideClick);
+      return () => {
+        document.removeEventListener('mousedown', handleOutsideClick);
+      };
     }
-  }, [context.isOpen, align, side]);
+  }, [context.isOpen, context.setIsOpen, context.triggerRef]);
 
   if (!context.isOpen) return null;
+
+  const getTransformOrigin = () => {
+    if (side === 'bottom') {
+      if (align === 'start') return 'top left';
+      if (align === 'end') return 'top right';
+      return 'top center';
+    }
+    if (side === 'top') {
+      if (align === 'start') return 'bottom left';
+      if (align === 'end') return 'bottom right';
+      return 'bottom center';
+    }
+    if (side === 'left') {
+      if (align === 'start') return 'top right';
+      if (align === 'end') return 'bottom right';
+      return 'center right';
+    }
+    if (side === 'right') {
+      if (align === 'start') return 'top left';
+      if (align === 'end') return 'bottom left';
+      return 'center left';
+    }
+    return 'center center';
+  };
 
   return createPortal(
     <div
       ref={contentRef}
-      style={{ top: position.top, left: position.left }}
+      style={{ 
+        top: position.top, 
+        left: position.left,
+        transformOrigin: getTransformOrigin(),
+      }}
       className={cn(
-        "absolute z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-md animate-in fade-in zoom-in-95 duration-100",
+        "fixed z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-md duration-100",
+        isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}
       {...props}

@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../utils/cn';
+import { useFloating } from '../../hooks/useFloating';
 
 interface PopoverContextValue {
   isOpen: boolean;
@@ -76,34 +77,16 @@ export function PopoverContent({ className, children, align = 'center', sideOffs
   const context = useContext(PopoverContext);
   if (!context) throw new Error('PopoverContent must be used within Popover');
 
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   const contentRef = useRef<HTMLDivElement>(null);
+  const { position, isPositioned } = useFloating(context.triggerRef, contentRef, {
+    side: 'bottom',
+    align,
+    sideOffset,
+    isOpen: context.isOpen,
+  });
 
   useEffect(() => {
-    if (context.isOpen && context.triggerRef.current) {
-      const updatePosition = () => {
-        if (!context.triggerRef.current) return;
-        const rect = context.triggerRef.current.getBoundingClientRect();
-        const scrollX = window.scrollX;
-        const scrollY = window.scrollY;
-
-        let left = rect.left + scrollX;
-        if (align === 'end') {
-          left = rect.right + scrollX - (contentRef.current?.offsetWidth || 200);
-        } else if (align === 'center') {
-          left = rect.left + scrollX + rect.width / 2 - (contentRef.current?.offsetWidth || 200) / 2;
-        }
-
-        setPosition({
-          top: rect.bottom + scrollY + sideOffset,
-          left: left,
-        });
-      };
-
-      updatePosition();
-      window.addEventListener('resize', updatePosition);
-      window.addEventListener('scroll', updatePosition, true);
-
+    if (context.isOpen) {
       const handleOutsideClick = (e: MouseEvent) => {
         if (
           contentRef.current &&
@@ -117,21 +100,41 @@ export function PopoverContent({ className, children, align = 'center', sideOffs
 
       document.addEventListener('mousedown', handleOutsideClick);
       return () => {
-        window.removeEventListener('resize', updatePosition);
-        window.removeEventListener('scroll', updatePosition, true);
         document.removeEventListener('mousedown', handleOutsideClick);
       };
     }
-  }, [context.isOpen, align, sideOffset]);
+  }, [context.isOpen, context.setIsOpen, context.triggerRef]);
 
   if (!context.isOpen) return null;
+
+  const getTransformOrigin = () => {
+    // Popover currently only supports top/bottom in its logic, but let's make it robust
+    const side = position.top > (context.triggerRef.current?.getBoundingClientRect().top || 0) ? 'bottom' : 'top';
+    
+    if (side === 'bottom') {
+      if (align === 'start') return 'top left';
+      if (align === 'end') return 'top right';
+      return 'top center';
+    }
+    if (side === 'top') {
+      if (align === 'start') return 'bottom left';
+      if (align === 'end') return 'bottom right';
+      return 'bottom center';
+    }
+    return 'center center';
+  };
 
   return createPortal(
     <div
       ref={contentRef}
-      style={{ top: position.top, left: position.left }}
+      style={{ 
+        top: position.top, 
+        left: position.left,
+        transformOrigin: getTransformOrigin(),
+      }}
       className={cn(
-        "absolute z-50 min-w-[12rem] rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-4 shadow-xl outline-none animate-in fade-in zoom-in-95 duration-200",
+        "fixed z-50 min-w-[12rem] rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-4 shadow-xl outline-none duration-200",
+        isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}
       {...props}

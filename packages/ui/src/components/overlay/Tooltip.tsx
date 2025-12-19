@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../utils/cn';
+import { useFloating } from '../../hooks/useFloating';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 
@@ -20,6 +22,15 @@ export function Tooltip({
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const { position: floatingPosition, isPositioned } = useFloating(triggerRef, contentRef, {
+    side: position,
+    align: 'center',
+    sideOffset: 8,
+    isOpen: isVisible,
+  });
 
   const showTooltip = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -37,13 +48,6 @@ export function Tooltip({
     };
   }, []);
 
-  const positionClasses = {
-    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
-    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
-  };
-
   const animationClasses = {
     top: 'slide-in-from-bottom-2',
     bottom: 'slide-in-from-top-2',
@@ -53,6 +57,7 @@ export function Tooltip({
 
   return (
     <div 
+      ref={triggerRef}
       className="relative inline-flex" 
       onMouseEnter={showTooltip} 
       onMouseLeave={hideTooltip}
@@ -60,19 +65,25 @@ export function Tooltip({
       onBlur={hideTooltip}
     >
       {children}
-      {isVisible && (
+      {isVisible && createPortal(
         <div
+          ref={contentRef}
           role="tooltip"
+          style={{
+            top: floatingPosition.top,
+            left: floatingPosition.left,
+          }}
           className={cn(
-            "absolute z-50 min-w-max max-w-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 px-3 py-1.5 text-xs text-gray-900 dark:text-white shadow-xl backdrop-blur-md",
-            "animate-in fade-in duration-200",
-            positionClasses[position],
+            "fixed z-[100] min-w-max max-w-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 px-3 py-1.5 text-xs text-gray-900 dark:text-white shadow-xl backdrop-blur-md",
+            "duration-200",
+            isPositioned ? "animate-in fade-in opacity-100" : "opacity-0",
             animationClasses[position],
             className
           )}
         >
           {content}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

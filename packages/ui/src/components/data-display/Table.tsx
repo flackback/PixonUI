@@ -44,10 +44,11 @@ TableBody.displayName = 'TableBody';
 
 export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   hoverable?: boolean;
+  optimized?: boolean;
 }
 
 export const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
-  ({ className, hoverable = true, ...props }, ref) => (
+  ({ className, hoverable = true, optimized = false, ...props }, ref) => (
     <tr
       ref={ref}
       className={cn(
@@ -55,6 +56,10 @@ export const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
         hoverable && 'hover:bg-white/[0.02]',
         className
       )}
+      style={optimized ? {
+        contentVisibility: 'auto',
+        containIntrinsicSize: '0 56px', // Estimated row height
+      } : undefined}
       {...props}
     />
   )
