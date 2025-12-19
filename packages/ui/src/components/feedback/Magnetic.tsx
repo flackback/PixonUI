@@ -9,13 +9,13 @@ export interface MagneticProps {
 
 export function Magnetic({ children, strength = 0.5, className }: MagneticProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (!ref.current) return;
+    const el = ref.current;
+    if (!el) return;
     
     const { clientX, clientY } = e;
-    const { left, top, width, height } = ref.current.getBoundingClientRect();
+    const { left, top, width, height } = el.getBoundingClientRect();
     
     const centerX = left + width / 2;
     const centerY = top + height / 2;
@@ -26,17 +26,20 @@ export function Magnetic({ children, strength = 0.5, className }: MagneticProps)
     // Only apply if mouse is relatively close
     const threshold = Math.max(width, height) * 1.5;
     if (Math.abs(distanceX) < threshold && Math.abs(distanceY) < threshold) {
-      setPosition({ 
-        x: distanceX * strength, 
-        y: distanceY * strength 
-      });
+      el.style.setProperty('--mag-x', `${distanceX * strength}px`);
+      el.style.setProperty('--mag-y', `${distanceY * strength}px`);
     } else {
-      setPosition({ x: 0, y: 0 });
+      el.style.setProperty('--mag-x', '0px');
+      el.style.setProperty('--mag-y', '0px');
     }
   };
 
   const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
+    const el = ref.current;
+    if (el) {
+      el.style.setProperty('--mag-x', '0px');
+      el.style.setProperty('--mag-y', '0px');
+    }
   };
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export function Magnetic({ children, strength = 0.5, className }: MagneticProps)
       className={cn("inline-block transition-transform duration-300 ease-out will-change-transform", className)}
       onMouseLeave={handleMouseLeave}
       style={{
-        transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+        transform: `translate3d(var(--mag-x, 0px), var(--mag-y, 0px), 0)`,
       }}
     >
       {children}

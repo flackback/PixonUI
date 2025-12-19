@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { cn } from '../../utils/cn';
 import { Surface } from '../../primitives/Surface';
 import { Badge } from '../../primitives/Badge';
@@ -73,6 +73,10 @@ export interface KanbanProps {
   onTaskTimerToggle?: (taskId: string) => void;
   onTaskSelectionChange?: (selectedIds: string[]) => void;
   onColumnAction?: (columnId: string) => void;
+  onTaskDragStart?: (taskId: string) => void;
+  onTaskDragEnd?: (taskId: string) => void;
+  onTaskDrop?: (taskId: string, fromColumnId: string, toColumnId: string, newIndex: number) => void;
+  onTaskRemove?: (taskId: string) => void;
   renderCard?: (task: KanbanTask) => React.ReactNode;
   groupBy?: keyof KanbanTask;
   activeTimerTaskId?: string;
@@ -84,6 +88,7 @@ export interface KanbanProps {
   columnClassName?: string;
   showTaskCount?: boolean;
   accentColor?: string;
+  pageSize?: number;
 }
 
 export function Kanban({
@@ -97,6 +102,10 @@ export function Kanban({
   onTaskTimerToggle,
   onTaskSelectionChange,
   onColumnAction,
+  onTaskDragStart,
+  onTaskDragEnd,
+  onTaskDrop,
+  onTaskRemove,
   renderCard,
   groupBy,
   activeTimerTaskId,
@@ -107,14 +116,105 @@ export function Kanban({
   cardClassName,
   columnClassName,
   showTaskCount = true,
-  accentColor = 'cyan'
+  accentColor = 'cyan',
+  pageSize = 20
 }: KanbanProps) {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [draggedColumnId, setDraggedColumnId] = useState<string | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
   const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<'top' | 'bottom' | 'left' | 'right' | null>(null);
   const [quickAddColumnId, setQuickAddColumnId] = useState<string | null>(null);
   const [quickAddValue, setQuickAddValue] = useState('');
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
+
+  // Initialize visible counts
+  useEffect(() => {
+    const initialCounts: Record<string, number> = {};
+    columns.forEach(col => {
+      initialCounts[col.id] = pageSize;
+    });
+    setVisibleCounts(initialCounts);
+  }, [columns, pageSize]);
+
+  const handleLoadMore = (columnId: string) => {
+    setVisibleCounts(prev => ({
+      ...prev,
+      [columnId]: (prev[columnId] || pageSize) + pageSize
+    }));
+  };
+
+  const touchTimer = useRef<any>(null);
+  const lastTouchPos = useRef<{ x: number, y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent, id: string, type: 'task' | 'column') => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    lastTouchPos.current = { x: touch.clientX, y: touch.clientY };
+
+    // Long press to start drag
+    touchTimer.current = setTimeout(() => {
+      if (type === 'task') {
+        setDraggedTaskId(id);
+      } else {
+        setDraggedColumnId(id);
+      }
+      // Vibrate if supported
+      if (window.navigator.vibrate) window.navigator.vibrate(50);
+    }, 500);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!draggedTaskId && !draggedColumnId) {
+      clearTimeout(touchTimer.current);
+      return;
+    }
+
+    e.preventDefault(); // Prevent scrolling while dragging
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!element) return;
+
+    // Find the closest column or task element
+    const columnEl = element.closest('[data-column-id]');
+    const taskEl = element.closest('[data-task-id]');
+
+    if (columnEl) {
+      const columnId = columnEl.getAttribute('data-column-id')!;
+      const taskId = taskEl?.getAttribute('data-task-id') || undefined;
+      
+      // Simulate drag over
+      const rect = columnEl.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      
+      setDragOverColumnId(columnId);
+      if (taskId) {
+        setDragOverTaskId(taskId);
+        setDropPosition(touch.clientY < midpoint ? 'top' : 'bottom');
+      } else {
+        setDragOverTaskId(null);
+        setDropPosition(null);
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    clearTimeout(touchTimer.current);
+    
+    if (draggedTaskId || draggedColumnId) {
+      if (dragOverColumnId) {
+        // Simulate drop
+        handleDrop({ 
+          preventDefault: () => {}, 
+          dataTransfer: { getData: () => '' } 
+        } as any, dragOverColumnId, dragOverTaskId || undefined);
+      } else {
+        handleDragEnd();
+      }
+    }
+  };
 
   const tasksByGroupAndColumn = useMemo(() => {
     const groups: Record<string, Record<string, KanbanTask[]>> = {};
@@ -148,6 +248,7 @@ export function Kanban({
 
     if (type === 'task') {
       e.dataTransfer.setData('taskId', id);
+      onTaskDragStart?.(id);
       // Delay setting state to allow browser to capture drag image
       setTimeout(() => {
         setDraggedTaskId(id);
@@ -161,10 +262,14 @@ export function Kanban({
   };
 
   const handleDragEnd = () => {
+    if (draggedTaskId) {
+      onTaskDragEnd?.(draggedTaskId);
+    }
     setDraggedTaskId(null);
     setDraggedColumnId(null);
     setDragOverColumnId(null);
     setDragOverTaskId(null);
+    setDropPosition(null);
   };
 
   const handleDragOver = (e: React.DragEvent, columnId: string, taskId?: string) => {
@@ -173,9 +278,21 @@ export function Kanban({
     
     if (draggedColumnId) {
       setDragOverColumnId(columnId);
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const midpoint = rect.left + rect.width / 2;
+      setDropPosition(e.clientX < midpoint ? 'left' : 'right');
     } else {
       setDragOverColumnId(columnId);
-      setDragOverTaskId(taskId || null);
+      
+      if (taskId) {
+        setDragOverTaskId(taskId);
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const midpoint = rect.top + rect.height / 2;
+        setDropPosition(e.clientY < midpoint ? 'top' : 'bottom');
+      } else if (e.target === e.currentTarget) {
+        setDragOverTaskId(null);
+        setDropPosition(null);
+      }
     }
   };
 
@@ -185,20 +302,33 @@ export function Kanban({
     const columnId = draggedColumnId || e.dataTransfer.getData('columnId');
 
     if (columnId && onColumnMove) {
-      const newIndex = columns.findIndex(c => c.id === toColumnId);
+      const targetIndex = columns.findIndex(c => c.id === toColumnId);
+      const newIndex = dropPosition === 'right' ? targetIndex + 1 : targetIndex;
       onColumnMove(columnId, newIndex);
     } else if (taskId && onTaskMove) {
       const task = tasks.find(t => t.id === taskId);
       if (!task) return;
 
+      // Multi-task move support
+      const tasksToMove = selectedTaskIds.includes(taskId) 
+        ? selectedTaskIds 
+        : [taskId];
+
       const columnTasks = tasks.filter(t => t.columnId === toColumnId);
       let newIndex = columnTasks.length;
       
       if (toTaskId) {
-        newIndex = columnTasks.findIndex(t => t.id === toTaskId);
+        const targetIndex = columnTasks.findIndex(t => t.id === toTaskId);
+        newIndex = dropPosition === 'bottom' ? targetIndex + 1 : targetIndex;
       }
 
-      onTaskMove(taskId, toColumnId, newIndex);
+      // Move each task
+      tasksToMove.forEach((id, idx) => {
+        const currentTask = tasks.find(t => t.id === id);
+        const fromColumnId = currentTask?.columnId || '';
+        onTaskMove(id, toColumnId, newIndex + idx);
+        onTaskDrop?.(id, fromColumnId, toColumnId, newIndex + idx);
+      });
     }
 
     handleDragEnd();
@@ -214,6 +344,29 @@ export function Kanban({
       setQuickAddValue('');
       setQuickAddColumnId(null);
     }
+  };
+
+  const LoadMoreTrigger = ({ columnId }: { columnId: string }) => {
+    const triggerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            handleLoadMore(columnId);
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      if (triggerRef.current) {
+        observer.observe(triggerRef.current);
+      }
+
+      return () => observer.disconnect();
+    }, [columnId]);
+
+    return <div ref={triggerRef} className="h-4 w-full" />;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, taskId: string, columnId: string) => {
@@ -310,7 +463,20 @@ export function Kanban({
                 {task.title}
               </Text>
             </div>
-            <GripVertical className="h-4 w-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            <div className="flex items-center gap-1">
+              {onTaskRemove && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTaskRemove(task.id);
+                  }}
+                  className="p-1 rounded-md hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <GripVertical className="h-4 w-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            </div>
           </div>
 
           {task.description && (
@@ -435,6 +601,9 @@ export function Kanban({
                 draggable
                 onDragStart={(e) => handleDragStart(e, column.id, 'column')}
                 onDragEnd={handleDragEnd}
+                onTouchStart={(e) => handleTouchStart(e, column.id, 'column')}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
                 className="flex items-center gap-2 cursor-grab active:cursor-grabbing flex-1"
               >
                 <div 
@@ -509,30 +678,59 @@ export function Kanban({
           
           <div className="flex">
             {columns.map((column, idx) => (
-              <div 
-                key={column.id}
-                className={cn(
-                  "flex-shrink-0 w-80 flex flex-col gap-4 transition-all duration-200 min-h-[200px] p-3",
-                  showDividers && idx > 0 && "border-l border-white/10",
-                  draggedColumnId === column.id ? "opacity-20" : "opacity-100",
-                  dragOverColumnId === column.id && draggedColumnId ? "bg-cyan-500/5" : "",
-                  columnClassName
+              <React.Fragment key={column.id}>
+                {/* Column Ghost Placeholder LEFT */}
+                {draggedColumnId && dragOverColumnId === column.id && dropPosition === 'left' && draggedColumnId !== column.id && (
+                  <div className="flex-shrink-0 w-1 bg-cyan-500/50 mx-2 rounded-full animate-pulse" />
                 )}
-                onDragOver={(e) => handleDragOver(e, column.id)}
-                onDrop={(e) => handleDrop(e, column.id)}
-              >
+
+                <div 
+                  key={column.id}
+                  data-column-id={column.id}
+                  className={cn(
+                    "flex-shrink-0 w-80 flex flex-col gap-4 transition-all duration-300 min-h-[200px] p-3 rounded-3xl",
+                    showDividers && idx > 0 && "border-l border-white/10",
+                    draggedColumnId === column.id ? "opacity-20" : "opacity-100",
+                    dragOverColumnId === column.id && draggedColumnId ? "bg-cyan-500/5" : "",
+                    column.limit && (columnMap[column.id] || []).length > column.limit && "bg-red-500/[0.02] ring-1 ring-inset ring-red-500/20",
+                    columnClassName
+                  )}
+                  onDragOver={(e) => handleDragOver(e, column.id)}
+                  onDrop={(e) => handleDrop(e, column.id)}
+                >
                 {/* Tasks Container */}
                 <div 
                   className={cn(
                     "flex-1 flex flex-col gap-4 p-1 rounded-2xl transition-colors duration-200",
                     dragOverColumnId === column.id && !dragOverTaskId && !draggedColumnId ? "bg-white/[0.02] ring-2 ring-dashed ring-white/10" : ""
                   )}
+                  onDragOver={(e) => {
+                    // Only handle column-level drag over if we're not over a specific task
+                    if (e.target === e.currentTarget) {
+                      handleDragOver(e, column.id);
+                    }
+                  }}
                 >
-                  {(columnMap[column.id] || []).map((task) => (
-                    <React.Fragment key={task.id}>
-                      {/* Ghost Placeholder */}
-                      {dragOverTaskId === task.id && draggedTaskId !== task.id && (
-                        <div className="h-24 w-full rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.01] mb-4 animate-pulse" />
+                  {(columnMap[column.id] || []).slice(0, visibleCounts[column.id] || pageSize).map((task) => (
+                    <div
+                      key={task.id}
+                      data-task-id={task.id}
+                      onDragOver={(e) => {
+                        e.stopPropagation();
+                        handleDragOver(e, column.id, task.id);
+                      }}
+                      onDrop={(e) => {
+                        e.stopPropagation();
+                        handleDrop(e, column.id, task.id);
+                      }}
+                      onTouchStart={(e) => handleTouchStart(e, task.id, 'task')}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      className="relative"
+                    >
+                      {/* Ghost Placeholder TOP */}
+                      {dragOverTaskId === task.id && draggedTaskId !== task.id && dropPosition === 'top' && (
+                        <div className="h-24 w-full rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.01] mb-4 animate-pulse pointer-events-none" />
                       )}
                       
                       <div
@@ -542,18 +740,34 @@ export function Kanban({
                         aria-grabbed={draggedTaskId === task.id}
                         onDragStart={(e) => handleDragStart(e, task.id, 'task')}
                         onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleDragOver(e, column.id, task.id)}
                         onKeyDown={(e) => handleKeyDown(e, task.id, column.id)}
                         onClick={() => onTaskClick?.(task)}
                         className={cn(
-                          "group relative cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-cyan-500/50 rounded-2xl transition-opacity",
-                          draggedTaskId === task.id ? "opacity-20" : "opacity-100"
+                          "group relative cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-cyan-500/50 rounded-2xl transition-all duration-300",
+                          draggedTaskId === task.id ? "opacity-20 scale-95" : "opacity-100 scale-100"
                         )}
                       >
                         <TaskCard task={task} columnId={column.id} />
+                        
+                        {/* Multi-drag indicator */}
+                        {draggedTaskId === task.id && selectedTaskIds.length > 1 && selectedTaskIds.includes(task.id) && (
+                          <div className="absolute -top-2 -right-2 bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg z-30 animate-enter-spring">
+                            +{selectedTaskIds.length - 1}
+                          </div>
+                        )}
                       </div>
-                    </React.Fragment>
+
+                      {/* Ghost Placeholder BOTTOM */}
+                      {dragOverTaskId === task.id && draggedTaskId !== task.id && dropPosition === 'bottom' && (
+                        <div className="h-24 w-full rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.01] mt-4 animate-pulse pointer-events-none" />
+                      )}
+                    </div>
                   ))}
+
+                  {/* Load More Trigger */}
+                  {(columnMap[column.id] || []).length > (visibleCounts[column.id] || pageSize) && (
+                    <LoadMoreTrigger columnId={column.id} />
+                  )}
 
                   {/* Ghost Placeholder for end of column */}
                   {dragOverColumnId === column.id && !dragOverTaskId && draggedTaskId && (
@@ -632,7 +846,13 @@ export function Kanban({
                   )}
                 </div>
               </div>
-            ))}
+
+              {/* Column Ghost Placeholder RIGHT */}
+              {draggedColumnId && dragOverColumnId === column.id && dropPosition === 'right' && draggedColumnId !== column.id && (
+                <div className="flex-shrink-0 w-1 bg-cyan-500/50 mx-2 rounded-full animate-pulse" />
+              )}
+            </React.Fragment>
+          ))}
           </div>
         </div>
       ))}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Slot } from '@radix-ui/react-slot';
+import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
 
 const buttonVariants = cva(
@@ -9,9 +9,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: "bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white border-transparent",
-        secondary: "bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-200 dark:bg-white/[0.05] dark:text-white dark:border-white/10 dark:hover:bg-white/[0.10] dark:hover:border-white/20",
-        outline: "bg-transparent text-gray-900 border border-gray-300 hover:bg-gray-100 dark:text-white dark:border-white/20 dark:hover:bg-white/[0.05] dark:hover:border-white/30",
-        ghost: "bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-white/80 dark:hover:text-white dark:hover:bg-white/[0.05] border-transparent",
+        secondary: "bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-zinc-200 dark:bg-white/[0.05] dark:text-white dark:border-white/10 dark:hover:bg-white/[0.10] dark:hover:border-white/20",
+        outline: "bg-transparent text-zinc-900 border border-zinc-300 hover:bg-zinc-100 dark:text-white dark:border-white/20 dark:hover:bg-white/[0.05] dark:hover:border-white/30",
+        ghost: "bg-transparent text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-white/80 dark:hover:text-white dark:hover:bg-white/[0.05] border-transparent",
         danger: "bg-rose-500/10 text-rose-600 border border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/30 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300",
         success: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300",
         alert: "bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300",

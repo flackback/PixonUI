@@ -15,22 +15,24 @@ export const Spotlight = ({
   ...props 
 }: SpotlightProps) => {
   const divRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!divRef.current) return;
+    const el = divRef.current;
+    if (!el) return;
 
-    const rect = divRef.current.getBoundingClientRect();
-    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    el.style.setProperty('--mouse-x', `${x}px`);
+    el.style.setProperty('--mouse-y', `${y}px`);
   };
 
   const handleMouseEnter = () => {
-    setOpacity(1);
+    divRef.current?.style.setProperty('--opacity', '1');
   };
 
   const handleMouseLeave = () => {
-    setOpacity(0);
+    divRef.current?.style.setProperty('--opacity', '0');
   };
 
   return (
@@ -48,8 +50,8 @@ export const Spotlight = ({
       <div
         className="pointer-events-none absolute -inset-px transition-opacity duration-300"
         style={{
-          opacity,
-          background: `radial-gradient(${size}px circle at ${position.x}px ${position.y}px, ${color}, transparent 80%)`,
+          opacity: 'var(--opacity, 0)',
+          background: `radial-gradient(${size}px circle at var(--mouse-x, center) var(--mouse-y, center), ${color}, transparent 80%)`,
         }}
       />
       <div className="relative h-full">{children}</div>

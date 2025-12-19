@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { cn } from '../../utils/cn';
 
-export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info';
+export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info' | 'loading';
 
 export interface ToastProps {
   id: string;
@@ -13,6 +13,11 @@ export interface ToastProps {
 }
 
 const Icons = {
+  loading: (
+    <svg className="animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  ),
   success: (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -70,7 +75,8 @@ export const Toast = ({
         variant === 'error' && "border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10",
         variant === 'success' && "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/10",
         variant === 'warning' && "border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-950/10",
-        variant === 'info' && "border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-950/10"
+        variant === 'info' && "border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-950/10",
+        variant === 'loading' && "border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-950/10"
       )}
     >
       {variant !== 'default' && Icons[variant] && (

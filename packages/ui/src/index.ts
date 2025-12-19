@@ -29,6 +29,7 @@ export * from './components/data-display/Accordion';
 export * from './components/data-display/Calendar';
 export * from './components/navigation/Tabs';
 export * from './components/navigation/Sidebar';
+export * from './components/navigation/Navbar';
 export * from './components/navigation/UserMenu';
 export * from './components/navigation/Breadcrumb';
 export * from './components/navigation/Pagination';

@@ -19,6 +19,7 @@ import {
   PaginationPrevious, 
   PaginationNext, 
   PaginationEllipsis,
+  Navbar,
   Switch,
   Checkbox,
   Badge,
@@ -534,6 +535,55 @@ const { toast } = useToast();
   Show Toast
 </Button>`,
     demo: <ToastDemo />
+  },
+  {
+    id: 'navbar',
+    title: 'Navbar',
+    category: 'Navigation',
+    description: 'A responsive navigation bar with dynamic scroll-blur and mobile menu.',
+    code: `import { Navbar, Button } from '@pixonui/react';
+
+<Navbar 
+  logo={<span className="text-xl font-bold tracking-tighter">PIXON</span>}
+  links={[
+    { label: 'Features', href: '#' },
+    { label: 'Pricing', href: '#' },
+    { label: 'About', href: '#' },
+  ]}
+  actions={
+    <>
+      <Button variant="ghost" size="sm">Log in</Button>
+      <Button size="sm">Get Started</Button>
+    </>
+  }
+/>`,
+    demo: (
+      <div className="relative h-[400px] w-full overflow-hidden rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950">
+        <div className="absolute inset-0 overflow-y-auto p-4">
+          <Navbar 
+            className="absolute"
+            logo={<span className="text-xl font-bold tracking-tighter">PIXON</span>}
+            links={[
+              { label: 'Features', href: '#' },
+              { label: 'Pricing', href: '#' },
+              { label: 'About', href: '#' },
+            ]}
+            actions={
+              <>
+                <Button variant="ghost" size="sm">Log in</Button>
+                <Button size="sm">Get Started</Button>
+              </>
+            }
+          />
+          <div className="h-[1000px] pt-32 px-8">
+            <h1 className="text-4xl font-bold mb-4">Scroll down to see the effect</h1>
+            <p className="text-zinc-500 dark:text-zinc-400 max-w-md">
+              The navbar will transition from transparent to a glassmorphism effect as you scroll down.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   },
   {
     id: 'breadcrumb',

@@ -30,11 +30,11 @@ export function ComponentDoc({ title, description, code, componentSource, childr
   return (
     <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500">
       <div className="space-y-2">
-        <Heading as="h2" className="text-3xl text-gray-900 dark:text-white">{title}</Heading>
-        <Text className="text-lg text-gray-500 dark:text-white/60">{description}</Text>
+        <Heading as="h2" className="text-3xl text-zinc-900 dark:text-white">{title}</Heading>
+        <Text className="text-lg text-zinc-500 dark:text-white/60">{description}</Text>
       </div>
       
-      <Surface className="p-8 flex justify-center border-gray-200 bg-white dark:border-white/10 dark:bg-black/20">
+      <Surface className="p-8 flex justify-center border-zinc-200 bg-white dark:border-white/10 dark:bg-black/20">
         <div className="w-full max-w-full overflow-hidden">
           {children}
         </div>
@@ -75,7 +75,7 @@ export function ComponentDoc({ title, description, code, componentSource, childr
             {copied ? 'Copied!' : 'Copy code'}
           </Button>
         </div>
-        <Surface className="p-0 overflow-hidden bg-gray-900 dark:bg-[#0D0D0D] border-gray-800 dark:border-white/5">
+        <Surface className="p-0 overflow-hidden bg-zinc-900 dark:bg-[#0D0D0D] border-zinc-800 dark:border-white/5">
           <ScrollArea className="p-4 w-full max-h-[500px]" orientation="both">
             <pre className="text-sm text-blue-200/90 font-mono leading-relaxed">
               <code>{activeTab === 'usage' ? code : componentSource}</code>

@@ -10,7 +10,7 @@
 
   <p align="center">
     A high-performance React UI library built with Tailwind CSS. <br />
-    Designed for modern dark-mode applications with a focus on aesthetics and developer experience.
+    Designed for modern interfaces with a focus on aesthetics, performance, and full theme support.
   </p>
 
   <p align="center">
@@ -35,13 +35,14 @@
 ## ✨ Features
 
 - **Native-First Architecture**: Leverages native browser APIs (`<dialog>`, `ValidityState`, `IntersectionObserver`, `ResizeObserver`) for maximum performance and stability.
+- **Ultra-Performance Mouse Tracking**: Interactive effects (Glow, Magnetic, Spotlight) use direct DOM manipulation via CSS variables, bypassing React's re-render cycle for buttery-smooth 120fps interactions.
 - **Zero Heavy Dependencies**: No Radix, no Headless UI. Just pure React and optimized DOM logic.
 - **Advanced Motion System**: High-performance animations using WAAPI and View Transitions API, without the overhead of external libraries.
 - **Glassmorphism First**: Built-in support for beautiful translucent backgrounds, borders, and mouse-follow glow effects.
+- **Full Theme Support**: Native support for Light and Dark modes with smooth transitions and theme-aware patterns.
 - **Tailwind CSS**: Fully styled with Tailwind, easily customizable via utility classes.
 - **Accessible**: WAI-ARIA compliant components with native focus management.
 - **TypeScript**: Written in TypeScript with strict type definitions.
-- **Dark Mode Native**: Designed primarily for modern dark interfaces.
 
 ## 🧩 Components & Hooks
 

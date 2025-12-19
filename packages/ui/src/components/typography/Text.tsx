@@ -23,20 +23,20 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
   }, ref) => {
     return (
       <Component
-        ref={ref as any}
+        ref={ref as React.Ref<any>}
         className={cn(
-          'leading-relaxed',
-          code && 'font-mono bg-white/5 px-1.5 py-0.5 rounded text-[0.9em]',
+          'leading-relaxed transition-colors duration-200',
+          code && 'font-mono bg-zinc-100 dark:bg-white/5 px-1.5 py-0.5 rounded text-[0.9em]',
           {
             // Variants
-            'text-gray-900 dark:text-white': variant === 'default',
-            'text-gray-500 dark:text-white/60': variant === 'muted',
-            'text-gray-400 dark:text-white/40': variant === 'subtle',
-            'text-lg md:text-xl text-white/70 font-light': variant === 'lead',
-            'text-red-500': variant === 'error',
-            'text-green-500': variant === 'success',
-            'text-yellow-500': variant === 'warning',
-            'text-blue-500': variant === 'info',
+            'text-zinc-900 dark:text-white': variant === 'default',
+            'text-zinc-500 dark:text-zinc-400': variant === 'muted',
+            'text-zinc-400 dark:text-zinc-500': variant === 'subtle',
+            'text-lg md:text-xl text-zinc-600 dark:text-zinc-300 font-light': variant === 'lead',
+            'text-rose-600 dark:text-rose-400': variant === 'error',
+            'text-emerald-600 dark:text-emerald-400': variant === 'success',
+            'text-amber-600 dark:text-amber-400': variant === 'warning',
+            'text-sky-600 dark:text-sky-400': variant === 'info',
             
             // Sizes
             'text-xs': size === 'xs',

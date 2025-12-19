@@ -48,7 +48,7 @@ export const Background = React.forwardRef<HTMLDivElement, BackgroundProps>(
   ({ 
     variant = 'none', 
     noise = false,
-    patternColor = 'rgba(255,255,255,0.08)', 
+    patternColor, 
     size = 24, 
     mask = 'none', 
     animate = false,
@@ -59,19 +59,19 @@ export const Background = React.forwardRef<HTMLDivElement, BackgroundProps>(
     style,
     ...props 
   }, ref) => {
-    const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
     const containerRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
       if (!followMouse) return;
 
       const handleMouseMove = (e: MouseEvent) => {
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        setMousePos({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
-        });
+        const el = containerRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        el.style.setProperty('--mouse-x', `${x}px`);
+        el.style.setProperty('--mouse-y', `${y}px`);
       };
 
       window.addEventListener('mousemove', handleMouseMove);
@@ -81,37 +81,40 @@ export const Background = React.forwardRef<HTMLDivElement, BackgroundProps>(
     const getBackgroundStyle = (): React.CSSProperties => {
       const baseStyle: React.CSSProperties = {};
       
-      if (followMouse) {
-        baseStyle.transform = `translate3d(${(mousePos.x - size) / 20}px, ${(mousePos.y - size) / 20}px, 0)`;
-      }
+      // Use CSS variables for ultra-performance (no React re-renders)
+      const effectiveColor = patternColor || 'var(--pattern-color, rgba(255,255,255,0.08))';
 
       if (variant === 'dots') {
         return {
           ...baseStyle,
-          backgroundImage: `radial-gradient(${patternColor} 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(${effectiveColor} 1px, transparent 1px)`,
           backgroundSize: `${size}px ${size}px`,
+          transform: followMouse ? 'translate3d(calc((var(--mouse-x, 0) - 24px) / 40), calc((var(--mouse-y, 0) - 24px) / 40), 0)' : undefined,
         };
       }
       if (variant === 'grid') {
         return {
           ...baseStyle,
           backgroundImage: `
-            linear-gradient(to right, ${patternColor} 1px, transparent 1px),
-            linear-gradient(to bottom, ${patternColor} 1px, transparent 1px)
+            linear-gradient(to right, ${effectiveColor} 1px, transparent 1px),
+            linear-gradient(to bottom, ${effectiveColor} 1px, transparent 1px)
           `,
           backgroundSize: `${size}px ${size}px`,
+          transform: followMouse ? 'translate3d(calc((var(--mouse-x, 0) - 24px) / 40), calc((var(--mouse-y, 0) - 24px) / 40), 0)' : undefined,
         };
       }
       if (variant === 'gradient') {
         return {
           ...baseStyle,
-          background: `radial-gradient(circle at ${followMouse ? `${mousePos.x}px ${mousePos.y}px` : 'center'}, ${patternColor}, transparent)`,
+          background: followMouse 
+            ? `radial-gradient(circle at var(--mouse-x, center) var(--mouse-y, center), ${effectiveColor}, transparent)`
+            : `radial-gradient(circle at center, ${effectiveColor}, transparent)`,
         };
       }
       if (variant === 'beams') {
         return {
           ...baseStyle,
-          background: `radial-gradient(60% 40% at 50% 0%, ${patternColor} 0%, transparent 100%)`,
+          background: `radial-gradient(60% 40% at 50% 0%, ${effectiveColor} 0%, transparent 100%)`,
         };
       }
       return baseStyle;
@@ -125,14 +128,16 @@ export const Background = React.forwardRef<HTMLDivElement, BackgroundProps>(
     return (
       <div
         ref={(node) => {
-          // @ts-ignore
-          containerRef.current = node;
+          if (node) {
+            (containerRef as React.MutableRefObject<HTMLDivElement>).current = node;
+          }
           if (typeof ref === 'function') ref(node);
-          else if (ref) ref.current = node;
+          else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
         }}
         className={cn(
           'absolute inset-0 overflow-hidden pointer-events-none transition-transform duration-300 ease-out',
           'z-0',
+          '[--pattern-color:rgba(0,0,0,0.05)] dark:[--pattern-color:rgba(255,255,255,0.08)]',
           bgColor?.startsWith('bg-') ? bgColor : '',
           className
         )}

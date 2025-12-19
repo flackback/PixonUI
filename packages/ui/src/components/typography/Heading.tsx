@@ -13,7 +13,7 @@ export const Heading = React.forwardRef<HTMLHeadingElement, HeadingProps>(
       <Component
         ref={ref}
         className={cn(
-          'tracking-tight text-white',
+          'tracking-tight text-zinc-900 dark:text-white transition-colors duration-200',
           {
             'text-4xl md:text-5xl lg:text-6xl': Component === 'h1',
             'text-3xl md:text-4xl': Component === 'h2',

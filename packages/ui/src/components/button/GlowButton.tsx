@@ -17,8 +17,8 @@ export const GlowButton = React.forwardRef<HTMLButtonElement, GlowButtonProps>(
       const rect = el.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      el.style.setProperty('--x', `${x}px`);
-      el.style.setProperty('--y', `${y}px`);
+      el.style.setProperty('--mouse-x', `${x}px`);
+      el.style.setProperty('--mouse-y', `${y}px`);
     };
 
     // Merge refs
@@ -31,10 +31,11 @@ export const GlowButton = React.forwardRef<HTMLButtonElement, GlowButtonProps>(
         type={props.type ?? 'button'}
         className={cn(
           'group relative inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3',
-          'bg-white/[0.03] border border-white/10',
-          'text-white font-semibold tracking-tight overflow-hidden',
+          'bg-zinc-100 border border-zinc-200 text-zinc-900',
+          'dark:bg-white/[0.03] dark:border-white/10 dark:text-white',
+          'font-semibold tracking-tight overflow-hidden',
           'transition-all duration-300',
-          'hover:bg-white/[0.05] hover:scale-[1.02]',
+          'hover:bg-zinc-200 dark:hover:bg-white/[0.05] hover:scale-[1.02]',
           'active:scale-[0.98]',
           'focus:outline-none focus:ring-2 focus:ring-purple-400/40',
           className
@@ -45,7 +46,7 @@ export const GlowButton = React.forwardRef<HTMLButtonElement, GlowButtonProps>(
         <div 
           className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            background: 'radial-gradient(600px circle at var(--x) var(--y), rgba(255,255,255,0.4), transparent 40%)'
+            background: 'radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.4), transparent 40%)'
           }}
         />
         
@@ -53,7 +54,7 @@ export const GlowButton = React.forwardRef<HTMLButtonElement, GlowButtonProps>(
         <div 
           className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            background: 'radial-gradient(300px circle at var(--x) var(--y), rgba(255,255,255,0.6), transparent 40%)',
+            background: 'radial-gradient(300px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.6), transparent 40%)',
             maskImage: 'linear-gradient(#fff, #fff), linear-gradient(#fff, #fff)',
             maskClip: 'content-box, border-box',
             maskComposite: 'exclude',

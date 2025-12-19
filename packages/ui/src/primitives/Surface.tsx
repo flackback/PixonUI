@@ -1,10 +1,10 @@
 import React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Slot } from '@radix-ui/react-slot';
+import { Slot } from '../utils/Slot';
 import { cn } from '../utils/cn';
 
 const surfaceVariants = cva(
-  "rounded-2xl backdrop-blur-xl transition-colors duration-200 bg-white/80 border border-black/5 shadow-sm text-gray-900 dark:bg-white/[0.03] dark:border-white/10 dark:shadow-[0_18px_55px_rgba(0,0,0,.45)] dark:text-white",
+  "rounded-2xl backdrop-blur-xl transition-all duration-300 bg-white/70 border border-zinc-200 shadow-sm text-zinc-900 dark:bg-white/[0.03] dark:border-white/10 dark:shadow-[0_18px_55px_rgba(0,0,0,.45)] dark:text-white",
   {
     variants: {
       variant: {

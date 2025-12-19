@@ -98,6 +98,24 @@ export function KanbanDemo() {
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | undefined>(undefined);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [view, setView] = useState<'board' | 'list' | 'calendar'>('board');
+
+  // Generate many tasks for lazy loading demo
+  useEffect(() => {
+    const manyTasks: KanbanTask[] = [...tasks];
+    for (let i = 5; i <= 100; i++) {
+      manyTasks.push({
+        id: String(i),
+        title: `Task ${i}: Performance Test`,
+        description: `This is task number ${i} for testing ultra-performance lazy loading.`,
+        priority: i % 4 === 0 ? 'urgent' : i % 3 === 0 ? 'high' : 'medium',
+        tags: ['Performance', 'Test'],
+        columnId: i % 4 === 0 ? 'todo' : i % 4 === 1 ? 'in-progress' : i % 4 === 2 ? 'review' : 'done',
+        progress: Math.floor(Math.random() * 100),
+        timeSpent: Math.floor(Math.random() * 10000)
+      });
+    }
+    setTasks(manyTasks);
+  }, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalColumnId, setModalColumnId] = useState<string | undefined>(undefined);
   const [editingTask, setEditingTask] = useState<KanbanTask | undefined>(undefined);
@@ -137,9 +155,15 @@ export function KanbanDemo() {
       
       // Find the actual index in the full array to insert
       let insertIndex = newTasks.length;
-      if (typeof index === 'number' && index < targetColumnTasks.length) {
-        const referenceTask = targetColumnTasks[index];
-        insertIndex = newTasks.findIndex(t => t.id === referenceTask?.id);
+      if (typeof index === 'number') {
+        if (index < targetColumnTasks.length) {
+          const referenceTask = targetColumnTasks[index];
+          insertIndex = newTasks.findIndex(t => t.id === referenceTask?.id);
+        } else if (targetColumnTasks.length > 0) {
+          // Insert after the last task of the target column
+          const lastTask = targetColumnTasks[targetColumnTasks.length - 1];
+          insertIndex = newTasks.findIndex(t => t.id === lastTask?.id) + 1;
+        }
       }
 
       if (task) {
@@ -309,11 +333,19 @@ export function KanbanDemo() {
           onTaskFullAdd={handleTaskFullAdd}
           onTaskTimerToggle={handleTimerToggle}
           onTaskSelectionChange={(ids) => setSelectedTaskIds(ids)}
+          onTaskDragStart={(id) => console.log('Drag Start:', id)}
+          onTaskDragEnd={(id) => console.log('Drag End:', id)}
+          onTaskDrop={(id, from, to, idx) => console.log('Task Dropped:', { id, from, to, idx })}
+          onTaskRemove={(id) => {
+            setTasks(prev => prev.filter(t => t.id !== id));
+            console.log('Task Removed:', id);
+          }}
           activeTimerTaskId={activeTimerTaskId}
           selectedTaskIds={selectedTaskIds}
           selectable
           groupBy={groupBy}
           showDividers
+          pageSize={15}
           className="mt-4"
         />
       ) : view === 'calendar' ? (

@@ -13,7 +13,8 @@
 
 - **Native-First**: We prefer native browser APIs (like `<dialog>`, `IntersectionObserver`, and `ValidityState`) over heavy JavaScript polyfills.
 - **Zero Dependencies**: We don't use Radix or other headless libraries. Every component is built from scratch for maximum control and minimum bundle size.
-- **Performance**: Optimized for 60fps animations and fast rendering (e.g., `content-visibility` in tables).
+- **Ultra-Performance**: Optimized for 120fps interactions using CSS variables for mouse tracking and `content-visibility` for large datasets.
+- **Full Theme Support**: Native support for Light and Dark modes with theme-aware patterns and glassmorphism.
 
 ## 📦 Installation
 
