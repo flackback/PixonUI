@@ -80,7 +80,14 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-  CommandShortcut
+  CommandShortcut,
+  Reveal,
+  Magnetic,
+  NumberTicker,
+  PageTransition,
+  Parallax,
+  Motion,
+  MotionGroup
 } from '@pixonui/react';
 import { Zap, Search, Home, Check, Activity, Settings, Mail, Users, Copy, Share, Plus, AlertTriangle, MoreHorizontal, ChevronDown, Calculator, User, CreditCard, Calendar } from 'lucide-react';
 import { DropdownSearchDemo, DropdownSimpleDemo } from './demos/DropdownDemos';
@@ -894,6 +901,32 @@ ${StepperSource}
 // Spotlight.tsx
 ${SpotlightSource}`,
     demo: <ExtrasDemo />
+  },
+  {
+    id: 'advanced-motion',
+    title: 'Advanced Motion',
+    category: 'Feedback',
+    description: 'High-performance animation primitives using WAAPI and View Transitions.',
+    code: `import { Reveal, Magnetic, NumberTicker, Parallax } from '@pixonui/react';
+
+// Reveal
+<Reveal direction="up">
+  <h1>Hello World</h1>
+</Reveal>
+
+// Magnetic
+<Magnetic>
+  <Button>Hover Me</Button>
+</Magnetic>
+
+// Number Ticker
+<NumberTicker value={100} />
+
+// Parallax
+<Parallax speed={0.5}>
+  <img src="..." />
+</Parallax>`,
+    demo: <MotionDemo />
   },
   {
     id: 'motion',

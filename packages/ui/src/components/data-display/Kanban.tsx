@@ -52,7 +52,7 @@ export interface KanbanTask {
   blockedBy?: string[]; // IDs of tasks that block this one
   timeSpent?: number; // in seconds
   archived?: boolean;
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
 }
 
 export interface KanbanColumn {
@@ -220,7 +220,12 @@ export function Kanban({
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       if (draggedTaskId === taskId) {
-        handleDrop(e as any, columnId);
+        // Create a synthetic drag event or refactor handleDrop to accept taskId/columnId directly
+        const taskIdToDrop = draggedTaskId;
+        if (taskIdToDrop && onTaskMove) {
+          onTaskMove(taskIdToDrop, columnId, 0);
+        }
+        handleDragEnd();
       } else {
         setDraggedTaskId(taskId);
       }

@@ -83,7 +83,7 @@ export function AccordionItem({ className, value, children, ...props }: Accordio
     <AccordionItemContext.Provider value={{ value, isOpen: !!isOpen }}>
       <div
         className={cn(
-          "overflow-hidden rounded-xl border border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.02] transition-all duration-200",
+          "overflow-hidden rounded-2xl border border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.03] transition-all duration-200",
           isOpen && "bg-white dark:bg-white/[0.04] border-gray-300 dark:border-white/10",
           className
         )}
@@ -108,6 +108,8 @@ export function AccordionTrigger({ className, children, ...props }: AccordionTri
       type="button"
       onClick={() => context?.onValueChange(value)}
       aria-expanded={isOpen}
+      aria-controls={`accordion-content-${value}`}
+      id={`accordion-trigger-${value}`}
       className={cn(
         "flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-gray-900 dark:text-white transition-all hover:text-gray-700 dark:hover:text-white/90 focus:outline-none",
         className
@@ -130,12 +132,15 @@ export interface AccordionContentProps extends React.HTMLAttributes<HTMLDivEleme
 }
 
 export function AccordionContent({ className, children, ...props }: AccordionContentProps) {
-  const { isOpen } = useContext(AccordionItemContext);
+  const { isOpen, value } = useContext(AccordionItemContext);
 
   if (!isOpen) return null;
 
   return (
     <div
+      id={`accordion-content-${value}`}
+      role="region"
+      aria-labelledby={`accordion-trigger-${value}`}
       className={cn(
         "px-4 pb-3 pt-0 text-sm text-gray-600 dark:text-white/70 animate-in slide-in-from-top-1 fade-in duration-200",
         className

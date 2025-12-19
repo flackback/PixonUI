@@ -2,7 +2,11 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 import { ScrollArea } from './ScrollArea';
 
-const TableContext = React.createContext<{}>({});
+interface TableContextValue {
+  // Add context values if needed in the future
+}
+
+const TableContext = React.createContext<TableContextValue | null>(null);
 
 export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   wrapperClassName?: string;

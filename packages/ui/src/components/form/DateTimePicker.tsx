@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../overlay/Popover';
 import { Calendar } from '../data-display/Calendar';
+import { ScrollArea } from '../data-display/ScrollArea';
 import { cn } from '../../utils/cn';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
-import { PrimaryButton } from '../button/PrimaryButton';
 
 export interface DateTimePickerProps {
   value?: Date;
@@ -33,36 +33,32 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
     updatedDate.setHours(hours);
     updatedDate.setMinutes(minutes);
     setDate(updatedDate);
+    onChange?.(updatedDate);
   };
 
   const handleTimeChange = (type: 'hours' | 'minutes', val: string) => {
     let num = parseInt(val, 10);
     if (isNaN(num)) return;
 
+    let newHours = hours;
+    let newMinutes = minutes;
+
     if (type === 'hours') {
       num = Math.max(0, Math.min(23, num));
       setHours(num);
+      newHours = num;
     } else {
       num = Math.max(0, Math.min(59, num));
       setMinutes(num);
+      newMinutes = num;
     }
 
-    if (date) {
-      const updatedDate = new Date(date);
-      if (type === 'hours') updatedDate.setHours(num);
-      else updatedDate.setMinutes(num);
-      setDate(updatedDate);
-    }
-  };
-
-  const handleApply = () => {
-    if (date) {
-      const finalDate = new Date(date);
-      finalDate.setHours(hours);
-      finalDate.setMinutes(minutes);
-      onChange?.(finalDate);
-      setIsOpen(false);
-    }
+    const baseDate = date || new Date();
+    const updatedDate = new Date(baseDate);
+    updatedDate.setHours(newHours);
+    updatedDate.setMinutes(newMinutes);
+    setDate(updatedDate);
+    onChange?.(updatedDate);
   };
 
   const formatDateTime = (d: Date) => {
@@ -119,49 +115,47 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
             <div className="flex flex-col p-4 w-[160px] h-[340px]">
               <div className="mb-3 text-sm font-medium text-gray-700 dark:text-white/70">Time</div>
               <div className="flex flex-1 gap-2 min-h-0 overflow-hidden">
-                <div className="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-none hover:scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <ScrollArea className="flex-1 flex flex-col gap-1" scrollbarSize="sm">
                   <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1 sticky top-0 bg-white dark:bg-[#0A0A0A] py-1 z-10">Hr</div>
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleTimeChange('hours', i.toString())}
-                      className={cn(
-                        "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
-                        hours === i 
-                          ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
-                          : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                      )}
-                    >
-                      {i.toString().padStart(2, '0')}
-                    </button>
-                  ))}
-                </div>
+                  <div className="flex flex-col gap-1">
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleTimeChange('hours', i.toString())}
+                        className={cn(
+                          "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
+                          hours === i 
+                            ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
+                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                        )}
+                      >
+                        {i.toString().padStart(2, '0')}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
                 <div className="w-[1px] bg-gray-200 dark:bg-white/10" />
-                <div className="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-none hover:scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <ScrollArea className="flex-1 flex flex-col gap-1" scrollbarSize="sm">
                   <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1 sticky top-0 bg-white dark:bg-[#0A0A0A] py-1 z-10">Min</div>
-                  {Array.from({ length: 60 }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleTimeChange('minutes', i.toString())}
-                      className={cn(
-                        "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
-                        minutes === i 
-                          ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
-                          : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                      )}
-                    >
-                      {i.toString().padStart(2, '0')}
-                    </button>
-                  ))}
-                </div>
+                  <div className="flex flex-col gap-1">
+                    {Array.from({ length: 60 }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleTimeChange('minutes', i.toString())}
+                        className={cn(
+                          "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
+                          minutes === i 
+                            ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
+                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                        )}
+                      >
+                        {i.toString().padStart(2, '0')}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             </div>
-          </div>
-
-          <div className="p-3 border-t border-gray-200 dark:border-white/10">
-            <PrimaryButton className="w-full justify-center" onClick={handleApply}>
-              Apply
-            </PrimaryButton>
           </div>
         </div>
       </PopoverContent>

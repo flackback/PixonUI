@@ -1973,7 +1973,7 @@ export function AccordionItem({ className, value, children, ...props }: Accordio
     <AccordionItemContext.Provider value={{ value, isOpen: !!isOpen }}>
       <div
         className={cn(
-          "overflow-hidden rounded-xl border border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.02] transition-all duration-200",
+          "overflow-hidden rounded-2xl border border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/[0.03] transition-all duration-200",
           isOpen && "bg-white dark:bg-white/[0.04] border-gray-300 dark:border-white/10",
           className
         )}
@@ -1998,6 +1998,8 @@ export function AccordionTrigger({ className, children, ...props }: AccordionTri
       type="button"
       onClick={() => context?.onValueChange(value)}
       aria-expanded={isOpen}
+      aria-controls={`accordion-content-${value}`}
+      id={`accordion-trigger-${value}`}
       className={cn(
         "flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-gray-900 dark:text-white transition-all hover:text-gray-700 dark:hover:text-white/90 focus:outline-none",
         className
@@ -2020,12 +2022,15 @@ export interface AccordionContentProps extends React.HTMLAttributes<HTMLDivEleme
 }
 
 export function AccordionContent({ className, children, ...props }: AccordionContentProps) {
-  const { isOpen } = useContext(AccordionItemContext);
+  const { isOpen, value } = useContext(AccordionItemContext);
 
   if (!isOpen) return null;
 
   return (
     <div
+      id={`accordion-content-${value}`}
+      role="region"
+      aria-labelledby={`accordion-trigger-${value}`}
       className={cn(
         "px-4 pb-3 pt-0 text-sm text-gray-600 dark:text-white/70 animate-in slide-in-from-top-1 fade-in duration-200",
         className
@@ -3513,7 +3518,7 @@ interface DataTableProps<T> {
   rounded?: boolean;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
   searchPlaceholder = "Search...",
@@ -3537,7 +3542,7 @@ export function DataTable<T extends Record<string, any>>({
     if (search && searchKeys) {
       filtered = filtered.filter(item =>
         searchKeys.some(key => 
-          String(item[key]).toLowerCase().includes(search.toLowerCase())
+          String(item[key] ?? '').toLowerCase().includes(search.toLowerCase())
         )
       );
     }
@@ -3548,6 +3553,7 @@ export function DataTable<T extends Record<string, any>>({
         const aValue = a[sortConfig.key as keyof T];
         const bValue = b[sortConfig.key as keyof T];
         
+        if (aValue === undefined || bValue === undefined) return 0;
         if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
@@ -3744,7 +3750,7 @@ export interface KanbanTask {
   blockedBy?: string[]; // IDs of tasks that block this one
   timeSpent?: number; // in seconds
   archived?: boolean;
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
 }
 
 export interface KanbanColumn {
@@ -3912,7 +3918,12 @@ export function Kanban({
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       if (draggedTaskId === taskId) {
-        handleDrop(e as any, columnId);
+        // Create a synthetic drag event or refactor handleDrop to accept taskId/columnId directly
+        const taskIdToDrop = draggedTaskId;
+        if (taskIdToDrop && onTaskMove) {
+          onTaskMove(taskIdToDrop, columnId, 0);
+        }
+        handleDragEnd();
       } else {
         setDraggedTaskId(taskId);
       }
@@ -5027,7 +5038,11 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 import { ScrollArea } from './ScrollArea';
 
-const TableContext = React.createContext<{}>({});
+interface TableContextValue {
+  // Add context values if needed in the future
+}
+
+const TableContext = React.createContext<TableContextValue | null>(null);
 
 export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   wrapperClassName?: string;
@@ -6899,9 +6914,9 @@ export function DatePicker({ value, onChange, placeholder = "Pick a date", class
 import React, { useState, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../overlay/Popover';
 import { Calendar } from '../data-display/Calendar';
+import { ScrollArea } from '../data-display/ScrollArea';
 import { cn } from '../../utils/cn';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
-import { PrimaryButton } from '../button/PrimaryButton';
 
 export interface DateTimePickerProps {
   value?: Date;
@@ -6931,36 +6946,32 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
     updatedDate.setHours(hours);
     updatedDate.setMinutes(minutes);
     setDate(updatedDate);
+    onChange?.(updatedDate);
   };
 
   const handleTimeChange = (type: 'hours' | 'minutes', val: string) => {
     let num = parseInt(val, 10);
     if (isNaN(num)) return;
 
+    let newHours = hours;
+    let newMinutes = minutes;
+
     if (type === 'hours') {
       num = Math.max(0, Math.min(23, num));
       setHours(num);
+      newHours = num;
     } else {
       num = Math.max(0, Math.min(59, num));
       setMinutes(num);
+      newMinutes = num;
     }
 
-    if (date) {
-      const updatedDate = new Date(date);
-      if (type === 'hours') updatedDate.setHours(num);
-      else updatedDate.setMinutes(num);
-      setDate(updatedDate);
-    }
-  };
-
-  const handleApply = () => {
-    if (date) {
-      const finalDate = new Date(date);
-      finalDate.setHours(hours);
-      finalDate.setMinutes(minutes);
-      onChange?.(finalDate);
-      setIsOpen(false);
-    }
+    const baseDate = date || new Date();
+    const updatedDate = new Date(baseDate);
+    updatedDate.setHours(newHours);
+    updatedDate.setMinutes(newMinutes);
+    setDate(updatedDate);
+    onChange?.(updatedDate);
   };
 
   const formatDateTime = (d: Date) => {
@@ -7017,49 +7028,47 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
             <div className="flex flex-col p-4 w-[160px] h-[340px]">
               <div className="mb-3 text-sm font-medium text-gray-700 dark:text-white/70">Time</div>
               <div className="flex flex-1 gap-2 min-h-0 overflow-hidden">
-                <div className="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-none hover:scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <ScrollArea className="flex-1 flex flex-col gap-1" scrollbarSize="sm">
                   <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1 sticky top-0 bg-white dark:bg-[#0A0A0A] py-1 z-10">Hr</div>
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleTimeChange('hours', i.toString())}
-                      className={cn(
-                        "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
-                        hours === i 
-                          ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
-                          : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                      )}
-                    >
-                      {i.toString().padStart(2, '0')}
-                    </button>
-                  ))}
-                </div>
+                  <div className="flex flex-col gap-1">
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleTimeChange('hours', i.toString())}
+                        className={cn(
+                          "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
+                          hours === i 
+                            ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
+                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                        )}
+                      >
+                        {i.toString().padStart(2, '0')}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
                 <div className="w-[1px] bg-gray-200 dark:bg-white/10" />
-                <div className="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-none hover:scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <ScrollArea className="flex-1 flex flex-col gap-1" scrollbarSize="sm">
                   <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1 sticky top-0 bg-white dark:bg-[#0A0A0A] py-1 z-10">Min</div>
-                  {Array.from({ length: 60 }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleTimeChange('minutes', i.toString())}
-                      className={cn(
-                        "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
-                        minutes === i 
-                          ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
-                          : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                      )}
-                    >
-                      {i.toString().padStart(2, '0')}
-                    </button>
-                  ))}
-                </div>
+                  <div className="flex flex-col gap-1">
+                    {Array.from({ length: 60 }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleTimeChange('minutes', i.toString())}
+                        className={cn(
+                          "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
+                          minutes === i 
+                            ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
+                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                        )}
+                      >
+                        {i.toString().padStart(2, '0')}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             </div>
-          </div>
-
-          <div className="p-3 border-t border-gray-200 dark:border-white/10">
-            <PrimaryButton className="w-full justify-center" onClick={handleApply}>
-              Apply
-            </PrimaryButton>
           </div>
         </div>
       </PopoverContent>
@@ -9714,9 +9723,35 @@ export function DropdownMenuContent({ className, children, align = 'start', side
         }
       };
 
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          context.setIsOpen(false);
+          context.triggerRef.current?.focus();
+        }
+        
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const items = contentRef.current?.querySelectorAll('[role="menuitem"]') as NodeListOf<HTMLElement>;
+          if (!items.length) return;
+          
+          const currentIndex = Array.from(items).indexOf(document.activeElement as HTMLElement);
+          let nextIndex = 0;
+          
+          if (e.key === 'ArrowDown') {
+            nextIndex = (currentIndex + 1) % items.length;
+          } else {
+            nextIndex = (currentIndex - 1 + items.length) % items.length;
+          }
+          
+          items[nextIndex]?.focus();
+        }
+      };
+
       document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('keydown', handleKeyDown);
       return () => {
         document.removeEventListener('mousedown', handleOutsideClick);
+        document.removeEventListener('keydown', handleKeyDown);
       };
     }
   }, [context.isOpen, context.setIsOpen, context.triggerRef]);
@@ -9750,13 +9785,15 @@ export function DropdownMenuContent({ className, children, align = 'start', side
   return createPortal(
     <div
       ref={contentRef}
+      role="menu"
+      aria-orientation="vertical"
       style={{ 
         top: position.top, 
         left: position.left,
         transformOrigin: getTransformOrigin(),
       }}
       className={cn(
-        "fixed z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-md duration-100",
+        "fixed z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-1 shadow-md duration-100",
         isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}
@@ -10063,7 +10100,7 @@ export function PopoverContent({ className, children, align = 'center', sideOffs
         transformOrigin: getTransformOrigin(),
       }}
       className={cn(
-        "fixed z-50 min-w-[12rem] rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-4 shadow-xl outline-none duration-200",
+        "fixed z-50 min-w-[12rem] rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-4 shadow-xl outline-none duration-200",
         isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}
@@ -10504,12 +10541,12 @@ interface UseFormOptions<T> {
   onSubmit: (values: T) => void | Promise<void>;
 }
 
-export function useForm<T extends Record<string, any>>({
+export function useForm<T extends Record<string, unknown>>({
   initialValues,
   onSubmit,
 }: UseFormOptions<T>) {
   const [values, setValues] = useState<T>(initialValues);
-  const [errors, setErrors] = useState<Record<keyof T, string>>({} as any);
+  const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = useCallback((
@@ -10531,10 +10568,11 @@ export function useForm<T extends Record<string, any>>({
     const form = e.currentTarget;
     
     if (!form.checkValidity()) {
-      const newErrors: any = {};
-      Array.from(form.elements).forEach((element: any) => {
-        if (element.name && !element.validity.valid) {
-          newErrors[element.name] = element.validationMessage;
+      const newErrors: Partial<Record<keyof T, string>> = {};
+      Array.from(form.elements).forEach((element) => {
+        const input = element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+        if (input.name && !input.validity.valid) {
+          newErrors[input.name as keyof T] = input.validationMessage;
         }
       });
       setErrors(newErrors);
@@ -10551,7 +10589,7 @@ export function useForm<T extends Record<string, any>>({
 
   const register = useCallback((name: keyof T) => ({
     name: name as string,
-    value: values[name],
+    value: values[name] as string | number | readonly string[] | undefined,
     onChange: handleChange,
     error: errors[name],
   }), [values, errors, handleChange]);

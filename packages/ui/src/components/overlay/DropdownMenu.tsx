@@ -84,9 +84,35 @@ export function DropdownMenuContent({ className, children, align = 'start', side
         }
       };
 
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          context.setIsOpen(false);
+          context.triggerRef.current?.focus();
+        }
+        
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const items = contentRef.current?.querySelectorAll('[role="menuitem"]') as NodeListOf<HTMLElement>;
+          if (!items.length) return;
+          
+          const currentIndex = Array.from(items).indexOf(document.activeElement as HTMLElement);
+          let nextIndex = 0;
+          
+          if (e.key === 'ArrowDown') {
+            nextIndex = (currentIndex + 1) % items.length;
+          } else {
+            nextIndex = (currentIndex - 1 + items.length) % items.length;
+          }
+          
+          items[nextIndex]?.focus();
+        }
+      };
+
       document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('keydown', handleKeyDown);
       return () => {
         document.removeEventListener('mousedown', handleOutsideClick);
+        document.removeEventListener('keydown', handleKeyDown);
       };
     }
   }, [context.isOpen, context.setIsOpen, context.triggerRef]);
@@ -120,13 +146,15 @@ export function DropdownMenuContent({ className, children, align = 'start', side
   return createPortal(
     <div
       ref={contentRef}
+      role="menu"
+      aria-orientation="vertical"
       style={{ 
         top: position.top, 
         left: position.left,
         transformOrigin: getTransformOrigin(),
       }}
       className={cn(
-        "fixed z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-md duration-100",
+        "fixed z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-1 shadow-md duration-100",
         isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}

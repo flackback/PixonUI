@@ -118,11 +118,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       const content = await fs.readFile(componentPath, "utf-8");
+      
+      // Simple regex to extract props interface
+      const propsMatch = content.match(/interface\s+(\w+Props)\s*{([^}]+)}/);
+      const props = propsMatch ? propsMatch[0] : "Props interface not found";
+
+      // Generate a simple usage example based on component name
+      const usage = `import { ${componentName} } from '@pixonui/react';\n\n// Basic usage\n<${componentName}>\n  {/* children */}\n</${componentName}>`;
+
       return {
         content: [
           {
             type: "text",
-            text: `Component Source for ${componentName}:\n\n${content}`,
+            text: `Component: ${componentName}\n\nProps:\n${props}\n\nUsage Example:\n${usage}\n\nSource Code:\n${content}`,
           },
         ],
       };

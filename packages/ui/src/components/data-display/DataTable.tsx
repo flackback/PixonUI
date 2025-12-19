@@ -23,7 +23,7 @@ interface DataTableProps<T> {
   rounded?: boolean;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
   searchPlaceholder = "Search...",
@@ -47,7 +47,7 @@ export function DataTable<T extends Record<string, any>>({
     if (search && searchKeys) {
       filtered = filtered.filter(item =>
         searchKeys.some(key => 
-          String(item[key]).toLowerCase().includes(search.toLowerCase())
+          String(item[key] ?? '').toLowerCase().includes(search.toLowerCase())
         )
       );
     }
@@ -58,6 +58,7 @@ export function DataTable<T extends Record<string, any>>({
         const aValue = a[sortConfig.key as keyof T];
         const bValue = b[sortConfig.key as keyof T];
         
+        if (aValue === undefined || aValue === null || bValue === undefined || bValue === null) return 0;
         if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
@@ -121,7 +122,7 @@ export function DataTable<T extends Record<string, any>>({
             >
               {columns.map((col) => (
                 <TableCell key={String(col.key)} className={col.className}>
-                  {col.render ? col.render(item) : item[col.key as keyof T]}
+                  {col.render ? col.render(item) : (item[col.key as keyof T] as React.ReactNode)}
                 </TableCell>
               ))}
             </TableRow>

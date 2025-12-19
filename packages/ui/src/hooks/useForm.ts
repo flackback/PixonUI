@@ -5,12 +5,12 @@ interface UseFormOptions<T> {
   onSubmit: (values: T) => void | Promise<void>;
 }
 
-export function useForm<T extends Record<string, any>>({
+export function useForm<T extends Record<string, unknown>>({
   initialValues,
   onSubmit,
 }: UseFormOptions<T>) {
   const [values, setValues] = useState<T>(initialValues);
-  const [errors, setErrors] = useState<Record<keyof T, string>>({} as any);
+  const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = useCallback((
@@ -32,10 +32,11 @@ export function useForm<T extends Record<string, any>>({
     const form = e.currentTarget;
     
     if (!form.checkValidity()) {
-      const newErrors: any = {};
-      Array.from(form.elements).forEach((element: any) => {
-        if (element.name && !element.validity.valid) {
-          newErrors[element.name] = element.validationMessage;
+      const newErrors: Partial<Record<keyof T, string>> = {};
+      Array.from(form.elements).forEach((element) => {
+        const input = element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+        if (input.name && !input.validity.valid) {
+          newErrors[input.name as keyof T] = input.validationMessage;
         }
       });
       setErrors(newErrors);
@@ -52,7 +53,7 @@ export function useForm<T extends Record<string, any>>({
 
   const register = useCallback((name: keyof T) => ({
     name: name as string,
-    value: values[name],
+    value: values[name] as string | number | readonly string[] | undefined,
     onChange: handleChange,
     error: errors[name],
   }), [values, errors, handleChange]);
