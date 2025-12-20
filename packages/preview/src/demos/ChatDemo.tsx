@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import type {
+  Conversation,
+  Message,
+  User
+} from '@pixonui/react';
 import { 
   ChatLayout, 
   ChatSidebar, 
   ChatHeader, 
   MessageList, 
   ChatInput, 
-  ChatProfile,
-  Conversation,
-  Message,
-  User
+  ChatProfile
 } from '@pixonui/react';
 
 const CURRENT_USER_ID = 'me';

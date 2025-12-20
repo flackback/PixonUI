@@ -1,4 +1,5 @@
-import { useState, useEffect, useLayoutEffect, RefObject } from 'react';
+import type { RefObject } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 
 export type Breakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
@@ -15,13 +16,12 @@ export function useMediaQuery(query: string): boolean {
 
   useEffect(() => {
     const media = window.matchMedia(query);
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
+    setMatches(media.matches);
+    
     const listener = () => setMatches(media.matches);
     media.addEventListener('change', listener);
     return () => media.removeEventListener('change', listener);
-  }, [matches, query]);
+  }, [query]);
 
   return matches;
 }

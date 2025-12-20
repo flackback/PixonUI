@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Message } from './types';
+import type { Message } from './types';
 import { MessageBubble } from './MessageBubble';
 import { ScrollArea } from '../data-display/ScrollArea';
 import { MessageSquare } from 'lucide-react';

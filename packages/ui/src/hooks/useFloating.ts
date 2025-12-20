@@ -1,4 +1,5 @@
-import { useState, useLayoutEffect, useCallback, RefObject } from 'react';
+import type { RefObject } from 'react';
+import { useState, useLayoutEffect, useCallback } from 'react';
 
 export type Side = 'top' | 'bottom' | 'left' | 'right';
 export type Align = 'start' | 'center' | 'end';
@@ -104,7 +105,7 @@ export function useFloating(
 
   useLayoutEffect(() => {
     if (!isOpen) {
-      setIsPositioned(false);
+      if (isPositioned) setIsPositioned(false);
       return;
     }
 

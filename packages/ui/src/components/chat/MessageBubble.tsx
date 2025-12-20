@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
-import { Message } from './types';
+import type { Message } from './types';
 import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile } from 'lucide-react';
 import { Motion } from '../feedback/Motion';
 import { 

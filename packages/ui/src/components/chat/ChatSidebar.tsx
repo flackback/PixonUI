@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import { Search, Plus } from 'lucide-react';
-import { Conversation } from './types';
+import type { Conversation } from './types';
 import { Avatar } from '../data-display/Avatar';
 import { ScrollArea } from '../data-display/ScrollArea';
 

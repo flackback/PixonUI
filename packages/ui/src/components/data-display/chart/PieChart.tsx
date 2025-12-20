@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { useChart, ChartDataPoint } from './Chart';
+import type { ChartDataPoint } from './Chart';
+import { useChart } from './Chart';
 import { cn } from '../../../utils/cn';
 
 export interface PieChartProps<T = any> {

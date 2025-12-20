@@ -44,7 +44,7 @@ export function DropdownMenuTrigger({ className, children, ...props }: DropdownM
       ref={context.triggerRef as any}
       type="button"
       aria-haspopup="menu"
-      aria-expanded={context.isOpen}
+      aria-expanded={context.isOpen ? "true" : "false"}
       onClick={handleClick}
       className={cn("inline-flex items-center justify-center", className)}
       {...props}

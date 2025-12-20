@@ -1,5 +1,6 @@
 import React, { createContext, useState, useCallback, useContext } from 'react';
-import { Toast, ToastProps, ToastVariant } from './Toast';
+import type { ToastProps} from './Toast';
+import { Toast, ToastVariant } from './Toast';
 
 export type ToastOptions = Omit<ToastProps, 'id' | 'onDismiss'>;
 

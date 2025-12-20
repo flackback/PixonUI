@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import type { 
+  KanbanColumn, 
+  KanbanTask} from '@pixonui/react';
 import { 
   Kanban, 
-  KanbanColumn, 
-  KanbanTask, 
   KanbanTaskModal,
   KanbanFilterBar,
   KanbanCalendarView,

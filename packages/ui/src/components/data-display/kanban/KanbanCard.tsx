@@ -5,7 +5,7 @@ import { Badge } from '../../../primitives/Badge';
 import { Text } from '../../typography/Text';
 import { Checkbox } from '../../form/Checkbox';
 import { cn } from '../../../utils/cn';
-import { KanbanTask } from './types';
+import type { KanbanTask } from './types';
 
 interface KanbanCardProps {
   task: KanbanTask;

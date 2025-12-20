@@ -5,14 +5,14 @@ import {
   SidebarFooter,
   SidebarItem,
   SidebarGroup,
-  Avatar,
   UserMenu,
   ThemeProvider,
   ThemeToggle,
   ScrollArea
 } from '@pixonui/react';
 import { useState, useMemo } from 'react';
-import { registry, ComponentItem } from './registry';
+import type { ComponentItem } from './registry';
+import { registry } from './registry';
 import { ComponentDoc } from './ComponentDoc';
 import { LandingPage } from './LandingPage';
 import { SaaSLayout } from './saas/SaaSLayout';
@@ -26,15 +26,9 @@ export default function App() {
   const [activeId, setActiveId] = useState('button');
   const [saasTab, setSaasTab] = useState('dashboard');
   
-  const activeComponent = useMemo(() => 
-    registry.find(c => c.id === activeId) || registry[0], 
-  [activeId]);
-
-  // Group by category
   const categories = useMemo(() => {
     const groups: Record<string, ComponentItem[]> = {};
-    // Define order
-    const order = ['Inputs', 'Data Display', 'Navigation', 'Feedback', 'Overlay', 'Layout'];
+    const order = ['Inputs', 'Data Display', 'Feedback', 'Navigation', 'Overlay', 'Layout', 'Forms', 'Templates'];
     
     registry.forEach(item => {
       if (!groups[item.category]) groups[item.category] = [];
@@ -46,6 +40,10 @@ export default function App() {
       return order.indexOf(a[0]) - order.indexOf(b[0]);
     });
   }, []);
+
+  const activeComponent = useMemo(() => 
+    registry.find(c => c.id === activeId) || registry[0], 
+  [activeId]);
 
   if (view === 'landing') {
     return (

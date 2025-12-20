@@ -32,7 +32,6 @@ export function useScroll(): ScrollValues {
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial call
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);

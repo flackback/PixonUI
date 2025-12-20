@@ -12,7 +12,6 @@ import {
   Stack, 
   Badge,
   Button,
-  cn
 } from '@pixonui/react';
 import { 
   MessageSquare, 
@@ -53,7 +52,7 @@ export function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <Heading as="h1" className="text-3xl font-bold tracking-tight">Dashboard Overview</Heading>
-          <Text className="text-gray-500 dark:text-white/40 mt-1">Welcome back, Alex. Here's what's happening today.</Text>
+          <Text className="text-gray-500 dark:text-white/40 mt-1">Welcome back, Alex. Here&apos;s what&apos;s happening today.</Text>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="h-10 border-gray-200 dark:border-white/10 bg-white dark:bg-white/5">
@@ -165,7 +164,7 @@ export function Dashboard() {
                 </div>
                 <div>
                   <Text className="font-bold">John Doe</Text>
-                  <Text className="text-xs text-gray-500 dark:text-white/30">"I'm having trouble with the new integration..."</Text>
+                  <Text className="text-xs text-gray-500 dark:text-white/30">&quot;I&apos;m having trouble with the new integration...&quot;</Text>
                 </div>
               </div>
               <div className="flex items-center gap-6">

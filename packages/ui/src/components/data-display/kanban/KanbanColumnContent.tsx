@@ -3,7 +3,7 @@ import { Plus, LayoutGrid } from 'lucide-react';
 import { Button } from '../../button/Button';
 import { Text } from '../../typography/Text';
 import { cn } from '../../../utils/cn';
-import { KanbanTask, KanbanColumn, DropPosition } from './types';
+import type { KanbanTask, KanbanColumn, DropPosition } from './types';
 import { KanbanCard } from './KanbanCard';
 
 interface KanbanColumnContentProps {

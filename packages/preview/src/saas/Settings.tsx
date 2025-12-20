@@ -7,9 +7,7 @@ import {
   Button, 
   TextInput, 
   Textarea,
-  Switch, 
   Label,
-  Select,
   Avatar,
   Divider
 } from '@pixonui/react';

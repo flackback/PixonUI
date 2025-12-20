@@ -1,5 +1,6 @@
 import React from 'react';
-import { useChart, normalize, ChartDataPoint } from './Chart';
+import type { ChartDataPoint } from './Chart';
+import { useChart, normalize } from './Chart';
 import { cn } from '../../../utils/cn';
 
 export interface AreaChartProps<T = any> {

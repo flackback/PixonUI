@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import type {
+  Column} from '@pixonui/react';
 import { 
   Table, 
   TableHeader, 
@@ -7,7 +9,6 @@ import {
   TableHead, 
   TableCell,
   DataTable,
-  Column,
   Switch,
   DropdownMenu,
   DropdownMenuTrigger,

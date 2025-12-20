@@ -4,10 +4,7 @@ import {
   Heading, 
   Text, 
   Button, 
-  Badge,
   Avatar,
-  Surface,
-  Stack
 } from '@pixonui/react';
 import { 
   Plus, 
@@ -42,7 +39,7 @@ export function KanbanView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <Heading as="h2" className="text-3xl font-bold tracking-tight">Project Board</Heading>
-          <Text className="text-gray-500 dark:text-white/40 mt-1">Manage your team's tasks and workflows.</Text>
+          <Text className="text-gray-500 dark:text-white/40 mt-1">Manage your team&apos;s tasks and workflows.</Text>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-gray-100 dark:bg-white/5 p-1 rounded-xl border border-gray-200 dark:border-white/10">

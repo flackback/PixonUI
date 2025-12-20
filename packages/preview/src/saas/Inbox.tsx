@@ -5,8 +5,6 @@ import {
   MessageList, 
   ChatInput, 
   ChatHeader,
-  ChatProfile,
-  Surface,
   Heading,
   Text,
   Badge,
@@ -18,15 +16,12 @@ import {
 import { 
   Search, 
   Filter, 
-  MoreVertical, 
   Phone, 
   Video, 
   Info,
   Mail,
   Globe,
   Calendar,
-  Tag,
-  UserPlus,
   CheckCircle2
 } from 'lucide-react';
 

@@ -4,7 +4,7 @@ import { Surface } from '../../primitives/Surface';
 import { Text } from '../typography/Text';
 import { Button } from '../button/Button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { KanbanTask } from './Kanban';
+import type { KanbanTask } from './Kanban';
 
 interface KanbanCalendarViewProps {
   tasks: KanbanTask[];

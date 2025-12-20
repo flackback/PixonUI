@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { KanbanTask, KanbanColumn, SortConfig } from './types';
+import type { KanbanTask, KanbanColumn, SortConfig } from './types';
 
 interface UseKanbanTasksProps {
   tasks: KanbanTask[];

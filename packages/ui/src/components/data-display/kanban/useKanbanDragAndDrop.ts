@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { KanbanTask, KanbanColumn, DropPosition } from './types';
+import type { KanbanTask, KanbanColumn, DropPosition } from './types';
 
 interface UseKanbanDragAndDropProps {
   tasks: KanbanTask[];

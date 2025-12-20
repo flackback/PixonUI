@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
-import { User } from './types';
+import type { User } from './types';
 import { Avatar } from '../data-display/Avatar';
 import { Phone, Video, MoreVertical, ArrowLeft } from 'lucide-react';
 

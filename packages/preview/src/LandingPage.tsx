@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   HeroText, 
   Background, 
-  Spotlight, 
   GlowButton, 
   Reveal, 
   Surface, 
@@ -22,23 +21,15 @@ import {
   Magnetic,
   Parallax,
   NumberTicker,
-  cn
 } from '@pixonui/react';
 import { 
   Zap, 
-  Shield, 
-  Cpu, 
-  Layout, 
-  MousePointer2, 
   Sparkles, 
   ArrowRight, 
   Github, 
-  Layers, 
   Accessibility, 
   Palette,
-  Code2,
   Rocket,
-  Globe
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -220,7 +211,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
                   </div>
                   <Heading as="h3" className="text-2xl font-bold mb-4">Pragmatic A11y</Heading>
                   <Text className="text-white/50 leading-relaxed text-lg">
-                    Full keyboard navigation and ARIA support out of the box. We don't compromise on accessibility.
+                    Full keyboard navigation and ARIA support out of the box. We don&apos;t compromise on accessibility.
                   </Text>
                 </Surface>
               </Reveal>

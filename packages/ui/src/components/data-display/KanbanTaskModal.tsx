@@ -6,7 +6,7 @@ import { Textarea } from '../form/Textarea';
 import { Select } from '../form/Select';
 import { Label } from '../form/Label';
 import { FileDropzone } from '../form/FileDropzone';
-import { KanbanTask } from './Kanban';
+import type { KanbanTask } from './Kanban';
 import { X, Paperclip, Tag, AlertCircle } from 'lucide-react';
 
 export interface KanbanTaskModalProps {

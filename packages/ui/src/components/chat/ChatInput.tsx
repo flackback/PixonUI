@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '../../utils/cn';
 import { Send, Paperclip, Smile, Mic, Image as ImageIcon, AtSign } from 'lucide-react';
 import { Button } from '../button/Button';
-import { User } from './types';
+import type { User } from './types';
 import { Surface } from '../../primitives/Surface';
 import { Avatar } from '../data-display/Avatar';
 

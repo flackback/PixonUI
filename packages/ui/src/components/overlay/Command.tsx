@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../utils/cn';
-import { Combobox, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty, ComboboxProps } from '../form/Combobox';
+import type { ComboboxProps } from '../form/Combobox';
+import { Combobox, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty } from '../form/Combobox';
 import { Search } from 'lucide-react';
 
 export interface CommandDialogProps extends ComboboxProps {

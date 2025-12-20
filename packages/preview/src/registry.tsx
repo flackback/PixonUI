@@ -2,10 +2,7 @@ import React from 'react';
 import { 
   Button,
   GlowButton,
-  PrimaryButton, 
-  MetricCard, 
   TextInput, 
-  Skeleton, 
   Breadcrumb, 
   BreadcrumbList, 
   BreadcrumbItem, 
@@ -20,77 +17,28 @@ import {
   PaginationNext, 
   PaginationEllipsis,
   Navbar,
-  Switch,
-  Checkbox,
   Badge,
   Select,
   Avatar,
-  Progress,
-  Surface,
   Textarea,
-  Slider,
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  DatePicker,
-  DateTimePicker,
   Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarItem,
-  Modal,
-  Drawer,
-  useToast,
-  Divider,
-  Kbd,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
   UserMenu,
   ScrollArea,
-  Combobox,
-  ComboboxTrigger,
-  ComboboxContent,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxEmpty,
-  ComboboxItem,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
   Image,
   Container,
   Stack,
   Grid,
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandShortcut,
-  Reveal,
-  Magnetic,
-  NumberTicker,
-  PageTransition,
-  Parallax,
-  Motion,
-  MotionGroup
 } from '@pixonui/react';
-import { Zap, Search, Home, Check, Activity, Settings, Mail, Users, Copy, Share, Plus, AlertTriangle, MoreHorizontal, ChevronDown, Calculator, User, CreditCard, Calendar } from 'lucide-react';
+import { Zap, Search, Home, Mail, User, Calendar, Check, AlertTriangle, Settings } from 'lucide-react';
 import { DropdownSearchDemo, DropdownSimpleDemo } from './demos/DropdownDemos';
 import { ToastDemo } from './demos/FeedbackDemos';
 import { FormDemo } from './demos/FormDemo';
@@ -467,13 +415,13 @@ const tasks: KanbanTask[] = [
         <AccordionItem value="item-2">
           <AccordionTrigger>Is it styled?</AccordionTrigger>
           <AccordionContent>
-            Yes. It comes with default styles that matches the other components' aesthetic.
+            Yes. It comes with default styles that matches the other components&apos; aesthetic.
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-3">
           <AccordionTrigger>Is it animated?</AccordionTrigger>
           <AccordionContent>
-            Yes. It's animated by default, but you can disable it if you prefer.
+            Yes. It&apos;s animated by default, but you can disable it if you prefer.
           </AccordionContent>
         </AccordionItem>
       </Accordion>

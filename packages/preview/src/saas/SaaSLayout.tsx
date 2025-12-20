@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Sidebar, 
   SidebarHeader, 
@@ -6,15 +6,11 @@ import {
   SidebarFooter, 
   SidebarItem, 
   SidebarGroup,
-  Navbar,
   UserMenu,
   ThemeToggle,
-  Badge,
   TextInput,
   Button,
-  Surface,
   ScrollArea,
-  cn
 } from '@pixonui/react';
 import { 
   LayoutDashboard, 
@@ -27,7 +23,6 @@ import {
   Plus, 
   Command,
   HelpCircle,
-  MessageSquare,
   BarChart3,
   ShieldCheck
 } from 'lucide-react';

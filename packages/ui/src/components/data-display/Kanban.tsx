@@ -22,7 +22,7 @@ import {
   DropdownMenuItem 
 } from '../overlay/DropdownMenu';
 
-import { KanbanProps, KanbanTask, KanbanColumn } from './kanban/types';
+import type { KanbanProps, KanbanTask, KanbanColumn } from './kanban/types';
 export type { KanbanProps, KanbanTask, KanbanColumn };
 import { useKanbanTasks } from './kanban/useKanbanTasks';
 import { useKanbanDragAndDrop } from './kanban/useKanbanDragAndDrop';
