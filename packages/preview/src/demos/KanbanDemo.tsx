@@ -291,7 +291,7 @@ export function KanbanDemo() {
               <select 
                 className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
                 value={groupBy || ''}
-                onChange={(e) => setGroupBy(e.target.value as any || undefined)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGroupBy(e.target.value as any || undefined)}
               >
                 <option value="">None</option>
                 <option value="priority">Priority</option>

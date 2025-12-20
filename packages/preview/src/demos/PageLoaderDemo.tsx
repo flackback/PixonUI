@@ -54,7 +54,7 @@ function TransitionExample() {
         <select 
           className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
           value={preset}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
             setPreset(e.target.value as any);
             reload();
           }}

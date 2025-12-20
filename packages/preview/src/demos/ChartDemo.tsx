@@ -70,7 +70,7 @@ export function ChartDemo() {
             </div>
             <div className="flex flex-wrap gap-2 items-center">
                <div className="flex items-center gap-2 mr-4">
-                  <Switch id="show-values" checked={showValues} onChange={(e) => setShowValues(e.target.checked)} />
+                  <Switch id="show-values" checked={showValues} onChange={(e: any) => setShowValues(e.target.checked)} />
                   <Label htmlFor="show-values" className="text-xs">Values</Label>
                </div>
                <div className="bg-white/5 p-1 rounded-lg flex gap-1">

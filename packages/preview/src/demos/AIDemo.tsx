@@ -90,7 +90,7 @@ export function AIDemo() {
             <h3 className="text-sm font-medium text-gray-500 dark:text-white/50">Prompt Input</h3>
             <AIPromptInput 
               value={promptValue}
-              onChange={(e) => setPromptValue(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPromptValue(e.target.value)}
               onSubmit={handleSubmit}
               isGenerating={isGenerating}
               onStop={handleStop}

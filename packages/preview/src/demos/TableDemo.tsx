@@ -110,7 +110,7 @@ export function TableDemo() {
       key: 'access',
       header: 'Access',
       render: (user) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <Switch defaultChecked={user.access} />
         </div>
       )
@@ -120,7 +120,7 @@ export function TableDemo() {
       header: 'Actions',
       className: 'text-right',
       render: (user) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 transition-colors">
               <MoreHorizontal className="h-4 w-4" />

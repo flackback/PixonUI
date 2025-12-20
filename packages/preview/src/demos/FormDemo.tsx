@@ -159,7 +159,7 @@ export function FormDemo() {
                 <FormControl>
                   <Switch
                     checked={value}
-                    onChange={(e) => onChange(e.target.checked)}
+                    onChange={(e: any) => onChange(e.target.checked)}
                     {...field}
                   />
                 </FormControl>

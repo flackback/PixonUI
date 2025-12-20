@@ -289,7 +289,7 @@ export function DashboardDemo() {
           </div>
           <AIPromptInput 
             value={aiQuery}
-            onChange={(e) => setAiQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAiQuery(e.target.value)}
             onSubmit={handleAiSubmit}
             placeholder="Ask about revenue trends..."
             isGenerating={isGenerating}
