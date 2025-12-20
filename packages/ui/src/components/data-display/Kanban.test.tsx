@@ -23,10 +23,10 @@ describe('Kanban', () => {
       />
     );
     
-    expect(screen.getByText('To Do')).toBeDefined();
-    expect(screen.getByText('Done')).toBeDefined();
-    expect(screen.getByText('Task 1')).toBeDefined();
-    expect(screen.getByText('Task 2')).toBeDefined();
+    expect(screen.getByText('To Do')).toBeTruthy();
+    expect(screen.getByText('Done')).toBeTruthy();
+    expect(screen.getByText('Task 1')).toBeTruthy();
+    expect(screen.getByText('Task 2')).toBeTruthy();
   });
 
   it('calls onTaskRemove when remove button is clicked', () => {
@@ -63,8 +63,8 @@ describe('Kanban', () => {
     );
     
     // Should only show 5 tasks initially
-    expect(screen.queryByText('Task 0')).toBeDefined();
-    expect(screen.queryByText('Task 4')).toBeDefined();
-    expect(screen.queryByText('Task 5')).toBeNull();
+    expect(screen.queryByText('Task 0')).toBeTruthy();
+    expect(screen.queryByText('Task 4')).toBeTruthy();
+    expect(screen.queryByText('Task 5')).toBeFalsy();
   });
 });
