@@ -12,47 +12,58 @@ export interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, children, className }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const dialog = dialogRef.current;
+    if (!dialog) return;
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+      if (!dialog.open) {
+        dialog.showModal();
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      if (dialog.open) {
+        dialog.close();
+        document.body.style.overflow = 'unset';
+      }
     }
+  }, [isOpen]);
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleCancel = (e: Event) => {
+      e.preventDefault();
+      onClose();
     };
-  }, [isOpen, onClose]);
+
+    dialog.addEventListener('cancel', handleCancel);
+    return () => dialog.removeEventListener('cancel', handleCancel);
+  }, [onClose]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) {
+    if (e.target === dialogRef.current) {
       onClose();
     }
   };
 
-  if (!isOpen) return null;
-
   return createPortal(
-    <div
-      ref={overlayRef}
+    <dialog
+      ref={dialogRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-      role="dialog"
-      aria-modal="true"
+      className={cn(
+        "fixed inset-0 z-50 bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
+        "animate-in fade-in duration-200",
+        className
+      )}
     >
       <div
-        ref={contentRef}
         className={cn(
           "relative w-full max-w-lg scale-100 gap-4 border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
-          "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2",
-          className
+          "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
         )}
       >
         {children}
@@ -67,7 +78,7 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
           <span className="sr-only">Close</span>
         </button>
       </div>
-    </div>,
+    </dialog>,
     document.body
   );
 }

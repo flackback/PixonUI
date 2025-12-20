@@ -56,12 +56,20 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  /** Whether the button should be rendered as a child component using Slot */
   asChild?: boolean;
+  /** Icon to display on the left side of the button text */
   leftIcon?: React.ReactNode;
+  /** Icon to display on the right side of the button text */
   rightIcon?: React.ReactNode;
+  /** Whether the button is in a loading state, showing a spinner and disabling interaction */
   isLoading?: boolean;
 }
 
+/**
+ * A versatile button component with multiple variants, sizes, and states.
+ * Supports glassmorphism, gradients, and icons.
+ */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ 
     className, 

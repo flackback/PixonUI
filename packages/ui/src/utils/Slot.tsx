@@ -11,26 +11,29 @@ export const Slot = React.forwardRef<HTMLElement, SlotProps>(
       return null;
     }
 
+    const childrenProps = children.props as any;
+
     return React.cloneElement(children, {
       ...props,
-      ...children.props,
-      // @ts-ignore
-      ref: forwardedRef ? (node: HTMLElement) => {
+      ...childrenProps,
+      ref: (node: HTMLElement | null) => {
+        // Handle forwardedRef
         if (typeof forwardedRef === 'function') {
           forwardedRef(node);
-        } else {
-          (forwardedRef as any).current = node;
+        } else if (forwardedRef) {
+          (forwardedRef as React.MutableRefObject<HTMLElement | null>).current = node;
         }
-        // @ts-ignore
-        const { ref } = children;
+
+        // Handle children's own ref
+        const { ref } = children as any;
         if (typeof ref === 'function') {
           ref(node);
-        } else if (ref) {
+        } else if (ref && 'current' in ref) {
           ref.current = node;
         }
-      } : (children as any).ref,
-      className: cn(props.className, (children as any).props.className),
-    });
+      },
+      className: cn(props.className, childrenProps.className),
+    } as any);
   }
 );
 

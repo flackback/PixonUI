@@ -31,13 +31,22 @@ const inputVariants = cva(
 export interface TextInputProps 
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     Omit<VariantProps<typeof inputVariants>, 'hasError'> {
+  /** Label text displayed above the input */
   label?: string;
+  /** Error message displayed below the input. If provided, the input will show an error state. */
   error?: string;
+  /** Icon to display on the left side inside the input */
   leftIcon?: React.ReactNode;
+  /** Icon to display on the right side inside the input */
   rightIcon?: React.ReactNode;
+  /** Additional CSS classes for the container div */
   containerClassName?: string;
 }
 
+/**
+ * A styled text input component with support for labels, error messages, and icons.
+ * Follows the library's glassmorphic design system.
+ */
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
   ({ className, containerClassName, label, error: errorMsg, leftIcon, rightIcon, id, ...props }, ref) => {
     const inputId = id || React.useId();
