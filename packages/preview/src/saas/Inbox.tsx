@@ -31,18 +31,18 @@ import {
 } from 'lucide-react';
 
 const mockContacts = [
-  { id: '1', name: 'Sarah Wilson', lastMessage: 'The integration is working perfectly!', time: '10:24 AM', unread: 2, status: 'online', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' },
-  { id: '2', name: 'Alex Chen', lastMessage: 'Can we schedule a call for tomorrow?', time: '9:15 AM', unread: 0, status: 'offline', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100' },
-  { id: '3', name: 'James Martin', lastMessage: 'I sent the documents to your email.', time: 'Yesterday', unread: 0, status: 'online' },
-  { id: '4', name: 'Emily Davis', lastMessage: 'Thanks for the quick response!', time: 'Yesterday', unread: 5, status: 'busy', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100' },
+  { id: '1', name: 'Sarah Wilson', lastMessage: 'The integration is working perfectly!', time: new Date(), unread: 2, status: 'online', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' },
+  { id: '2', name: 'Alex Chen', lastMessage: 'Can we schedule a call for tomorrow?', time: new Date(Date.now() - 3600000), unread: 0, status: 'offline', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100' },
+  { id: '3', name: 'James Martin', lastMessage: 'I sent the documents to your email.', time: new Date(Date.now() - 86400000), unread: 0, status: 'online' },
+  { id: '4', name: 'Emily Davis', lastMessage: 'Thanks for the quick response!', time: new Date(Date.now() - 172800000), unread: 5, status: 'busy', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100' },
 ];
 
 const mockMessages = [
-  { id: '1', content: 'Hi there! I have a question about the enterprise plan.', senderId: 'user', timestamp: '10:20 AM', status: 'read' },
-  { id: '2', content: 'Hello! I\'d be happy to help. What specifically would you like to know?', senderId: 'me', timestamp: '10:21 AM', status: 'read' },
-  { id: '3', content: 'Does it include custom SSO integration?', senderId: 'user', timestamp: '10:22 AM', status: 'read' },
-  { id: '4', content: 'Yes, it does! We support SAML, OIDC, and most major providers.', senderId: 'me', timestamp: '10:23 AM', status: 'read' },
-  { id: '5', content: 'The integration is working perfectly!', senderId: 'user', timestamp: '10:24 AM', status: 'delivered' },
+  { id: '1', content: 'Hi there! I have a question about the enterprise plan.', senderId: 'user', timestamp: new Date(Date.now() - 500000), status: 'read' },
+  { id: '2', content: 'Hello! I\'d be happy to help. What specifically would you like to know?', senderId: 'me', timestamp: new Date(Date.now() - 400000), status: 'read' },
+  { id: '3', content: 'Does it include custom SSO integration?', senderId: 'user', timestamp: new Date(Date.now() - 300000), status: 'read' },
+  { id: '4', content: 'Yes, it does! We support SAML, OIDC, and most major providers.', senderId: 'me', timestamp: new Date(Date.now() - 200000), status: 'read' },
+  { id: '5', content: 'The integration is working perfectly!', senderId: 'user', timestamp: new Date(Date.now() - 100000), status: 'delivered' },
 ];
 
 const mockConversations = mockContacts.map(c => ({
@@ -126,7 +126,9 @@ export function Inbox() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <Text className="font-bold truncate">{contact.name}</Text>
-                      <Text className="text-[10px] text-gray-400">{contact.time}</Text>
+                      <Text className="text-[10px] text-gray-400">
+                        {contact.time instanceof Date ? contact.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : contact.time}
+                      </Text>
                     </div>
                     <Text className="text-xs text-gray-500 dark:text-white/30 truncate">{contact.lastMessage}</Text>
                   </div>

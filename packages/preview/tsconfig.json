@@ -9,5 +9,8 @@
       "@pixonui/react": ["../ui/src/index"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../ui" }
+  ]
 }

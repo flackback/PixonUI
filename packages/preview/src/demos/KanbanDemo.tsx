@@ -151,7 +151,7 @@ export function KanbanDemo() {
     setActiveTimerTaskId(prev => prev === taskId ? undefined : taskId);
   };
 
-  const handleTaskMove = (taskId: string, toColumnId: string, index?: number) => {
+  const handleTaskMove = (taskId: string, toColumnId: string, toTaskId?: string, position?: 'top' | 'bottom') => {
     setTasks(prev => {
       const newTasks = [...prev];
       const taskIndex = newTasks.findIndex(t => t.id === taskId);
@@ -162,21 +162,13 @@ export function KanbanDemo() {
         task.columnId = toColumnId;
       }
       
-      // Get tasks in the target column
-      const targetColumnTasks = newTasks.filter(t => t.columnId === toColumnId);
-      
-      // Find the actual index in the full array to insert
-      let insertIndex = newTasks.length;
-      if (typeof index === 'number') {
-        if (index < targetColumnTasks.length) {
-          const referenceTask = targetColumnTasks[index];
-          insertIndex = newTasks.findIndex(t => t.id === referenceTask?.id);
-        } else if (targetColumnTasks.length > 0) {
-          // Insert after the last task of the target column
-          const lastTask = targetColumnTasks[targetColumnTasks.length - 1];
-          insertIndex = newTasks.findIndex(t => t.id === lastTask?.id) + 1;
-        }
+      if (!toTaskId) {
+        newTasks.push(task!);
+        return newTasks;
       }
+
+      const targetIndex = newTasks.findIndex(t => t.id === toTaskId);
+      const insertIndex = position === 'bottom' ? targetIndex + 1 : targetIndex;
 
       if (task) {
         newTasks.splice(insertIndex, 0, task);
@@ -185,15 +177,18 @@ export function KanbanDemo() {
     });
   };
 
-  const handleColumnMove = (columnId: string, newIndex: number) => {
+  const handleColumnMove = (columnId: string, toColumnId: string, position?: 'left' | 'right') => {
     setColumns(prev => {
       const newCols = [...prev];
       const colIndex = newCols.findIndex(c => c.id === columnId);
-      if (colIndex === -1) return prev;
+      const targetIndex = newCols.findIndex(c => c.id === toColumnId);
+      if (colIndex === -1 || targetIndex === -1) return prev;
 
       const [col] = newCols.splice(colIndex, 1);
+      const insertIndex = position === 'right' ? targetIndex : targetIndex;
+
       if (col) {
-        newCols.splice(newIndex, 0, col);
+        newCols.splice(insertIndex, 0, col);
       }
       return newCols;
     });
