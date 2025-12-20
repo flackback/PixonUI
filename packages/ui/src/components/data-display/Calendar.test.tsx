@@ -16,12 +16,12 @@ describe('Calendar', () => {
 
     const buttons = screen.getAllByRole('button');
     
-    const prevBtn = buttons[0];
+    const prevBtn = buttons[0]!;
     fireEvent.click(prevBtn);
     expect(screen.getByText(/December/)).toBeInTheDocument();
     expect(screen.getByText(/2023/)).toBeInTheDocument();
     
-    const nextBtn = buttons[1]; // This might be the next button if it's the second one.
+    const nextBtn = buttons[1]!; // This might be the next button if it's the second one.
     // Wait, if we clicked prev, we are in Dec 2023.
     // Clicking next (which is the 2nd button) should go back to Jan 2024.
     fireEvent.click(nextBtn);
@@ -37,7 +37,7 @@ describe('Calendar', () => {
     fireEvent.click(screen.getByText('15'));
     
     expect(handleChange).toHaveBeenCalled();
-    const date = handleChange.mock.calls[0][0] as Date;
+    const date = handleChange.mock.calls[0]![0] as Date;
     expect(date.getDate()).toBe(15);
     expect(date.getMonth()).toBe(0); // Jan
     expect(date.getFullYear()).toBe(2024);

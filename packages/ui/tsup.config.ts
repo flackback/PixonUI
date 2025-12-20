@@ -11,4 +11,5 @@ export default defineConfig({
   external: ['react', 'react-dom'],
   treeshake: true,
   outDir: 'dist',
+  tsconfig: 'tsconfig.build.json',
 });

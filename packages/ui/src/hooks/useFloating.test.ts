@@ -5,7 +5,7 @@ import { useFloating } from './useFloating';
 describe('useFloating', () => {
   beforeEach(() => {
     // Mock ResizeObserver
-    global.ResizeObserver = vi.fn().mockImplementation(function(this: any) {
+    (globalThis as any).ResizeObserver = vi.fn().mockImplementation(function(this: any) {
       this.observe = vi.fn();
       this.unobserve = vi.fn();
       this.disconnect = vi.fn();

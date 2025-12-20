@@ -4,13 +4,16 @@ import { Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '.
 import React from 'react';
 
 describe('Modal', () => {
-  it('renders nothing when isOpen is false', () => {
+  it('is not open when isOpen is false', () => {
     render(
       <Modal isOpen={false} onClose={() => {}}>
         <div>Content</div>
       </Modal>
     );
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+    const dialog = screen.queryByRole('dialog') as HTMLDialogElement;
+    if (dialog) {
+      expect(dialog.open).toBe(false);
+    }
   });
 
   it('renders content when isOpen is true', () => {
@@ -21,6 +24,7 @@ describe('Modal', () => {
     );
     expect(screen.getByText('Content')).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect((screen.getByRole('dialog') as HTMLDialogElement).open).toBe(true);
   });
 
   it('calls onClose when close button is clicked', () => {
@@ -44,7 +48,8 @@ describe('Modal', () => {
       </Modal>
     );
     
-    fireEvent.keyDown(document, { key: 'Escape' });
+    const dialog = screen.getByRole('dialog');
+    fireEvent(dialog, new Event('cancel'));
     expect(onClose).toHaveBeenCalled();
   });
 

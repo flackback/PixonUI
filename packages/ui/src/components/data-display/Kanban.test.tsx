@@ -41,7 +41,7 @@ describe('Kanban', () => {
     );
     
     const removeButtons = screen.getAllByRole('button').filter(btn => btn.querySelector('svg.lucide-trash2'));
-    fireEvent.click(removeButtons[0]);
+    fireEvent.click(removeButtons[0]!);
     
     expect(onTaskRemove).toHaveBeenCalledWith('1');
   });
