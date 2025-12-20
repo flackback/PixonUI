@@ -11,11 +11,11 @@ export const Slot = React.forwardRef<HTMLElement, SlotProps>(
       return null;
     }
 
-    const childrenProps = children.props as any;
+    const child = children as React.ReactElement & { ref?: React.Ref<HTMLElement> };
 
-    return React.cloneElement(children, {
+    return React.cloneElement(child, {
       ...props,
-      ...childrenProps,
+      ...child.props,
       ref: (node: HTMLElement | null) => {
         // Handle forwardedRef
         if (typeof forwardedRef === 'function') {
@@ -25,15 +25,15 @@ export const Slot = React.forwardRef<HTMLElement, SlotProps>(
         }
 
         // Handle children's own ref
-        const { ref } = children as any;
+        const { ref } = child;
         if (typeof ref === 'function') {
           ref(node);
         } else if (ref && 'current' in ref) {
-          ref.current = node;
+          (ref as React.MutableRefObject<HTMLElement | null>).current = node;
         }
       },
-      className: cn(props.className, childrenProps.className),
-    } as any);
+      className: cn(props.className, child.props.className),
+    });
   }
 );
 
