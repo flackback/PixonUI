@@ -122,7 +122,7 @@ export function KanbanCalendarView({
                 </span>
                 <button 
                   onClick={() => onAddTask?.(date)}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded-md transition-all text-white/40 hover:text-white"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/[0.06] rounded-md transition-all text-white/40 hover:text-white"
                 >
                   <Plus className="h-3 w-3" />
                 </button>

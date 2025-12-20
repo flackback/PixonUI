@@ -96,7 +96,7 @@ export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>
         {icon && <span className={cn("flex h-4 w-4 items-center justify-center", active ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-white/60")}>{icon}</span>}
         <span className="flex-1 text-left">{children}</span>
         {badge && (
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-200 dark:bg-white/10 px-1.5 text-[10px] font-bold text-gray-900 dark:text-white">
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-200 dark:bg-white/[0.06] px-1.5 text-[10px] font-bold text-gray-900 dark:text-white">
             {badge}
           </span>
         )}

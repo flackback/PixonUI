@@ -140,7 +140,11 @@ export const KanbanColumnContent = ({
       )}
 
       {/* Tasks List */}
-      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4 min-h-0 pb-20">
+      <div 
+        role="list"
+        aria-label={`Tasks in ${column.title}`}
+        className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4 min-h-0 pb-20"
+      >
         {visibleTasks.map((task) => (
           <React.Fragment key={task.id}>
             {/* Task Ghost Placeholder TOP */}
@@ -150,6 +154,8 @@ export const KanbanColumnContent = ({
 
             <div
               draggable
+              role="listitem"
+              aria-label={`Task: ${task.title}`}
               onDragStart={(e) => handleDragStart(e, task.id, 'task')}
               onDragEnd={handleDragEnd}
               onDragOver={(e) => handleDragOver(e, column.id, task.id)}

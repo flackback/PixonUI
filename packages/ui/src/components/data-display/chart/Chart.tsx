@@ -171,7 +171,7 @@ export function ChartTooltip({
 
   // Simple default tooltip if none provided
   const content = renderTooltip ? renderTooltip(point) : (
-    <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white/90 dark:bg-black/80 px-3 py-2 text-xs shadow-xl backdrop-blur-md">
+    <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white/90 dark:bg-black/80 px-3 py-2 text-xs shadow-xl backdrop-blur-md">
       <div className="font-semibold text-gray-900 dark:text-white">{point.label}</div>
       <div className="text-gray-500 dark:text-white/70">Value: {point.value}</div>
     </div>
@@ -196,11 +196,11 @@ export function ChartTooltip({
 
 export function ChartSkeleton() {
   return (
-    <div className="w-full h-full flex items-end justify-between gap-2 p-4 animate-pulse bg-gray-100 dark:bg-white/[0.02] rounded-xl border border-gray-200 dark:border-white/5">
-      {[...Array(6)].map((_, i) => (
-        <div
-          key={i}
-          className="bg-gray-200 dark:bg-white/10 rounded-t-md w-full"
+    <div className="w-full h-full flex items-end justify-between gap-2 p-4 animate-pulse bg-gray-100 dark:bg-white/[0.02] rounded-2xl border border-gray-200 dark:border-white/5">
+      {[...Array(12)].map((_, i) => (
+        <div 
+          key={i} 
+          className="w-full bg-gray-200 dark:bg-white/[0.03] rounded-t-lg" 
           style={{ height: `${Math.random() * 60 + 20}%` }}
         />
       ))}

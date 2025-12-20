@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
 
 const separatorVariants = cva(
-  "shrink-0 bg-gray-200 dark:bg-white/10",
+  "shrink-0 bg-gray-200 dark:bg-white/[0.03]",
   {
     variants: {
       orientation: {

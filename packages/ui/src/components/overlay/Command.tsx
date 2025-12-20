@@ -11,7 +11,7 @@ export interface CommandDialogProps extends ComboboxProps {
 
 export function Command({ children, ...props }: ComboboxProps) {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-xl bg-white dark:bg-black/90 text-gray-900 dark:text-white">
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white dark:bg-black/90 text-gray-900 dark:text-white">
       <Combobox usePopover={false} {...props}>
         {children}
       </Combobox>
@@ -120,7 +120,7 @@ export function CommandItem({
   return (
     <ComboboxItem 
       className={cn(
-        "relative flex cursor-default select-none items-center rounded-xl px-2 py-1.5 text-sm outline-none text-gray-900 dark:text-white aria-selected:bg-gray-100 dark:aria-selected:bg-white/[0.06] aria-selected:text-gray-900 dark:aria-selected:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex cursor-default select-none items-center rounded-2xl px-2 py-1.5 text-sm outline-none text-gray-900 dark:text-white aria-selected:bg-gray-100 dark:aria-selected:bg-white/[0.06] aria-selected:text-gray-900 dark:aria-selected:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )} 
       {...props} 

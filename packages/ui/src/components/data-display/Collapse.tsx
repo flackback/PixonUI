@@ -41,7 +41,7 @@ export function Collapse({
   return (
     <div 
       className={cn(
-        'w-full overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-white/[0.02]',
+        'w-full overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-white/10 dark:bg-white/[0.02]',
         className
       )} 
       {...props}

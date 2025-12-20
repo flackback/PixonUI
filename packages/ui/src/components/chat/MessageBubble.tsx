@@ -94,7 +94,7 @@ export function MessageBubble({
                   key={att.id} 
                   src={att.url} 
                   alt="Attachment" 
-                  className="rounded-xl max-h-60 object-cover w-full"
+                  className="rounded-2xl max-h-60 object-cover w-full"
                 />
               ) : (
                 <div key={att.id} className="flex items-center gap-2 p-2 rounded bg-black/5 dark:bg-white/[0.06]">

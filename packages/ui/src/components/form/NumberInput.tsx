@@ -5,7 +5,7 @@ import { cn } from '../../utils/cn';
 import { Button } from '../button/Button';
 
 const numberInputVariants = cva(
-  "flex items-center rounded-2xl border bg-gray-50 dark:bg-white/5 dark:border-white/10",
+  "flex items-center rounded-2xl border bg-gray-50 dark:bg-white/[0.03] dark:border-white/10",
   {
     variants: {
       size: {
@@ -66,7 +66,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           <Minus className="h-3.5 w-3.5" />
         </button>
         
-        <div className="h-full w-px bg-gray-200 dark:bg-white/10" />
+        <div className="h-full w-px bg-gray-200 dark:bg-white/[0.06]" />
         
         <input
           ref={ref}
@@ -78,7 +78,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           {...props}
         />
         
-        <div className="h-full w-px bg-gray-200 dark:bg-white/10" />
+        <div className="h-full w-px bg-gray-200 dark:bg-white/[0.06]" />
         
         <button
           type="button"

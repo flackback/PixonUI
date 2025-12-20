@@ -9,9 +9,9 @@ export function Skeleton({ className, variant = 'default', ...props }: SkeletonP
   return (
     <div
       className={cn(
-        "animate-pulse bg-gray-200 dark:bg-white/10",
+        "animate-pulse bg-gray-200 dark:bg-white/[0.03]",
         variant === 'circle' && "rounded-full",
-        variant === 'default' && "rounded-xl",
+        variant === 'default' && "rounded-2xl",
         variant === 'text' && "rounded h-4 w-full",
         className
       )}

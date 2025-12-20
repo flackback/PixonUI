@@ -26,7 +26,7 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
         ref={ref as React.Ref<any>}
         className={cn(
           'leading-relaxed transition-colors duration-200',
-          code && 'font-mono bg-zinc-100 dark:bg-white/5 px-1.5 py-0.5 rounded text-[0.9em]',
+          code && 'font-mono bg-zinc-100 dark:bg-white/[0.03] px-1.5 py-0.5 rounded text-[0.9em]',
           {
             // Variants
             'text-zinc-900 dark:text-white': variant === 'default',

@@ -15,7 +15,7 @@ export const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(
           'overflow-auto',
           // Scrollbar base styles
           '[&::-webkit-scrollbar]:bg-transparent',
-          '[&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-white/10',
+          '[&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-white/[0.06]',
           '[&::-webkit-scrollbar-thumb]:rounded-full',
           'hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20',
           '[&::-webkit-scrollbar-track]:bg-transparent',

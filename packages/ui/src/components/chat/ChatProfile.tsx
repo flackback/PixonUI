@@ -40,7 +40,7 @@ export function ChatProfile({ user, onClose, className, ...props }: ChatProfileP
           <h3 className="text-xs font-semibold text-gray-500 dark:text-white/40 uppercase tracking-wider">Media & Docs</h3>
           <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="aspect-square rounded-xl bg-gray-100 dark:bg-white/[0.03] overflow-hidden relative group cursor-pointer">
+              <div key={i} className="aspect-square rounded-2xl bg-gray-100 dark:bg-white/[0.03] overflow-hidden relative group cursor-pointer">
                 <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                   <Image className="h-6 w-6" />
                 </div>

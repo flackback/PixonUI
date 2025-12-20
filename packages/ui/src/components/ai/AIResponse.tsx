@@ -106,7 +106,7 @@ export const AIResponse = React.forwardRef<HTMLDivElement, AIResponseProps>(
                   className={cn(
                     "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
                     "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
-                    "dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10"
+                    "dark:border-white/10 dark:bg-white/[0.03] dark:text-white/60 dark:hover:bg-white/[0.06]"
                   )}
                 >
                   <span className="max-w-[150px] truncate">{source.title}</span>

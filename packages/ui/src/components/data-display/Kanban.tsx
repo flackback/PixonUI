@@ -176,6 +176,8 @@ export function Kanban({
   return (
     <div 
       ref={boardRef}
+      role="list"
+      aria-label="Kanban Board"
       onMouseDown={handleBoardMouseDown}
       onMouseMove={handleBoardMouseMove}
       onMouseUp={handleBoardMouseUp}
@@ -196,6 +198,8 @@ export function Kanban({
           return (
             <div 
               key={column.id}
+              role="listitem"
+              aria-label={`Column: ${column.title}`}
               className={cn(
                 "flex-shrink-0 w-[480px] flex items-center justify-between px-8 py-6 group/header snap-start",
                 showDividers && idx > 0 && "border-l border-white/10"
@@ -255,7 +259,7 @@ export function Kanban({
                     
                     <DropdownMenuItem 
                       onClick={() => onColumnAction?.(column.id, 'settings')}
-                      className="gap-2.5 text-xs text-white/70 hover:text-white hover:bg-white/[0.03] rounded-xl py-2"
+                      className="gap-2.5 text-xs text-white/70 hover:text-white hover:bg-white/[0.03] rounded-2xl py-2"
                     >
                       <Settings className="h-4 w-4" /> Column Settings
                     </DropdownMenuItem>
@@ -269,7 +273,7 @@ export function Kanban({
                     <DropdownMenuItem 
                       onClick={() => setSortConfig({ field: 'title', direction: sortConfig?.field === 'title' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                       className={cn(
-                        "gap-2.5 text-xs hover:bg-white/[0.03] rounded-xl py-2",
+                        "gap-2.5 text-xs hover:bg-white/[0.03] rounded-2xl py-2",
                         sortConfig?.field === 'title' ? "text-cyan-400 bg-cyan-500/5" : "text-white/70 hover:text-white"
                       )}
                     >
@@ -282,7 +286,7 @@ export function Kanban({
                     <DropdownMenuItem 
                       onClick={() => setSortConfig({ field: 'priority', direction: sortConfig?.field === 'priority' && sortConfig.direction === 'desc' ? 'asc' : 'desc' })}
                       className={cn(
-                        "gap-2.5 text-xs hover:bg-white/[0.03] rounded-xl py-2",
+                        "gap-2.5 text-xs hover:bg-white/[0.03] rounded-2xl py-2",
                         sortConfig?.field === 'priority' ? "text-cyan-400 bg-cyan-500/5" : "text-white/70 hover:text-white"
                       )}
                     >
@@ -295,7 +299,7 @@ export function Kanban({
                     <DropdownMenuItem 
                       onClick={() => setSortConfig({ field: 'dueDate', direction: sortConfig?.field === 'dueDate' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                       className={cn(
-                        "gap-2.5 text-xs hover:bg-white/[0.03] rounded-xl py-2",
+                        "gap-2.5 text-xs hover:bg-white/[0.03] rounded-2xl py-2",
                         sortConfig?.field === 'dueDate' ? "text-cyan-400 bg-cyan-500/5" : "text-white/70 hover:text-white"
                       )}
                     >
@@ -307,11 +311,11 @@ export function Kanban({
 
                     <div className="h-px bg-white/[0.03] my-1.5" />
 
-                    <DropdownMenuItem className="gap-2.5 text-xs text-white/70 hover:text-white hover:bg-white/[0.03] rounded-xl py-2">
+                    <DropdownMenuItem className="gap-2.5 text-xs text-white/70 hover:text-white hover:bg-white/[0.03] rounded-2xl py-2">
                       <Archive className="h-4 w-4" /> Archive All Tasks
                     </DropdownMenuItem>
                     
-                    <DropdownMenuItem className="gap-2.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl py-2">
+                    <DropdownMenuItem className="gap-2.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-2xl py-2">
                       <Trash2 className="h-4 w-4" /> Delete Column
                     </DropdownMenuItem>
                   </DropdownMenuContent>

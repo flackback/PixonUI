@@ -52,7 +52,7 @@ export function TabsList({ className, children, ...props }: TabsListProps) {
     <div
       role="tablist"
       className={cn(
-        "inline-flex h-10 items-center justify-center rounded-xl bg-gray-100 p-1 text-gray-500 dark:bg-white/[0.03] dark:text-white/60",
+        "inline-flex h-10 items-center justify-center rounded-2xl bg-gray-100 p-1 text-gray-500 dark:bg-white/[0.03] dark:text-white/60",
         className
       )}
       {...props}
@@ -82,7 +82,7 @@ export function TabsTrigger({ className, value, children, ...props }: TabsTrigge
       id={`tabs-trigger-${value}`}
       onClick={() => context.onValueChange(value)}
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-zinc-950 dark:focus-visible:ring-white/20",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-2xl px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-zinc-950 dark:focus-visible:ring-white/20",
         isActive
           ? "bg-white text-gray-900 shadow-sm dark:bg-white/[0.06] dark:text-white dark:backdrop-blur-sm"
           : "hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-white/[0.03] dark:hover:text-white",

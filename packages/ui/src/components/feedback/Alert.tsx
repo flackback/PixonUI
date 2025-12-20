@@ -49,7 +49,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         ref={ref}
         role="alert"
         className={cn(
-          "relative w-full rounded-xl border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-gray-900 dark:[&>svg]:text-white",
+          "relative w-full rounded-2xl border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-gray-900 dark:[&>svg]:text-white",
           "bg-white dark:bg-[#0A0A0A]/50 backdrop-blur-md border-gray-200 dark:border-white/10 text-gray-900 dark:text-white",
           variant === 'error' && "border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-950/10 text-rose-900 dark:text-rose-50 [&>svg]:text-rose-600 dark:[&>svg]:text-rose-400",
           variant === 'success' && "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-900 dark:text-emerald-50 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400",

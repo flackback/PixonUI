@@ -110,13 +110,16 @@ export function Combobox({
 }
 
 export function ComboboxTrigger({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const context = useContext(ComboboxContext);
   return (
     <PopoverTrigger
+      role="combobox"
+      aria-expanded={context?.isOpen}
+      aria-haspopup="listbox"
       className={cn(
         "flex h-10 w-full items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-white/40 dark:focus:border-white/20 dark:focus:ring-white/10",
         className
       )}
-      {...props}
       {...props}
     >
       {children}
@@ -194,6 +197,8 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
         value={context.searchTerm}
         onChange={(e) => context.setSearchTerm(e.target.value)}
         onKeyDown={handleKeyDown}
+        aria-autocomplete="list"
+        aria-activedescendant={context.activeIndex !== -1 ? context.visibleItems[context.activeIndex]?.id : undefined}
         {...props}
       />
     </div>
@@ -202,7 +207,11 @@ export function ComboboxInput({ className, placeholder = "Search...", ...props }
 
 export function ComboboxList({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden p-1", className)} {...props}>
+    <div 
+      role="listbox"
+      className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden p-1", className)} 
+      {...props}
+    >
       {children}
     </div>
   );
@@ -247,15 +256,18 @@ export function ComboboxItem({ className, value, children, textValue, ...props }
 
   return (
     <div
+      id={id}
+      role="option"
+      aria-selected={isSelected}
       onClick={() => context.onValueChange(value)}
       onMouseEnter={() => context.setActiveIndex(itemIndex)}
       className={cn(
-        "relative flex cursor-default select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors",
+        "relative flex cursor-default select-none items-center rounded-2xl px-3 py-2 text-sm outline-none transition-colors",
         "text-gray-700 dark:text-white/80",
-        "aria-selected:bg-gray-100 aria-selected:text-gray-900 dark:aria-selected:bg-white/10 dark:aria-selected:text-white",
+        "aria-selected:bg-gray-100 aria-selected:text-gray-900 dark:aria-selected:bg-white/[0.06] dark:aria-selected:text-white",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white",
-        (isSelected || isActive) && "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white",
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/[0.06] dark:hover:text-white",
+        (isSelected || isActive) && "bg-gray-100 text-gray-900 dark:bg-white/[0.06] dark:text-white",
         className
       )}
       {...props}

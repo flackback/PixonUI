@@ -112,7 +112,7 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
             onChange={handleChange} 
           />
           
-          <div className="mb-4 rounded-full bg-gray-100 p-3 dark:bg-white/10">
+          <div className="mb-4 rounded-full bg-gray-100 p-3 dark:bg-white/[0.06]">
             <Upload className="h-6 w-6 text-gray-500 dark:text-white/70" />
           </div>
           <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -131,9 +131,9 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
         {files.length > 0 && (
           <div className="grid gap-2">
             {files.map((file, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+              <div key={i} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/[0.06]">
                     <FileIcon className="h-4 w-4 text-gray-500 dark:text-white/70" />
                   </div>
                   <div className="flex flex-col">
@@ -143,7 +143,7 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
                 </div>
                 <button 
                   onClick={(e) => removeFile(i, e)}
-                  className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-white/50"
+                  className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50"
                 >
                   <X className="h-4 w-4" />
                 </button>

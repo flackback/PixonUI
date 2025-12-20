@@ -124,7 +124,7 @@ export function ChatInput({
                 key={user.id}
                 onClick={() => insertMention(user)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left",
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-2xl transition-colors text-left",
                   idx === mentionIndex ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"
                 )}
               >

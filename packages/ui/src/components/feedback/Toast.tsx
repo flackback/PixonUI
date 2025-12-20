@@ -69,7 +69,7 @@ export const Toast = ({
     <div
       role="alert"
       className={cn(
-        "pointer-events-auto relative flex w-full max-w-sm items-start gap-4 overflow-hidden rounded-xl border p-4 shadow-lg transition-all",
+        "pointer-events-auto relative flex w-full max-w-sm items-start gap-4 overflow-hidden rounded-2xl border p-4 shadow-lg transition-all",
         "animate-in slide-in-from-right-full fade-in duration-300",
         "bg-white dark:bg-[#0A0A0A]/90 backdrop-blur-md border-gray-200 dark:border-white/10",
         variant === 'error' && "border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10",

@@ -5,7 +5,7 @@ import { Sparkles, Paperclip, ArrowUp, Square, Mic, X, File } from 'lucide-react
 import { Button } from '../button/Button';
 
 const aiPromptInputVariants = cva(
-  "relative flex w-full flex-col rounded-3xl border transition-all duration-200 focus-within:ring-4",
+  "relative flex w-full flex-col rounded-2xl border transition-all duration-200 focus-within:ring-4",
   {
     variants: {
       variant: {
@@ -164,9 +164,9 @@ export const AIPromptInput = React.forwardRef<HTMLTextAreaElement, AIPromptInput
             {attachments.map((att) => (
               <div 
                 key={att.id} 
-                className="group relative flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                className="group relative flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
               >
-                <div className="flex h-5 w-5 items-center justify-center rounded bg-white dark:bg-white/10">
+                <div className="flex h-5 w-5 items-center justify-center rounded-lg bg-white dark:bg-white/[0.06]">
                   <File className="h-3 w-3 text-purple-500" />
                 </div>
                 <span className="max-w-[120px] truncate text-gray-700 dark:text-gray-300">
@@ -174,7 +174,7 @@ export const AIPromptInput = React.forwardRef<HTMLTextAreaElement, AIPromptInput
                 </span>
                 <button 
                   onClick={() => onRemoveAttachment?.(att.id)}
-                  className="ml-1 rounded-full p-0.5 text-gray-400 opacity-0 transition-all hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100 dark:hover:bg-white/20 dark:hover:text-white"
+                  className="ml-1 rounded-full p-0.5 text-gray-400 opacity-0 transition-all hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100 dark:hover:bg-white/[0.06] dark:hover:text-white"
                   type="button"
                 >
                   <X className="h-3 w-3" />
@@ -246,7 +246,7 @@ export const AIPromptInput = React.forwardRef<HTMLTextAreaElement, AIPromptInput
                 "h-8 w-8 rounded-full transition-all duration-200",
                 (value.trim() || isGenerating)
                   ? "bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-500/25" 
-                  : "bg-gray-100 text-gray-400 dark:bg-white/10 dark:text-white/20"
+                  : "bg-gray-100 text-gray-400 dark:bg-white/[0.06] dark:text-white/20"
               )}
             >
               {isGenerating ? (

@@ -126,7 +126,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
                           "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
                           hours === i 
                             ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
-                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white"
                         )}
                       >
                         {i.toString().padStart(2, '0')}
@@ -134,7 +134,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
                     ))}
                   </div>
                 </ScrollArea>
-                <div className="w-[1px] bg-gray-200 dark:bg-white/10" />
+                <div className="w-[1px] bg-gray-200 dark:bg-white/[0.06]" />
                 <ScrollArea className="flex-1 flex flex-col gap-1" scrollbarSize="sm">
                   <div className="text-xs text-gray-400 dark:text-white/40 text-center mb-1 sticky top-0 bg-white dark:bg-[#0A0A0A] py-1 z-10">Min</div>
                   <div className="flex flex-col gap-1">
@@ -146,7 +146,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
                           "w-full rounded-lg px-1 py-1.5 text-sm transition-colors text-center shrink-0",
                           minutes === i 
                             ? "bg-emerald-500 dark:bg-emerald-600/80 text-white font-medium" 
-                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                            : "text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white"
                         )}
                       >
                         {i.toString().padStart(2, '0')}

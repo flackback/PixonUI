@@ -45,10 +45,11 @@ export function RadarChart<T = any>({
     let max = 0;
     data.forEach(d => {
       keys.forEach(k => {
-        if (d[k] > max) max = d[k];
+        const val = Number(d[k]) || 0;
+        if (val > max) max = val;
       });
     });
-    return max * 1.1;
+    return max * 1.1 || 100;
   }, [data, keys, userMaxValue]);
 
   const angleSlice = (Math.PI * 2) / data.length;
@@ -135,7 +136,7 @@ export function RadarChart<T = any>({
         {/* Data Polygons */}
         {keys.map((key, kIndex) => {
           const points = data.map((d, i) => {
-            const value = d[key] || 0;
+            const value = Number(d[key]) || 0;
             const r = (value / maxValue) * radius;
             const angle = angleSlice * i - Math.PI / 2;
             return `${center.x + Math.cos(angle) * r},${center.y + Math.sin(angle) * r}`;
@@ -147,7 +148,7 @@ export function RadarChart<T = any>({
 
           return (
             <polygon
-              key={key}
+              key={key as string}
               points={points}
               fill={fill}
               fillOpacity={0.3}

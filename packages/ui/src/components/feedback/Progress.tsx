@@ -50,7 +50,7 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
         aria-valuemax={max}
         aria-valuenow={isIndeterminate ? undefined : value}
         className={cn(
-          "relative w-full overflow-hidden rounded-full bg-gray-200 dark:bg-white/5 border border-gray-200 dark:border-white/5 backdrop-blur-sm",
+          "relative w-full overflow-hidden rounded-full bg-gray-200 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 backdrop-blur-sm",
           sizes[size],
           className
         )}

@@ -44,7 +44,7 @@ export function PageLoader({
     return (
       <div className={cn(baseStyles, className)} {...props}>
         <div className="flex flex-col items-center gap-4">
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-white/10 shadow-lg ring-1 ring-black/5">
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-white/[0.06] shadow-lg ring-1 ring-black/5">
             <div className="absolute inset-0 rounded-full animate-ping bg-blue-500/20" />
             <div className="h-8 w-8 rounded bg-blue-500" />
           </div>

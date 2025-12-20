@@ -31,7 +31,7 @@ const TreeNodeItem = ({ node, depth = 0, onSelect }: { node: TreeNode; depth?: n
     <div>
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5 cursor-pointer",
+          "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.03] cursor-pointer",
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onClick={handleToggle}

@@ -33,7 +33,7 @@ export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
       <div ref={ref} className={cn(timelineItemVariants({ status, className }))} {...props}>
         {/* Line */}
         {!isLast && (
-          <div className="absolute left-[11px] top-[24px] bottom-0 w-px bg-gray-200 dark:bg-white/10" />
+          <div className="absolute left-[11px] top-[24px] bottom-0 w-px bg-gray-200 dark:bg-white/[0.06]" />
         )}
         
         {/* Dot / Icon */}

@@ -119,7 +119,7 @@ export function KanbanTaskModal({ isOpen, onClose, onSave, task, columnId }: Kan
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {tags.map(tag => (
-                <span key={tag} className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/70">
+                <span key={tag} className="flex items-center gap-1 px-2 py-1 rounded-2xl bg-white/[0.03] border border-white/10 text-xs text-white/70">
                   {tag}
                   <X size={12} className="cursor-pointer hover:text-white" onClick={() => removeTag(tag)} />
                 </span>

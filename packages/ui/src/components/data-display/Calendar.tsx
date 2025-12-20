@@ -79,10 +79,10 @@ export function Calendar({ className, value, onChange, minDate, maxDate }: Calen
           onClick={() => handleDateClick(day)}
           type="button"
           className={cn(
-            "h-9 w-9 rounded-xl text-sm font-medium transition-all duration-200",
-            "hover:bg-gray-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/20",
+            "h-9 w-9 rounded-2xl text-sm font-medium transition-all duration-200",
+            "hover:bg-gray-100 dark:hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/20",
             selected && "bg-gray-900 text-white dark:bg-white dark:text-black shadow-md dark:shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:bg-gray-800 dark:hover:bg-white/90",
-            !selected && today && "bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10",
+            !selected && today && "bg-gray-100 dark:bg-white/[0.03] text-gray-900 dark:text-white border border-gray-200 dark:border-white/10",
             !selected && !today && "text-gray-700 dark:text-white/70 hover:text-gray-900 dark:hover:text-white"
           )}
         >
@@ -104,14 +104,14 @@ export function Calendar({ className, value, onChange, minDate, maxDate }: Calen
           <button
             onClick={handlePrevMonth}
             type="button"
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={handleNextMonth}
             type="button"
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
