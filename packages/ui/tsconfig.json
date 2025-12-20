@@ -8,7 +8,7 @@
     "emitDeclarationOnly": false,
     "noEmitOnError": true,
 
-    "types": ["react"]
+    "types": ["react", "vitest/globals", "node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
