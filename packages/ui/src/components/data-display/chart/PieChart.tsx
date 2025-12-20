@@ -1,21 +1,23 @@
 import React, { useMemo } from 'react';
-import { useChart } from './Chart';
+import { useChart, ChartDataPoint } from './Chart';
 import { cn } from '../../../utils/cn';
 
-export interface PieChartProps {
+export interface PieChartProps<T = any> {
   innerRadius?: number; // 0 for Pie, >0 for Donut (0-1 relative to radius, or absolute pixels?) Let's say 0-1 relative.
   padAngle?: number;
   showLabels?: boolean;
   colors?: string[];
+  onValueClick?: (data: ChartDataPoint<T>) => void;
 }
 
-export function PieChart({ 
+export function PieChart<T = any>({ 
   innerRadius = 0, 
   padAngle = 0.02, 
   showLabels = false,
-  colors = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#3b82f6', '#ec4899']
-}: PieChartProps) {
-  const { width, height, data, setHoveredIndex, hoveredIndex } = useChart();
+  colors = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#3b82f6', '#ec4899'],
+  onValueClick
+}: PieChartProps<T>) {
+  const { width, height, data, setHoveredIndex, hoveredIndex } = useChart<T>();
   
   const radius = Math.min(width, height) / 2 * 0.8; // 80% of half-size to leave room for labels/hover
   const centerX = width / 2;

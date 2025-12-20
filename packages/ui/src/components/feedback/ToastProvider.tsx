@@ -66,7 +66,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         const errorOptions = typeof options.error === 'function'
           ? options.error(err)
           : typeof options.error === 'string'
-          ? { title: options.error, variant: 'danger' as const }
+          ? { title: options.error, variant: 'error' as const }
           : options.error;
 
         updateToast(id, { ...errorOptions, duration: 5000 });

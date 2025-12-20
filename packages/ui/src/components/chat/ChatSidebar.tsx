@@ -27,7 +27,7 @@ export function ChatSidebar({
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Messages</h2>
           <button 
             onClick={onNewChat}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-white/60 transition-colors"
+            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -38,7 +38,7 @@ export function ChatSidebar({
           <input 
             type="text" 
             placeholder="Search messages..." 
-            className="w-full h-10 pl-9 pr-4 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-gray-400"
+            className="w-full h-10 pl-9 pr-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-gray-400"
           />
         </div>
       </div>
@@ -50,10 +50,10 @@ export function ChatSidebar({
               key={chat.id}
               onClick={() => onSelect?.(chat.id)}
               className={cn(
-                "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
+                "w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left group",
                 activeId === chat.id 
-                  ? "bg-blue-500/10 dark:bg-white/10 shadow-[0_0_15px_rgba(59,130,246,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.05)]" 
-                  : "hover:bg-gray-100 dark:hover:bg-white/5"
+                  ? "bg-blue-500/10 dark:bg-white/[0.06] shadow-[0_0_15px_rgba(59,130,246,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.05)]" 
+                  : "hover:bg-gray-100 dark:hover:bg-white/[0.03]"
               )}
             >
               <div className="relative">

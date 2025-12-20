@@ -16,7 +16,7 @@ export function ChatProfile({ user, onClose, className, ...props }: ChatProfileP
   return (
     <div className={cn("w-80 border-l border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 flex flex-col", className)} {...props}>
       <div className="h-16 flex items-center px-4 border-b border-gray-200 dark:border-white/10">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10">
+        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06]">
           <X className="h-5 w-5 text-gray-500" />
         </button>
         <span className="ml-2 font-semibold text-gray-900 dark:text-white">Contact Info</span>
@@ -40,7 +40,7 @@ export function ChatProfile({ user, onClose, className, ...props }: ChatProfileP
           <h3 className="text-xs font-semibold text-gray-500 dark:text-white/40 uppercase tracking-wider">Media & Docs</h3>
           <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="aspect-square rounded-lg bg-gray-100 dark:bg-white/5 overflow-hidden relative group cursor-pointer">
+              <div key={i} className="aspect-square rounded-xl bg-gray-100 dark:bg-white/[0.03] overflow-hidden relative group cursor-pointer">
                 <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                   <Image className="h-6 w-6" />
                 </div>
@@ -65,11 +65,11 @@ export function ChatProfile({ user, onClose, className, ...props }: ChatProfileP
         <Separator />
 
         <div className="p-4 space-y-2">
-          <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors text-sm font-medium">
+          <button className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors text-sm font-medium">
             <Ban className="h-5 w-5" />
             Block {user.name}
           </button>
-          <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors text-sm font-medium">
+          <button className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors text-sm font-medium">
             <Trash2 className="h-5 w-5" />
             Delete Chat
           </button>

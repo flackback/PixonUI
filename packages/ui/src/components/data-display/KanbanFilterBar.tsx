@@ -59,7 +59,7 @@ export function KanbanFilterBar({
         <input 
           type="text"
           placeholder="Search tasks..."
-          className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-white/10 bg-white/5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all placeholder:text-white/20"
+          className="w-full pl-10 pr-4 py-2 text-sm rounded-2xl border border-white/10 bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all placeholder:text-white/20"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -93,7 +93,7 @@ export function KanbanFilterBar({
             className="h-9 px-3 text-xs text-white/40 hover:text-white gap-2"
           >
             <X className="h-3.5 w-3.5" /> Clear Filters
-            <Badge variant="neutral" className="bg-white/10 border-white/10 ml-1">
+            <Badge variant="neutral" className="bg-white/[0.06] border-white/10 ml-1">
               {activeCount}
             </Badge>
           </Button>
@@ -113,7 +113,7 @@ function FilterPopover({ label, options, selected, onSelect }: {
     <Popover>
       <PopoverTrigger 
         className={cn(
-          "h-9 px-3 text-xs gap-2 border border-transparent hover:border-white/10 rounded-xl transition-all",
+          "h-9 px-3 text-xs gap-2 border border-transparent hover:border-white/10 rounded-2xl transition-all",
           selected.length > 0 ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" : "text-white/60"
         )}
       >

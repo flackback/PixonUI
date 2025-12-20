@@ -81,7 +81,7 @@ export function Navbar({
             </div>
             
             <button
-              className="md:hidden p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+              className="md:hidden p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.03] rounded-xl transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -103,7 +103,7 @@ export function Navbar({
               <a
                 key={link.label}
                 href={link.href}
-                className="text-base font-medium px-4 py-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-all"
+                className="text-base font-medium px-4 py-2 rounded-2xl hover:bg-zinc-100 dark:hover:bg-white/[0.03] text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-all"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.label}

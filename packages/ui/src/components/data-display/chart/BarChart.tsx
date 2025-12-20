@@ -1,21 +1,21 @@
 import React from 'react';
-import { useChart, normalize } from './Chart';
+import { useChart, normalize, ChartDataPoint } from './Chart';
 import { cn } from '../../../utils/cn';
 
-export interface BarChartProps {
+export interface BarChartProps<T = any> {
   color?: 'cyan' | 'purple' | 'emerald' | 'amber' | 'rose';
   showValues?: boolean;
   animationDelay?: number;
-  onValueClick?: (data: any) => void;
+  onValueClick?: (data: ChartDataPoint<T>) => void;
 }
 
-export function BarChart({ 
+export function BarChart<T = any>({ 
   color = 'cyan', 
   showValues = false, 
   animationDelay = 0,
   onValueClick 
-}: BarChartProps) {
-  const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart();
+}: BarChartProps<T>) {
+  const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const itemWidth = chartWidth / data.length;

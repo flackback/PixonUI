@@ -33,7 +33,7 @@ export function UserMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={cn("w-full outline-none", className)}>
-        <div className="group flex w-full items-center gap-3 rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-white/5 p-3 transition-colors hover:bg-gray-50 dark:hover:bg-white/10">
+        <div className="group flex w-full items-center gap-3 rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-white/[0.03] p-3 transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.06]">
           <Avatar src={avatarSrc} fallback={avatarFallback || name.charAt(0)} size="sm" />
           <div className="flex flex-1 flex-col items-start text-left">
             <span className="text-xs font-medium text-gray-900 dark:text-white">{name}</span>

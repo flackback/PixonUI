@@ -2,16 +2,15 @@ import React, { createContext, useContext, useState, useMemo } from 'react';
 import { cn } from '../../../utils/cn';
 
 // --- Types ---
-export interface ChartDataPoint {
+export type ChartDataPoint<T = Record<string, any>> = {
   label: string;
   value: number;
-  [key: string]: any;
-}
+} & T;
 
-export interface ChartContextValue {
+export interface ChartContextValue<T = any> {
   width: number;
   height: number;
-  data: ChartDataPoint[];
+  data: ChartDataPoint<T>[];
   maxValue: number;
   padding: { top: number; right: number; bottom: number; left: number };
   hoveredIndex: number | null;
@@ -19,12 +18,12 @@ export interface ChartContextValue {
 }
 
 // --- Context ---
-const ChartContext = createContext<ChartContextValue | undefined>(undefined);
+const ChartContext = createContext<ChartContextValue<any> | undefined>(undefined);
 
-export function useChart() {
+export function useChart<T = any>() {
   const context = useContext(ChartContext);
   if (!context) throw new Error('Chart components must be used within a ChartContainer');
-  return context;
+  return context as ChartContextValue<T>;
 }
 
 // --- Utils ---
@@ -35,21 +34,21 @@ export function normalize(value: number, max: number, height: number) {
 
 // --- Components ---
 
-export interface ChartContainerProps extends React.HTMLAttributes<HTMLDivElement> {
-  data: ChartDataPoint[];
+export interface ChartContainerProps<T = any> extends React.HTMLAttributes<HTMLDivElement> {
+  data: ChartDataPoint<T>[];
   height?: number;
   padding?: { top: number; right: number; bottom: number; left: number };
   children: React.ReactNode;
 }
 
-export function ChartContainer({
+export function ChartContainer<T = any>({
   data,
   height = 300,
   padding = { top: 20, right: 20, bottom: 40, left: 40 },
   className,
   children,
   ...props
-}: ChartContainerProps) {
+}: ChartContainerProps<T>) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);

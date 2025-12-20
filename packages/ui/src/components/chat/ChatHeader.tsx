@@ -21,7 +21,7 @@ export function ChatHeader({ user, onBack, onInfo, className, ...props }: ChatHe
     >
       <div className="flex items-center gap-3">
         {onBack && (
-          <button onClick={onBack} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10">
+          <button onClick={onBack} className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06]">
             <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-white/70" />
           </button>
         )}
@@ -42,15 +42,15 @@ export function ChatHeader({ user, onBack, onInfo, className, ...props }: ChatHe
       </div>
 
       <div className="flex items-center gap-1">
-        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-white/60 transition-colors">
+        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors">
           <Phone className="h-5 w-5" />
         </button>
-        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-white/60 transition-colors">
+        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors">
           <Video className="h-5 w-5" />
         </button>
         <button 
           onClick={onInfo}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-white/60 transition-colors"
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
         >
           <MoreVertical className="h-5 w-5" />
         </button>

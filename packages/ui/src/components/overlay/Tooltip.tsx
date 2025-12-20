@@ -74,7 +74,7 @@ export function Tooltip({
             left: floatingPosition.left,
           }}
           className={cn(
-            "fixed z-[100] min-w-max max-w-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 px-3 py-1.5 text-xs text-gray-900 dark:text-white shadow-xl backdrop-blur-md",
+            "fixed z-[100] min-w-max max-w-xs rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 px-3 py-1.5 text-xs text-gray-900 dark:text-white shadow-xl backdrop-blur-md",
             "duration-200",
             isPositioned ? "animate-in fade-in opacity-100" : "opacity-0",
             animationClasses[position],

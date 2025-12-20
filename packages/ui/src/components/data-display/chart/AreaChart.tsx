@@ -1,21 +1,21 @@
 import React from 'react';
-import { useChart, normalize } from './Chart';
+import { useChart, normalize, ChartDataPoint } from './Chart';
 import { cn } from '../../../utils/cn';
 
-export interface AreaChartProps {
+export interface AreaChartProps<T = any> {
   color?: 'cyan' | 'purple' | 'emerald' | 'amber' | 'rose';
   showValues?: boolean;
   animationDelay?: number;
-  onValueClick?: (data: any) => void;
+  onValueClick?: (data: ChartDataPoint<T>) => void;
 }
 
-export function AreaChart({ 
+export function AreaChart<T = any>({ 
   color = 'purple', 
   showValues = false, 
   animationDelay = 0,
   onValueClick 
-}: AreaChartProps) {
-  const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart();
+}: AreaChartProps<T>) {
+  const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const itemWidth = chartWidth / (data.length - 1); // Points are on edges
@@ -34,7 +34,7 @@ export function AreaChart({
   const points = data.map((point, i) => {
     const x = padding.left + itemWidth * i;
     const y = height - padding.bottom - normalize(point.value, maxValue, chartHeight);
-    return { x, y };
+    return { x, y, item: point };
   });
 
   // Simple Line Path
@@ -82,7 +82,7 @@ export function AreaChart({
             key={i} 
             onMouseEnter={() => setHoveredIndex(i)}
             onMouseLeave={() => setHoveredIndex(null)}
-            onClick={() => onValueClick?.(data[i])}
+            onClick={() => onValueClick?.(p.item)}
             className={cn("cursor-crosshair", onValueClick && "cursor-pointer")}
         >
             {/* Invisible Hit Area */}

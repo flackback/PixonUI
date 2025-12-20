@@ -43,9 +43,10 @@ import {
 
 interface LandingPageProps {
   onEnterGallery: () => void;
+  onEnterSaaS: () => void;
 }
 
-export function LandingPage({ onEnterGallery }: LandingPageProps) {
+export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -132,12 +133,18 @@ export function LandingPage({ onEnterGallery }: LandingPageProps) {
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   <Magnetic strength={0.3}>
                     <GlowButton className="px-10 h-16 text-xl" onClick={onEnterGallery}>
-                      Get Started <ArrowRight className="ml-2 h-6 w-6" />
+                      Explore Components <ArrowRight className="ml-2 h-6 w-6" />
                     </GlowButton>
                   </Magnetic>
                   <Magnetic strength={0.2}>
-                    <Button variant="outline" size="lg" className="px-10 h-16 text-xl border-white/10 bg-white/5 hover:bg-white/10">
-                      Documentation
+                    <Button 
+                      variant="outline" 
+                      size="lg" 
+                      className="px-10 h-16 text-xl border-white/10 bg-white/5 hover:bg-white/10"
+                      onClick={onEnterSaaS}
+                    >
+                      <Rocket className="mr-2 h-6 w-6 text-cyan-500" />
+                      View SaaS Demo
                     </Button>
                   </Magnetic>
                 </div>

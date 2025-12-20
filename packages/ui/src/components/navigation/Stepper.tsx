@@ -44,7 +44,7 @@ export const Stepper = ({ steps, currentStep, className, onStepClick }: StepperP
                 {index < steps.length - 1 && (
                   <div 
                     className={cn(
-                      "ml-4 h-px flex-1 bg-gray-200 md:hidden dark:bg-white/10",
+                      "ml-4 h-px flex-1 bg-gray-200 md:hidden dark:bg-white/[0.03]",
                       isCompleted && "bg-blue-600 dark:bg-blue-500"
                     )} 
                   />
@@ -70,7 +70,7 @@ export const Stepper = ({ steps, currentStep, className, onStepClick }: StepperP
             {index < steps.length - 1 && (
               <div 
                 className={cn(
-                  "hidden h-px flex-1 bg-gray-200 md:block dark:bg-white/10",
+                  "hidden h-px flex-1 bg-gray-200 md:block dark:bg-white/[0.03]",
                   isCompleted && "bg-blue-600 dark:bg-blue-500"
                 )} 
               />

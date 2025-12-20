@@ -124,8 +124,8 @@ export function ChatInput({
                 key={user.id}
                 onClick={() => insertMention(user)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
-                  idx === mentionIndex ? "bg-white/10" : "hover:bg-white/5"
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left",
+                  idx === mentionIndex ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"
                 )}
               >
                 <Avatar src={user.avatar} alt={user.name} size="sm" />
@@ -134,7 +134,7 @@ export function ChatInput({
                   <div className="text-xs text-white/40 truncate">@{user.name.toLowerCase().replace(/\s/g, '')}</div>
                 </div>
                 {idx === mentionIndex && (
-                  <div className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60">Enter</div>
+                  <div className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">Enter</div>
                 )}
               </button>
             ))}
@@ -144,7 +144,7 @@ export function ChatInput({
 
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
         <div className="flex gap-1 mb-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-white/40 hover:text-white" onClick={handleAttachClick} disabled={isUploading}>
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-2xl text-white/40 hover:text-white" onClick={handleAttachClick} disabled={isUploading}>
             <Paperclip className={cn("w-5 h-5", isUploading && "animate-pulse text-blue-500")} />
           </Button>
         </div>
@@ -173,12 +173,12 @@ export function ChatInput({
           {content.trim() ? (
             <Button 
               onClick={handleSend}
-              className="h-9 w-9 rounded-xl bg-white text-black hover:bg-white/90 p-0"
+              className="h-9 w-9 rounded-2xl bg-white text-black hover:bg-white/90 p-0"
             >
               <Send className="w-4 h-4" />
             </Button>
           ) : (
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-white/40 hover:text-white">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-2xl text-white/40 hover:text-white">
               <Mic className="w-5 h-5" />
             </Button>
           )}

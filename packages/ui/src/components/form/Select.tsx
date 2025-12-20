@@ -171,10 +171,10 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                   onClick={() => handleSelect(option.value)}
                   onMouseEnter={() => setActiveIndex(index)}
                   className={cn(
-                    'w-full rounded-xl px-3 py-2 text-left text-sm transition-colors cursor-pointer',
-                    'hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white',
+                    'w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors cursor-pointer',
+                    'hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white',
                     (currentValue === option.value || activeIndex === index)
-                      ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white/90' 
+                      ? 'bg-gray-100 dark:bg-white/[0.06] text-gray-900 dark:text-white/90' 
                       : 'text-gray-700 dark:text-white/80'
                   )}
                 >

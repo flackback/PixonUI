@@ -63,7 +63,7 @@ export function MessageList({
     return (
       <div className={cn("flex-1 flex items-center justify-center p-8 text-center text-gray-500 dark:text-white/40", className)} {...props}>
         <div className="max-w-sm space-y-4">
-          <div className="w-24 h-24 bg-blue-500/10 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+          <div className="w-24 h-24 bg-blue-500/10 dark:bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
             <MessageSquare className="h-12 w-12 text-blue-500" />
           </div>
           <h3 className="text-xl font-medium text-gray-900 dark:text-white">No messages yet</h3>
@@ -104,7 +104,7 @@ export function MessageList({
         {Object.entries(groupedMessages).map(([date, msgs]) => (
           <div key={date} className="space-y-4">
             <div className="flex justify-center sticky top-0 z-10 py-2">
-              <span className="px-3 py-1 rounded-full bg-gray-100/80 dark:bg-white/5 text-[10px] uppercase tracking-wider font-bold text-gray-500 dark:text-white/40 backdrop-blur-md border border-white/5 shadow-sm">
+              <span className="px-3 py-1 rounded-full bg-gray-100/80 dark:bg-white/[0.03] text-[10px] uppercase tracking-wider font-bold text-gray-500 dark:text-white/40 backdrop-blur-md border border-white/5 shadow-sm">
                 {date}
               </span>
             </div>

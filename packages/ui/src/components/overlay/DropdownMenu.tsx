@@ -184,10 +184,10 @@ export function DropdownMenuItem({ className, children, ...props }: DropdownMenu
       role="menuitem"
       onClick={handleClick}
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors",
+        "relative flex w-full cursor-pointer select-none items-center rounded-2xl px-3 py-2 text-sm outline-none transition-colors",
         "text-gray-700 dark:text-white/80",
-        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white",
-        "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-white/10 dark:focus:text-white",
+        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/[0.06] dark:hover:text-white",
+        "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-white/[0.06] dark:focus:text-white",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}
@@ -208,6 +208,6 @@ export function DropdownMenuLabel({ className, children, ...props }: React.HTMLA
 
 export function DropdownMenuSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("-mx-1 my-1 h-px bg-gray-200 dark:bg-white/10", className)} {...props} />
+    <div className={cn("-mx-1 my-1 h-px bg-gray-200 dark:bg-white/[0.03]", className)} {...props} />
   );
 }

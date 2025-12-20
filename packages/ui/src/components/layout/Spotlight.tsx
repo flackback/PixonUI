@@ -42,7 +42,7 @@ export const Spotlight = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "relative overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-black",
+        "relative overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-white/10 dark:bg-black",
         className
       )}
       {...props}

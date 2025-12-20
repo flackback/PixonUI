@@ -44,9 +44,9 @@ const PaginationLink = ({
   <a
     aria-current={isActive ? "page" : undefined}
     className={cn(
-      "inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-colors",
-      "hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white",
-      isActive ? "bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white" : "text-gray-500 dark:text-white/60",
+      "inline-flex h-9 w-9 items-center justify-center rounded-2xl text-sm font-medium transition-colors",
+      "hover:bg-gray-100 dark:hover:bg-white/[0.03] hover:text-gray-900 dark:hover:text-white",
+      isActive ? "bg-gray-100 text-gray-900 dark:bg-white/[0.06] dark:text-white" : "text-gray-500 dark:text-white/60",
       className
     )}
     {...props}

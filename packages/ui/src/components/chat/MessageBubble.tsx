@@ -47,7 +47,7 @@ export function MessageBubble({
         isOwn ? "left-0 -translate-x-full pr-2" : "right-0 translate-x-full pl-2"
       )}>
         <DropdownMenu>
-          <DropdownMenuTrigger className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400">
+          <DropdownMenuTrigger className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400">
             <MoreHorizontal className="h-4 w-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align={isOwn ? "end" : "start"}>
@@ -73,13 +73,13 @@ export function MessageBubble({
         "relative max-w-[70%] px-4 py-2 rounded-2xl shadow-sm transition-all",
         isOwn 
           ? "bg-blue-600 text-white rounded-tr-sm" 
-          : "bg-white dark:bg-white/10 text-gray-900 dark:text-white rounded-tl-sm border border-gray-200 dark:border-transparent"
+          : "bg-white dark:bg-white/[0.06] text-gray-900 dark:text-white rounded-tl-sm border border-gray-200 dark:border-transparent"
       )}>
         {/* Reply Context */}
         {message.replyToId && (
           <div className={cn(
             "mb-2 rounded px-2 py-1 text-xs border-l-2 opacity-80",
-            isOwn ? "bg-white/10 border-white/50" : "bg-gray-100 dark:bg-black/20 border-blue-500"
+            isOwn ? "bg-white/[0.06] border-white/50" : "bg-gray-100 dark:bg-black/20 border-blue-500"
           )}>
             Replying to message...
           </div>
@@ -94,10 +94,10 @@ export function MessageBubble({
                   key={att.id} 
                   src={att.url} 
                   alt="Attachment" 
-                  className="rounded-lg max-h-60 object-cover w-full"
+                  className="rounded-xl max-h-60 object-cover w-full"
                 />
               ) : (
-                <div key={att.id} className="flex items-center gap-2 p-2 rounded bg-black/5 dark:bg-white/10">
+                <div key={att.id} className="flex items-center gap-2 p-2 rounded bg-black/5 dark:bg-white/[0.06]">
                   <div className="h-8 w-8 bg-gray-200 dark:bg-white/20 rounded flex items-center justify-center text-xs font-bold">
                     FILE
                   </div>

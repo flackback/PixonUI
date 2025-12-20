@@ -1,6 +1,22 @@
 {
   "name": "@pixonui/react",
   "version": "0.1.0",
+  "description": "Modern, decoupled, glassmorphic UI library for React with zero heavy dependencies.",
+  "author": "PixonUI Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pixonui/pixonui.git"
+  },
+  "keywords": [
+    "react",
+    "ui",
+    "components",
+    "glassmorphism",
+    "tailwind",
+    "design-system"
+  ],
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -13,7 +29,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"
@@ -22,7 +39,8 @@
     "build": "tsup",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "react": "^18.0.0",

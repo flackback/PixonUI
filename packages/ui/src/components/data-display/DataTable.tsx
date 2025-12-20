@@ -118,7 +118,7 @@ export function DataTable<T extends Record<string, unknown>>({
             <TableRow 
               key={idx} 
               onClick={() => onRowClick?.(item)}
-              className={cn(onRowClick && "cursor-pointer hover:bg-white/5 transition-colors group")}
+              className={cn(onRowClick && "cursor-pointer hover:bg-white/[0.03] transition-colors group")}
             >
               {columns.map((col) => (
                 <TableCell key={String(col.key)} className={col.className}>

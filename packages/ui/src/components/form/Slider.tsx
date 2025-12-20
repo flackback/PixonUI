@@ -131,7 +131,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       >
         <div
           ref={trackRef}
-          className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-gray-200 dark:bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-white/5"
+          className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-gray-200 dark:bg-white/[0.06] backdrop-blur-sm border border-gray-200 dark:border-white/5"
         >
           <div
             className="absolute h-full bg-gray-900 dark:bg-white transition-none dark:shadow-[0_0_10px_rgba(255,255,255,0.5)]"

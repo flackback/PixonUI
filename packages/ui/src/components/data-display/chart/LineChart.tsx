@@ -1,18 +1,18 @@
 import React from 'react';
-import { useChart, normalize } from './Chart';
+import { useChart, normalize, ChartDataPoint } from './Chart';
 import { cn } from '../../../utils/cn';
 
-export interface LineChartProps {
+export interface LineChartProps<T = any> {
   color?: 'cyan' | 'purple' | 'emerald' | 'amber' | 'rose';
   showValues?: boolean;
   animationDelay?: number;
   curve?: 'linear' | 'smooth' | 'step';
   strokeWidth?: number;
   align?: 'center' | 'edge';
-  onValueClick?: (data: any) => void;
+  onValueClick?: (data: ChartDataPoint<T>) => void;
 }
 
-export function LineChart({ 
+export function LineChart<T = any>({ 
   color = 'cyan', 
   showValues = false, 
   animationDelay = 0,
@@ -20,8 +20,8 @@ export function LineChart({
   strokeWidth = 3,
   align = 'edge',
   onValueClick 
-}: LineChartProps) {
-  const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart();
+}: LineChartProps<T>) {
+  const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   
@@ -52,7 +52,7 @@ export function LineChart({
     }
     
     const y = height - padding.bottom - normalize(point.value, maxValue, chartHeight);
-    return { x, y };
+    return { x, y, item: point };
   });
 
   // Generate Path Command
@@ -115,7 +115,7 @@ export function LineChart({
             key={i} 
             onMouseEnter={() => setHoveredIndex(i)}
             onMouseLeave={() => setHoveredIndex(null)}
-            onClick={() => onValueClick?.(data[i])}
+            onClick={() => onValueClick?.(p.item)}
             className={cn("cursor-crosshair", onValueClick && "cursor-pointer")}
         >
             {/* Invisible Hit Area */}

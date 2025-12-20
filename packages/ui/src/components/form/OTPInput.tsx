@@ -96,10 +96,10 @@ export const OTPInput = React.forwardRef<HTMLDivElement, OTPInputProps>(
             onKeyDown={(e) => handleKeyDown(e, index)}
             onPaste={handlePaste}
             className={cn(
-              "rounded-xl border bg-gray-50 text-center font-semibold transition-all duration-200",
+              "rounded-2xl border bg-gray-50 text-center font-semibold transition-all duration-200",
               "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none",
               "disabled:opacity-50 disabled:cursor-not-allowed",
-              "dark:bg-white/5 dark:text-white",
+              "dark:bg-white/[0.03] dark:text-white",
               error 
                 ? "border-rose-500 text-rose-500 focus:border-rose-500 focus:ring-rose-500/20" 
                 : "border-gray-200 dark:border-white/10"

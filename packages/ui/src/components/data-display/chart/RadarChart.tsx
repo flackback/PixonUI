@@ -1,20 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import { cn } from '../../../utils/cn';
 
-export interface RadarDataPoint {
+export type RadarDataPoint<T = Record<string, any>> = {
   subject: string;
-  [key: string]: any;
-}
+} & T;
 
-export interface RadarChartProps extends React.HTMLAttributes<HTMLDivElement> {
-  data: RadarDataPoint[];
-  keys: string[]; // Keys to plot (e.g. ['A', 'B'])
+export interface RadarChartProps<T = any> extends React.HTMLAttributes<HTMLDivElement> {
+  data: RadarDataPoint<T>[];
+  keys: (keyof T)[]; // Keys to plot (e.g. ['A', 'B'])
   colors?: string[]; // Colors for each key
   maxValue?: number;
   height?: number;
 }
 
-export function RadarChart({
+export function RadarChart<T = any>({
   data,
   keys,
   colors = ['cyan', 'purple', 'emerald'],
@@ -22,7 +21,7 @@ export function RadarChart({
   height = 300,
   className,
   ...props
-}: RadarChartProps) {
+}: RadarChartProps<T>) {
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
 

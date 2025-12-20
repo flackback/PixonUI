@@ -15,10 +15,16 @@ import { useState, useMemo } from 'react';
 import { registry, ComponentItem } from './registry';
 import { ComponentDoc } from './ComponentDoc';
 import { LandingPage } from './LandingPage';
+import { SaaSLayout } from './saas/SaaSLayout';
+import { Dashboard } from './saas/Dashboard';
+import { Inbox } from './saas/Inbox';
+import { KanbanView } from './saas/KanbanView';
+import { Settings } from './saas/Settings';
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'gallery'>('landing');
+  const [view, setView] = useState<'landing' | 'gallery' | 'saas'>('landing');
   const [activeId, setActiveId] = useState('button');
+  const [saasTab, setSaasTab] = useState('dashboard');
   
   const activeComponent = useMemo(() => 
     registry.find(c => c.id === activeId) || registry[0], 
@@ -44,7 +50,28 @@ export default function App() {
   if (view === 'landing') {
     return (
       <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
-        <LandingPage onEnterGallery={() => setView('gallery')} />
+        <LandingPage 
+          onEnterGallery={() => setView('gallery')} 
+          onEnterSaaS={() => setView('saas')}
+        />
+      </ThemeProvider>
+    );
+  }
+
+  if (view === 'saas') {
+    return (
+      <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
+        <SaaSLayout 
+          activeTab={saasTab} 
+          onTabChange={setSaasTab}
+          onBackToLanding={() => setView('landing')}
+        >
+          {saasTab === 'dashboard' && <Dashboard />}
+          {saasTab === 'inbox' && <Inbox />}
+          {saasTab === 'kanban' && <KanbanView />}
+          {saasTab === 'settings' && <Settings />}
+          {/* Add other tabs as needed */}
+        </SaaSLayout>
       </ThemeProvider>
     );
   }
