@@ -16,17 +16,13 @@ describe('Calendar', () => {
 
     const buttons = screen.getAllByRole('button');
     
-    const prevBtn = buttons[0];
-    if (!prevBtn) throw new Error('Previous button not found');
-    fireEvent.click(prevBtn);
+    fireEvent.click(buttons[0]!);
     expect(screen.getByText(/December/)).toBeInTheDocument();
     expect(screen.getByText(/2023/)).toBeInTheDocument();
     
-    const nextBtn = buttons[1]; 
-    if (!nextBtn) throw new Error('Next button not found');
     // Wait, if we clicked prev, we are in Dec 2023.
     // Clicking next (which is the 2nd button) should go back to Jan 2024.
-    fireEvent.click(nextBtn);
+    fireEvent.click(buttons[1]!);
     expect(screen.getByText(/January/)).toBeInTheDocument();
     expect(screen.getByText(/2024/)).toBeInTheDocument();
   });

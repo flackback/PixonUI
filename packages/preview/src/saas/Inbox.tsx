@@ -12,8 +12,11 @@ import {
   ScrollArea,
   Stack,
   cn,
+} from '@pixonui/react';
+import type {
   Conversation,
-  Message
+  Message,
+  UserStatus
 } from '@pixonui/react';
 import { 
   Search, 
@@ -27,11 +30,21 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
-const mockContacts = [
-  { id: '1', name: 'Sarah Wilson', lastMessage: 'The integration is working perfectly!', time: new Date(), unread: 2, status: 'online' as const, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' },
-  { id: '2', name: 'Alex Chen', lastMessage: 'Can we schedule a call for tomorrow?', time: new Date(Date.now() - 3600000), unread: 0, status: 'offline' as const, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100' },
-  { id: '3', name: 'James Martin', lastMessage: 'I sent the documents to your email.', time: new Date(Date.now() - 86400000), unread: 0, status: 'online' as const },
-  { id: '4', name: 'Emily Davis', lastMessage: 'Thanks for the quick response!', time: new Date(Date.now() - 172800000), unread: 5, status: 'busy' as const, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100' },
+interface Contact {
+  id: string;
+  name: string;
+  lastMessage: string;
+  time: Date;
+  unread: number;
+  status: UserStatus;
+  avatar?: string;
+}
+
+const mockContacts: Contact[] = [
+  { id: '1', name: 'Sarah Wilson', lastMessage: 'The integration is working perfectly!', time: new Date(), unread: 2, status: 'online', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' },
+  { id: '2', name: 'Alex Chen', lastMessage: 'Can we schedule a call for tomorrow?', time: new Date(Date.now() - 3600000), unread: 0, status: 'offline', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100' },
+  { id: '3', name: 'James Martin', lastMessage: 'I sent the documents to your email.', time: new Date(Date.now() - 86400000), unread: 0, status: 'online' },
+  { id: '4', name: 'Emily Davis', lastMessage: 'Thanks for the quick response!', time: new Date(Date.now() - 172800000), unread: 5, status: 'busy', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100' },
 ];
 
 const mockMessages: Message[] = [

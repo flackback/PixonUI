@@ -147,7 +147,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
         {/* Stats Section */}
         <section id="performance" className="py-12 border-y border-white/5 bg-white/[0.02]">
           <Container>
-            <Grid cols={2} md={4} gap={8} className="text-center">
+            <Grid className="grid-cols-2 md:grid-cols-4 gap-8 text-center">
               <Stack gap={1}>
                 <div className="text-3xl md:text-4xl font-bold text-cyan-400">
                   <NumberTicker value={60} />

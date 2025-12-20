@@ -382,7 +382,7 @@ const tasks: KanbanTask[] = [
   tasks={tasks} 
   pageSize={20}
   columnHeight="600px"
-  onTaskMove={(id, toCol, index) => handleMove(id, toCol, index)}
+  onTaskMove={(id, toCol, toTaskId, pos) => handleMove(id, toCol, toTaskId, pos)}
   onTaskDrop={(id, from, to, idx) => syncWithBackend(id, from, to, idx)}
   onTaskRemove={(id) => deleteTask(id)}
   onTaskClick={(task) => openDetails(task)}
