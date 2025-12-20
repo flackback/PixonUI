@@ -92,6 +92,7 @@ export * from './components/navigation/Stepper';
 export * from './components/layout/Spotlight';
 export * from './components/ai/AIPromptInput';
 export * from './components/ai/AIResponse';
+export * from './components/chat';
 export * from './components/feedback/Motion';
 export * from './components/feedback/MotionGroup';
 export * from './components/feedback/TextMotion';

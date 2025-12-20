@@ -86,7 +86,7 @@ export function ChatDemo() {
           const userIds = reactions[emoji] || [];
           // Toggle reaction for current user
           if (userIds.includes(CURRENT_USER_ID)) {
-             const newIds = userIds.filter(id => id !== CURRENT_USER_ID);
+             const newIds = userIds.filter((id: string) => id !== CURRENT_USER_ID);
              const newReactions = { ...reactions };
              if (newIds.length === 0) {
                delete newReactions[emoji];

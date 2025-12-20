@@ -29,8 +29,19 @@ import {
 } from '@pixonui/react';
 import { MoreHorizontal, Edit, Trash, Copy, Eye, Mail } from 'lucide-react';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  access: boolean;
+  lastActive: string;
+  activity: number[];
+}
+
 export function TableDemo() {
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const users = [
     {
@@ -75,12 +86,12 @@ export function TableDemo() {
     }
   ];
 
-  const columns: Column<typeof users[0]>[] = [
+  const columns: Column<User>[] = [
     {
       key: 'name',
       header: 'User',
       sortable: true,
-      render: (user) => (
+      render: (user: User) => (
         <div className="flex items-center gap-3">
           <Avatar fallback={user.name[0]} className="h-8 w-8" />
           <div className="flex flex-col">
@@ -94,13 +105,13 @@ export function TableDemo() {
       key: 'role',
       header: 'Role',
       sortable: true,
-      render: (user) => <span className="text-gray-700 dark:text-gray-300">{user.role}</span>
+      render: (user: User) => <span className="text-gray-700 dark:text-gray-300">{user.role}</span>
     },
     {
       key: 'status',
       header: 'Status',
       sortable: true,
-      render: (user) => (
+      render: (user: User) => (
         <Badge variant={user.status === 'active' ? 'success' : 'neutral'}>
           {user.status}
         </Badge>
@@ -109,7 +120,7 @@ export function TableDemo() {
     {
       key: 'access',
       header: 'Access',
-      render: (user) => (
+      render: (user: User) => (
         <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <Switch defaultChecked={user.access} />
         </div>
@@ -119,7 +130,7 @@ export function TableDemo() {
       key: 'actions',
       header: 'Actions',
       className: 'text-right',
-      render: (user) => (
+      render: (user: User) => (
         <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 transition-colors">

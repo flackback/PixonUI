@@ -252,7 +252,7 @@ export function KanbanDemo() {
     { label: 'Low', value: 'low' }
   ];
 
-  const tagOptions = Array.from(new Set(tasks.flatMap(t => t.tags || []))).map(tag => ({
+  const tagOptions = Array.from(new Set(tasks.flatMap(t => t.tags || []))).map((tag: string) => ({
     label: tag,
     value: tag
   }));
@@ -500,7 +500,7 @@ export function KanbanDemo() {
                 <Heading as="h4" className="text-sm font-semibold uppercase">Blocked By</Heading>
               </div>
               <div className="flex flex-col gap-2">
-                {selectedTask.blockedBy.map(blockId => {
+                {selectedTask.blockedBy.map((blockId: string) => {
                   const blockingTask = tasks.find(t => t.id === blockId);
                   return (
                     <div key={blockId} className="flex items-center justify-between text-xs bg-white/5 p-2 rounded-lg">

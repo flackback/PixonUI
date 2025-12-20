@@ -30,6 +30,14 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
+interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  timestamp: Date;
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+}
+
 const mockContacts = [
   { id: '1', name: 'Sarah Wilson', lastMessage: 'The integration is working perfectly!', time: new Date(), unread: 2, status: 'online', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' },
   { id: '2', name: 'Alex Chen', lastMessage: 'Can we schedule a call for tomorrow?', time: new Date(Date.now() - 3600000), unread: 0, status: 'offline', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100' },
@@ -37,7 +45,7 @@ const mockContacts = [
   { id: '4', name: 'Emily Davis', lastMessage: 'Thanks for the quick response!', time: new Date(Date.now() - 172800000), unread: 5, status: 'busy', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100' },
 ];
 
-const mockMessages = [
+const mockMessages: Message[] = [
   { id: '1', content: 'Hi there! I have a question about the enterprise plan.', senderId: 'user', timestamp: new Date(Date.now() - 500000), status: 'read' },
   { id: '2', content: 'Hello! I\'d be happy to help. What specifically would you like to know?', senderId: 'me', timestamp: new Date(Date.now() - 400000), status: 'read' },
   { id: '3', content: 'Does it include custom SSO integration?', senderId: 'user', timestamp: new Date(Date.now() - 300000), status: 'read' },
@@ -184,7 +192,7 @@ export function Inbox() {
 
           <div className="flex-1 overflow-hidden relative">
             <MessageList 
-              messages={mockMessages as any} 
+              messages={mockMessages} 
               currentUserId="me"
               className="p-8"
             />

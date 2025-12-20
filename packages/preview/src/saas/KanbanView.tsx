@@ -116,7 +116,7 @@ export function KanbanView() {
         <Kanban 
           columns={initialColumns as any}
           tasks={initialTasks as any}
-          onTaskMove={(taskId, targetColumnId) => console.log(`Moved ${taskId} to ${targetColumnId}`)}
+          onTaskMove={(taskId: string, targetColumnId: string) => console.log(`Moved ${taskId} to ${targetColumnId}`)}
           className="h-full"
         />
       </div>

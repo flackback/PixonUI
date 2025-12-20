@@ -26,7 +26,7 @@ export function DropdownSearchDemo() {
 
   return (
     <div className="w-full max-w-sm">
-      <Combobox value={value} onValueChange={(newValue) => {
+      <Combobox value={value} onValueChange={(newValue: string) => {
         setValue(newValue);
         console.log("Selected:", newValue);
       }}>
@@ -68,7 +68,7 @@ export function DropdownSimpleDemo() {
 
   return (
     <div className="w-full max-w-sm">
-      <Combobox value={value} onValueChange={(newValue) => {
+      <Combobox value={value} onValueChange={(newValue: string) => {
         setValue(newValue);
         console.log("Selected:", newValue);
       }}>
