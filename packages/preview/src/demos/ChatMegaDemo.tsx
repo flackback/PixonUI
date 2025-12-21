@@ -6,6 +6,7 @@ import {
   ChatInput, 
   MessageList,
   ChatBanner,
+  TypingIndicator,
   useChatMessages,
   useTypingIndicator,
   useVoiceRecorder,
@@ -53,6 +54,14 @@ const INITIAL_MESSAGES: Message[] = [
     status: 'read',
     type: 'image',
     attachments: [{ id: 'a1', type: 'image', url: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=800&q=80' }]
+  },
+  {
+    id: '4',
+    content: 'Check out the documentation at https://pixonui.com for more details!',
+    senderId: '1',
+    timestamp: new Date(Date.now() - 300000),
+    status: 'read',
+    type: 'text'
   }
 ];
 
@@ -140,8 +149,8 @@ export function ChatMegaDemo() {
             className="flex-1"
           />
           {isTyping && (
-            <div className="px-6 py-2 text-xs text-white/40 italic">
-              Sarah is typing...
+            <div className="px-6 py-2">
+              <TypingIndicator users={['Sarah']} />
             </div>
           )}
         </div>

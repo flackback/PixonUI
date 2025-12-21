@@ -29,9 +29,13 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 ### Chat System (Mega Expansion)
 - `ChatLayout`: Main container for chat interfaces.
 - `MessageList`: Virtualized-ready list with date grouping and sticky headers.
-- `MessageBubble`: Rich media renderer (text, image, audio, location, contact).
-- `ChatInput`: Advanced input with voice recording, mentions, and replies.
-- `ChatSidebar`: Group and contact management.
+- `MessageBubble`: Rich media renderer with automatic `LinkPreview` detection.
+- `ChatInput`: Advanced input with mentions, replies, and action hooks.
+- `EmojiPicker`: Manual, lightweight emoji selection (no external libs).
+- `VoiceRecorder`: Native-first audio recording with duration and waveform.
+- `AudioPlayer`: Specialized component for voice messages.
+- `TypingIndicator`: Standalone component for real-time feedback.
+- `ChatSidebar`: Conversation management with integrated `TypingIndicator`.
 
 ### Kanban System (Mega Expansion)
 - `KanbanBoard`: Professional board with WIP limits, swimlanes, and multiple views.

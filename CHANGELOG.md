@@ -54,8 +54,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `OnlineIndicator`: Real-time user status visualization.
   - `ReadReceipt`: Visual indicators for sent/delivered/read states.
   - `SystemMessage`: Specialized rendering for non-user events.
-  - `LinkPreview`: Automatic URL detection and previewing.
-  - `GroupHeader`: Support for group chat metadata and member lists.
+  - `LinkPreview`: Automatic URL detection and previewing in `MessageBubble`.
+  - `TypingIndicator`: Standalone component now integrated into `ChatSidebar`.
+  - `EmojiPicker`: Enhanced manual implementation with 200+ emojis and categories.
+  - `VoiceRecorder`: Full-featured recording UI with waveform animation.
+  - `AudioPlayer`: Native-first audio playback with progress tracking.
+- **New Hooks**:
+  - `useChatMessages`: Advanced state management for chat history.
+  - `useTypingIndicator`: Real-time typing state logic.
+  - `useVoiceRecorder`: Native `MediaRecorder` wrapper.
 - **New Demo**: `ChatMegaDemo` showcasing the full messaging ecosystem.
 
 ### Changed
