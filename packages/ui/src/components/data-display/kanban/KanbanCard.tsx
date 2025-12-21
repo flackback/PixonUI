@@ -20,6 +20,9 @@ interface KanbanCardProps {
   onTaskClick?: (e: React.MouseEvent, task: KanbanTask) => void;
   onTaskSelectionChange?: (selectedIds: string[]) => void;
   onTaskTimerToggle?: (taskId: string) => void;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
   renderCard?: (task: KanbanTask) => React.ReactNode;
 }
 
@@ -36,6 +39,9 @@ export const KanbanCard = React.memo(({
   onTaskClick,
   onTaskSelectionChange,
   onTaskTimerToggle,
+  onDragStart,
+  onDragOver,
+  onDrop,
   renderCard
 }: KanbanCardProps) => {
   if (renderCard) return <>{renderCard(task)}</>;
@@ -53,8 +59,12 @@ export const KanbanCard = React.memo(({
   return (
     <Surface 
       onClick={(e) => onTaskClick?.(e, task)}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
       className={cn(
-        "p-6 border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group",
+        "p-6 border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group cursor-grab active:cursor-grabbing",
         task.blockedBy && task.blockedBy.length > 0 && "border-red-500/30 bg-red-500/[0.02]",
         isSelected && "ring-2 ring-cyan-500/50 bg-cyan-500/[0.02]",
         cardClassName

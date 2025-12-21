@@ -8,6 +8,7 @@ import { KanbanTableView } from './KanbanTableView';
 import { KanbanCalendarView } from './KanbanCalendarView';
 import { KanbanFilterBar } from './KanbanFilterBar';
 import { KanbanTaskModal } from './KanbanTaskModal';
+import { KanbanSwimlane } from './KanbanSwimlane';
 import { useKanbanFilters } from './useKanbanFilters';
 import { useKanbanUndo } from './useKanbanUndo';
 import { useKanbanKeyboard } from './useKanbanKeyboard';
@@ -22,11 +23,22 @@ export function KanbanBoard({
   onTaskClick,
   onTaskAdd,
   onColumnAction,
+  swimlanes = false,
+  swimlaneBy = 'priority',
+  view: propView,
+  onViewChange,
   className,
   ...props
 }: KanbanProps) {
-  const [view, setView] = useState<'board' | 'list' | 'calendar' | 'timeline' | 'table'>('board');
+  const [internalView, setInternalView] = useState<'board' | 'list' | 'calendar' | 'timeline' | 'table'>(propView || 'board');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [collapsedSwimlanes, setCollapsedSwimlanes] = useState<string[]>([]);
+
+  const view = propView || internalView;
+  const setView = (v: 'board' | 'list' | 'calendar' | 'timeline' | 'table') => {
+    setInternalView(v);
+    onViewChange?.(v);
+  };
   
   const { 
     state, 
@@ -46,6 +58,17 @@ export function KanbanBoard({
     filteredTasks
   } = useKanbanFilters(tasks);
 
+  const swimlaneGroups = useMemo(() => {
+    if (!swimlanes) return null;
+    const groups: Record<string, KanbanTask[]> = {};
+    filteredTasks.forEach(task => {
+      const value = String(task[swimlaneBy] || 'Uncategorized');
+      if (!groups[value]) groups[value] = [];
+      groups[value].push(task);
+    });
+    return groups;
+  }, [filteredTasks, swimlanes, swimlaneBy]);
+
   const {
     handleDragStart,
     handleDragOver,
@@ -56,7 +79,6 @@ export function KanbanBoard({
     tasks, 
     selectedTaskIds: [], 
     onTaskMove: (taskId, toColumnId, toTaskId, position) => {
-      // This is a simplified update logic for the demo/component
       const updatedTasks = tasks.map(t => {
         if (t.id === taskId) {
           return { ...t, columnId: toColumnId };
@@ -96,6 +118,44 @@ export function KanbanBoard({
       case 'calendar':
         return <KanbanCalendarView tasks={filteredTasks} onTaskClick={handleTaskClick} />;
       default:
+        if (swimlanes) {
+          const groups = swimlaneGroups && Object.keys(swimlaneGroups).length > 0 
+            ? swimlaneGroups 
+            : { 'All Tasks': [] };
+
+          return (
+            <div className="flex flex-col gap-8 overflow-y-auto h-full pr-2 custom-scrollbar">
+              {Object.entries(groups).map(([groupName, groupTasks]) => (
+                <KanbanSwimlane
+                  key={groupName}
+                  title={groupName}
+                  count={groupTasks.length}
+                  isCollapsed={collapsedSwimlanes.includes(groupName)}
+                  onToggle={() => setCollapsedSwimlanes(prev => 
+                    prev.includes(groupName) ? prev.filter(s => s !== groupName) : [...prev, groupName]
+                  )}
+                >
+                  <div className="flex gap-6 min-h-[200px]">
+                    {columns.map(column => (
+                      <KanbanColumn
+                        key={column.id}
+                        column={column}
+                        tasks={groupTasks.filter(t => t.columnId === column.id)}
+                        onTaskClick={handleTaskClick}
+                        onAddTask={() => onTaskAdd?.(column.id, 'New Task')}
+                        onAction={(action) => onColumnAction?.(column.id, action)}
+                        onDragStart={handleDragStart}
+                        onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
+                        onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
+                      />
+                    ))}
+                  </div>
+                </KanbanSwimlane>
+              ))}
+            </div>
+          );
+        }
+
         return (
           <div className="flex gap-6 overflow-x-auto pb-4 min-h-[500px] scrollbar-thin scrollbar-thumb-white/10">
             {columns.map(column => (
@@ -106,8 +166,9 @@ export function KanbanBoard({
                 onTaskClick={handleTaskClick}
                 onAddTask={() => onTaskAdd?.(column.id, 'New Task')}
                 onAction={(action) => onColumnAction?.(column.id, action)}
-                onDragOver={(e) => handleDragOver(e, column.id)}
-                onDrop={(e) => handleDrop(e, column.id)}
+                onDragStart={handleDragStart}
+                onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
+                onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
               />
             ))}
           </div>

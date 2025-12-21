@@ -13,8 +13,9 @@ interface KanbanColumnProps {
   onCollapse?: (columnId: string) => void;
   onTaskClick?: (task: KanbanTask) => void;
   onAction?: (action: string) => void;
-  onDragOver?: (e: React.DragEvent) => void;
-  onDrop?: (e: React.DragEvent) => void;
+  onDragStart?: (e: React.DragEvent, id: string, type: 'task' | 'column') => void;
+  onDragOver?: (e: React.DragEvent, taskId?: string) => void;
+  onDrop?: (e: React.DragEvent, taskId?: string) => void;
   isCollapsed?: boolean;
   children?: React.ReactNode;
   className?: string;
@@ -27,8 +28,9 @@ export function KanbanColumn({
   onCollapse, 
   onTaskClick,
   onAction,
-  onDragOver,
-  onDrop,
+  onDragStart,
+  onDragOver, 
+  onDrop, 
   isCollapsed, 
   children,
   className 
@@ -40,8 +42,10 @@ export function KanbanColumn({
         isCollapsed ? "w-12" : "w-80",
         className
       )}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      onDragOver={(e) => onDragOver?.(e)}
+      onDrop={(e) => onDrop?.(e)}
+      onDragStart={(e) => onDragStart?.(e, column.id, 'column')}
+      draggable={!isCollapsed}
     >
       {/* Header */}
       <div className={cn(
@@ -109,6 +113,9 @@ export function KanbanColumn({
             key={task.id} 
             task={task} 
             onTaskClick={(_, t) => onTaskClick?.(t)}
+            onDragStart={(e) => onDragStart?.(e, task.id, 'task')}
+            onDragOver={(e) => onDragOver?.(e, task.id)}
+            onDrop={(e) => onDrop?.(e, task.id)}
           />
         ))}
       </div>

@@ -58,6 +58,8 @@ import { OverlaysPageDemo } from './demos/OverlaysPageDemo';
 import { PageLoaderDemo } from './demos/PageLoaderDemo';
 import { ChatDemo } from './demos/ChatDemo';
 import { KanbanDemo } from './demos/KanbanDemo';
+import { NewComponentsDemo } from './demos/NewComponentsDemo';
+import { TenNewComponentsDemo } from './demos/TenNewComponentsDemo';
 import { HooksDemo } from './demos/HooksDemo';
 import { BackgroundDemo } from './demos/BackgroundDemo';
 import { HeroDemo } from './demos/HeroDemo';
@@ -1076,5 +1078,77 @@ ${LetterPullupSource}`,
     description: 'A comprehensive analytics dashboard template featuring advanced charts, AI integration, and data tables.',
     code: `// See DashboardDemo.tsx for full implementation`,
     demo: <DashboardDemo />
+  },
+  {
+    id: 'new-components',
+    title: 'Modern Essentials',
+    category: 'Data Display',
+    description: 'A collection of modern UI essentials including rich user previews, interactive timelines, and advanced file dropzones.',
+    code: `import { UserPreview, Timeline, FileDropzone } from '@pixonui/react';
+
+// User Preview
+<UserPreview user={userData} variant="glass" />
+
+// Timeline
+<Timeline>
+  <TimelineItem title="Step 1" status="success" />
+  <TimelineItem title="Step 2" status="active" />
+</Timeline>
+
+// File Dropzone
+<FileDropzone onFilesSelected={handleFiles} />`,
+    componentSource: `// UserPreview.tsx
+${UserPreviewSource}
+
+// Timeline.tsx
+${TimelineSource}
+
+// FileDropzone.tsx
+${FileDropzoneSource}`,
+    demo: <NewComponentsDemo />
+  },
+  {
+    id: 'ten-new',
+    title: 'Advanced Utilities',
+    category: 'Templates',
+    description: 'Ten powerful new components for specialized use cases: OTP, Terminal, Marquee, Tree, and more.',
+    code: `import { 
+  OTPInput, 
+  Terminal, 
+  Marquee, 
+  Tree, 
+  StatusDot, 
+  Stepper, 
+  Spotlight 
+} from '@pixonui/react';
+
+// Terminal
+<Terminal commands={commands} />
+
+// Marquee
+<Marquee pauseOnHover>
+  <Logo1 /> <Logo2 />
+</Marquee>
+
+// OTP Input
+<OTPInput length={6} onComplete={verify} />`,
+    componentSource: `// OTPInput.tsx
+${OTPInputSource}
+
+// Terminal.tsx
+${TerminalSource}
+
+// Marquee.tsx
+${MarqueeSource}
+
+// Tree.tsx
+${TreeSource}
+
+// Stepper.tsx
+${StepperSource}
+
+// Spotlight.tsx
+${SpotlightSource}`,
+    demo: <TenNewComponentsDemo />
   }
 ];

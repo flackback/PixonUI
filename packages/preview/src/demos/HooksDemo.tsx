@@ -44,31 +44,27 @@ export function HooksDemo() {
     { id: 4, name: 'Date', category: 'Fruit' },
     { id: 5, name: 'Eggplant', category: 'Vegetable' },
   ];
-  const { results, query, setQuery } = useSearch(items, { keys: ['name', 'category'] });
+  const [searchQuery, setSearchQuery] = useState('');
+  const results = useSearch(items, searchQuery, ['name', 'category']);
 
   // 4. useLocalStorage Demo
   const [storedValue, setStoredValue] = useLocalStorage('demo-key', 'Default Value');
 
   // 5. useKeyboardShortcuts Demo
   const [shortcutTriggered, setShortcutTriggered] = useState(false);
-  useKeyboardShortcuts([
-    {
-      key: 's',
-      ctrl: true,
-      handler: () => {
-        setShortcutTriggered(true);
-        setTimeout(() => setShortcutTriggered(false), 2000);
-      }
+  useKeyboardShortcuts({
+    'mod+s': (e) => {
+      e.preventDefault();
+      setShortcutTriggered(true);
+      setTimeout(() => setShortcutTriggered(false), 2000);
     }
-  ]);
+  });
 
   // 6. useVirtualList Demo
   const longList = Array.from({ length: 10000 }).map((_, i) => `Item ${i + 1}`);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { virtualItems, totalHeight } = useVirtualList({
+  const { containerRef, visibleItems, totalHeight, onScroll } = useVirtualList({
     itemCount: longList.length,
     itemHeight: 40,
-    containerRef,
     overscan: 5
   });
 
@@ -111,13 +107,13 @@ export function HooksDemo() {
             <Heading as="h3">Smart Search</Heading>
           </div>
           <TextInput 
-            value={query} 
-            onChange={(e) => setQuery(e.target.value)}
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search fruits or vegetables..."
             leftIcon={<SearchIcon className="w-4 h-4" />}
           />
           <div className="space-y-2">
-            {results.map(item => (
+            {results.map((item: any) => (
               <div key={item.id} className="flex justify-between items-center p-2 rounded bg-white/5 border border-white/10">
                 <Text>{item.name}</Text>
                 <Badge variant="outline">{item.category}</Badge>
@@ -163,10 +159,11 @@ export function HooksDemo() {
           </div>
           <div 
             ref={containerRef}
+            onScroll={onScroll}
             className="h-[200px] overflow-auto rounded-xl border border-white/10 bg-black/20 custom-scrollbar"
           >
             <div style={{ height: totalHeight, position: 'relative' }}>
-              {virtualItems.map(item => (
+              {visibleItems.map((item: any) => (
                 <div
                   key={item.index}
                   style={{

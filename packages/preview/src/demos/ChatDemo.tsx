@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type {
   Conversation,
   Message,
-  User
+  User,
+  MessageStatus
 } from '@pixonui/react';
 import { 
   ChatLayout, 
@@ -34,13 +35,23 @@ export function ChatDemo() {
   const [showProfile, setShowProfile] = useState(true);
   
   const { 
-    messages, 
-    sendMessage, 
-    receiveMessage, 
-    markAsRead, 
-    isTyping, 
-    setTyping 
-  } = useChat(INITIAL_MESSAGES);
+    messages: chatMessages, 
+    sendMessage,
+    setMessages,
+    setIsTyping,
+    isTyping
+  } = useChat({
+    initialMessages: INITIAL_MESSAGES.map(m => ({
+      ...m,
+      status: (m.status === 'read' || m.status === 'delivered') ? 'sent' : (m.status as any)
+    }))
+  });
+
+  // Map ChatMessage back to Message for the UI components
+  const messages: Message[] = chatMessages.map(m => ({
+    ...m,
+    status: m.status as MessageStatus
+  }));
 
   const conversations: Conversation[] = [
     { id: '1', user: USERS['1']!, lastMessage: messages[messages.length - 1], unreadCount: 2 },
@@ -52,10 +63,17 @@ export function ChatDemo() {
     sendMessage(content, CURRENT_USER_ID);
 
     // Simulate reply
-    setTyping(true);
+    setIsTyping(true);
     setTimeout(() => {
-      setTyping(false);
-      receiveMessage("That's really cool! I love the glassmorphism effect.", activeId);
+      setIsTyping(false);
+      const reply: Message = {
+        id: Date.now().toString(),
+        content: "That's really cool! I love the glassmorphism effect.",
+        senderId: activeId,
+        timestamp: new Date(),
+        status: 'sent'
+      };
+      setMessages(prev => [...prev, { ...reply, status: 'sent' }]);
     }, 2000);
   };
 
@@ -65,42 +83,6 @@ export function ChatDemo() {
 
   const handleReact = (message: Message, emoji: string) => {
     console.log('React to:', message, emoji);
-  };
-          }
-        }
-        return msg;
-      });
-      return { ...prev, [activeId]: updatedMessages };
-    });
-  };
-
-  const handleDelete = (message: Message) => {
-    setMessages(prev => ({
-      ...prev,
-      [activeId]: (prev[activeId] || []).filter(m => m.id !== message.id)
-    }));
-  };
-
-  const handleAttach = () => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: "",
-      senderId: CURRENT_USER_ID,
-      timestamp: new Date(),
-      status: 'sent',
-      type: 'image',
-      attachments: [{
-        id: Date.now().toString(),
-        type: 'image',
-        url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60',
-        name: 'design-mockup.jpg'
-      }]
-    };
-
-    setMessages(prev => ({
-      ...prev,
-      [activeId]: [...(prev[activeId] || []), newMessage]
-    }));
   };
 
   const activeUser = USERS[activeId] || USERS['1']!;
@@ -130,7 +112,7 @@ export function ChatDemo() {
         
         <ChatInput 
           onSend={handleSend} 
-          onAttach={(files) => console.log('Attach:', files)} 
+          onAttach={() => console.log('Attach')} 
           users={Object.values(USERS)}
         />
       </div>

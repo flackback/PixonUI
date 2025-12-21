@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { KanbanTask, KanbanColumnDef } from './types';
 
 interface KanbanState {
@@ -9,6 +9,21 @@ interface KanbanState {
 export function useKanbanUndo(initialState: KanbanState) {
   const [history, setHistory] = useState<KanbanState[]>([initialState]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const lastInitialState = useRef(initialState);
+
+  // Sync with external state changes
+  useEffect(() => {
+    const tasksChanged = initialState.tasks.length !== lastInitialState.current.tasks.length ||
+                        initialState.tasks.some((t, i) => t.id !== lastInitialState.current.tasks[i]?.id || t.columnId !== lastInitialState.current.tasks[i]?.columnId);
+    const columnsChanged = initialState.columns.length !== lastInitialState.current.columns.length ||
+                          initialState.columns.some((c, i) => c.id !== lastInitialState.current.columns[i]?.id);
+
+    if (tasksChanged || columnsChanged) {
+      setHistory([initialState]);
+      setCurrentIndex(0);
+      lastInitialState.current = initialState;
+    }
+  }, [initialState]);
 
   const pushState = useCallback((newState: KanbanState) => {
     setHistory(prev => {

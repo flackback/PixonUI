@@ -94,7 +94,7 @@ export interface KanbanProps {
   onBulkAction?: (taskIds: string[], action: string) => void;
   sortBy?: 'priority' | 'dueDate' | 'title' | 'created' | 'order';
   sortOrder?: 'asc' | 'desc';
-  view?: 'board' | 'list' | 'calendar' | 'timeline';
+  view?: 'board' | 'list' | 'calendar' | 'timeline' | 'table';
   onViewChange?: (view: string) => void;
   swimlanes?: boolean;
   swimlaneBy?: keyof KanbanTask;

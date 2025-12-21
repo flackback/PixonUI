@@ -11,7 +11,8 @@ import {
   useTypingIndicator,
   useVoiceRecorder,
   useReadReceipts,
-  useChatSearch
+  useChatSearch,
+  cn
 } from '@pixonui/react';
 import type { Message, User, GroupInfo } from '@pixonui/react';
 
@@ -26,7 +27,10 @@ const MOCK_GROUP: GroupInfo = {
   name: 'Design System Team',
   avatar: 'https://i.pravatar.cc/150?u=group',
   members: MOCK_USERS,
-  description: 'Discussion about PixonUI components and design tokens.'
+  description: 'Discussion about PixonUI components and design tokens.',
+  admins: ['1'],
+  createdBy: '1',
+  createdAt: new Date()
 };
 
 const INITIAL_MESSAGES: Message[] = [
@@ -67,10 +71,10 @@ const INITIAL_MESSAGES: Message[] = [
 
 export function ChatMegaDemo() {
   const currentUserId = '1';
-  const { messages, addMessage, updateMessageStatus, deleteMessage, reactToMessage } = useChatMessages(INITIAL_MESSAGES);
+  const { messages, addMessage, updateMessageStatus, deleteMessage } = useChatMessages(INITIAL_MESSAGES);
   const { isTyping, setTyping } = useTypingIndicator();
-  const { isRecording, duration, startRecording, stopRecording, cancelRecording } = useVoiceRecorder();
-  const { results, searchMessages } = useChatSearch(messages);
+  const { isRecording, duration, startRecording, stopRecording } = useVoiceRecorder();
+  const { results, query, setQuery } = useChatSearch(messages);
   
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -84,7 +88,7 @@ export function ChatMegaDemo() {
       status: 'sent',
       type,
       attachments,
-      replyTo: replyTo ? { id: replyTo.id, content: replyTo.content, senderName: 'User' } : undefined
+      replyTo: replyTo || undefined
     };
     addMessage(newMessage);
     setReplyTo(null);
@@ -98,61 +102,45 @@ export function ChatMegaDemo() {
 
   return (
     <div className="h-[800px] w-full border border-white/10 rounded-3xl overflow-hidden bg-black flex">
-      <ChatLayout
-        sidebar={
-          <ChatSidebar 
-            isOpen={isSidebarOpen}
-            onClose={() => setIsSidebarOpen(false)}
-            groups={[MOCK_GROUP]}
-            activeId={MOCK_GROUP.id}
-          />
-        }
-        header={
+      <ChatLayout>
+        <ChatSidebar 
+          conversations={[{ id: MOCK_GROUP.id, group: MOCK_GROUP, lastMessage: messages[messages.length - 1] }]}
+          activeId={MOCK_GROUP.id}
+          className={cn(!isSidebarOpen && "hidden md:flex")}
+        />
+        
+        <div className="flex-1 flex flex-col min-w-0">
           <ChatHeader 
-            title={MOCK_GROUP.name}
-            subtitle={`${MOCK_USERS.length} members • 2 online`}
-            avatar={MOCK_GROUP.avatar}
+            user={{ id: 'group', name: MOCK_GROUP.name, avatar: MOCK_GROUP.avatar, status: 'online' }}
             onBack={() => setIsSidebarOpen(true)}
           />
-        }
-        footer={
-          <div className="p-4">
-            <ChatInput 
-              onSend={(content) => handleSendMessage(content)}
-              onTyping={() => setTyping(true)}
-              placeholder="Type a message..."
-              replyTo={replyTo || undefined}
-              onCancelReply={() => setReplyTo(null)}
-              onVoiceStart={startRecording}
-              onVoiceStop={(blob) => {
-                stopRecording();
-                handleSendMessage('Voice message', 'audio', [{ id: 'v1', type: 'audio', url: URL.createObjectURL(blob), duration }]);
-              }}
-              isRecording={isRecording}
-              recordingDuration={duration}
+          
+          <div className="flex-1 flex flex-col min-h-0">
+            <MessageList 
+              messages={messages}
+              currentUserId={currentUserId}
+              onReply={setReplyTo}
+              onDelete={(msg) => deleteMessage(msg.id)}
+              className="flex-1"
             />
-          </div>
-        }
-      >
-        <div className="flex-1 flex flex-col min-h-0">
-          <ChatBanner 
-            content="This is a preview of the PixonUI Chat Mega Expansion. All features are functional." 
-            type="info"
-            closable
-          />
-          <MessageList 
-            messages={messages}
-            currentUserId={currentUserId}
-            onReply={setReplyTo}
-            onReact={(msg, emoji) => reactToMessage(msg.id, '1', emoji)}
-            onDelete={(msg) => deleteMessage(msg.id)}
-            className="flex-1"
-          />
-          {isTyping && (
-            <div className="px-6 py-2">
-              <TypingIndicator users={['Sarah']} />
+            
+            {isTyping && (
+              <div className="px-6 py-2">
+                <TypingIndicator users={['Sarah']} />
+              </div>
+            )}
+            
+            <div className="p-4">
+              <ChatInput 
+                onSend={(content) => handleSendMessage(content)}
+                placeholder="Type a message..."
+                replyingTo={replyTo || undefined}
+                onCancelReply={() => setReplyTo(null)}
+                onMic={startRecording}
+                isRecording={isRecording}
+              />
             </div>
-          )}
+          </div>
         </div>
       </ChatLayout>
     </div>

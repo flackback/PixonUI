@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { 
-  KanbanColumn, 
+  KanbanColumnDef, 
   KanbanTask} from '@pixonui/react';
 import { 
   Kanban, 
@@ -24,7 +24,7 @@ import {
 import { Search, Filter, Plus, Layout, List, Calendar as CalendarIcon, Settings, MoreHorizontal, UserPlus, Share2, Lock, AlertCircle, Play, Pause, Clock, Archive, Trash2, X, Activity, Zap } from 'lucide-react';
 
 export function KanbanDemo() {
-  const [columns, setColumns] = useState<KanbanColumn[]>([
+  const [columns, setColumns] = useState<KanbanColumnDef[]>([
     { id: 'todo', title: 'To Do', color: '#94a3b8' },
     { id: 'in-progress', title: 'In Progress', color: '#06b6d4', limit: 3 },
     { id: 'review', title: 'Review', color: '#8b5cf6', limit: 2 },
@@ -42,7 +42,7 @@ export function KanbanDemo() {
       comments: 12,
       attachments: 4,
       dueDate: 'Dec 24',
-      assignee: { name: 'Sarah Wilson', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
+      assignee: { id: 'u1', name: 'Sarah Wilson', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
       progress: 0,
       timeSpent: 3600 * 2
     },
@@ -56,7 +56,7 @@ export function KanbanDemo() {
       comments: 5,
       attachments: 2,
       dueDate: 'Dec 20',
-      assignee: { name: 'Alex Chen', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
+      assignee: { id: 'u2', name: 'Alex Chen', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
       progress: 65,
       timeSpent: 3600 * 5 + 1200,
       customFields: {
@@ -73,7 +73,7 @@ export function KanbanDemo() {
       tags: ['Bug'],
       columnId: 'review',
       comments: 8,
-      assignee: { name: 'James Martin' },
+      assignee: { id: 'u3', name: 'James Martin' },
       progress: 90,
       blockedBy: ['2'],
       timeSpent: 1800
@@ -86,7 +86,7 @@ export function KanbanDemo() {
       tags: ['Feature'],
       columnId: 'done',
       comments: 2,
-      assignee: { name: 'Sarah Wilson', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
+      assignee: { id: 'u1', name: 'Sarah Wilson', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
       progress: 100,
       timeSpent: 3600 * 8
     },
@@ -110,7 +110,12 @@ export function KanbanDemo() {
   const [groupBy, setGroupBy] = useState<keyof KanbanTask | undefined>(undefined);
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | undefined>(undefined);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-  const [view, setView] = useState<'board' | 'list' | 'calendar'>('board');
+  const [view, setView] = useState<'board' | 'list' | 'calendar' | 'timeline' | 'table'>('board');
+  const [swimlanes, setSwimlanes] = useState(false);
+  const [swimlaneBy, setSwimlaneBy] = useState<keyof KanbanTask>('priority');
+  const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'title' | 'created' | 'order'>('priority');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
 
   // Generate many tasks for lazy loading demo
   useEffect(() => {
@@ -158,22 +163,18 @@ export function KanbanDemo() {
       const taskIndex = newTasks.findIndex(t => t.id === taskId);
       if (taskIndex === -1) return prev;
 
-      const [task] = newTasks.splice(taskIndex, 1);
-      if (task) {
-        task.columnId = toColumnId;
-      }
+      const task = { ...newTasks[taskIndex], columnId: toColumnId } as KanbanTask;
+      newTasks.splice(taskIndex, 1);
       
       if (!toTaskId) {
-        newTasks.push(task!);
+        newTasks.push(task);
         return newTasks;
       }
 
       const targetIndex = newTasks.findIndex(t => t.id === toTaskId);
       const insertIndex = position === 'bottom' ? targetIndex + 1 : targetIndex;
 
-      if (task) {
-        newTasks.splice(insertIndex, 0, task);
-      }
+      newTasks.splice(insertIndex, 0, task);
       return newTasks;
     });
   };
@@ -259,34 +260,9 @@ export function KanbanDemo() {
   }));
 
   return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <Heading as="h2">Project Board</Heading>
-          <Text className="text-gray-500">Manage your team's tasks and workflow.</Text>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Share2 className="h-4 w-4" /> Share
-          </Button>
-          <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> New Task
-          </Button>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="space-y-4">
-        <KanbanFilterBar 
-          onSearchChange={setSearchQuery}
-          onFilterChange={setActiveFilters}
-          priorityOptions={priorityOptions}
-          tagOptions={tagOptions}
-        />
-        
-        <Surface className="p-2 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+    <div className="space-y-6 h-full flex flex-col">
+      <Surface className="p-2 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Text className="text-xs text-white/40 uppercase font-bold tracking-wider">Group By:</Text>
               <select 
@@ -298,6 +274,49 @@ export function KanbanDemo() {
                 <option value="priority">Priority</option>
                 <option value="assignee.name">Assignee</option>
               </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Text className="text-xs text-white/40 uppercase font-bold tracking-wider">Swimlanes:</Text>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={cn("h-7 px-2 text-[10px]", swimlanes ? "bg-cyan-500/20 text-cyan-400" : "text-white/40")}
+                onClick={() => setSwimlanes(!swimlanes)}
+              >
+                {swimlanes ? 'ON' : 'OFF'}
+              </Button>
+              {swimlanes && (
+                <select 
+                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                  value={swimlaneBy}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSwimlaneBy(e.target.value as any)}
+                >
+                  <option value="priority">By Priority</option>
+                  <option value="assignee.name">By Assignee</option>
+                </select>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Text className="text-xs text-white/40 uppercase font-bold tracking-wider">Sort:</Text>
+              <select 
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                value={sortBy}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as any)}
+              >
+                <option value="priority">Priority</option>
+                <option value="dueDate">Due Date</option>
+                <option value="title">Title</option>
+              </select>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0 text-white/40"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
+              </Button>
             </div>
           </div>
           <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
@@ -327,10 +346,9 @@ export function KanbanDemo() {
             </Button>
           </div>
         </Surface>
-      </div>
 
       {/* Main Content */}
-      {view === 'board' ? (
+      <div className="flex-1 min-h-0">
         <Kanban 
           columns={columns}
           tasks={filteredTasks}
@@ -348,27 +366,39 @@ export function KanbanDemo() {
             setTasks(prev => prev.filter(t => t.id !== id));
             console.log('Task Removed:', id);
           }}
+          onColumnAdd={() => {
+            const newCol = { id: `col-${Date.now()}`, title: 'New Column', color: '#64748b' };
+            setColumns([...columns, newCol]);
+          }}
+          onColumnDelete={(id) => setColumns(columns.filter(c => c.id !== id))}
+          onColumnCollapse={(id) => {
+            setCollapsedColumns(prev => 
+              prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+            );
+          }}
+          collapsedColumns={collapsedColumns}
+          onBulkAction={(ids, action) => {
+            if (action === 'delete') {
+              setTasks(prev => prev.filter(t => !ids.includes(t.id)));
+              setSelectedTaskIds([]);
+            }
+          }}
           activeTimerTaskId={activeTimerTaskId}
           selectedTaskIds={selectedTaskIds}
           selectable
           groupBy={groupBy}
+          swimlanes={swimlanes}
+          swimlaneBy={swimlaneBy}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          view={view}
+          onViewChange={(v) => setView(v as any)}
           showDividers
           pageSize={10}
-          columnHeight="calc(100vh - 120px)"
-          className="mt-4"
+          columnHeight="calc(100vh - 250px)"
+          className="h-full"
         />
-      ) : view === 'calendar' ? (
-        <KanbanCalendarView 
-          tasks={filteredTasks}
-          onTaskClick={setSelectedTask}
-          onAddTask={(date: Date) => handleAddTask('todo', `Task for ${date.toLocaleDateString()}`)}
-          className="mt-4"
-        />
-      ) : (
-        <Surface className="p-8 text-center">
-          <Text className="text-gray-500">List view is coming soon...</Text>
-        </Surface>
-      )}
+      </div>
 
       {/* Usage Info */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
