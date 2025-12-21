@@ -12,6 +12,7 @@ import {
 import { Image } from '../data-display/Image';
 import { AudioPlayer } from './AudioPlayer';
 import { ReadReceipt } from './ReadReceipt';
+import { LinkPreview } from './LinkPreview';
 
 interface MessageBubbleProps {
   message: Message;
@@ -91,7 +92,24 @@ export function MessageBubble({
           </div>
         );
       default:
-        return <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>;
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const urls = message.content.match(urlRegex);
+        
+        return (
+          <div className="space-y-2">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+            {urls && urls.map((url, i) => (
+              <LinkPreview 
+                key={i} 
+                url={url} 
+                className={cn(
+                  "mt-2",
+                  isOwn ? "bg-white/10 border-white/20" : "bg-black/5 dark:bg-black/20"
+                )} 
+              />
+            ))}
+          </div>
+        );
     }
   };
 

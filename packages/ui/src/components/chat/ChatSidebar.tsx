@@ -4,6 +4,7 @@ import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter } from 'lucide-reac
 import type { Conversation } from './types';
 import { Avatar } from '../data-display/Avatar';
 import { ScrollArea } from '../data-display/ScrollArea';
+import { TypingIndicator } from './TypingIndicator';
 
 interface ChatSidebarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   conversations: Conversation[];
@@ -120,13 +121,16 @@ export function ChatSidebar({
                       )}
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className={cn(
-                        "text-sm truncate pr-2",
-                        activeId === chat.id ? "text-blue-600/80 dark:text-white/70" : "text-gray-500 dark:text-white/50",
-                        chat.isTyping && "text-blue-500 italic"
+                      <div className={cn(
+                        "text-sm truncate pr-2 flex-1",
+                        activeId === chat.id ? "text-blue-600/80 dark:text-white/70" : "text-gray-500 dark:text-white/50"
                       )}>
-                        {chat.isTyping ? 'Typing...' : chat.lastMessage?.content}
-                      </p>
+                        {chat.isTyping ? (
+                          <TypingIndicator className="text-[10px]" />
+                        ) : (
+                          <p className="truncate">{chat.lastMessage?.content}</p>
+                        )}
+                      </div>
                       {chat.unreadCount ? (
                         <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-blue-500 px-1.5 text-[10px] font-bold text-white">
                           {chat.unreadCount}
