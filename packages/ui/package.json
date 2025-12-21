@@ -1,6 +1,6 @@
 {
   "name": "@pixonui/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Modern, decoupled, glassmorphic UI library for React with zero heavy dependencies.",
   "author": "PixonUI Team",
   "license": "MIT",

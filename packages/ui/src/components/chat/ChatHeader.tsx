@@ -2,15 +2,35 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 import type { User } from './types';
 import { Avatar } from '../data-display/Avatar';
-import { Phone, Video, MoreVertical, ArrowLeft } from 'lucide-react';
+import { Phone, Video, MoreVertical, ArrowLeft, Search, BellOff } from 'lucide-react';
 
 interface ChatHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   user: User;
   onBack?: () => void;
   onInfo?: () => void;
+  onCall?: () => void;
+  onVideoCall?: () => void;
+  onSearch?: () => void;
+  onMute?: () => void;
+  isTyping?: boolean;
+  isMuted?: boolean;
+  actions?: React.ReactNode;
 }
 
-export function ChatHeader({ user, onBack, onInfo, className, ...props }: ChatHeaderProps) {
+export function ChatHeader({ 
+  user, 
+  onBack, 
+  onInfo, 
+  onCall,
+  onVideoCall,
+  onSearch,
+  onMute,
+  isTyping,
+  isMuted,
+  actions,
+  className, 
+  ...props 
+}: ChatHeaderProps) {
   return (
     <div 
       className={cn(
@@ -34,20 +54,43 @@ export function ChatHeader({ user, onBack, onInfo, className, ...props }: ChatHe
         </div>
         
         <div className="cursor-pointer" onClick={onInfo}>
-          <h3 className="font-semibold text-gray-900 dark:text-white leading-none mb-1">{user.name}</h3>
-          <p className="text-xs text-gray-500 dark:text-white/50">
-            {user.status === 'online' ? 'Online' : `Last seen ${user.lastSeen?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 dark:text-white leading-none">{user.name}</h3>
+            {isMuted && <BellOff className="h-3 w-3 text-gray-400" />}
+          </div>
+          <p className={cn(
+            "text-xs mt-1 transition-colors",
+            isTyping ? "text-blue-500 font-medium animate-pulse" : "text-gray-500 dark:text-white/50"
+          )}>
+            {isTyping ? 'typing...' : user.status === 'online' ? 'Online' : `Last seen ${user.lastSeen?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-1">
-        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors">
+        {onSearch && (
+          <button 
+            onClick={onSearch}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+        )}
+        <button 
+          onClick={onCall}
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+        >
           <Phone className="h-5 w-5" />
         </button>
-        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors">
+        <button 
+          onClick={onVideoCall}
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+        >
           <Video className="h-5 w-5" />
         </button>
+        
+        {actions}
+
         <button 
           onClick={onInfo}
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"

@@ -3,17 +3,25 @@ import { cn } from '../../utils/cn';
 import type { Message } from './types';
 import { MessageBubble } from './MessageBubble';
 import { ScrollArea } from '../data-display/ScrollArea';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Calendar } from 'lucide-react';
 
-interface MessageListProps extends React.HTMLAttributes<HTMLDivElement> {
+interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onCopy' | 'onSelect'> {
   messages: Message[];
   currentUserId: string;
   onReply?: (message: Message) => void;
   onReact?: (message: Message, emoji: string) => void;
   onDelete?: (message: Message) => void;
+  onEdit?: (message: Message) => void;
+  onForward?: (message: Message) => void;
+  onCopy?: (message: Message) => void;
+  onPin?: (message: Message) => void;
+  onSelect?: (message: Message) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
+  selectedMessages?: string[];
+  dateFormat?: string;
+  groupByDate?: boolean;
 }
 
 export function MessageList({ 
@@ -23,9 +31,17 @@ export function MessageList({
   onReply,
   onReact,
   onDelete,
+  onEdit,
+  onForward,
+  onCopy,
+  onPin,
+  onSelect,
   onLoadMore,
   hasMore,
   isLoadingMore,
+  selectedMessages = [],
+  dateFormat = 'MMMM d, yyyy',
+  groupByDate = true,
   ...props 
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -49,15 +65,21 @@ export function MessageList({
 
   // Group messages by date
   const groupedMessages = useMemo(() => {
+    if (!groupByDate) return { 'all': messages };
+    
     return messages.reduce((groups, message) => {
-      const date = message.timestamp.toLocaleDateString();
+      const date = message.timestamp.toLocaleDateString(undefined, { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
       if (!groups[date]) {
         groups[date] = [];
       }
       groups[date].push(message);
       return groups;
     }, {} as Record<string, Message[]>);
-  }, [messages]);
+  }, [messages, groupByDate]);
 
   if (messages.length === 0 && !isLoadingMore) {
     return (
@@ -103,11 +125,14 @@ export function MessageList({
 
         {Object.entries(groupedMessages).map(([date, msgs]) => (
           <div key={date} className="space-y-4">
-            <div className="flex justify-center sticky top-0 z-10 py-2">
-              <span className="px-3 py-1 rounded-full bg-gray-100/80 dark:bg-white/[0.03] text-[10px] uppercase tracking-wider font-bold text-gray-500 dark:text-white/40 backdrop-blur-md border border-white/5 shadow-sm">
-                {date}
-              </span>
-            </div>
+            {groupByDate && (
+              <div className="flex justify-center sticky top-0 z-10 py-2">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100/80 dark:bg-white/5 backdrop-blur text-[10px] font-medium text-gray-500 dark:text-white/40 border border-gray-200 dark:border-white/10">
+                  <Calendar className="h-3 w-3" />
+                  {date}
+                </div>
+              </div>
+            )}
             
             <div className="space-y-1">
               {msgs.map((msg, index) => {
@@ -127,9 +152,15 @@ export function MessageList({
                     className={cn(
                       !isLastInGroup && "mb-0.5"
                     )}
-                    onReply={onReply}
-                    onReact={onReact}
-                    onDelete={onDelete}
+                    onReply={() => onReply?.(msg)}
+                    onReact={(emoji) => onReact?.(msg, emoji)}
+                    onDelete={() => onDelete?.(msg)}
+                    onEdit={() => onEdit?.(msg)}
+                    onForward={() => onForward?.(msg)}
+                    onCopy={() => onCopy?.(msg)}
+                    onPin={() => onPin?.(msg)}
+                    onSelect={() => onSelect?.(msg)}
+                    isSelected={selectedMessages.includes(msg.id)}
                   />
                 );
               })}
