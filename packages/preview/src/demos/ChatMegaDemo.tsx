@@ -14,7 +14,7 @@ import {
   useChatSearch,
   cn
 } from '@pixonui/react';
-import type { Message, User, GroupInfo } from '@pixonui/react';
+import type { Message, User, GroupInfo, MessageType, ChatAttachment } from '@pixonui/react';
 
 const MOCK_USERS: User[] = [
   { id: '1', name: 'Alex Rivera', avatar: 'https://i.pravatar.cc/150?u=1', status: 'online' },
@@ -79,7 +79,7 @@ export function ChatMegaDemo() {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const handleSendMessage = (content: string, type: any = 'text', attachments?: any[]) => {
+  const handleSendMessage = (content: string, type: MessageType = 'text', attachments?: ChatAttachment[]) => {
     const newMessage: Message = {
       id: Math.random().toString(36).substr(2, 9),
       content,
