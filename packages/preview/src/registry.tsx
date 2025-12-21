@@ -57,6 +57,7 @@ import { OverlaysPageDemo } from './demos/OverlaysPageDemo';
 import { PageLoaderDemo } from './demos/PageLoaderDemo';
 import { ChatDemo } from './demos/ChatDemo';
 import { KanbanDemo } from './demos/KanbanDemo';
+import { HooksDemo } from './demos/HooksDemo';
 import { BackgroundDemo } from './demos/BackgroundDemo';
 import { HeroDemo } from './demos/HeroDemo';
 import { DashboardDemo } from './demos/DashboardDemo';
@@ -99,6 +100,34 @@ export type ComponentItem = {
 // --- Registry ---
 
 export const registry: ComponentItem[] = [
+  {
+    id: 'hooks',
+    title: 'Performance Hooks',
+    category: 'Templates',
+    description: 'A collection of high-performance, zero-dependency React hooks for state management, history, search, and virtualization.',
+    code: `import { 
+  useHistory, 
+  useClipboard, 
+  useSearch, 
+  useLocalStorage, 
+  useKeyboardShortcuts,
+  useVirtualList 
+} from '@pixonui/react';
+
+// History with Undo/Redo
+const { state, set, undo, redo } = useHistory('initial');
+
+// Virtualization for long lists
+const { virtualItems, totalHeight } = useVirtualList({
+  itemCount: 10000,
+  itemHeight: 40,
+  containerRef
+});
+
+// Smart Search
+const { results, query, setQuery } = useSearch(items, { keys: ['name'] });`,
+    demo: <HooksDemo />
+  },
   {
     id: 'chart',
     title: 'Chart',

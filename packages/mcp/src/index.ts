@@ -14,7 +14,7 @@ const UI_SRC_PATH = path.resolve(__dirname, "../../../ui/src");
 const server = new Server(
   {
     name: "pixonui-mcp",
-    version: "0.1.0",
+    version: "0.2.0",
   },
   {
     capabilities: {
@@ -46,6 +46,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ["componentName"],
+        },
+      },
+      {
+        name: "list_hooks",
+        description: "List all available PixonUI hooks",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+      {
+        name: "get_hook_info",
+        description: "Get detailed information about a specific hook including its parameters and usage",
+        inputSchema: {
+          type: "object",
+          properties: {
+            hookName: {
+              type: "string",
+              description: "The name of the hook (e.g., useChat, useKanban, useVirtualList)",
+            },
+          },
+          required: ["hookName"],
         },
       },
     ],
@@ -137,6 +159,69 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     } catch (error: any) {
       return {
         content: [{ type: "text", text: `Error getting component info: ${error.message}` }],
+        isError: true,
+      };
+    }
+  }
+
+  if (name === "list_hooks") {
+    try {
+      const hooksDir = path.join(UI_SRC_PATH, "hooks");
+      const files = await fs.readdir(hooksDir);
+      const allHooks = files
+        .filter(f => (f.endsWith(".tsx") || f.endsWith(".ts")) && !f.includes(".test."))
+        .map(f => f.replace(/\.(tsx|ts)$/, ""));
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Available PixonUI Hooks:\n${allHooks.sort().join("\n")}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        content: [{ type: "text", text: `Error listing hooks: ${error.message}` }],
+        isError: true,
+      };
+    }
+  }
+
+  if (name === "get_hook_info") {
+    const hookName = args?.hookName as string;
+    try {
+      const hooksDir = path.join(UI_SRC_PATH, "hooks");
+      const files = await fs.readdir(hooksDir);
+      const match = files.find(f => f.toLowerCase() === `${hookName.toLowerCase()}.ts` || f.toLowerCase() === `${hookName.toLowerCase()}.tsx`);
+
+      if (!match) {
+        return {
+          content: [{ type: "text", text: `Hook "${hookName}" not found.` }],
+          isError: true,
+        };
+      }
+
+      const hookPath = path.join(hooksDir, match);
+      const content = await fs.readFile(hookPath, "utf-8");
+      
+      // Simple regex to extract options/props interface
+      const optionsMatch = content.match(/interface\s+(\w+(Options|Props))\s*{([^}]+)}/);
+      const options = optionsMatch ? optionsMatch[0] : "Options interface not found";
+
+      const usage = `import { ${hookName} } from '@pixonui/react';\n\n// Basic usage\nconst { ... } = ${hookName}({ /* options */ });`;
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Hook: ${hookName}\n\nOptions/Parameters:\n${options}\n\nUsage Example:\n${usage}\n\nSource Code:\n${content}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        content: [{ type: "text", text: `Error getting hook info: ${error.message}` }],
         isError: true,
       };
     }

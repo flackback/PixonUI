@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type {
   Conversation,
   Message,
@@ -10,7 +10,8 @@ import {
   ChatHeader, 
   MessageList, 
   ChatInput, 
-  ChatProfile
+  ChatProfile,
+  useChat
 } from '@pixonui/react';
 
 const CURRENT_USER_ID = 'me';
@@ -21,83 +22,50 @@ const USERS: Record<string, User> = {
   '3': { id: '3', name: 'Emily Davis', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150', status: 'busy' },
 };
 
-const INITIAL_MESSAGES: Record<string, Message[]> = {
-  '1': [
-    { id: '1', content: 'Hey! How is the new project going?', senderId: '1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), status: 'read' },
-    { id: '2', content: 'It is going great! Just finishing up the chat component.', senderId: 'me', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1.9), status: 'read' },
-    { id: '3', content: 'That sounds awesome. Can I see a preview?', senderId: '1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1.8), status: 'read' },
-    { id: '4', content: 'Sure! I will send you a link shortly.', senderId: 'me', timestamp: new Date(Date.now() - 1000 * 60 * 5), status: 'delivered' },
-  ],
-  '2': [
-    { id: '1', content: 'Did you see the latest design updates?', senderId: '2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), status: 'read' },
-  ]
-};
+const INITIAL_MESSAGES: Message[] = [
+  { id: '1', content: 'Hey! How is the new project going?', senderId: '1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), status: 'read' },
+  { id: '2', content: 'It is going great! Just finishing up the chat component.', senderId: 'me', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1.9), status: 'read' },
+  { id: '3', content: 'That sounds awesome. Can I see a preview?', senderId: '1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1.8), status: 'read' },
+  { id: '4', content: 'Sure! I will send you a link shortly.', senderId: 'me', timestamp: new Date(Date.now() - 1000 * 60 * 5), status: 'delivered' },
+];
 
 export function ChatDemo() {
   const [activeId, setActiveId] = useState('1');
   const [showProfile, setShowProfile] = useState(true);
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  
+  const { 
+    messages, 
+    sendMessage, 
+    receiveMessage, 
+    markAsRead, 
+    isTyping, 
+    setTyping 
+  } = useChat(INITIAL_MESSAGES);
 
   const conversations: Conversation[] = [
-    { id: '1', user: USERS['1']!, lastMessage: messages['1']?.[messages['1'].length - 1], unreadCount: 2 },
-    { id: '2', user: USERS['2']!, lastMessage: messages['2']?.[messages['2'].length - 1] },
+    { id: '1', user: USERS['1']!, lastMessage: messages[messages.length - 1], unreadCount: 2 },
+    { id: '2', user: USERS['2']!, lastMessage: { id: '1', content: 'Did you see the latest design updates?', senderId: '2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), status: 'read' } },
     { id: '3', user: USERS['3']!, lastMessage: { id: '0', content: 'Call me later', senderId: '3', timestamp: new Date() } },
   ];
 
   const handleSend = (content: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content,
-      senderId: CURRENT_USER_ID,
-      timestamp: new Date(),
-      status: 'sent'
-    };
-
-    setMessages(prev => ({
-      ...prev,
-      [activeId]: [...(prev[activeId] || []), newMessage]
-    }));
+    sendMessage(content, CURRENT_USER_ID);
 
     // Simulate reply
+    setTyping(true);
     setTimeout(() => {
-      const reply: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "That's really cool! I love the glassmorphism effect.",
-        senderId: activeId,
-        timestamp: new Date(),
-        status: 'delivered'
-      };
-      setMessages(prev => ({
-        ...prev,
-        [activeId]: [...(prev[activeId] || []), reply]
-      }));
+      setTyping(false);
+      receiveMessage("That's really cool! I love the glassmorphism effect.", activeId);
     }, 2000);
   };
 
   const handleReply = (message: Message) => {
-    // In a real app, this would set a reply state in ChatInput
     console.log('Reply to:', message);
   };
 
   const handleReact = (message: Message, emoji: string) => {
-    setMessages(prev => {
-      const chatMessages = prev[activeId] || [];
-      const updatedMessages = chatMessages.map(msg => {
-        if (msg.id === message.id) {
-          const reactions = msg.reactions || {};
-          const userIds = reactions[emoji] || [];
-          // Toggle reaction for current user
-          if (userIds.includes(CURRENT_USER_ID)) {
-             const newIds = userIds.filter((id: string) => id !== CURRENT_USER_ID);
-             const newReactions = { ...reactions };
-             if (newIds.length === 0) {
-               delete newReactions[emoji];
-             } else {
-               newReactions[emoji] = newIds;
-             }
-             return { ...msg, reactions: newReactions };
-          } else {
-             return { ...msg, reactions: { ...reactions, [emoji]: [...userIds, CURRENT_USER_ID] } };
+    console.log('React to:', message, emoji);
+  };
           }
         }
         return msg;
@@ -136,7 +104,6 @@ export function ChatDemo() {
   };
 
   const activeUser = USERS[activeId] || USERS['1']!;
-  const activeMessages = messages[activeId] || [];
 
   return (
     <ChatLayout className="h-[700px]">
@@ -154,16 +121,16 @@ export function ChatDemo() {
         />
         
         <MessageList 
-          messages={activeMessages} 
+          messages={messages} 
           currentUserId={CURRENT_USER_ID} 
           onReply={handleReply}
           onReact={handleReact}
-          onDelete={handleDelete}
+          onDelete={(id) => console.log('Delete:', id)}
         />
         
         <ChatInput 
           onSend={handleSend} 
-          onAttach={handleAttach} 
+          onAttach={(files) => console.log('Attach:', files)} 
           users={Object.values(USERS)}
         />
       </div>
