@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pixonui/pixonui.git"
+    "url": "git+https://github.com/pixonui/pixonui.git"
   },
   "bugs": {
     "url": "https://github.com/pixonui/pixonui/issues"
@@ -61,6 +61,7 @@
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
     "happy-dom": "^20.0.11",
+    "lucide-react": "^0.561.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsup": "^8.0.1",
