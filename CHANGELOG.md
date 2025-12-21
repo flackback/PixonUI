@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-21
+
+### Added
+- **Kanban Mega Expansion**:
+  - `KanbanTaskModal`: Comprehensive task editor with subtasks, checklists, activity feed, and attachments.
+  - `KanbanHeader`: Advanced board header with view switching, filtering, and member management.
+  - `KanbanQuickAdd`: Inline task creation for rapid workflow.
+  - `KanbanSwimlane`: Support for horizontal grouping of tasks.
+  - `KanbanListView`: Alternative list-based visualization for tasks.
+  - `KanbanTimelineView`: Gantt-style timeline for project scheduling.
+  - `KanbanTableView`: Structured data view for bulk task management.
+  - `KanbanFilterBar`: Advanced filtering system with saved filters and multi-select.
+  - `useKanbanFilters`: Hook for complex task filtering and searching.
+  - `useKanbanUndo`: History management with Undo/Redo support (Ctrl+Z/Ctrl+Y).
+  - `useKanbanKeyboard`: Global keyboard shortcuts for Kanban operations.
+  - `useKanbanSync`: Real-time synchronization logic for collaborative boards.
+  - `useKanbanHistory`: Detailed activity tracking for tasks and boards.
+  - **Support Components**: `SubtaskList`, `Checklist`, `TaskActivity`, `TaskComments`, `TaskAttachments`, `LabelPicker`, `AssigneePicker`, `DueDatePicker`, `TimeTracker`, `ColumnLimit`.
+
+### Changed
+- Overhauled `KanbanBoard` and `KanbanColumn` to support WIP limits, swimlanes, and multiple views.
+- Enhanced `KanbanCard` with selection states, time tracking indicators, and rich metadata display.
+- Expanded `KanbanTask` and `KanbanColumn` types to support professional project management features.
+
+### Fixed
+- Improved drag-and-drop performance for large boards.
+- Resolved accessibility issues in task interactions.
+- Fixed layout shifts when switching between Kanban views.
+
 ## [0.3.0] - 2025-12-21
 
 ### Added

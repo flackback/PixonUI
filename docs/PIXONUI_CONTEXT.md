@@ -31,6 +31,13 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 - `ChatInput`: Advanced input with voice recording, mentions, and replies.
 - `ChatSidebar`: Group and contact management.
 
+### Kanban System (Mega Expansion)
+- `KanbanBoard`: Professional board with WIP limits, swimlanes, and multiple views.
+- `KanbanTaskModal`: Rich task editor with subtasks, checklists, and activity feeds.
+- `KanbanHeader`: Advanced header with view switching (Board, List, Timeline, Table).
+- `KanbanFilterBar`: Multi-criteria filtering with saved filters support.
+- `KanbanQuickAdd`: Inline task creation for rapid workflow.
+
 ### Overlays (Native-First)
 - `Dialog`: Uses `<dialog>`. Props: `isOpen`, `onClose`.
 - `DropdownMenu`: Positioned via `useFloating`.
@@ -49,6 +56,10 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 - `useReadReceipts(messages, onRead)`: Visibility-based tracking.
 - `useTypingIndicator()`: Real-time typing state.
 - `useChatSearch(messages)`: High-performance local search.
+- `useKanbanFilters(tasks)`: Complex task filtering and searching.
+- `useKanbanUndo(tasks)`: History management with Undo/Redo support.
+- `useKanbanKeyboard()`: Global keyboard shortcuts for Kanban.
+- `useKanbanSync(boardId)`: Real-time synchronization logic.
 - `useFloating(triggerRef, contentRef, options)`: For custom overlays.
 - `useForm({ initialValues, onSubmit })`: Returns `register`, `handleSubmit`, `errors`.
 - `useScroll()`: Returns `scrollProgressY` (0 to 1).

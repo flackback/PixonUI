@@ -51,9 +51,15 @@
 - **MessageList**: High-performance list with date grouping and sticky headers.
 - **MessageBubble**: Rich media support (Audio, Image, Location, Contact).
 - **ChatInput**: Advanced input with voice recording, mentions, and replies.
-- **useChatMessages**: Advanced state management for messaging.
-- **useVoiceRecorder**: Native audio capture hook.
-- **useReadReceipts**: Visibility-based message tracking.
+- **Hooks**: `useChatMessages`, `useVoiceRecorder`, `useReadReceipts`, `useTypingIndicator`, `useChatSearch`.
+
+### 📋 Kanban System (Mega Expansion)
+- **KanbanBoard**: Professional project management board with WIP limits and swimlanes.
+- **KanbanTaskModal**: Rich task editing with subtasks, checklists, and activity feeds.
+- **Multiple Views**: Switch between Board, List, Timeline, and Table visualizations.
+- **Advanced Filtering**: `KanbanFilterBar` with saved filters and multi-criteria search.
+- **Hooks**: `useKanbanUndo` (Undo/Redo), `useKanbanKeyboard` (Shortcuts), `useKanbanFilters`.
+- **Time Tracking**: Integrated time tracking and due date management.
 
 ### 🏗️ Layout & Structure
 - **Surface**: The base glassmorphic container.
