@@ -70,6 +70,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["hookName"],
         },
       },
+      {
+        name: "list_utils",
+        description: "List all available PixonUI utility functions",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+      {
+        name: "get_util_info",
+        description: "Get detailed information about a specific utility function",
+        inputSchema: {
+          type: "object",
+          properties: {
+            utilName: {
+              type: "string",
+              description: "The name of the utility function (e.g., formatDate, truncate, slugify)",
+            },
+          },
+          required: ["utilName"],
+        },
+      },
     ],
   };
 });
@@ -222,6 +244,63 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     } catch (error: any) {
       return {
         content: [{ type: "text", text: `Error getting hook info: ${error.message}` }],
+        isError: true,
+      };
+    }
+  }
+
+  if (name === "list_utils") {
+    try {
+      const utilsDir = path.join(UI_SRC_PATH, "utils");
+      const files = await fs.readdir(utilsDir);
+      const allUtils = files
+        .filter(f => (f.endsWith(".ts") || f.endsWith(".tsx")) && !f.includes(".test.") && f !== "cn.ts")
+        .map(f => f.replace(/\.(ts|tsx)$/, ""));
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Available PixonUI Utility Modules:\n${allUtils.sort().join("\n")}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        content: [{ type: "text", text: `Error listing utils: ${error.message}` }],
+        isError: true,
+      };
+    }
+  }
+
+  if (name === "get_util_info") {
+    const utilName = args?.utilName as string;
+    try {
+      const utilsDir = path.join(UI_SRC_PATH, "utils");
+      const files = await fs.readdir(utilsDir);
+      const match = files.find(f => f.toLowerCase() === `${utilName.toLowerCase()}.ts` || f.toLowerCase() === `${utilName.toLowerCase()}.tsx`);
+
+      if (!match) {
+        return {
+          content: [{ type: "text", text: `Utility module "${utilName}" not found.` }],
+          isError: true,
+        };
+      }
+
+      const utilPath = path.join(utilsDir, match);
+      const content = await fs.readFile(utilPath, "utf-8");
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Utility Module: ${utilName}\n\nSource Code:\n${content}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        content: [{ type: "text", text: `Error getting util info: ${error.message}` }],
         isError: true,
       };
     }

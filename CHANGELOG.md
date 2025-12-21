@@ -16,14 +16,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `useHistory`: Generic Undo/Redo state management.
   - `useSearch`: Client-side fuzzy search with multi-key support.
   - `useLocalStorage`: Type-safe persistent state with cross-tab sync.
+  - `useSessionStorage`: Type-safe persistent state for session.
   - `useKeyboardShortcuts`: Declarative hotkey management.
   - `useClipboard`: Copy-to-clipboard utility.
+  - `useDebounce` & `useThrottle`: Performance optimization hooks.
+  - `usePrevious`, `useToggle`, `useLifecycle`: Utility hooks.
+  - `useAsync` & `useFetch`: Asynchronous operation management.
   - `useFlip`: FLIP technique for smooth layout transitions.
   - `useViewTransition`: Native Browser View Transitions API wrapper.
   - `useDrag`: Gesture-based dragging with touch support.
   - `useTextScramble`: Hacker-style text animation.
   - `useStagger`: Animation orchestration utility.
   - `useScrollTransform`, `useScrollVelocity`, `useScrollDirection`, `useScrollLock`: Advanced scroll-linked animation hooks.
+- **New Components**:
+  - `PasswordInput`: Input with visibility toggle.
+  - `ConfirmDialog`: Specialized modal for confirmations.
+  - `TagInput`: Multi-tag management input.
+  - `ColorPicker`: Styled color selection.
+  - `SkipToContent`: Accessibility helper for keyboard users.
+- **Utility Functions**:
+  - `formatDate`, `formatNumber`, `formatCurrency`: Locale-aware formatters.
+  - `truncate`, `slugify`: String manipulation helpers.
 - New `HooksDemo` in preview application.
 
 ### Changed

@@ -51,12 +51,14 @@
 - **Card & MetricCard**: Data containers with optional glow effects.
 - **Kanban**: Advanced board with native Drag & Drop and continuous separators.
 - **Table**: Optimized with `content-visibility` for large datasets.
+- **VirtualList**: High-performance windowing for rendering 10,000+ items.
 
 ### 🖱️ Overlays & Navigation
-- **Dialog**: Native `<dialog>` implementation for modals.
+- **Dialog & ConfirmDialog**: Native `<dialog>` implementation for modals and confirmations.
 - **DropdownMenu & Popover**: Positioned via the native-first `useFloating` hook.
 - **Tooltip**: Lightweight, portal-based tooltips.
 - **Sidebar & Tabs**: Flexible navigation structures.
+- **SkipToContent**: Accessibility helper for keyboard users.
 
 ### 🎭 Motion & Feedback
 - **Motion & MotionGroup**: Preset-based entry animations.
@@ -65,6 +67,7 @@
 - **NumberTicker**: Smoothly animated numeric counters.
 - **ScrollProgress**: Page reading progress indicator.
 - **PageTransition**: Support for the native View Transitions API.
+- **TextScramble**: Hacker-style text animation effect.
 
 ### 🪝 Native Hooks
 - **`useFloating`**: Robust positioning for overlays.
@@ -72,6 +75,11 @@
 - **`useScroll`**: Real-time scroll progress tracking.
 - **`useResponsive`**: `useMediaQuery`, `useBreakpoint`, and `useContainerQuery`.
 - **`useIntersection`**: Easy access to `IntersectionObserver`.
+- **`useChat` & `useKanban`**: Domain-specific state management.
+- **`useHistory`**: Generic Undo/Redo state management.
+- **`useSearch`**: Client-side fuzzy search with multi-key support.
+- **`useDebounce` & `useThrottle`**: Performance optimization hooks.
+- **`useLocalStorage` & `useSessionStorage`**: Type-safe persistent state.
 
 ## 🚀 Getting Started
 

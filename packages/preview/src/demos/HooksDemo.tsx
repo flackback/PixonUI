@@ -79,7 +79,7 @@ export function HooksDemo() {
         <Surface className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <History className="w-5 h-5 text-blue-400" />
-            <Heading level={3}>History & Clipboard</Heading>
+            <Heading as="h3">History & Clipboard</Heading>
           </div>
           <TextInput 
             value={historyState} 
@@ -108,7 +108,7 @@ export function HooksDemo() {
         <Surface className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <SearchIcon className="w-5 h-5 text-purple-400" />
-            <Heading level={3}>Smart Search</Heading>
+            <Heading as="h3">Smart Search</Heading>
           </div>
           <TextInput 
             value={query} 
@@ -130,7 +130,7 @@ export function HooksDemo() {
         <Surface className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <Database className="w-5 h-5 text-emerald-400" />
-            <Heading level={3}>Persistence & Shortcuts</Heading>
+            <Heading as="h3">Persistence & Shortcuts</Heading>
           </div>
           <div className="space-y-2">
             <Text size="sm" className="text-white/60">Local Storage Value:</Text>
@@ -159,7 +159,7 @@ export function HooksDemo() {
         <Surface className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <List className="w-5 h-5 text-pink-400" />
-            <Heading level={3}>Virtualization (10k items)</Heading>
+            <Heading as="h3">Virtualization (10k items)</Heading>
           </div>
           <div 
             ref={containerRef}
