@@ -100,7 +100,7 @@ export * from './primitives/Kbd';
 export * from './theme/ThemeProvider';
 export * from './theme/ThemeToggle';
 export * from './hooks';
-export * from './utils/cn';
+export { cn } from './utils/cn';
 export * from './utils/format';
 export * from './utils/string';
 
