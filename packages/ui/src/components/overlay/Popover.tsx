@@ -133,7 +133,7 @@ export function PopoverContent({ className, children, align = 'center', sideOffs
         transformOrigin: getTransformOrigin(),
       }}
       className={cn(
-        "fixed z-50 min-w-[12rem] rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-4 shadow-xl outline-none duration-200",
+        "fixed z-[110] min-w-[12rem] rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-4 shadow-xl outline-none duration-200",
         isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}

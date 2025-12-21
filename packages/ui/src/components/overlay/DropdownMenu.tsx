@@ -154,7 +154,7 @@ export function DropdownMenuContent({ className, children, align = 'start', side
         transformOrigin: getTransformOrigin(),
       }}
       className={cn(
-        "fixed z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-1 shadow-md duration-100",
+        "fixed z-[110] min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-1 shadow-md duration-100",
         isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}

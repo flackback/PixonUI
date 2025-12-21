@@ -16,12 +16,12 @@ export function PageLoader({
   ...props
 }: PageLoaderProps) {
   const baseStyles = fullscreen
-    ? 'fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-black/80 backdrop-blur-sm'
+    ? 'fixed inset-0 z-[200] flex items-center justify-center bg-white/80 dark:bg-black/80 backdrop-blur-sm'
     : 'flex items-center justify-center p-8 w-full h-full min-h-[200px]';
 
   if (variant === 'bar') {
     return (
-      <div className={cn('fixed top-0 left-0 right-0 z-50 h-1 bg-transparent', className)} {...props}>
+      <div className={cn('fixed top-0 left-0 right-0 z-[200] h-1 bg-transparent', className)} {...props}>
         <div className="h-full bg-blue-500 animate-indeterminate-progress origin-left" />
       </div>
     );

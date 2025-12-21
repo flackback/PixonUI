@@ -56,7 +56,7 @@ export function CommandDialog({
     <div
       ref={overlayRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 pt-[20vh]"
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 pt-[20vh]"
     >
       <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/90 shadow-2xl animate-in zoom-in-95 duration-200">
         <Combobox usePopover={false} {...props}>

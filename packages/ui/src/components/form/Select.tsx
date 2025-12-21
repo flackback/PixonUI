@@ -155,7 +155,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         </div>
 
         {isOpen && (
-          <div className="absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute top-full left-0 z-[110] mt-1 w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-xl animate-in fade-in zoom-in-95 duration-100">
             <ul
               id={`${id}-listbox`}
               role="listbox"

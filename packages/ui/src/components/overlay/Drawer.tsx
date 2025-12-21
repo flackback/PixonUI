@@ -82,7 +82,7 @@ export function Drawer({
       ref={overlayRef}
       onClick={handleBackdropClick}
       className={cn(
-        "fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm transition-opacity duration-300",
+        "fixed inset-0 z-[100] flex bg-black/60 backdrop-blur-sm transition-opacity duration-300",
         isVisible ? "opacity-100" : "opacity-0"
       )}
       role="dialog"

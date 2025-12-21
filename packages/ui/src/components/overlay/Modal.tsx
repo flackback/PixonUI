@@ -55,7 +55,7 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
       ref={dialogRef}
       onClick={handleBackdropClick}
       className={cn(
-        "fixed inset-0 z-50 bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
+        "fixed inset-0 z-[100] bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
         "animate-in fade-in duration-200",
         className
       )}
