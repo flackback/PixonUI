@@ -20,7 +20,7 @@ export interface KanbanBoardColumn {
   taskIds: string[];
 }
 
-export interface KanbanBoard {
+export interface KanbanBoardState {
   columns: Record<string, KanbanBoardColumn>;
   columnOrder: string[];
   tasks: Record<string, KanbanBoardTask>;
@@ -32,8 +32,8 @@ export interface KanbanBoard {
  * @example
  * const { board, moveTask } = useKanban(initialData);
  */
-export function useKanban(initialBoard: KanbanBoard) {
-  const [board, setBoard] = useState<KanbanBoard>(initialBoard);
+export function useKanban(initialBoard: KanbanBoardState) {
+  const [board, setBoard] = useState<KanbanBoardState>(initialBoard);
 
   /**
    * Moves a task within the same column or to a different column.

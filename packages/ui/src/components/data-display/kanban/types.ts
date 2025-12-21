@@ -1,5 +1,30 @@
 import type { ReactNode } from 'react';
 
+export interface KanbanUser {
+  id: string;
+  name: string;
+  avatar?: string;
+  status?: 'online' | 'offline' | 'away' | 'busy';
+}
+
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface ChecklistItem {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface KanbanLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface KanbanTask {
   id: string;
   columnId: string;
@@ -7,30 +32,47 @@ export interface KanbanTask {
   description?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   tags?: string[];
-  assignee?: {
-    name: string;
-    avatar?: string;
-  };
+  assignee?: KanbanUser;
   dueDate?: string;
   progress?: number;
   comments?: number;
   attachments?: number;
   timeSpent?: number; // in seconds
   blockedBy?: string[];
-  [key: string]: any; // Allow for custom properties
+  createdAt?: Date;
+  updatedAt?: Date;
+  createdBy?: KanbanUser;
+  subtasks?: Subtask[];
+  checklist?: ChecklistItem[];
+  estimatedTime?: number;
+  customFields?: Record<string, any>;
+  labels?: KanbanLabel[];
+  watchers?: KanbanUser[];
+  order?: number;
+  archived?: boolean;
+  parentId?: string;
+  [key: string]: any;
 }
 
-export interface KanbanColumn {
+export interface KanbanColumnDef {
   id: string;
   title: string;
   color?: string;
   limit?: number;
+  description?: string;
+  isCollapsed?: boolean;
+  order?: number;
+  icon?: ReactNode;
+  autoMove?: {
+    when: 'overdue' | 'completed';
+    toColumnId: string;
+  };
 }
 
 export type DropPosition = 'top' | 'bottom' | 'left' | 'right';
 
 export interface KanbanProps {
-  columns: KanbanColumn[];
+  columns: KanbanColumnDef[];
   tasks: KanbanTask[];
   onTaskMove?: (taskId: string, toColumnId: string, toTaskId?: string, position?: 'top' | 'bottom') => void;
   onColumnMove?: (columnId: string, toColumnId: string, position?: 'left' | 'right') => void;
@@ -44,6 +86,21 @@ export interface KanbanProps {
   onTaskDragEnd?: (taskId: string) => void;
   onTaskSelectionChange?: (selectedIds: string[]) => void;
   onTaskTimerToggle?: (taskId: string) => void;
+  onColumnAdd?: () => void;
+  onColumnEdit?: (columnId: string) => void;
+  onColumnDelete?: (columnId: string) => void;
+  onColumnCollapse?: (columnId: string) => void;
+  collapsedColumns?: string[];
+  onBulkAction?: (taskIds: string[], action: string) => void;
+  sortBy?: 'priority' | 'dueDate' | 'title' | 'created' | 'order';
+  sortOrder?: 'asc' | 'desc';
+  view?: 'board' | 'list' | 'calendar' | 'timeline';
+  onViewChange?: (view: string) => void;
+  swimlanes?: boolean;
+  swimlaneBy?: keyof KanbanTask;
+  showColumnActions?: boolean;
+  showQuickAdd?: boolean;
+  enableKeyboardNavigation?: boolean;
   renderCard?: (task: KanbanTask) => ReactNode;
   className?: string;
   columnClassName?: string;
@@ -60,6 +117,17 @@ export interface KanbanProps {
 }
 
 export interface SortConfig {
-  field: 'title' | 'priority' | 'dueDate';
+  field: 'title' | 'priority' | 'dueDate' | 'created' | 'order';
   direction: 'asc' | 'desc';
+}
+
+export interface FilterOption {
+  label: string;
+  value: string;
+}
+
+export interface SavedFilter {
+  id: string;
+  name: string;
+  query: any;
 }

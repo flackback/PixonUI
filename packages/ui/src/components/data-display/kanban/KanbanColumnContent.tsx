@@ -3,11 +3,11 @@ import { Plus, LayoutGrid } from 'lucide-react';
 import { Button } from '../../button/Button';
 import { Text } from '../../typography/Text';
 import { cn } from '../../../utils/cn';
-import type { KanbanTask, KanbanColumn, DropPosition } from './types';
+import type { KanbanTask, KanbanColumnDef, DropPosition } from './types';
 import { KanbanCard } from './KanbanCard';
 
 interface KanbanColumnContentProps {
-  column: KanbanColumn;
+  column: KanbanColumnDef;
   columnMap: Record<string, KanbanTask[]>;
   groupName: string;
   visibleCount: number;

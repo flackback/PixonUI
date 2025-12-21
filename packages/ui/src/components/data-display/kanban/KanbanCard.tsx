@@ -9,28 +9,32 @@ import type { KanbanTask } from './types';
 
 interface KanbanCardProps {
   task: KanbanTask;
-  columnId: string;
-  selectedTaskIds: string[];
+  isSelected?: boolean;
+  showTimer?: boolean;
+  onEdit?: (task: KanbanTask) => void;
+  onDelete?: (taskId: string) => void;
+  draggable?: boolean;
   activeTimerTaskId?: string | null;
   selectable?: boolean;
   cardClassName?: string;
   onTaskClick?: (e: React.MouseEvent, task: KanbanTask) => void;
   onTaskSelectionChange?: (selectedIds: string[]) => void;
-  onTaskRemove?: (taskId: string) => void;
   onTaskTimerToggle?: (taskId: string) => void;
   renderCard?: (task: KanbanTask) => React.ReactNode;
 }
 
 export const KanbanCard = React.memo(({
   task,
-  columnId,
-  selectedTaskIds,
+  isSelected,
+  showTimer,
+  onEdit,
+  onDelete,
+  draggable = true,
   activeTimerTaskId,
   selectable,
   cardClassName,
   onTaskClick,
   onTaskSelectionChange,
-  onTaskRemove,
   onTaskTimerToggle,
   renderCard
 }: KanbanCardProps) => {
@@ -45,8 +49,6 @@ export const KanbanCard = React.memo(({
       default: return 'neutral';
     }
   };
-
-  const isSelected = selectedTaskIds.includes(task.id);
 
   return (
     <Surface 
@@ -65,11 +67,8 @@ export const KanbanCard = React.memo(({
               <Checkbox 
                 checked={isSelected}
                 onChange={(e) => {
-                  const checked = e.target.checked;
-                  const newSelection = checked 
-                    ? [...selectedTaskIds, task.id]
-                    : selectedTaskIds.filter(id => id !== task.id);
-                  onTaskSelectionChange?.(newSelection);
+                  // This should be handled by the parent now or via onTaskSelectionChange
+                  onTaskSelectionChange?.(isSelected ? [] : [task.id]);
                 }}
                 onClick={(e) => e.stopPropagation()}
                 className="mr-1"
@@ -86,18 +85,18 @@ export const KanbanCard = React.memo(({
             </Text>
           </div>
           <div className="flex items-center gap-1">
-            {onTaskRemove && (
+            {onDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onTaskRemove(task.id);
+                  onDelete(task.id);
                 }}
                 className="p-1 rounded-md hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
-            <GripVertical className="h-4 w-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            {draggable && <GripVertical className="h-4 w-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
           </div>
         </div>
 

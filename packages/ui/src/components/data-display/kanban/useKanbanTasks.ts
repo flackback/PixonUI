@@ -1,9 +1,9 @@
 import { useMemo, useState, useCallback } from 'react';
-import type { KanbanTask, KanbanColumn, SortConfig } from './types';
+import type { KanbanTask, KanbanColumnDef, SortConfig } from './types';
 
 interface UseKanbanTasksProps {
   tasks: KanbanTask[];
-  columns: KanbanColumn[];
+  columns: KanbanColumnDef[];
   groupBy?: keyof KanbanTask;
   pageSize: number;
 }

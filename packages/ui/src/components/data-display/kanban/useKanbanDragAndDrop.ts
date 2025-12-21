@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
-import type { KanbanTask, KanbanColumn, DropPosition } from './types';
+import type { KanbanTask, KanbanColumnDef, DropPosition } from './types';
 
 interface UseKanbanDragAndDropProps {
   tasks: KanbanTask[];
-  columns: KanbanColumn[];
+  columns: KanbanColumnDef[];
   selectedTaskIds: string[];
   onTaskMove?: (taskId: string, toColumnId: string, toTaskId?: string, position?: 'top' | 'bottom') => void;
   onColumnMove?: (columnId: string, toColumnId: string, position?: 'left' | 'right') => void;
