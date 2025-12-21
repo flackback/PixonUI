@@ -61,8 +61,15 @@ export function KanbanBoard({
   const swimlaneGroups = useMemo(() => {
     if (!swimlanes) return null;
     const groups: Record<string, KanbanTask[]> = {};
+    
+    const getNestedValue = (obj: any, path: string) => {
+      if (!path.includes('.')) return obj[path];
+      return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+    };
+
     filteredTasks.forEach(task => {
-      const value = String(task[swimlaneBy] || 'Uncategorized');
+      const rawValue = getNestedValue(task, swimlaneBy as string);
+      const value = String(rawValue || 'Uncategorized');
       if (!groups[value]) groups[value] = [];
       groups[value].push(task);
     });
@@ -79,13 +86,22 @@ export function KanbanBoard({
     tasks, 
     selectedTaskIds: [], 
     onTaskMove: (taskId, toColumnId, toTaskId, position) => {
-      const updatedTasks = tasks.map(t => {
-        if (t.id === taskId) {
-          return { ...t, columnId: toColumnId };
-        }
-        return t;
-      });
-      pushState({ tasks: updatedTasks, columns });
+      const newTasks = [...tasks];
+      const taskIndex = newTasks.findIndex(t => t.id === taskId);
+      if (taskIndex === -1) return;
+
+      const task = { ...newTasks[taskIndex], columnId: toColumnId } as KanbanTask;
+      newTasks.splice(taskIndex, 1);
+      
+      if (!toTaskId) {
+        newTasks.push(task);
+      } else {
+        const targetIndex = newTasks.findIndex(t => t.id === toTaskId);
+        const insertIndex = position === 'bottom' ? targetIndex + 1 : targetIndex;
+        newTasks.splice(insertIndex, 0, task);
+      }
+
+      pushState({ tasks: newTasks, columns });
       onTaskMove?.(taskId, toColumnId, toTaskId, position);
     }
   });

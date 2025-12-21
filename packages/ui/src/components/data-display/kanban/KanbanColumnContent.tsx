@@ -174,14 +174,13 @@ export const KanbanColumnContent = ({
             >
               <KanbanCard 
                 task={task}
-                columnId={column.id}
-                selectedTaskIds={selectedTaskIds}
+                isSelected={selectedTaskIds.includes(task.id)}
                 activeTimerTaskId={activeTimerTaskId}
                 selectable={selectable}
                 cardClassName={cardClassName}
                 onTaskClick={onTaskClick}
                 onTaskSelectionChange={onTaskSelectionChange}
-                onTaskRemove={onTaskRemove}
+                onDelete={onTaskRemove}
                 onTaskTimerToggle={onTaskTimerToggle}
                 renderCard={renderCard}
               />

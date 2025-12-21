@@ -6,9 +6,17 @@ interface KanbanState {
   columns: KanbanColumnDef[];
 }
 
+interface HistoryState {
+  history: KanbanState[];
+  currentIndex: number;
+}
+
 export function useKanbanUndo(initialState: KanbanState) {
-  const [history, setHistory] = useState<KanbanState[]>([initialState]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [state, setState] = useState<HistoryState>({
+    history: [initialState],
+    currentIndex: 0
+  });
+  
   const lastInitialState = useRef(initialState);
 
   // Sync with external state changes
@@ -19,42 +27,56 @@ export function useKanbanUndo(initialState: KanbanState) {
                           initialState.columns.some((c, i) => c.id !== lastInitialState.current.columns[i]?.id);
 
     if (tasksChanged || columnsChanged) {
-      setHistory([initialState]);
-      setCurrentIndex(0);
+      // Check if the new initialState matches our current state to avoid resetting history on our own changes
+      const currentState = state.history[state.currentIndex];
+      const isSameAsCurrent = currentState && 
+                             initialState.tasks.length === currentState.tasks.length &&
+                             initialState.tasks.every((t, i) => t.id === currentState.tasks[i]?.id && t.columnId === currentState.tasks[i]?.columnId);
+
+      if (!isSameAsCurrent) {
+        setState({
+          history: [initialState],
+          currentIndex: 0
+        });
+      }
       lastInitialState.current = initialState;
     }
-  }, [initialState]);
+  }, [initialState, state.history, state.currentIndex]);
 
   const pushState = useCallback((newState: KanbanState) => {
-    setHistory(prev => {
-      const nextHistory = prev.slice(0, currentIndex + 1);
-      return [...nextHistory, newState];
+    setState(prev => {
+      const nextHistory = prev.history.slice(0, prev.currentIndex + 1);
+      return {
+        history: [...nextHistory, newState],
+        currentIndex: prev.currentIndex + 1
+      };
     });
-    setCurrentIndex(prev => prev + 1);
-  }, [currentIndex]);
+  }, []);
 
   const undo = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      return history[currentIndex - 1];
-    }
-    return null;
-  }, [currentIndex, history]);
+    setState(prev => {
+      if (prev.currentIndex > 0) {
+        return { ...prev, currentIndex: prev.currentIndex - 1 };
+      }
+      return prev;
+    });
+  }, []);
 
   const redo = useCallback(() => {
-    if (currentIndex < history.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      return history[currentIndex + 1];
-    }
-    return null;
-  }, [currentIndex, history]);
+    setState(prev => {
+      if (prev.currentIndex < prev.history.length - 1) {
+        return { ...prev, currentIndex: prev.currentIndex + 1 };
+      }
+      return prev;
+    });
+  }, []);
 
   return {
-    state: history[currentIndex],
+    state: state.history[state.currentIndex],
     pushState,
     undo,
     redo,
-    canUndo: currentIndex > 0,
-    canRedo: currentIndex < history.length - 1
+    canUndo: state.currentIndex > 0,
+    canRedo: state.currentIndex < state.history.length - 1
   };
 }

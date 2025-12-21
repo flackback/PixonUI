@@ -119,20 +119,25 @@ export function KanbanDemo() {
 
   // Generate many tasks for lazy loading demo
   useEffect(() => {
-    const manyTasks: KanbanTask[] = [...tasks];
-    for (let i = 5; i <= 100; i++) {
-      manyTasks.push({
-        id: String(i),
-        title: `Task ${i}: Performance Test`,
-        description: `This is task number ${i} for testing ultra-performance lazy loading.`,
-        priority: i % 4 === 0 ? 'urgent' : i % 3 === 0 ? 'high' : 'medium',
-        tags: ['Performance', 'Test'],
-        columnId: i % 4 === 0 ? 'todo' : i % 4 === 1 ? 'in-progress' : i % 4 === 2 ? 'review' : 'done',
-        progress: Math.floor(Math.random() * 100),
-        timeSpent: Math.floor(Math.random() * 10000)
-      });
-    }
-    setTasks(manyTasks);
+    setTasks(prev => {
+      // Only add if we haven't already added them (to avoid double addition in dev mode)
+      if (prev.length > 50) return prev;
+      
+      const manyTasks = [...prev];
+      for (let i = 5; i <= 100; i++) {
+        manyTasks.push({
+          id: `perf-${i}`,
+          title: `Task ${i}: Performance Test`,
+          description: `This is task number ${i} for testing ultra-performance lazy loading.`,
+          priority: i % 4 === 0 ? 'urgent' : i % 3 === 0 ? 'high' : 'medium',
+          tags: ['Performance', 'Test'],
+          columnId: i % 4 === 0 ? 'todo' : i % 4 === 1 ? 'in-progress' : i % 4 === 2 ? 'review' : 'done',
+          progress: Math.floor(Math.random() * 100),
+          timeSpent: Math.floor(Math.random() * 10000)
+        });
+      }
+      return manyTasks;
+    });
   }, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalColumnId, setModalColumnId] = useState<string | undefined>(undefined);
