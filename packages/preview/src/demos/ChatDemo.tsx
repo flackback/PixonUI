@@ -12,7 +12,8 @@ import {
   MessageList, 
   ChatInput, 
   ChatProfile,
-  useChat
+  useChatMessages,
+  useTypingIndicator
 } from '@pixonui/react';
 
 const CURRENT_USER_ID = 'me';
@@ -35,23 +36,11 @@ export function ChatDemo() {
   const [showProfile, setShowProfile] = useState(true);
   
   const { 
-    messages: chatMessages, 
-    sendMessage,
-    setMessages,
-    setIsTyping,
-    isTyping
-  } = useChat({
-    initialMessages: INITIAL_MESSAGES.map(m => ({
-      ...m,
-      status: (m.status === 'read' || m.status === 'delivered') ? 'sent' : (m.status as any)
-    }))
-  });
+    messages, 
+    addMessage
+  } = useChatMessages(INITIAL_MESSAGES);
 
-  // Map ChatMessage back to Message for the UI components
-  const messages: Message[] = chatMessages.map(m => ({
-    ...m,
-    status: m.status as MessageStatus
-  }));
+  const { isTyping, setTyping } = useTypingIndicator();
 
   const conversations: Conversation[] = [
     { id: '1', user: USERS['1']!, lastMessage: messages[messages.length - 1], unreadCount: 2 },
@@ -60,20 +49,27 @@ export function ChatDemo() {
   ];
 
   const handleSend = (content: string) => {
-    sendMessage(content, CURRENT_USER_ID);
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content,
+      senderId: CURRENT_USER_ID,
+      timestamp: new Date(),
+      status: 'sent'
+    };
+    addMessage(newMessage);
 
     // Simulate reply
-    setIsTyping(true);
+    setTyping(true);
     setTimeout(() => {
-      setIsTyping(false);
+      setTyping(false);
       const reply: Message = {
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         content: "That's really cool! I love the glassmorphism effect.",
         senderId: activeId,
         timestamp: new Date(),
         status: 'sent'
       };
-      setMessages(prev => [...prev, { ...reply, status: 'sent' }]);
+      addMessage(reply);
     }, 2000);
   };
 
