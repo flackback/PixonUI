@@ -26,6 +26,13 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 - `Card`: Glassmorphic card. Supports `glow` prop for mouse-follow effect.
 - `Kanban`: Board with native DnD. Uses `columns` and `tasks` props.
 
+### Chat System (Mega Expansion)
+- `ChatLayout`: Main container for chat interfaces.
+- `MessageList`: Virtualized-ready list with date grouping and sticky headers.
+- `MessageBubble`: Rich media renderer (text, image, audio, location, contact).
+- `ChatInput`: Advanced input with voice recording, mentions, and replies.
+- `ChatSidebar`: Group and contact management.
+
 ### Overlays (Native-First)
 - `Dialog`: Uses `<dialog>`. Props: `isOpen`, `onClose`.
 - `DropdownMenu`: Positioned via `useFloating`.
@@ -39,6 +46,11 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 - `ScrollProgress`: Page reading indicator.
 
 ## 4. Native Hooks
+- `useChatMessages(initialMessages)`: Advanced chat state management.
+- `useVoiceRecorder()`: Native `MediaRecorder` wrapper.
+- `useReadReceipts(messages, onRead)`: Visibility-based tracking.
+- `useTypingIndicator()`: Real-time typing state.
+- `useChatSearch(messages)`: High-performance local search.
 - `useFloating(triggerRef, contentRef, options)`: For custom overlays.
 - `useForm({ initialValues, onSubmit })`: Returns `register`, `handleSubmit`, `errors`.
 - `useScroll()`: Returns `scrollProgressY` (0 to 1).

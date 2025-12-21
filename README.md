@@ -46,6 +46,15 @@
 
 ## 🧩 Components & Hooks
 
+### 💬 Chat System (Mega Expansion)
+- **ChatLayout**: Flexible layout for messaging apps.
+- **MessageList**: High-performance list with date grouping and sticky headers.
+- **MessageBubble**: Rich media support (Audio, Image, Location, Contact).
+- **ChatInput**: Advanced input with voice recording, mentions, and replies.
+- **useChatMessages**: Advanced state management for messaging.
+- **useVoiceRecorder**: Native audio capture hook.
+- **useReadReceipts**: Visibility-based message tracking.
+
 ### 🏗️ Layout & Structure
 - **Surface**: The base glassmorphic container.
 - **Card & MetricCard**: Data containers with optional glow effects.

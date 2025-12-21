@@ -48,6 +48,7 @@ import { ExtrasDemo } from './demos/ExtrasDemo';
 import { TableDemo } from './demos/TableDemo';
 import { MotionDemo } from './demos/MotionDemo';
 import { StructureDemo } from './demos/StructureDemo';
+import { ChatMegaDemo } from './demos/ChatMegaDemo';
 import StructureDemoSource from './demos/StructureDemo.tsx?raw';
 import { DatePickersDemo } from './demos/DatePickersDemo';
 import { SelectionControlsDemo } from './demos/SelectionControlsDemo';
@@ -1008,16 +1009,16 @@ ${PageTransitionSource}`,
   },
   {
     id: 'chat',
-    title: 'Chat System',
+    title: 'Chat System (Mega)',
     category: 'Data Display',
-    description: 'A complete, modern chat interface with sidebar, messages, and profile view.',
+    description: 'A complete, modern chat interface with voice recording, replies, reactions, and more.',
     code: `import { 
   ChatLayout, ChatSidebar, ChatHeader, 
-  MessageList, ChatInput, ChatProfile 
+  MessageList, ChatInput, useChatMessages 
 } from '@pixonui/react';
 
-// See ChatDemo.tsx for full implementation`,
-    demo: <ChatDemo />
+// See ChatMegaDemo.tsx for full implementation`,
+    demo: <ChatMegaDemo />
   },
   {
     id: 'background',

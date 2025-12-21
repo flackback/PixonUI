@@ -5,49 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2025-12-21
+## [0.3.0] - 2025-12-21
 
 ### Added
-- **Mega Expansion of Hooks**:
-  - `useChat`: Full chat state management with message history and typing indicators.
-  - `useKanban`: Normalized state management for Kanban boards.
-  - `useVirtualList`: High-performance windowing for large datasets.
-  - `useInfiniteScroll`: Intersection Observer-based infinite loading.
-  - `useHistory`: Generic Undo/Redo state management.
-  - `useSearch`: Client-side fuzzy search with multi-key support.
-  - `useLocalStorage`: Type-safe persistent state with cross-tab sync.
-  - `useSessionStorage`: Type-safe persistent state for session.
-  - `useKeyboardShortcuts`: Declarative hotkey management.
-  - `useClipboard`: Copy-to-clipboard utility.
-  - `useDebounce` & `useThrottle`: Performance optimization hooks.
-  - `usePrevious`, `useToggle`, `useLifecycle`: Utility hooks.
-  - `useAsync` & `useFetch`: Asynchronous operation management.
-  - `useFlip`: FLIP technique for smooth layout transitions.
-  - `useViewTransition`: Native Browser View Transitions API wrapper.
-  - `useDrag`: Gesture-based dragging with touch support.
-  - `useTextScramble`: Hacker-style text animation.
-  - `useStagger`: Animation orchestration utility.
-  - `useScrollTransform`, `useScrollVelocity`, `useScrollDirection`, `useScrollLock`: Advanced scroll-linked animation hooks.
-- **New Components**:
-  - `PasswordInput`: Input with visibility toggle.
-  - `ConfirmDialog`: Specialized modal for confirmations.
-  - `TagInput`: Multi-tag management input.
-  - `ColorPicker`: Styled color selection.
-  - `SkipToContent`: Accessibility helper for keyboard users.
-- **Utility Functions**:
-  - `formatDate`, `formatNumber`, `formatCurrency`: Locale-aware formatters.
-  - `truncate`, `slugify`: String manipulation helpers.
-- New `HooksDemo` in preview application.
+- **Chat Mega Expansion**:
+  - `useChatMessages`: Advanced state management for chat history, reactions, and status.
+  - `useVoiceRecorder`: Native `MediaRecorder` wrapper for audio capture.
+  - `useReadReceipts`: Visibility-based message tracking using `IntersectionObserver`.
+  - `useTypingIndicator`: Real-time typing state management.
+  - `useChatSearch`: High-performance local message search.
+  - `AudioPlayer`: Specialized component for voice messages with waveforms.
+  - `EmojiPicker`: Lightweight, custom emoji selection.
+  - `VoiceRecorder`: UI component for audio recording with duration tracking.
+  - `MessageSearch`: Integrated search interface for chat history.
+  - `MentionList`: User tagging system for chat inputs.
+  - `ReplyPreview`: Contextual UI for message replies.
+  - `ChatBanner`: Informational banners for chat headers.
+  - `DateSeparator`: Automatic message grouping by date.
+  - `OnlineIndicator`: Real-time user status visualization.
+  - `ReadReceipt`: Visual indicators for sent/delivered/read states.
+  - `SystemMessage`: Specialized rendering for non-user events.
+  - `LinkPreview`: Automatic URL detection and previewing.
+  - `GroupHeader`: Support for group chat metadata and member lists.
+- **New Demo**: `ChatMegaDemo` showcasing the full messaging ecosystem.
 
 ### Changed
-- Optimized all scroll hooks with `requestAnimationFrame` for 120fps performance.
-- Renamed internal Kanban types to `KanbanBoardTask` and `KanbanBoardColumn` to avoid export collisions.
-- Updated `ChatDemo` to use the new `useChat` hook.
+- Upgraded `ChatLayout`, `ChatSidebar`, `ChatHeader`, and `ChatInput` to support rich media, groups, and advanced interactions.
+- Refactored `MessageList` and `MessageBubble` for better performance and extensibility.
+- Centralized all hooks in `packages/ui/src/hooks/index.ts` for easier consumption.
 
 ### Fixed
-- TypeScript error in `useInfiniteScroll` where `target` was possibly undefined.
-- TypeScript error in `useHistory` where `previous` state could be undefined.
-- Duplicate export error in `index.ts` for Kanban types.
+- Resolved TypeScript prop collisions in `MessageList`, `MentionList`, `EmojiPicker`, and `MessageSearch`.
+- Fixed syntax errors in `ChatInput` and `ChatSidebar` caused by duplicate code blocks.
+- Corrected `MessageBubble` rendering logic for complex attachment types.
+
+## [0.2.0] - 2025-12-21
 
 ## [0.1.0] - 2025-12-20
 
