@@ -5,6 +5,12 @@ import { Button } from '../button/Button';
 import type { User, Message } from './types';
 import { Surface } from '../../primitives/Surface';
 import { Avatar } from '../data-display/Avatar';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from '../overlay/DropdownMenu';
 
 interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   onSend?: (content: string) => void;
@@ -113,7 +119,7 @@ export function ChatInput({
   };
 
   const handleSend = () => {
-    if (disabled || !content.trim()) return;
+    if (disabled || (!content.trim() && !isRecording)) return;
     onSend?.(content);
     setContent("");
     if (textareaRef.current) {
@@ -122,16 +128,37 @@ export function ChatInput({
   };
 
   return (
-    <div className={cn("p-4 bg-white/80 dark:bg-black/40 backdrop-blur border-t border-gray-200 dark:border-white/10", className)} {...props}>
+    <div className={cn("p-4 bg-white/80 dark:bg-black/40 backdrop-blur border-t border-gray-200 dark:border-white/10 relative", className)} {...props}>
+      {mentionSearch !== null && filteredUsers.length > 0 && (
+        <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4">
+          {filteredUsers.map((user, i) => (
+            <button
+              key={user.id}
+              onClick={() => insertMention(user)}
+              className={cn(
+                "w-full flex items-center gap-3 p-3 text-left transition-colors",
+                i === mentionIndex ? "bg-blue-500/10 dark:bg-white/10" : "hover:bg-gray-50 dark:hover:bg-white/5"
+              )}
+            >
+              <Avatar src={user.avatar} alt={user.name} className="w-8 h-8" />
+              <div>
+                <p className="text-sm font-bold dark:text-white">{user.name}</p>
+                <p className="text-xs text-gray-500 dark:text-white/40">@{user.name.toLowerCase().replace(/\s/g, '')}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
       {replyingTo && (
-        <div className="mb-3 flex items-center justify-between p-2 rounded-xl bg-blue-500/5 border-l-4 border-blue-500 animate-in slide-in-from-bottom-2">
+        <div className="mb-3 flex items-center justify-between p-3 rounded-2xl bg-blue-500/5 border-l-4 border-blue-500 animate-in slide-in-from-bottom-2">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-blue-500">Replying to</p>
             <p className="text-sm text-gray-600 dark:text-white/60 truncate">{replyingTo.content}</p>
           </div>
           <button 
             onClick={onCancelReply}
-            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400"
+            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400"
           >
             <X className="h-4 w-4" />
           </button>
@@ -140,13 +167,29 @@ export function ChatInput({
 
       <div className="flex items-end gap-2">
         <div className="flex items-center gap-1 mb-1">
-          <button 
-            onClick={onAttach}
-            disabled={disabled}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
-          >
-            <Paperclip className="h-5 w-5" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger 
+              disabled={disabled}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
+            >
+              <Paperclip className="h-5 w-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top">
+              <DropdownMenuItem onClick={onAttach}>
+                <ImageIcon className="h-4 w-4 mr-2" /> Image & Video
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAttach}>
+                <Paperclip className="h-4 w-4 mr-2" /> Document
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onLocation}>
+                <MapPin className="h-4 w-4 mr-2" /> Location
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onGif}>
+                <Gift className="h-4 w-4 mr-2" /> GIF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <button 
             onClick={onEmoji}
             disabled={disabled}
@@ -157,95 +200,45 @@ export function ChatInput({
         </div>
 
         <div className="flex-1 relative">
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            placeholder={isRecording ? "Recording..." : placeholder}
-            disabled={disabled || isRecording}
-            rows={1}
-            className={cn(
-              "w-full resize-none rounded-2xl bg-gray-100 dark:bg-white/[0.03] border-none px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-gray-400 dark:text-white",
-              isRecording && "animate-pulse text-red-500"
-            )}
-          />
-          
-          {mentionSearch !== null && filteredUsers.length > 0 && (
-            <Surface className="absolute bottom-full left-0 mb-2 w-64 overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-2">
-              <div className="p-1">
-                {filteredUsers.map((user, i) => (
-                  <button
-                    key={user.id}
-                    onClick={() => insertMention(user)}
-                    className={cn(
-                      "w-full flex items-center gap-2 p-2 rounded-xl text-left transition-colors",
-                      i === mentionIndex ? "bg-blue-500 text-white" : "hover:bg-gray-100 dark:hover:bg-white/[0.06]"
-                    )}
-                  >
-                    <Avatar src={user.avatar} alt={user.name} fallback={user.name[0]} size="sm" />
-                    <span className="text-sm font-medium">{user.name}</span>
-                  </button>
-                ))}
-              </div>
-            </Surface>
+          {isRecording ? (
+            <div className="h-10 flex items-center px-4 bg-red-500/10 rounded-2xl border border-red-500/20 animate-pulse">
+              <div className="w-2 h-2 bg-red-500 rounded-full mr-3 animate-ping" />
+              <span className="text-sm font-medium text-red-500">Recording Audio...</span>
+            </div>
+          ) : (
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled}
+              rows={1}
+              className="w-full p-2.5 max-h-[120px] rounded-2xl bg-gray-100 dark:bg-white/[0.03] border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/[0.06] text-sm resize-none transition-all outline-none dark:text-white placeholder:text-gray-400"
+            />
           )}
         </div>
 
         <div className="flex items-center gap-1 mb-1">
-          {!content.trim() && !isRecording && (
-            <>
-              <button 
-                onClick={onGif}
-                disabled={disabled}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
-              >
-                <Gift className="h-5 w-5" />
-              </button>
-              <button 
-                onClick={onLocation}
-                disabled={disabled}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
-              >
-                <MapPin className="h-5 w-5" />
-              </button>
-            </>
-          )}
-          
-          {isRecording ? (
-            <Button 
-              size="icon" 
-              variant="ghost"
-              onClick={onMic}
-              className="rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 animate-pulse"
-            >
-              <Mic className="h-5 w-5" />
-            </Button>
-          ) : content.trim() ? (
-            <Button 
-              size="icon" 
+          {content.trim() || isRecording ? (
+            <button 
               onClick={handleSend}
               disabled={disabled}
-              className="rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+              className="p-2.5 rounded-full bg-blue-500 text-white hover:bg-blue-600 shadow-lg shadow-blue-500/20 transition-all active:scale-90"
             >
               <Send className="h-5 w-5" />
-            </Button>
+            </button>
           ) : (
             <button 
               onClick={onMic}
               disabled={disabled}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
+              className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
             >
               <Mic className="h-5 w-5" />
             </button>
           )}
         </div>
       </div>
-      {maxLength && (
-        <div className="mt-1 text-[10px] text-right text-gray-400">
-          {content.length} / {maxLength}
-        </div>
-      )}
     </div>
   );
 }

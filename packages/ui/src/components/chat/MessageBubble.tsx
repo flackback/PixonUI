@@ -13,6 +13,9 @@ import { Image } from '../data-display/Image';
 import { AudioPlayer } from './AudioPlayer';
 import { ReadReceipt } from './ReadReceipt';
 import { LinkPreview } from './LinkPreview';
+import { Avatar } from '../data-display/Avatar';
+import { InteractiveMessage } from './InteractiveMessage';
+import { CarouselMessage } from './CarouselMessage';
 
 interface MessageBubbleProps {
   message: Message;
@@ -47,7 +50,20 @@ export function MessageBubble({
   onSelect,
   isSelected
 }: MessageBubbleProps) {
+  const renderStatus = () => {
+    if (!isOwn || !showStatus) return null;
+    return <ReadReceipt status={message.status || 'sent'} className="ml-1" />;
+  };
+
   const renderContent = () => {
+    if (message.type === 'revoked') {
+      return (
+        <p className="text-sm italic opacity-50 flex items-center gap-2">
+          <Trash2 className="h-3 w-3" /> This message was deleted
+        </p>
+      );
+    }
+
     switch (message.type) {
       case 'audio':
         return (
@@ -64,15 +80,16 @@ export function MessageBubble({
               <MapPin className="h-4 w-4" />
               <span className="text-sm font-medium">{message.location?.address || "Shared Location"}</span>
             </div>
-            <div className="aspect-video rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center">
-              <MapPin className="h-8 w-8 opacity-20" />
+            <div className="aspect-video rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center overflow-hidden relative group/map">
+              <MapPin className="h-8 w-8 opacity-20 group-hover/map:scale-110 transition-transform" />
+              <div className="absolute inset-0 bg-blue-500/5 group-hover/map:bg-blue-500/10 transition-colors" />
             </div>
           </div>
         );
       case 'contact':
         return (
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-black/5 dark:bg-white/10">
-            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-black/5 dark:bg-white/10 border border-white/5">
+            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
               <UserIcon className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
@@ -83,127 +100,160 @@ export function MessageBubble({
         );
       case 'file':
         return (
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/10 border border-white/5">
-            <FileText className="h-8 w-8 text-blue-500" />
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/10 border border-white/5 hover:bg-black/10 dark:hover:bg-white/20 transition-colors cursor-pointer">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500">
+              <FileText className="h-6 w-6" />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{message.attachments?.[0]?.name || "File"}</p>
               <p className="text-[10px] opacity-60 uppercase">{message.attachments?.[0]?.size || "Unknown size"}</p>
             </div>
           </div>
         );
+      case 'sticker':
+        return (
+          <div className="relative group/sticker">
+            <img 
+              src={message.attachments?.[0]?.url} 
+              alt="Sticker" 
+              className="w-32 h-32 object-contain"
+            />
+          </div>
+        );
+      case 'interactive':
+        if (message.interactive?.type === 'carousel' && message.interactive.cards) {
+          return <CarouselMessage cards={message.interactive.cards} isOwn={isOwn} />;
+        }
+        if (message.interactive) {
+          return <InteractiveMessage data={message.interactive} isOwn={isOwn} />;
+        }
+        return null;
       default:
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         const urls = message.content.match(urlRegex);
         
         return (
           <div className="space-y-2">
+            {message.replyTo && (
+              <div className="mb-2 p-2 rounded-lg bg-black/5 dark:bg-white/5 border-l-4 border-blue-500 text-xs">
+                <p className="font-bold text-blue-500 truncate">
+                  {message.replyTo.senderId === message.senderId ? 'You' : 'Other'}
+                </p>
+                <p className="opacity-60 truncate">{message.replyTo.content}</p>
+              </div>
+            )}
             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
-            {urls && urls.map((url, i) => (
-              <LinkPreview 
-                key={i} 
-                url={url} 
-                className={cn(
-                  "mt-2",
-                  isOwn ? "bg-white/10 border-white/20" : "bg-black/5 dark:bg-black/20"
-                )} 
-              />
-            ))}
+            {urls && urls.map(url => <LinkPreview key={url} url={url} />)}
           </div>
         );
     }
   };
 
   return (
-    <Motion 
-      preset="spring"
-      className={cn(
-        "flex w-full gap-2 mb-1 group relative",
-        isOwn ? "justify-end" : "justify-start",
-        isSelected && "bg-blue-500/5",
-        className
+    <div className={cn(
+      "flex w-full mb-4 group/bubble",
+      isOwn ? "justify-end" : "justify-start",
+      className
+    )}>
+      {!isOwn && showAvatar && (
+        <div className="mr-2 mt-auto">
+          <Avatar 
+            src={message.senderId} // In real app, fetch user avatar
+            alt="User" 
+            className="w-8 h-8"
+          />
+        </div>
       )}
-      onClick={() => onSelect?.()}
-    >
-      {/* Actions Menu (Hover) */}
+      
       <div className={cn(
-        "absolute top-2 opacity-0 group-hover:opacity-100 transition-opacity z-10",
-        isOwn ? "left-0 -translate-x-full pr-2" : "right-0 translate-x-full pl-2"
+        "relative max-w-[75%] sm:max-w-[60%] transition-all duration-300",
+        isSelected && "scale-95 opacity-80"
       )}>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400">
-            <MoreHorizontal className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align={isOwn ? "end" : "start"}>
-            <DropdownMenuItem onClick={() => onReply?.()}>
-              <Reply className="h-4 w-4 mr-2" /> Reply
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit?.()}>
-              <Edit2 className="h-4 w-4 mr-2" /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onCopy?.()}>
-              <Copy className="h-4 w-4 mr-2" /> Copy
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onForward?.()}>
-              <Forward className="h-4 w-4 mr-2" /> Forward
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPin?.()}>
-              <Pin className="h-4 w-4 mr-2" /> Pin
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onReact?.('👍')}>
-              <Smile className="h-4 w-4 mr-2" /> React
-            </DropdownMenuItem>
-            {isOwn && (
-              <DropdownMenuItem onClick={() => onDelete?.()} className="text-red-500">
-                <Trash2 className="h-4 w-4 mr-2" /> Delete
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className={cn(
-        "relative max-w-[70%] px-4 py-2 rounded-2xl shadow-sm transition-all",
-        isOwn 
-          ? "bg-blue-600 text-white rounded-tr-sm" 
-          : "bg-white dark:bg-white/[0.06] text-gray-900 dark:text-white rounded-tl-sm border border-gray-200 dark:border-transparent",
-        message.isPinned && "ring-2 ring-blue-500/50"
-      )}>
-        {/* Reply Context */}
-        {message.replyTo && (
+        <Motion preset="spring">
           <div className={cn(
-            "mb-2 rounded px-2 py-1 text-xs border-l-2 opacity-80",
-            isOwn ? "bg-white/[0.06] border-white/50" : "bg-gray-100 dark:bg-black/20 border-blue-500"
+            "relative p-3 rounded-2xl shadow-sm backdrop-blur-md border",
+            isOwn 
+              ? "bg-blue-600/90 dark:bg-blue-500/20 text-white border-blue-500/20 rounded-tr-none" 
+              : "bg-white/80 dark:bg-white/[0.05] text-gray-900 dark:text-white border-white/10 rounded-tl-none",
+            "hover:shadow-lg hover:shadow-blue-500/5 transition-shadow"
           )}>
-            <p className="font-bold opacity-60">Replying to</p>
-            <p className="truncate">{message.replyTo.content}</p>
+            {renderContent()}
+            
+            <div className="flex items-center justify-end gap-1 mt-1 opacity-60 text-[10px]">
+              <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              {renderStatus()}
+            </div>
+
+            {/* Reactions */}
+            {message.reactions && Object.keys(message.reactions).length > 0 && (
+              <div className="absolute -bottom-3 right-2 flex -space-x-1">
+                {Object.entries(message.reactions).map(([emoji, users]) => (
+                  <div 
+                    key={emoji}
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-full px-1.5 py-0.5 text-xs shadow-sm animate-in zoom-in-50"
+                    title={users.join(', ')}
+                  >
+                    {emoji}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </Motion>
 
-        {/* Attachments (Images) */}
-        {message.attachments && message.attachments.length > 0 && message.type === 'image' && (
-          <div className="mb-2 space-y-2">
-            {message.attachments.map(att => (
-              <Image 
-                key={att.id} 
-                src={att.url} 
-                alt="Attachment" 
-                className="rounded-2xl max-h-60 object-cover w-full"
-              />
-            ))}
-          </div>
-        )}
-
-        {renderContent()}
-
+        {/* Actions Menu */}
         <div className={cn(
-          "flex items-center justify-end gap-1 mt-1 text-[10px]",
-          isOwn ? "text-white/60" : "text-gray-400"
+          "absolute top-0 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1",
+          isOwn ? "right-full mr-2" : "left-full ml-2"
         )}>
-          {message.isEdited && <span>edited</span>}
-          <span>{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-          {isOwn && message.status && <ReadReceipt status={message.status} />}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
+              <Smile className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" className="flex gap-1 p-1">
+              {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => (
+                <button 
+                  key={emoji}
+                  onClick={() => onReact?.(emoji)}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-transform hover:scale-125"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align={isOwn ? "end" : "start"}>
+              <DropdownMenuItem onClick={onReply}>
+                <Reply className="h-4 w-4 mr-2" /> Reply
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onCopy}>
+                <Copy className="h-4 w-4 mr-2" /> Copy
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onForward}>
+                <Forward className="h-4 w-4 mr-2" /> Forward
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPin}>
+                <Pin className="h-4 w-4 mr-2" /> Pin
+              </DropdownMenuItem>
+              {isOwn && (
+                <>
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Edit2 className="h-4 w-4 mr-2" /> Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500" onClick={onDelete}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-    </Motion>
+    </div>
   );
 }

@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter } from 'lucide-react';
+import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter, MoreVertical } from 'lucide-react';
 import type { Conversation } from './types';
 import { Avatar } from '../data-display/Avatar';
-import { ScrollArea } from '../data-display/ScrollArea';
-import { TypingIndicator } from './TypingIndicator';
+import { useVirtualList } from '../../hooks/useVirtualList';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from '../overlay/DropdownMenu';
 
 interface ChatSidebarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   conversations: Conversation[];
@@ -36,6 +41,19 @@ export function ChatSidebar({
   ...props 
 }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredConversations = useMemo(() => {
+    return conversations.filter(c => {
+      const name = c.user?.name || c.group?.name || "";
+      return name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [conversations, searchQuery]);
+
+  const { containerRef, visibleItems, totalHeight, onScroll } = useVirtualList({
+    itemCount: filteredConversations.length,
+    itemHeight: 72,
+    overscan: 10,
+  });
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -77,95 +95,100 @@ export function ChatSidebar({
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
-          {conversations.map((chat) => {
+      <div 
+        ref={containerRef}
+        onScroll={onScroll}
+        className="flex-1 overflow-y-auto scrollbar-hide"
+      >
+        <div className="relative" style={{ height: totalHeight }}>
+          {visibleItems.map(({ index, offsetTop }) => {
+            const chat = filteredConversations[index];
+            if (!chat) return null;
+
             const displayName = chat.user?.name || chat.group?.name || "Unknown";
             const displayAvatar = chat.user?.avatar || chat.group?.avatar;
             const isOnline = chat.user?.status === 'online';
+            const isActive = activeId === chat.id;
 
             return (
-              <div key={chat.id} className="group relative">
-                <button
+              <div 
+                key={chat.id} 
+                className="absolute left-0 right-0 p-2"
+                style={{ top: offsetTop, height: 72 }}
+              >
+                <div
                   onClick={() => onSelect?.(chat.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left",
-                    activeId === chat.id 
+                    "w-full h-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left group cursor-pointer",
+                    isActive 
                       ? "bg-blue-500/10 dark:bg-white/[0.06] shadow-[0_0_15px_rgba(59,130,246,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.05)]" 
                       : "hover:bg-gray-100 dark:hover:bg-white/[0.03]"
                   )}
                 >
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <Avatar src={displayAvatar} alt={displayName} fallback={displayName[0]} />
                     {isOnline && (
-                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-black" />
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#0a0a0a] rounded-full" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className={cn(
-                          "font-medium truncate",
-                          activeId === chat.id ? "text-blue-600 dark:text-white" : "text-gray-900 dark:text-white/90"
-                        )}>
-                          {displayName}
-                        </span>
-                        {chat.isPinned && <Pin className="h-3 w-3 text-blue-500 rotate-45" />}
-                        {chat.isMuted && <BellOff className="h-3 w-3 text-gray-400" />}
-                      </div>
+                      <span className={cn(
+                        "font-semibold truncate",
+                        isActive ? "text-blue-600 dark:text-white" : "text-gray-900 dark:text-white/90"
+                      )}>
+                        {displayName}
+                      </span>
                       {chat.lastMessage && (
-                        <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
-                          {chat.lastMessage.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-[10px] text-gray-400 dark:text-white/30 whitespace-nowrap">
+                          {new Date(chat.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className={cn(
-                        "text-sm truncate pr-2 flex-1",
-                        activeId === chat.id ? "text-blue-600/80 dark:text-white/70" : "text-gray-500 dark:text-white/50"
-                      )}>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-gray-500 dark:text-white/40 truncate">
                         {chat.isTyping ? (
-                          <TypingIndicator className="text-[10px]" />
+                          <span className="text-blue-500 animate-pulse">typing...</span>
                         ) : (
-                          <p className="truncate">{chat.lastMessage?.content}</p>
+                          chat.lastMessage?.content || "No messages yet"
                         )}
-                      </div>
-                      {chat.unreadCount ? (
-                        <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-blue-500 px-1.5 text-[10px] font-bold text-white">
+                      </p>
+                      {chat.unreadCount > 0 && (
+                        <span className="flex-shrink-0 min-w-[18px] h-[18px] flex items-center justify-center bg-blue-500 text-white text-[10px] font-bold rounded-full px-1">
                           {chat.unreadCount}
                         </span>
-                      ) : null}
+                      )}
                     </div>
                   </div>
-                </button>
 
-                {/* Quick Actions on Hover */}
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-1 border border-gray-200 dark:border-white/10 animate-in fade-in zoom-in-95">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onPin?.(chat.id); }}
-                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500"
-                  >
-                    <Pin className="h-3.5 w-3.5" />
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onArchive?.(chat.id); }}
-                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500"
-                  >
-                    <Archive className="h-3.5 w-3.5" />
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onDelete?.(chat.id); }}
-                    className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400">
+                        <MoreVertical className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onPin?.(chat.id)}>
+                          <Pin className="h-4 w-4 mr-2" /> Pin
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onArchive?.(chat.id)}>
+                          <Archive className="h-4 w-4 mr-2" /> Archive
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onMute?.(chat.id)}>
+                          <BellOff className="h-4 w-4 mr-2" /> Mute
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-500" onClick={() => onDelete?.(chat.id)}>
+                          <Trash2 className="h-4 w-4 mr-2" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

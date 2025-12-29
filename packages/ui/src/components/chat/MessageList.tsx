@@ -1,9 +1,9 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffect } from 'react';
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
 import { MessageBubble } from './MessageBubble';
-import { ScrollArea } from '../data-display/ScrollArea';
-import { MessageSquare, Calendar } from 'lucide-react';
+import { useVirtualList } from '../../hooks/useVirtualList';
+import { MessageSquare, Calendar, ArrowDown } from 'lucide-react';
 
 interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onCopy' | 'onSelect'> {
   messages: Message[];
@@ -44,42 +44,61 @@ export function MessageList({
   groupByDate = true,
   ...props 
 }: MessageListProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const isPrependingRef = useRef(false);
+  const lastTotalHeightRef = useRef(0);
+  
+  // Estimate height based on message type and content length
+  const getMessageHeight = useCallback((index: number) => {
+    const msg = messages[index];
+    if (!msg) return 0;
+    
+    let height = 60; // Base height
+    if (msg.type === 'image' || msg.type === 'video') height += 200;
+    if (msg.type === 'audio') height += 40;
+    if (msg.content) height += Math.ceil(msg.content.length / 50) * 20;
+    if (msg.replyTo) height += 50;
+    if (msg.reactions && Object.keys(msg.reactions).length > 0) height += 30;
+    
+    return height + 16; // Add padding
+  }, [messages]);
+
+  const { containerRef, visibleItems, totalHeight, onScroll, scrollToBottom } = useVirtualList({
+    itemCount: messages.length,
+    itemHeight: getMessageHeight,
+    overscan: 15,
+    startAtBottom: true,
+  });
+
+  // Maintain scroll position after prepending
+  useLayoutEffect(() => {
+    if (isPrependingRef.current && containerRef.current) {
+      const heightDiff = totalHeight - lastTotalHeightRef.current;
+      if (heightDiff > 0) {
+        containerRef.current.scrollTop += heightDiff;
+      }
+      isPrependingRef.current = false;
+    }
+    lastTotalHeightRef.current = totalHeight;
+  }, [totalHeight]);
 
   useEffect(() => {
-    if (shouldAutoScroll) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (shouldAutoScroll && !isPrependingRef.current) {
+      scrollToBottom('smooth');
     }
-  }, [messages, shouldAutoScroll]);
+  }, [messages.length, shouldAutoScroll, scrollToBottom]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    onScroll(e);
     const target = e.currentTarget;
-    const isAtBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 50;
+    const isAtBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 100;
     setShouldAutoScroll(isAtBottom);
 
     if (target.scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
+      isPrependingRef.current = true;
       onLoadMore();
     }
   };
-
-  // Group messages by date
-  const groupedMessages = useMemo(() => {
-    if (!groupByDate) return { 'all': messages };
-    
-    return messages.reduce((groups, message) => {
-      const date = message.timestamp.toLocaleDateString(undefined, { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(message);
-      return groups;
-    }, {} as Record<string, Message[]>);
-  }, [messages, groupByDate]);
 
   if (messages.length === 0 && !isLoadingMore) {
     return (
@@ -96,79 +115,55 @@ export function MessageList({
   }
 
   return (
-    <ScrollArea 
-      className={cn("flex-1 p-4", className)} 
-      onScroll={handleScroll}
-      role="log"
-      aria-live="polite"
-      aria-relevant="additions"
-      {...props}
-    >
-      <div className="space-y-6 pb-4">
-        {hasMore && (
-          <div className="flex justify-center py-4">
-            {isLoadingMore ? (
-              <div className="flex items-center gap-2 text-xs text-white/40">
-                <div className="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
-                Loading older messages...
-              </div>
-            ) : (
-              <button 
-                onClick={onLoadMore}
-                className="text-xs text-cyan-500/60 hover:text-cyan-500 transition-colors"
+    <div className={cn("flex-1 relative overflow-hidden", className)} {...props}>
+      <div 
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="h-full overflow-y-auto scrollbar-hide p-4"
+      >
+        <div className="relative" style={{ height: totalHeight }}>
+          {visibleItems.map(({ index, offsetTop, height }) => {
+            const message = messages[index];
+            if (!message) return null;
+
+            const isOwn = message.senderId === currentUserId;
+            const prevMessage = index > 0 ? messages[index - 1] : null;
+            const showAvatar = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId);
+
+            return (
+              <div 
+                key={message.id} 
+                className="absolute left-0 right-0"
+                style={{ top: offsetTop, height }}
               >
-                Load older messages
-              </button>
-            )}
-          </div>
-        )}
-
-        {Object.entries(groupedMessages).map(([date, msgs]) => (
-          <div key={date} className="space-y-4">
-            {groupByDate && (
-              <div className="flex justify-center sticky top-0 z-10 py-2">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100/80 dark:bg-white/5 backdrop-blur text-[10px] font-medium text-gray-500 dark:text-white/40 border border-gray-200 dark:border-white/10">
-                  <Calendar className="h-3 w-3" />
-                  {date}
-                </div>
+                <MessageBubble
+                  message={message}
+                  isOwn={isOwn}
+                  showAvatar={showAvatar}
+                  onReply={() => onReply?.(message)}
+                  onReact={(emoji) => onReact?.(message, emoji)}
+                  onDelete={() => onDelete?.(message)}
+                  onEdit={() => onEdit?.(message)}
+                  onForward={() => onForward?.(message)}
+                  onCopy={() => onCopy?.(message)}
+                  onPin={() => onPin?.(message)}
+                  onSelect={() => onSelect?.(message)}
+                  isSelected={selectedMessages.includes(message.id)}
+                />
               </div>
-            )}
-            
-            <div className="space-y-1">
-              {msgs.map((msg, index) => {
-                const isOwn = msg.senderId === currentUserId;
-                const prevMsg = msgs[index - 1];
-                const nextMsg = msgs[index + 1];
-                
-                // Logic to group bubbles visually
-                const isFirstInGroup = !prevMsg || prevMsg.senderId !== msg.senderId;
-                const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId;
-
-                return (
-                  <MessageBubble 
-                    key={msg.id} 
-                    message={msg} 
-                    isOwn={isOwn}
-                    className={cn(
-                      !isLastInGroup && "mb-0.5"
-                    )}
-                    onReply={() => onReply?.(msg)}
-                    onReact={(emoji) => onReact?.(msg, emoji)}
-                    onDelete={() => onDelete?.(msg)}
-                    onEdit={() => onEdit?.(msg)}
-                    onForward={() => onForward?.(msg)}
-                    onCopy={() => onCopy?.(msg)}
-                    onPin={() => onPin?.(msg)}
-                    onSelect={() => onSelect?.(msg)}
-                    isSelected={selectedMessages.includes(msg.id)}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ))}
-        <div ref={bottomRef} className="h-px" />
+            );
+          })}
+        </div>
       </div>
-    </ScrollArea>
+
+      {!shouldAutoScroll && (
+        <button 
+          onClick={() => scrollToBottom('smooth')}
+          className="absolute bottom-6 right-6 p-3 rounded-full bg-white dark:bg-white/10 backdrop-blur border border-gray-200 dark:border-white/10 shadow-lg text-gray-600 dark:text-white hover:scale-110 transition-all z-10"
+        >
+          <ArrowDown className="h-5 w-5" />
+        </button>
+      )}
+    </div>
   );
 }

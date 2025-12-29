@@ -18,5 +18,7 @@ export * from './LinkPreview';
 export * from './GroupHeader';
 export * from './MentionList';
 export * from './EmojiPicker';
+export * from './InteractiveMessage';
+export * from './CarouselMessage';
 export * from './VoiceRecorder';
 export * from './MessageSearch';

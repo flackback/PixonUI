@@ -1,17 +1,17 @@
 {
   "name": "@pixonui/react",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "Modern, decoupled, glassmorphic UI library for React with zero heavy dependencies.",
   "author": "PixonUI Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pixonui/pixonui.git"
+    "url": "git+https://github.com/flackback/pixonui.git"
   },
   "bugs": {
-    "url": "https://github.com/pixonui/pixonui/issues"
+    "url": "https://github.com/flackback/pixonui/issues"
   },
-  "homepage": "https://github.com/pixonui/pixonui#readme",
+  "homepage": "https://pixonui.lovable.app",
   "keywords": [
     "react",
     "ui",
@@ -54,6 +54,7 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
