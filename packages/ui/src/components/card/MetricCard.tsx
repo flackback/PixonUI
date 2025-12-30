@@ -69,7 +69,7 @@ function SparkWave({ color = 'currentColor' }: { color?: string }) {
   );
 }
 
-export interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface MetricCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   accent?: 'teal' | 'amber' | 'violet' | 'blue' | 'rose' | 'emerald' | 'indigo';
   icon: React.ReactNode;
   title?: React.ReactNode;

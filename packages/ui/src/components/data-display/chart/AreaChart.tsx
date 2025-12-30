@@ -17,9 +17,12 @@ export function AreaChart<T = any>({
   onValueClick 
 }: AreaChartProps<T>) {
   const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
+  
+  if (!data || data.length === 0) return null;
+
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
-  const itemWidth = chartWidth / (data.length - 1); // Points are on edges
+  const itemWidth = data.length > 1 ? chartWidth / (data.length - 1) : chartWidth; 
 
   const colors = {
     cyan: { stroke: '#06b6d4', fill: 'rgba(6, 182, 212, 0.2)' },
@@ -69,7 +72,6 @@ export function AreaChart<T = any>({
         strokeWidth={3}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="animate-draw-line"
         style={{
             strokeDasharray: 2000,
             strokeDashoffset: 2000,
