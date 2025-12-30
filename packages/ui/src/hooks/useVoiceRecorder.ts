@@ -24,7 +24,13 @@ export function useVoiceRecorder(): VoiceRecorderHook {
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
+      
+      // WhatsApp prefers audio/ogg; codecs=opus for PTT
+      const mimeType = MediaRecorder.isTypeSupported('audio/ogg; codecs=opus') 
+        ? 'audio/ogg; codecs=opus' 
+        : 'audio/webm';
+        
+      mediaRecorder.current = new MediaRecorder(stream, { mimeType });
       chunks.current = [];
 
       mediaRecorder.current.ondataavailable = (e) => {
@@ -34,7 +40,7 @@ export function useVoiceRecorder(): VoiceRecorderHook {
       };
 
       mediaRecorder.current.onstop = () => {
-        const blob = new Blob(chunks.current, { type: 'audio/webm' });
+        const blob = new Blob(chunks.current, { type: mimeType });
         const url = URL.createObjectURL(blob);
         setAudioBlob(blob);
         setAudioUrl(url);

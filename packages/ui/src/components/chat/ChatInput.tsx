@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Send, Paperclip, Smile, Mic, Image as ImageIcon, AtSign, X, MapPin, Gift } from 'lucide-react';
+import { Send, Paperclip, Smile, Mic, Image as ImageIcon, AtSign, X, MapPin, Gift, List, Layout } from 'lucide-react';
 import { Button } from '../button/Button';
 import type { User, Message } from './types';
 import { Surface } from '../../primitives/Surface';
@@ -13,6 +13,8 @@ import {
 } from '../overlay/DropdownMenu';
 
 interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onChange'> {
+  value?: string;
+  onValueChange?: (value: string) => void;
   onSend?: (content: string) => void;
   onChange?: (content: string) => void;
   onAttach?: () => void;
@@ -20,6 +22,12 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
   onEmoji?: () => void;
   onGif?: () => void;
   onLocation?: () => void;
+  onContact?: () => void;
+  onPoll?: () => void;
+  onPix?: () => void;
+  onCarousel?: () => void;
+  onButtons?: () => void;
+  onList?: () => void;
   onCancelReply?: () => void;
   placeholder?: string;
   users?: User[];
@@ -30,6 +38,8 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
 }
 
 export function ChatInput({ 
+  value,
+  onValueChange,
   onSend, 
   onChange,
   onAttach, 
@@ -37,6 +47,12 @@ export function ChatInput({
   onEmoji,
   onGif,
   onLocation,
+  onContact,
+  onPoll,
+  onPix,
+  onCarousel,
+  onButtons,
+  onList,
   onCancelReply,
   placeholder = "Type a message...", 
   users = [],
@@ -47,7 +63,13 @@ export function ChatInput({
   className, 
   ...props 
 }: ChatInputProps) {
-  const [content, setContent] = useState("");
+  const [internalContent, setInternalContent] = useState("");
+  const content = value !== undefined ? value : internalContent;
+  const setContent = (val: string) => {
+    if (onValueChange) onValueChange(val);
+    else setInternalContent(val);
+  };
+
   const [isUploading, setIsUploading] = useState(false);
   const [mentionSearch, setMentionSearch] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -186,6 +208,24 @@ export function ChatInput({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onLocation}>
                 <MapPin className="h-4 w-4 mr-2" /> Location
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onContact}>
+                <AtSign className="h-4 w-4 mr-2" /> Contact
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPoll}>
+                <AtSign className="h-4 w-4 mr-2" /> Poll
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPix}>
+                <AtSign className="h-4 w-4 mr-2" /> PIX
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onCarousel}>
+                <Layout className="h-4 w-4 mr-2" /> Carousel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onButtons}>
+                <Layout className="h-4 w-4 mr-2" /> Buttons
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onList}>
+                <List className="h-4 w-4 mr-2" /> List Menu
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onGif}>
                 <Gift className="h-4 w-4 mr-2" /> GIF
