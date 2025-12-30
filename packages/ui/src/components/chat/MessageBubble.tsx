@@ -188,10 +188,10 @@ export function MessageBubble({
       {!isOwn && showAvatar && (
         <div className="mr-2 mt-auto">
           <Avatar 
-            src={message.senderId?.startsWith('http') ? message.senderId : undefined} 
-            alt="User" 
+            src={message.contact?.avatar} 
+            alt={message.contact?.name || "User"} 
             className="w-8 h-8"
-            fallback={message.senderId?.charAt(0).toUpperCase()}
+            fallback={(message.contact?.name || message.senderId || "?").charAt(0).toUpperCase()}
           />
         </div>
       )}
@@ -208,6 +208,11 @@ export function MessageBubble({
               : "bg-white/80 dark:bg-white/[0.05] text-gray-900 dark:text-white border-white/10 rounded-tl-none",
             "hover:shadow-lg hover:shadow-blue-500/5 transition-shadow"
           )}>
+            {!isOwn && message.remoteJid?.endsWith('@g.us') && message.contact?.name && (
+              <p className="text-[11px] font-bold text-blue-500 dark:text-blue-400 mb-1 truncate">
+                {message.contact.name}
+              </p>
+            )}
             {renderContent()}
             
             <div className="flex items-center justify-end gap-1 mt-1 opacity-60 text-[10px]">
