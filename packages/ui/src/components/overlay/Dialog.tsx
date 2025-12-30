@@ -60,7 +60,7 @@ export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
       ref={dialogRef}
       onClick={handleBackdropClick}
       className={cn(
-        "fixed inset-0 z-[100] bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm",
+        "fixed inset-0 z-[100] bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:grid open:place-items-center",
         "open:animate-in open:fade-in open:duration-200",
         className
       )}
