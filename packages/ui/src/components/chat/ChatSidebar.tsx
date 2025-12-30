@@ -3,7 +3,6 @@ import { cn } from '../../utils/cn';
 import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter, MoreVertical } from 'lucide-react';
 import type { Conversation } from './types';
 import { Avatar } from '../data-display/Avatar';
-import { useVirtualList } from '../../hooks/useVirtualList';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -49,12 +48,6 @@ export function ChatSidebar({
     });
   }, [conversations, searchQuery]);
 
-  const { containerRef, visibleItems, totalHeight, onScroll } = useVirtualList({
-    itemCount: filteredConversations.length,
-    itemHeight: 72,
-    overscan: 10,
-  });
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -96,15 +89,10 @@ export function ChatSidebar({
       </div>
 
       <div 
-        ref={containerRef}
-        onScroll={onScroll}
         className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
       >
-        <div className="relative" style={{ height: totalHeight }}>
-          {visibleItems.map(({ index, offsetTop }) => {
-            const chat = filteredConversations[index];
-            if (!chat) return null;
-
+        <div className="flex flex-col">
+          {filteredConversations.map((chat) => {
             const displayName = chat.user?.name || chat.group?.name || "Unknown";
             const displayAvatar = chat.user?.avatar || chat.group?.avatar;
             const isOnline = chat.user?.status === 'online';
@@ -113,13 +101,12 @@ export function ChatSidebar({
             return (
               <div 
                 key={chat.id} 
-                className="absolute left-0 right-0 p-2"
-                style={{ top: offsetTop, height: 72 }}
+                className="p-2"
               >
                 <div
                   onClick={() => onSelect?.(chat.id)}
                   className={cn(
-                    "w-full h-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left group cursor-pointer",
+                    "w-full h-16 flex items-center gap-3 p-3 rounded-2xl transition-all text-left group cursor-pointer",
                     isActive 
                       ? "bg-blue-500/10 dark:bg-white/[0.06] shadow-[0_0_15px_rgba(59,130,246,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.05)]" 
                       : "hover:bg-gray-100 dark:hover:bg-white/[0.03]"

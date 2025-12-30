@@ -188,9 +188,10 @@ export function MessageBubble({
       {!isOwn && showAvatar && (
         <div className="mr-2 mt-auto">
           <Avatar 
-            src={message.senderId} // In real app, fetch user avatar
+            src={message.senderId?.startsWith('http') ? message.senderId : undefined} 
             alt="User" 
             className="w-8 h-8"
+            fallback={message.senderId?.charAt(0).toUpperCase()}
           />
         </div>
       )}

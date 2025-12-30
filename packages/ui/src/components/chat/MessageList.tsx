@@ -2,7 +2,6 @@ import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffe
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
 import { MessageBubble } from './MessageBubble';
-import { useVirtualList } from '../../hooks/useVirtualList';
 import { MessageSquare, Calendar, ArrowDown } from 'lucide-react';
 
 interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onCopy' | 'onSelect'> {
@@ -45,57 +44,25 @@ export function MessageList({
   ...props 
 }: MessageListProps) {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const isPrependingRef = useRef(false);
-  const lastTotalHeightRef = useRef(0);
-  
-  // Estimate height based on message type and content length
-  const getMessageHeight = useCallback((index: number) => {
-    const msg = messages[index];
-    if (!msg) return 0;
-    
-    let height = 60; // Base height
-    if (msg.type === 'image' || msg.type === 'video') height += 200;
-    if (msg.type === 'audio') height += 40;
-    if (msg.content) height += Math.ceil(msg.content.length / 50) * 20;
-    if (msg.replyTo) height += 50;
-    if (msg.reactions && Object.keys(msg.reactions).length > 0) height += 30;
-    
-    return height + 16; // Add padding
-  }, [messages]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { containerRef, visibleItems, totalHeight, onScroll, scrollToBottom } = useVirtualList({
-    itemCount: messages.length,
-    itemHeight: getMessageHeight,
-    overscan: 15,
-    startAtBottom: true,
-  });
-
-  // Maintain scroll position after prepending
-  useLayoutEffect(() => {
-    if (isPrependingRef.current && containerRef.current) {
-      const heightDiff = totalHeight - lastTotalHeightRef.current;
-      if (heightDiff > 0) {
-        containerRef.current.scrollTop += heightDiff;
-      }
-      isPrependingRef.current = false;
-    }
-    lastTotalHeightRef.current = totalHeight;
-  }, [totalHeight]);
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'auto') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  }, []);
 
   useEffect(() => {
-    if (shouldAutoScroll && !isPrependingRef.current) {
+    if (shouldAutoScroll) {
       scrollToBottom('smooth');
     }
   }, [messages.length, shouldAutoScroll, scrollToBottom]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    onScroll(e);
     const target = e.currentTarget;
     const isAtBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 100;
     setShouldAutoScroll(isAtBottom);
 
     if (target.scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
-      isPrependingRef.current = true;
       onLoadMore();
     }
   };
@@ -121,38 +88,31 @@ export function MessageList({
         onScroll={handleScroll}
         className="h-full overflow-y-auto p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
       >
-        <div className="relative" style={{ height: totalHeight }}>
-          {visibleItems.map(({ index, offsetTop, height }) => {
-            const message = messages[index];
-            if (!message) return null;
-
+        <div className="flex flex-col gap-4">
+          {messages.map((message, index) => {
             const isOwn = message.senderId === currentUserId;
             const prevMessage = index > 0 ? messages[index - 1] : null;
             const showAvatar = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId);
 
             return (
-              <div 
-                key={message.id} 
-                className="absolute left-0 right-0"
-                style={{ top: offsetTop, height }}
-              >
-                <MessageBubble
-                  message={message}
-                  isOwn={isOwn}
-                  showAvatar={showAvatar}
-                  onReply={() => onReply?.(message)}
-                  onReact={(emoji) => onReact?.(message, emoji)}
-                  onDelete={() => onDelete?.(message)}
-                  onEdit={() => onEdit?.(message)}
-                  onForward={() => onForward?.(message)}
-                  onCopy={() => onCopy?.(message)}
-                  onPin={() => onPin?.(message)}
-                  onSelect={() => onSelect?.(message)}
-                  isSelected={selectedMessages.includes(message.id)}
-                />
-              </div>
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwn={isOwn}
+                showAvatar={showAvatar}
+                onReply={() => onReply?.(message)}
+                onReact={(emoji) => onReact?.(message, emoji)}
+                onDelete={() => onDelete?.(message)}
+                onEdit={() => onEdit?.(message)}
+                onForward={() => onForward?.(message)}
+                onCopy={() => onCopy?.(message)}
+                onPin={() => onPin?.(message)}
+                onSelect={() => onSelect?.(message)}
+                isSelected={selectedMessages.includes(message.id)}
+              />
             );
           })}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
