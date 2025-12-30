@@ -41,6 +41,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "prepare": "npm run build",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest run",
     "test:watch": "vitest",
