@@ -12,8 +12,9 @@ import {
   DropdownMenuItem 
 } from '../overlay/DropdownMenu';
 
-interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onChange'> {
   onSend?: (content: string) => void;
+  onChange?: (content: string) => void;
   onAttach?: () => void;
   onMic?: () => void;
   onEmoji?: () => void;
@@ -30,6 +31,7 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
 
 export function ChatInput({ 
   onSend, 
+  onChange,
   onAttach, 
   onMic,
   onEmoji,
@@ -64,6 +66,7 @@ export function ChatInput({
     if (maxLength && value.length > maxLength) return;
     
     setContent(value);
+    onChange?.(value);
     
     // Mention logic
     const lastChar = value[e.target.selectionStart - 1];
