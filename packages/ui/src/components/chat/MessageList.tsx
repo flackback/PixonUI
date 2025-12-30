@@ -14,6 +14,7 @@ interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   onForward?: (message: Message) => void;
   onCopy?: (message: Message) => void;
   onPin?: (message: Message) => void;
+  onStar?: (message: Message, starred: boolean) => void;
   onSelect?: (message: Message) => void;
   onImageClick?: (url: string) => void;
   onLoadMore?: () => void;
@@ -35,6 +36,7 @@ export function MessageList({
   onForward,
   onCopy,
   onPin,
+  onStar,
   onSelect,
   onImageClick,
   onLoadMore,
@@ -109,6 +111,7 @@ export function MessageList({
                 onForward={() => onForward?.(message)}
                 onCopy={() => onCopy?.(message)}
                 onPin={() => onPin?.(message)}
+                onStar={(starred) => onStar?.(message, starred)}
                 onSelect={() => onSelect?.(message)}
                 onImageClick={onImageClick}
                 isSelected={selectedMessages.includes(message.id)}

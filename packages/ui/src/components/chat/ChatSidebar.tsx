@@ -1,6 +1,6 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter, MoreVertical } from 'lucide-react';
+import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter, MoreVertical, MessageSquare } from 'lucide-react';
 import type { Conversation } from './types';
 import { Avatar } from '../data-display/Avatar';
 import { 
@@ -20,6 +20,7 @@ interface ChatSidebarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   onPin?: (id: string) => void;
   onMute?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onMarkUnread?: (id: string) => void;
   filter?: 'all' | 'unread' | 'groups';
   sortBy?: 'recent' | 'unread' | 'name';
   hideHeader?: boolean;
@@ -35,6 +36,7 @@ export function ChatSidebar({
   onPin,
   onMute,
   onDelete,
+  onMarkUnread,
   filter = 'all',
   sortBy = 'recent',
   hideHeader = false,
@@ -167,6 +169,9 @@ export function ChatSidebar({
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onMute?.(chat.id)}>
                           <BellOff className="h-4 w-4 mr-2" /> Mute
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onMarkUnread?.(chat.id)}>
+                          <MessageSquare className="h-4 w-4 mr-2" /> Mark as Unread
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-500" onClick={() => onDelete?.(chat.id)}>
                           <Trash2 className="h-4 w-4 mr-2" /> Delete

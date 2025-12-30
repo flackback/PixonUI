@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
-import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Edit2, MapPin, User as UserIcon, FileText } from 'lucide-react';
+import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Star, Edit2, MapPin, User as UserIcon, FileText } from 'lucide-react';
 import { Motion } from '../feedback/Motion';
 import { 
   DropdownMenu, 
@@ -30,6 +30,7 @@ interface MessageBubbleProps {
   onForward?: () => void;
   onCopy?: () => void;
   onPin?: () => void;
+  onStar?: (starred: boolean) => void;
   onSelect?: () => void;
   onImageClick?: (url: string) => void;
   isSelected?: boolean;
@@ -48,6 +49,7 @@ export function MessageBubble({
   onForward,
   onCopy,
   onPin,
+  onStar,
   onSelect,
   onImageClick,
   isSelected
@@ -280,6 +282,9 @@ export function MessageBubble({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onPin}>
                 <Pin className="h-4 w-4 mr-2" /> Pin
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onStar?.(true)}>
+                <Star className="h-4 w-4 mr-2" /> Star
               </DropdownMenuItem>
               {isOwn && (
                 <>
