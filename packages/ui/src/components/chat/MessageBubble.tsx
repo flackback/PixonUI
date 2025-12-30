@@ -120,6 +120,36 @@ export function MessageBubble({
             />
           </div>
         );
+      case 'image':
+        return (
+          <div className="space-y-2">
+            <div className="relative rounded-2xl overflow-hidden border border-white/5 group/image">
+              <Image 
+                src={message.attachments?.[0]?.url || ""} 
+                alt={message.content || "Image"}
+                className="max-h-[300px] w-auto object-contain bg-black/20"
+              />
+            </div>
+            {message.content && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-1">{message.content}</p>
+            )}
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="space-y-2">
+            <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-black/20 aspect-video flex items-center justify-center group/video">
+              <video 
+                src={message.attachments?.[0]?.url} 
+                controls 
+                className="max-h-[300px] w-full"
+              />
+            </div>
+            {message.content && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-1">{message.content}</p>
+            )}
+          </div>
+        );
       case 'interactive':
         if (message.interactive?.type === 'carousel' && message.interactive.cards) {
           return <CarouselMessage cards={message.interactive.cards} isOwn={isOwn} />;
