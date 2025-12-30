@@ -5,6 +5,7 @@ import { Button } from '../button/Button';
 import type { User, Message } from './types';
 import { Surface } from '../../primitives/Surface';
 import { Avatar } from '../data-display/Avatar';
+import { VoiceRecorder } from './VoiceRecorder';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -19,6 +20,7 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
   onChange?: (content: string) => void;
   onAttach?: () => void;
   onMic?: () => void;
+  onVoiceEnd?: (blob: Blob, duration: number) => void;
   onEmoji?: () => void;
   onGif?: () => void;
   onLocation?: () => void;
@@ -44,6 +46,7 @@ export function ChatInput({
   onChange,
   onAttach, 
   onMic,
+  onVoiceEnd,
   onEmoji,
   onGif,
   onLocation,
@@ -244,10 +247,10 @@ export function ChatInput({
 
         <div className="flex-1 relative">
           {isRecording ? (
-            <div className="h-10 flex items-center px-4 bg-red-500/10 rounded-2xl border border-red-500/20 animate-pulse">
-              <div className="w-2 h-2 bg-red-500 rounded-full mr-3 animate-ping" />
-              <span className="text-sm font-medium text-red-500">Recording Audio...</span>
-            </div>
+            <VoiceRecorder 
+              onSend={(blob, duration) => onVoiceEnd?.(blob, duration)}
+              onCancel={() => onCancelReply?.()}
+            />
           ) : (
             <textarea
               ref={textareaRef}
