@@ -72,6 +72,7 @@ function SparkWave({ color = 'currentColor' }: { color?: string }) {
 export interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
   accent?: 'teal' | 'amber' | 'violet' | 'blue' | 'rose' | 'emerald' | 'indigo';
   icon: React.ReactNode;
+  title?: React.ReactNode;
   value: React.ReactNode;
   subtext?: React.ReactNode;
   showWave?: boolean;
@@ -79,7 +80,7 @@ export interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
-  ({ accent = 'teal', icon, value, subtext, showWave = false, onClick, className, ...props }, ref) => {
+  ({ accent = 'teal', icon, title, value, subtext, showWave = false, onClick, className, ...props }, ref) => {
     const localRef = useRef<HTMLDivElement | null>(null);
 
     const setCenter = () => {
@@ -145,6 +146,11 @@ export const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
         <div className="relative p-5">
           <div className="flex items-start justify-between gap-4">
             <TokenBadge accent={accent}>{icon}</TokenBadge>
+            {title && (
+              <div className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-white/40">
+                {title}
+              </div>
+            )}
           </div>
 
           <div className="mt-4 flex items-end justify-between gap-4">

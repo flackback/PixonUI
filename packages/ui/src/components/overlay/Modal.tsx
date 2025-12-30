@@ -14,6 +14,12 @@ export interface ModalProps {
 export function Modal({ isOpen, onClose, children, className }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -29,7 +35,7 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
         document.body.style.overflow = 'unset';
       }
     }
-  }, [isOpen]);
+  }, [isOpen, mounted]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -42,13 +48,15 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
 
     dialog.addEventListener('cancel', handleCancel);
     return () => dialog.removeEventListener('cancel', handleCancel);
-  }, [onClose]);
+  }, [onClose, mounted]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === dialogRef.current) {
       onClose();
     }
   };
+
+  if (!mounted) return null;
 
   return createPortal(
     <dialog
