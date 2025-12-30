@@ -98,7 +98,7 @@ export function ChatSidebar({
       <div 
         ref={containerRef}
         onScroll={onScroll}
-        className="flex-1 overflow-y-auto scrollbar-hide"
+        className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
       >
         <div className="relative" style={{ height: totalHeight }}>
           {visibleItems.map(({ index, offsetTop }) => {

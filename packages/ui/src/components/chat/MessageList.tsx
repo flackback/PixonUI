@@ -119,7 +119,7 @@ export function MessageList({
       <div 
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto scrollbar-hide p-4"
+        className="h-full overflow-y-auto p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
       >
         <div className="relative" style={{ height: totalHeight }}>
           {visibleItems.map(({ index, offsetTop, height }) => {
