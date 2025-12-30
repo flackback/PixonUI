@@ -31,6 +31,7 @@ interface MessageBubbleProps {
   onCopy?: () => void;
   onPin?: () => void;
   onSelect?: () => void;
+  onImageClick?: (url: string) => void;
   isSelected?: boolean;
 }
 
@@ -48,6 +49,7 @@ export function MessageBubble({
   onCopy,
   onPin,
   onSelect,
+  onImageClick,
   isSelected
 }: MessageBubbleProps) {
   const renderStatus = () => {
@@ -123,11 +125,14 @@ export function MessageBubble({
       case 'image':
         return (
           <div className="space-y-2">
-            <div className="relative rounded-2xl overflow-hidden border border-white/5 group/image">
+            <div 
+              className="relative rounded-2xl overflow-hidden border border-white/5 group/image cursor-pointer"
+              onClick={() => onImageClick?.(message.attachments?.[0]?.url || "")}
+            >
               <Image 
                 src={message.attachments?.[0]?.url || ""} 
                 alt={message.content || "Image"}
-                className="max-h-[300px] w-auto object-contain bg-black/20"
+                className="max-h-[300px] w-auto object-contain bg-black/20 transition-transform duration-300 group-hover/image:scale-105"
               />
             </div>
             {message.content && (

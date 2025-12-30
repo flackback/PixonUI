@@ -8,6 +8,7 @@ interface ChatHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   user: User;
   onBack?: () => void;
   onInfo?: () => void;
+  onAvatarClick?: () => void;
   onCall?: () => void;
   onVideoCall?: () => void;
   onSearch?: () => void;
@@ -21,6 +22,7 @@ export function ChatHeader({
   user, 
   onBack, 
   onInfo, 
+  onAvatarClick,
   onCall,
   onVideoCall,
   onSearch,
@@ -46,7 +48,7 @@ export function ChatHeader({
           </button>
         )}
         
-        <div className="relative cursor-pointer" onClick={onInfo}>
+        <div className="relative cursor-pointer" onClick={onAvatarClick || onInfo}>
           <Avatar src={user.avatar} alt={user.name} fallback={user.name[0]} />
           {user.status === 'online' && (
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-black" />
@@ -76,18 +78,22 @@ export function ChatHeader({
             <Search className="h-5 w-5" />
           </button>
         )}
-        <button 
-          onClick={onCall}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
-        >
-          <Phone className="h-5 w-5" />
-        </button>
-        <button 
-          onClick={onVideoCall}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
-        >
-          <Video className="h-5 w-5" />
-        </button>
+        {onCall && (
+          <button 
+            onClick={onCall}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+          >
+            <Phone className="h-5 w-5" />
+          </button>
+        )}
+        {onVideoCall && (
+          <button 
+            onClick={onVideoCall}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+          >
+            <Video className="h-5 w-5" />
+          </button>
+        )}
         
         {actions}
 
