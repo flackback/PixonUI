@@ -12,7 +12,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         ref={ref}
         className={cn(
           "flex h-full w-64 flex-col border-r backdrop-blur-xl transition-colors duration-200",
-          "border-gray-200 bg-white/50",
+          "border-zinc-200 bg-white/80",
           "dark:border-white/10 dark:bg-black/20",
           className
         )}

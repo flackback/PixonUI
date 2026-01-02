@@ -60,14 +60,14 @@ export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
       ref={dialogRef}
       onClick={handleBackdropClick}
       className={cn(
-        "fixed inset-0 z-[100] bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:grid open:place-items-center",
+        "fixed inset-0 z-[100] m-auto bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
         "open:animate-in open:fade-in open:duration-200",
         className
       )}
     >
       <div
         className={cn(
-          "relative w-full max-w-lg scale-100 gap-4 border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
+          "relative w-full max-w-lg scale-100 gap-4 border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
           "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
         )}
       >
