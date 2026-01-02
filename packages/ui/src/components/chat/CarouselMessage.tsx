@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import type { InteractiveCard, InteractiveButton } from './types';
-import { ExternalLink, Phone, Reply, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExternalLink, Phone, Reply, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
 
 interface CarouselMessageProps {
   cards: InteractiveCard[];
@@ -47,7 +47,7 @@ export function CarouselMessage({ cards, isOwn, onAction }: CarouselMessageProps
               {card.footer && <p className="text-[10px] opacity-50 italic mb-3">{card.footer}</p>}
               
               <div className="mt-auto flex flex-col gap-1">
-                {card.buttons.map((btn) => (
+                {card.buttons?.map((btn) => (
                   <button
                     key={btn.id}
                     onClick={() => onAction?.(btn)}
@@ -63,6 +63,28 @@ export function CarouselMessage({ cards, isOwn, onAction }: CarouselMessageProps
                     {btn.text}
                   </button>
                 ))}
+                {card.nativeFlow?.buttons.map((btn, idx) => {
+                  let params: any = {};
+                  try {
+                    params = typeof btn.buttonParamsJson === 'string' ? JSON.parse(btn.buttonParamsJson) : btn.buttonParamsJson;
+                  } catch (e) {}
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => onAction?.({ id: params.id || btn.name, text: params.display_text || btn.name, type: 'reply', params })}
+                      className={cn(
+                        "flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium transition-all",
+                        "bg-white/10 hover:bg-white/20 border border-white/10",
+                        isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                      )}
+                    >
+                      {btn.name === 'cta_copy' && <Copy className="h-3 w-3" />}
+                      {btn.name === 'cta_url' && <ExternalLink className="h-3 w-3" />}
+                      {btn.name === 'cta_call' && <Phone className="h-3 w-3" />}
+                      {params.display_text || btn.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

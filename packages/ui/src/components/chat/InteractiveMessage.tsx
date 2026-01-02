@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import type { InteractiveContent, InteractiveButton, InteractiveListSection } from './types';
-import { ExternalLink, Phone, Reply } from 'lucide-react';
+import { ExternalLink, Phone, Reply, Copy } from 'lucide-react';
 
 interface InteractiveMessageProps {
   data: InteractiveContent;
@@ -79,6 +79,35 @@ export function InteractiveMessage({ data, isOwn, onAction }: InteractiveMessage
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {data.nativeFlow && (
+        <div className="flex flex-col gap-1 mt-3">
+          {data.nativeFlow.buttons.map((btn, idx) => {
+            let params: any = {};
+            try {
+              params = typeof btn.buttonParamsJson === 'string' ? JSON.parse(btn.buttonParamsJson) : btn.buttonParamsJson;
+            } catch (e) {}
+            
+            return (
+              <button
+                key={idx}
+                onClick={() => onAction?.({ id: params.id || btn.name, text: params.display_text || btn.name, type: 'reply', params })}
+                className={cn(
+                  "flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium transition-all",
+                  "bg-white/10 hover:bg-white/20 border border-white/10 active:scale-[0.98]",
+                  isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                )}
+              >
+                {btn.name === 'cta_copy' && <Copy className="h-3.5 w-3.5" />}
+                {btn.name === 'cta_url' && <ExternalLink className="h-3.5 w-3.5" />}
+                {btn.name === 'cta_call' && <Phone className="h-3.5 w-3.5" />}
+                {btn.name === 'single_select' && <Reply className="h-3.5 w-3.5" />}
+                {params.display_text || params.title || btn.name}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

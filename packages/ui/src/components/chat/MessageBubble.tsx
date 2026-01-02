@@ -32,6 +32,7 @@ interface MessageBubbleProps {
   onPin?: () => void;
   onStar?: (starred: boolean) => void;
   onSelect?: () => void;
+  onAction?: (action: any) => void;
   onImageClick?: (url: string) => void;
   isSelected?: boolean;
 }
@@ -51,6 +52,7 @@ export function MessageBubble({
   onPin,
   onStar,
   onSelect,
+  onAction,
   onImageClick,
   isSelected
 }: MessageBubbleProps) {
@@ -159,10 +161,10 @@ export function MessageBubble({
         );
       case 'interactive':
         if (message.interactive?.type === 'carousel' && message.interactive.cards) {
-          return <CarouselMessage cards={message.interactive.cards} isOwn={isOwn} />;
+          return <CarouselMessage cards={message.interactive.cards} isOwn={isOwn} onAction={onAction} />;
         }
         if (message.interactive) {
-          return <InteractiveMessage data={message.interactive} isOwn={isOwn} />;
+          return <InteractiveMessage data={message.interactive} isOwn={isOwn} onAction={onAction} />;
         }
         return null;
       default:

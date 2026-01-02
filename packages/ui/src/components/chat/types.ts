@@ -56,6 +56,7 @@ export interface InteractiveButton {
   text: string;
   type: 'reply' | 'url' | 'call';
   payload?: string;
+  params?: any;
 }
 
 export interface InteractiveListSection {
@@ -74,7 +75,13 @@ export interface InteractiveCard {
   };
   body: string;
   footer?: string;
-  buttons: InteractiveButton[];
+  buttons?: InteractiveButton[];
+  nativeFlow?: {
+    buttons: {
+      name: string;
+      buttonParamsJson: string;
+    }[];
+  };
 }
 
 export interface InteractiveContent {
@@ -89,6 +96,12 @@ export interface InteractiveContent {
   buttons?: InteractiveButton[];
   sections?: InteractiveListSection[];
   cards?: InteractiveCard[];
+  nativeFlow?: {
+    buttons: {
+      name: string;
+      buttonParamsJson: string;
+    }[];
+  };
 }
 
 export interface Message {
