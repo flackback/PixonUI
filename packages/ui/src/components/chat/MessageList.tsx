@@ -18,6 +18,7 @@ interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   onSelect?: (message: Message) => void;
   onAction?: (message: Message, action: any) => void;
   onImageClick?: (url: string) => void;
+  onTTS?: (message: Message) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
@@ -41,6 +42,7 @@ export function MessageList({
   onSelect,
   onAction,
   onImageClick,
+  onTTS,
   onLoadMore,
   hasMore,
   isLoadingMore,
@@ -117,6 +119,7 @@ export function MessageList({
                 onSelect={() => onSelect?.(message)}
                 onAction={(action) => onAction?.(message, action)}
                 onImageClick={onImageClick}
+                onTTS={onTTS ? () => onTTS(message) : undefined}
                 isSelected={selectedMessages.includes(message.id)}
               />
             );
