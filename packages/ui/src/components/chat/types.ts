@@ -164,6 +164,11 @@ export interface Conversation {
   isReadOnly?: boolean;
   ephemeralExpiration?: number;
   labels?: string[];
+  activeFlowName?: string;
+  jid?: string;
+  instanceId?: number;
+  status?: 'open' | 'closed';
+  sessionWindowExpiresAt?: string | Date;
   wallpaper?: string;
 }
 
