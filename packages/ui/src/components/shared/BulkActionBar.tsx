@@ -1,7 +1,8 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import { X, Trash2, Forward, CheckSquare, MessageSquare, Copy } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Animate } from '../../primitives/Animate';
+import { Presence } from '../../primitives/Presence';
 
 interface BulkActionBarProps {
   isVisible: boolean;
@@ -23,15 +24,12 @@ export function BulkActionBar({
   onCopyAll
 }: BulkActionBarProps) {
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4"
-        >
-          <div className="bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-3 flex items-center justify-between gap-4">
+    <Presence present={isVisible} exitDuration={300}>
+      <Animate 
+        preset="slide-bottom"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4"
+      >
+        <div className="bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-3 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 pl-2">
               <button 
                 onClick={onClose}
@@ -73,10 +71,9 @@ export function BulkActionBar({
               />
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+        </Animate>
+      </Presence>
+    );
 }
 
 function ActionButton({ 

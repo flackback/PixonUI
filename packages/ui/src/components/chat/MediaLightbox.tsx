@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '../../utils/cn';
 import { X, ZoomIn, ZoomOut, Download, Maximize2, RotateCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Animate } from '../../primitives/Animate';
+import { Presence } from '../../primitives/Presence';
+import { useDrag } from '../../hooks/useDrag';
 
 interface MediaLightboxProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface MediaLightboxProps {
 export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, caption }: MediaLightboxProps) {
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const drag = useDrag();
 
   useEffect(() => {
     if (isOpen) {
@@ -23,6 +26,8 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
       document.body.style.overflow = 'auto';
       setScale(1);
       setRotation(0);
+      drag.offset.x = 0; // Reset manually since it's a ref-based state in my hook
+      drag.offset.y = 0;
     }
     return () => {
       document.body.style.overflow = 'auto';
@@ -36,8 +41,9 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <div 
+    <Presence present={isOpen} exitDuration={300}>
+      <Animate 
+        preset="fade"
         className="fixed inset-0 z-[9999] flex flex-col bg-black/95 backdrop-blur-2xl overflow-hidden"
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         tabIndex={0}
@@ -62,11 +68,14 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
 
         {/* Content Viewport */}
         <div className="flex-1 relative flex items-center justify-center p-4 sm:p-12 overflow-hidden">
-          <motion.div 
-            drag
-            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-            className="relative max-w-full max-h-full cursor-grab active:cursor-grabbing"
-            style={{ scale, rotate: rotation }}
+          <div 
+            {...drag.dragProps}
+            className="relative max-w-full max-h-full"
+            style={{ 
+              ...drag.dragProps.style,
+              transform: `translate3d(${drag.offset.x}px, ${drag.offset.y}px, 0) scale(${scale}) rotate(${rotation}deg)`,
+              transition: drag.isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' 
+            }}
           >
             {type === 'image' ? (
               <img 
@@ -82,7 +91,7 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
                 className="max-w-full max-h-[80vh] rounded-lg shadow-2xl" 
               />
             )}
-          </motion.div>
+          </div>
         </div>
 
         {/* Footer / Caption */}
@@ -93,7 +102,7 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
             </p>
           </div>
         )}
-      </div>
-    </AnimatePresence>
+      </Animate>
+    </Presence>
   );
 }

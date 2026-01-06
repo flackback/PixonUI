@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import { WifiOff, RefreshCcw, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Animate } from '../../primitives/Animate';
 
 interface ConnectionStatusBannerProps {
   status: 'disconnected' | 'connecting' | 'reconnecting' | 'error';
@@ -42,32 +42,28 @@ export function ConnectionStatusBanner({ status, onRetry, message }: ConnectionS
   }[status];
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -20, opacity: 0 }}
-        className={cn(
-          "flex items-center justify-center gap-4 py-2 px-4 border-b backdrop-blur-md z-50",
-          config.bg,
-          config.border
-        )}
-      >
-        <div className={cn("flex items-center gap-2 text-xs font-bold uppercase tracking-widest", config.text)}>
-          {config.icon}
-          {message || config.label}
-        </div>
-        
-        {onRetry && (status === 'disconnected' || status === 'error') && (
-          <button 
-            onClick={onRetry}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-bold text-white transition-all active:scale-95"
-          >
-            Tentar agora
-            <RefreshCcw size={10} />
-          </button>
-        )}
-      </motion.div>
-    </AnimatePresence>
+    <Animate
+      preset="fade-down"
+      className={cn(
+        "flex items-center justify-center gap-4 py-2 px-4 border-b backdrop-blur-md z-50",
+        config.bg,
+        config.border
+      )}
+    >
+      <div className={cn("flex items-center gap-2 text-xs font-bold uppercase tracking-widest", config.text)}>
+        {config.icon}
+        {message || config.label}
+      </div>
+      
+      {onRetry && (status === 'disconnected' || status === 'error') && (
+        <button 
+          onClick={onRetry}
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-bold text-white transition-all active:scale-95"
+        >
+          Tentar agora
+          <RefreshCcw size={10} />
+        </button>
+      )}
+    </Animate>
   );
 }
