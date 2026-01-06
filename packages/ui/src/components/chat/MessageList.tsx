@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffe
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
 import { MessageBubble } from './MessageBubble';
+import { StickyDateHeader } from './StickyDateHeader';
 import { MessageSquare, Calendar, ArrowDown } from 'lucide-react';
 
 interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onCopy' | 'onSelect'> {
@@ -100,28 +101,40 @@ export function MessageList({
           {messages.map((message, index) => {
             const isOwn = message.senderId === currentUserId;
             const prevMessage = index > 0 ? messages[index - 1] : null;
-            const showAvatar = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId);
+
+            // Date processing
+            const msgDate = new Date(message.timestamp);
+            const prevMsgDate = prevMessage ? new Date(prevMessage.timestamp) : null;
+            const showDate = groupByDate && (!prevMsgDate || msgDate.toDateString() !== prevMsgDate.toDateString());
+
+            const showAvatar = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId || showDate);
 
             return (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={isOwn}
-                showAvatar={showAvatar}
-                onReply={() => onReply?.(message)}
-                onReact={(emoji) => onReact?.(message, emoji)}
-                onDelete={() => onDelete?.(message)}
-                onEdit={() => onEdit?.(message)}
-                onForward={() => onForward?.(message)}
-                onCopy={() => onCopy?.(message)}
-                onPin={() => onPin?.(message)}
-                onStar={(starred) => onStar?.(message, starred)}
-                onSelect={() => onSelect?.(message)}
-                onAction={(action) => onAction?.(message, action)}
-                onImageClick={onImageClick}
-                onTTS={onTTS ? () => onTTS(message) : undefined}
-                isSelected={selectedMessages.includes(message.id)}
-              />
+              <React.Fragment key={message.id}>
+                {showDate && (
+                  <div className="my-4">
+                    <StickyDateHeader date={message.timestamp} />
+                  </div>
+                )}
+                <MessageBubble
+                  message={message}
+                  isOwn={isOwn}
+                  showAvatar={showAvatar}
+                  onReply={() => onReply?.(message)}
+                  onReact={(emoji) => onReact?.(message, emoji)}
+                  onDelete={() => onDelete?.(message)}
+                  onEdit={() => onEdit?.(message)}
+                  onForward={() => onForward?.(message)}
+                  onCopy={() => onCopy?.(message)}
+                  onPin={() => onPin?.(message)}
+                  onStar={(starred) => onStar?.(message, starred)}
+                  onSelect={() => onSelect?.(message)}
+                  onAction={(action) => onAction?.(message, action)}
+                  onImageClick={onImageClick}
+                  onTTS={onTTS ? () => onTTS(message) : undefined}
+                  isSelected={selectedMessages.includes(message.id)}
+                />
+              </React.Fragment>
             );
           })}
           <div ref={messagesEndRef} />

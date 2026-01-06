@@ -59,6 +59,18 @@ export function ChatHeader({
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-gray-900 dark:text-white leading-none">{user.name}</h3>
             {isMuted && <BellOff className="h-3 w-3 text-gray-400" />}
+            {user.tags && user.tags.length > 0 && (
+              <div className="flex gap-1">
+                {user.tags.slice(0, 2).map((tag, i) => (
+                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
+                    {tag}
+                  </span>
+                ))}
+                {user.tags.length > 2 && (
+                  <span className="text-[9px] text-gray-400">+{user.tags.length - 2}</span>
+                )}
+              </div>
+            )}
           </div>
           <p className={cn(
             "text-xs mt-1 transition-colors",

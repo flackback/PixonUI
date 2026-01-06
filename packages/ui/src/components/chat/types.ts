@@ -12,6 +12,7 @@ export interface User {
   phone?: string;
   isOnline?: boolean;
   verified?: boolean;
+  tags?: string[];
 }
 
 export type MessageType = 
@@ -142,6 +143,10 @@ export interface Message {
   forwardingScore?: number;
   broadcast?: boolean;
   starred?: boolean;
+  
+  // CRM / AI Evolution
+  agentName?: string;
+  isInternalNote?: boolean;
 }
 
 export interface Conversation {

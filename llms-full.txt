@@ -32,8 +32,10 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 - **Baileys/WhatsApp Support**: Native support for JIDs, presence (composing, recording), message status (played, read), and ephemeral messages.
 - `ChatLayout`: Main container for chat interfaces.
 - `MessageList`: Virtualized list with dynamic height support and auto-scroll logic.
-- `MessageBubble`: Rich media renderer (stickers, audio, location, contacts) with reactions and replies.
-- `ChatInput`: Advanced input with mentions, recording state, and attachment menus.
+- `MessageBubble`: Rich media renderer (stickers, audio, location, contacts) with reactions, replies, and interactive message support.
+- `InteractiveMessage`: WhatsApp-style interactive messages with buttons (reply, URL, call) and list menus.
+- `CarouselMessage`: Horizontal scrolling cards for product showcases or multi-option selections.
+- `ChatInput`: Advanced input with mentions, recording state, attachment menus, and reply preview.
 - `ChatSidebar`: Virtualized conversation list with real-time presence and unread counters.
 - `useChatStore`: Centralized, high-performance store for all chat data.
 - `useSocket`: Robust Socket.io hook with room management and event buffering.
@@ -608,6 +610,131 @@ AIResponse.displayName = 'AIResponse';
 
 
 
+=== FILE: packages\ui\src\components\ai\AISummaryCard.tsx ===
+
+import React from 'react';
+import { cn } from '../../utils/cn';
+import { Sparkles, ListChecks, ArrowRight, RefreshCw } from 'lucide-react';
+
+interface AISummaryCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  summary: string;
+  onRegenerate?: () => void;
+  isLoading?: boolean;
+}
+
+export function AISummaryCard({ summary, onRegenerate, isLoading, className, ...props }: AISummaryCardProps) {
+  return (
+    <div 
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 group",
+        className
+      )} 
+      {...props}
+    >
+      {/* Glow Effect */}
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-purple-500/30 transition-all duration-700" />
+      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-blue-500/30 transition-all duration-700" />
+
+      <div className="relative space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg shadow-purple-500/20">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
+            <h3 className="text-sm font-bold text-white tracking-tight">Resumo Inteligente</h3>
+          </div>
+          
+          {onRegenerate && (
+            <button 
+              onClick={onRegenerate}
+              disabled={isLoading}
+              className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm text-white/70 leading-relaxed font-medium">
+            {summary}
+          </p>
+          
+          <div className="flex flex-wrap gap-2 pt-2">
+             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+               <ListChecks size={12} />
+               Key Points Extracted
+             </div>
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <button className="flex items-center gap-2 text-[11px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider group/btn">
+            Ver detalhes da análise
+            <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+=== FILE: packages\ui\src\components\ai\SmartReplySuggestions.tsx ===
+
+import React from 'react';
+import { cn } from '../../utils/cn';
+import { Sparkles, Send } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+interface SmartReplySuggestionsProps {
+  replies: string[];
+  onSelect: (reply: string) => void;
+  isLoading?: boolean;
+}
+
+export function SmartReplySuggestions({ replies, onSelect, isLoading }: SmartReplySuggestionsProps) {
+  if (isLoading) {
+    return (
+      <div className="flex gap-2 p-2 px-4 animate-pulse">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-8 w-32 bg-white/5 rounded-full border border-white/5" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-2 p-2 px-4 overflow-x-auto no-scrollbar scroll-smooth">
+      <div className="flex items-center shrink-0 pr-2 border-r border-white/10 mr-1">
+        <Sparkles size={14} className="text-purple-400 mr-2" />
+        <span className="text-[10px] font-bold text-purple-400/50 uppercase tracking-widest select-none">IA Sugere</span>
+      </div>
+      
+      {replies.map((reply, index) => (
+        <motion.button
+          key={index}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+          onClick={() => onSelect(reply)}
+          className={cn(
+            "shrink-0 flex items-center gap-2 px-4 py-2 rounded-full",
+            "bg-white/[0.03] border border-white/10 text-white/70 text-xs font-medium",
+            "hover:bg-white/10 hover:border-white/20 hover:text-white transition-all active:scale-95 group"
+          )}
+        >
+          {reply}
+          <Send size={10} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+        </motion.button>
+      ))}
+    </div>
+  );
+}
+
+
+
 === FILE: packages\ui\src\components\button\Button.tsx ===
 
 import React from 'react';
@@ -1008,9 +1135,10 @@ function SparkWave({ color = 'currentColor' }: { color?: string }) {
   );
 }
 
-export interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface MetricCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   accent?: 'teal' | 'amber' | 'violet' | 'blue' | 'rose' | 'emerald' | 'indigo';
   icon: React.ReactNode;
+  title?: React.ReactNode;
   value: React.ReactNode;
   subtext?: React.ReactNode;
   showWave?: boolean;
@@ -1018,7 +1146,7 @@ export interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
-  ({ accent = 'teal', icon, value, subtext, showWave = false, onClick, className, ...props }, ref) => {
+  ({ accent = 'teal', icon, title, value, subtext, showWave = false, onClick, className, ...props }, ref) => {
     const localRef = useRef<HTMLDivElement | null>(null);
 
     const setCenter = () => {
@@ -1084,6 +1212,11 @@ export const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
         <div className="relative p-5">
           <div className="flex items-start justify-between gap-4">
             <TokenBadge accent={accent}>{icon}</TokenBadge>
+            {title && (
+              <div className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-white/40">
+                {title}
+              </div>
+            )}
           </div>
 
           <div className="mt-4 flex items-end justify-between gap-4">
@@ -1201,6 +1334,123 @@ export function AudioPlayer({ src, duration, isMe, className, ...props }: AudioP
 
 
 
+=== FILE: packages\ui\src\components\chat\CarouselMessage.tsx ===
+
+import React from 'react';
+import { cn } from '../../utils/cn';
+import type { InteractiveCard, InteractiveButton } from './types';
+import { ExternalLink, Phone, Reply, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
+
+interface CarouselMessageProps {
+  cards: InteractiveCard[];
+  isOwn: boolean;
+  onAction?: (button: InteractiveButton) => void;
+}
+
+export function CarouselMessage({ cards, isOwn, onAction }: CarouselMessageProps) {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const amount = 240;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -amount : amount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  return (
+    <div className="relative group/carousel max-w-[300px] sm:max-w-[400px]">
+      <div 
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+      >
+        {cards.map((card, idx) => (
+          <div 
+            key={idx}
+            className="flex-shrink-0 w-[240px] snap-start rounded-2xl bg-white/5 dark:bg-white/[0.03] border border-white/10 overflow-hidden flex flex-col"
+          >
+            {card.header?.attachment && (
+              <div className="aspect-video w-full overflow-hidden">
+                <img 
+                  src={card.header.attachment.url} 
+                  alt="Card" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="p-3 flex-1 flex flex-col">
+              <p className="text-sm leading-relaxed mb-1">{card.body}</p>
+              {card.footer && <p className="text-[10px] opacity-50 italic mb-3">{card.footer}</p>}
+              
+              <div className="mt-auto flex flex-col gap-1">
+                {card.buttons?.map((btn) => (
+                  <button
+                    key={btn.id}
+                    onClick={() => onAction?.(btn)}
+                    className={cn(
+                      "flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium transition-all",
+                      "bg-white/10 hover:bg-white/20 border border-white/10",
+                      isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                    )}
+                  >
+                    {btn.type === 'url' && <ExternalLink className="h-3 w-3" />}
+                    {btn.type === 'call' && <Phone className="h-3 w-3" />}
+                    {btn.type === 'reply' && <Reply className="h-3 w-3" />}
+                    {btn.text}
+                  </button>
+                ))}
+                {card.nativeFlow?.buttons.map((btn, idx) => {
+                  let params: any = {};
+                  try {
+                    params = typeof btn.buttonParamsJson === 'string' ? JSON.parse(btn.buttonParamsJson) : btn.buttonParamsJson;
+                  } catch (e) {}
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => onAction?.({ id: params.id || btn.name, text: params.display_text || btn.name, type: 'reply', params })}
+                      className={cn(
+                        "flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium transition-all",
+                        "bg-white/10 hover:bg-white/20 border border-white/10",
+                        isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                      )}
+                    >
+                      {btn.name === 'cta_copy' && <Copy className="h-3 w-3" />}
+                      {btn.name === 'cta_url' && <ExternalLink className="h-3 w-3" />}
+                      {btn.name === 'cta_call' && <Phone className="h-3 w-3" />}
+                      {params.display_text || btn.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {cards.length > 1 && (
+        <>
+          <button 
+            onClick={() => scroll('left')}
+            className="absolute left-[-12px] top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-lg border border-white/10 opacity-0 group-hover/carousel:opacity-100 transition-opacity z-10"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={() => scroll('right')}
+            className="absolute right-[-12px] top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-lg border border-white/10 opacity-0 group-hover/carousel:opacity-100 transition-opacity z-10"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+
+
 === FILE: packages\ui\src\components\chat\ChatBanner.tsx ===
 
 import React from 'react';
@@ -1288,6 +1538,7 @@ interface ChatHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   user: User;
   onBack?: () => void;
   onInfo?: () => void;
+  onAvatarClick?: () => void;
   onCall?: () => void;
   onVideoCall?: () => void;
   onSearch?: () => void;
@@ -1301,6 +1552,7 @@ export function ChatHeader({
   user, 
   onBack, 
   onInfo, 
+  onAvatarClick,
   onCall,
   onVideoCall,
   onSearch,
@@ -1326,7 +1578,7 @@ export function ChatHeader({
           </button>
         )}
         
-        <div className="relative cursor-pointer" onClick={onInfo}>
+        <div className="relative cursor-pointer" onClick={onAvatarClick || onInfo}>
           <Avatar src={user.avatar} alt={user.name} fallback={user.name[0]} />
           {user.status === 'online' && (
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-black" />
@@ -1337,6 +1589,18 @@ export function ChatHeader({
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-gray-900 dark:text-white leading-none">{user.name}</h3>
             {isMuted && <BellOff className="h-3 w-3 text-gray-400" />}
+            {user.tags && user.tags.length > 0 && (
+              <div className="flex gap-1">
+                {user.tags.slice(0, 2).map((tag, i) => (
+                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
+                    {tag}
+                  </span>
+                ))}
+                {user.tags.length > 2 && (
+                  <span className="text-[9px] text-gray-400">+{user.tags.length - 2}</span>
+                )}
+              </div>
+            )}
           </div>
           <p className={cn(
             "text-xs mt-1 transition-colors",
@@ -1356,18 +1620,22 @@ export function ChatHeader({
             <Search className="h-5 w-5" />
           </button>
         )}
-        <button 
-          onClick={onCall}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
-        >
-          <Phone className="h-5 w-5" />
-        </button>
-        <button 
-          onClick={onVideoCall}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
-        >
-          <Video className="h-5 w-5" />
-        </button>
+        {onCall && (
+          <button 
+            onClick={onCall}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+          >
+            <Phone className="h-5 w-5" />
+          </button>
+        )}
+        {onVideoCall && (
+          <button 
+            onClick={onVideoCall}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+          >
+            <Video className="h-5 w-5" />
+          </button>
+        )}
         
         {actions}
 
@@ -1388,11 +1656,12 @@ export function ChatHeader({
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Send, Paperclip, Smile, Mic, Image as ImageIcon, AtSign, X, MapPin, Gift } from 'lucide-react';
+import { Send, Paperclip, Smile, Mic, Image as ImageIcon, AtSign, X, MapPin, Gift, List, Layout } from 'lucide-react';
 import { Button } from '../button/Button';
 import type { User, Message } from './types';
 import { Surface } from '../../primitives/Surface';
 import { Avatar } from '../data-display/Avatar';
+import { VoiceRecorder } from './VoiceRecorder';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -1400,13 +1669,23 @@ import {
   DropdownMenuItem 
 } from '../overlay/DropdownMenu';
 
-interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onChange'> {
+  value?: string;
+  onValueChange?: (value: string) => void;
   onSend?: (content: string) => void;
+  onChange?: (content: string) => void;
   onAttach?: () => void;
   onMic?: () => void;
+  onVoiceEnd?: (blob: Blob, duration: number) => void;
   onEmoji?: () => void;
   onGif?: () => void;
   onLocation?: () => void;
+  onContact?: () => void;
+  onPoll?: () => void;
+  onPix?: () => void;
+  onCarousel?: () => void;
+  onButtons?: () => void;
+  onList?: () => void;
   onCancelReply?: () => void;
   placeholder?: string;
   users?: User[];
@@ -1417,12 +1696,22 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
 }
 
 export function ChatInput({ 
+  value,
+  onValueChange,
   onSend, 
+  onChange,
   onAttach, 
   onMic,
+  onVoiceEnd,
   onEmoji,
   onGif,
   onLocation,
+  onContact,
+  onPoll,
+  onPix,
+  onCarousel,
+  onButtons,
+  onList,
   onCancelReply,
   placeholder = "Type a message...", 
   users = [],
@@ -1433,7 +1722,13 @@ export function ChatInput({
   className, 
   ...props 
 }: ChatInputProps) {
-  const [content, setContent] = useState("");
+  const [internalContent, setInternalContent] = useState("");
+  const content = value !== undefined ? value : internalContent;
+  const setContent = (val: string) => {
+    if (onValueChange) onValueChange(val);
+    else setInternalContent(val);
+  };
+
   const [isUploading, setIsUploading] = useState(false);
   const [mentionSearch, setMentionSearch] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -1452,6 +1747,7 @@ export function ChatInput({
     if (maxLength && value.length > maxLength) return;
     
     setContent(value);
+    onChange?.(value);
     
     // Mention logic
     const lastChar = value[e.target.selectionStart - 1];
@@ -1572,6 +1868,24 @@ export function ChatInput({
               <DropdownMenuItem onClick={onLocation}>
                 <MapPin className="h-4 w-4 mr-2" /> Location
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={onContact}>
+                <AtSign className="h-4 w-4 mr-2" /> Contact
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPoll}>
+                <AtSign className="h-4 w-4 mr-2" /> Poll
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPix}>
+                <AtSign className="h-4 w-4 mr-2" /> PIX
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onCarousel}>
+                <Layout className="h-4 w-4 mr-2" /> Carousel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onButtons}>
+                <Layout className="h-4 w-4 mr-2" /> Buttons
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onList}>
+                <List className="h-4 w-4 mr-2" /> List Menu
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={onGif}>
                 <Gift className="h-4 w-4 mr-2" /> GIF
               </DropdownMenuItem>
@@ -1589,10 +1903,10 @@ export function ChatInput({
 
         <div className="flex-1 relative">
           {isRecording ? (
-            <div className="h-10 flex items-center px-4 bg-red-500/10 rounded-2xl border border-red-500/20 animate-pulse">
-              <div className="w-2 h-2 bg-red-500 rounded-full mr-3 animate-ping" />
-              <span className="text-sm font-medium text-red-500">Recording Audio...</span>
-            </div>
+            <VoiceRecorder 
+              onSend={(blob, duration) => onVoiceEnd?.(blob, duration)}
+              onCancel={() => onCancelReply?.()}
+            />
           ) : (
             <textarea
               ref={textareaRef}
@@ -1747,10 +2061,9 @@ export function ChatProfile({ user, onClose, className, ...props }: ChatProfileP
 
 ﻿import React, { useState, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter, MoreVertical } from 'lucide-react';
+import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter, MoreVertical, MessageSquare } from 'lucide-react';
 import type { Conversation } from './types';
 import { Avatar } from '../data-display/Avatar';
-import { useVirtualList } from '../../hooks/useVirtualList';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -1768,8 +2081,10 @@ interface ChatSidebarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   onPin?: (id: string) => void;
   onMute?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onMarkUnread?: (id: string) => void;
   filter?: 'all' | 'unread' | 'groups';
   sortBy?: 'recent' | 'unread' | 'name';
+  hideHeader?: boolean;
 }
 
 export function ChatSidebar({ 
@@ -1782,8 +2097,10 @@ export function ChatSidebar({
   onPin,
   onMute,
   onDelete,
+  onMarkUnread,
   filter = 'all',
   sortBy = 'recent',
+  hideHeader = false,
   className,
   ...props 
 }: ChatSidebarProps) {
@@ -1796,12 +2113,6 @@ export function ChatSidebar({
     });
   }, [conversations, searchQuery]);
 
-  const { containerRef, visibleItems, totalHeight, onScroll } = useVirtualList({
-    itemCount: filteredConversations.length,
-    itemHeight: 72,
-    overscan: 10,
-  });
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -1809,49 +2120,46 @@ export function ChatSidebar({
   };
 
   return (
-    <div className={cn("flex w-80 flex-col border-r border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]", className)} {...props}>
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Messages</h2>
-          <div className="flex items-center gap-1">
-            <button 
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
-              title="Filter"
-            >
-              <Filter className="h-4 w-4" />
-            </button>
-            <button 
-              onClick={onNewChat}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
-              title="New Chat"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
+    <div className={cn("flex flex-col border-r border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]", !className?.includes('w-') && "w-80", className)} {...props}>
+      {!hideHeader && (
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Messages</h2>
+            <div className="flex items-center gap-1">
+              <button 
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+                title="Filter"
+              >
+                <Filter className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={onNewChat}
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/[0.06] text-gray-600 dark:text-white/60 transition-colors"
+                title="New Chat"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={handleSearch}
+              placeholder="Search messages..." 
+              className="w-full h-10 pl-9 pr-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-gray-400 dark:text-white"
+            />
           </div>
         </div>
-        
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={handleSearch}
-            placeholder="Search messages..." 
-            className="w-full h-10 pl-9 pr-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-gray-400 dark:text-white"
-          />
-        </div>
-      </div>
+      )}
 
       <div 
-        ref={containerRef}
-        onScroll={onScroll}
-        className="flex-1 overflow-y-auto scrollbar-hide"
+        className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
       >
-        <div className="relative" style={{ height: totalHeight }}>
-          {visibleItems.map(({ index, offsetTop }) => {
-            const chat = filteredConversations[index];
-            if (!chat) return null;
-
+        <div className="flex flex-col">
+          {filteredConversations.map((chat) => {
             const displayName = chat.user?.name || chat.group?.name || "Unknown";
             const displayAvatar = chat.user?.avatar || chat.group?.avatar;
             const isOnline = chat.user?.status === 'online';
@@ -1860,13 +2168,12 @@ export function ChatSidebar({
             return (
               <div 
                 key={chat.id} 
-                className="absolute left-0 right-0 p-2"
-                style={{ top: offsetTop, height: 72 }}
+                className="p-2"
               >
-                <button
+                <div
                   onClick={() => onSelect?.(chat.id)}
                   className={cn(
-                    "w-full h-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left group",
+                    "w-full h-16 flex items-center gap-3 p-3 rounded-2xl transition-all text-left group cursor-pointer",
                     isActive 
                       ? "bg-blue-500/10 dark:bg-white/[0.06] shadow-[0_0_15px_rgba(59,130,246,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.05)]" 
                       : "hover:bg-gray-100 dark:hover:bg-white/[0.03]"
@@ -1909,7 +2216,7 @@ export function ChatSidebar({
                     </div>
                   </div>
 
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400">
                         <MoreVertical className="h-4 w-4" />
@@ -1924,13 +2231,16 @@ export function ChatSidebar({
                         <DropdownMenuItem onClick={() => onMute?.(chat.id)}>
                           <BellOff className="h-4 w-4 mr-2" /> Mute
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onMarkUnread?.(chat.id)}>
+                          <MessageSquare className="h-4 w-4 mr-2" /> Mark as Unread
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-500" onClick={() => onDelete?.(chat.id)}>
                           <Trash2 className="h-4 w-4 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </button>
+                </div>
               </div>
             );
           })}
@@ -2125,6 +2435,126 @@ export function GroupHeader({
 
 
 
+=== FILE: packages\ui\src\components\chat\InteractiveMessage.tsx ===
+
+import React from 'react';
+import { cn } from '../../utils/cn';
+import type { InteractiveContent, InteractiveButton, InteractiveListSection } from './types';
+import { ExternalLink, Phone, Reply, Copy } from 'lucide-react';
+
+interface InteractiveMessageProps {
+  data: InteractiveContent;
+  isOwn: boolean;
+  onAction?: (button: InteractiveButton) => void;
+}
+
+export function InteractiveMessage({ data, isOwn, onAction }: InteractiveMessageProps) {
+  const renderHeader = () => {
+    if (!data.header) return null;
+    
+    switch (data.header.type) {
+      case 'text':
+        return <h4 className="font-bold mb-1 text-sm">{data.header.text}</h4>;
+      case 'image':
+        return (
+          <div className="mb-2 rounded-lg overflow-hidden border border-white/10">
+            <img src={data.header.attachment?.url} alt="Header" className="w-full h-auto object-cover" />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-2 max-w-sm">
+      {renderHeader()}
+      <p className="text-sm leading-relaxed">{data.body}</p>
+      {data.footer && <p className="text-[10px] opacity-50 italic">{data.footer}</p>}
+      
+      {data.type === 'button' && data.buttons && (
+        <div className="flex flex-col gap-1 mt-3">
+          {data.buttons.map((btn: InteractiveButton) => (
+            <button
+              key={btn.id}
+              onClick={() => onAction?.(btn)}
+              className={cn(
+                "flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium transition-all",
+                "bg-white/10 hover:bg-white/20 border border-white/10 active:scale-[0.98]",
+                isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+              )}
+            >
+              {btn.type === 'url' && <ExternalLink className="h-3.5 w-3.5" />}
+              {btn.type === 'call' && <Phone className="h-3.5 w-3.5" />}
+              {btn.type === 'reply' && <Reply className="h-3.5 w-3.5" />}
+              {btn.text}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {data.type === 'list' && data.sections && (
+        <div className="mt-3 space-y-3">
+          {data.sections.map((section: InteractiveListSection, idx: number) => (
+            <div key={idx} className="space-y-1">
+              {section.title && (
+                <p className="text-[10px] uppercase tracking-wider opacity-40 font-bold px-1">
+                  {section.title}
+                </p>
+              )}
+              <div className="flex flex-col gap-1">
+                {section.rows.map((row: any) => (
+                  <button
+                    key={row.id}
+                    onClick={() => onAction?.({ id: row.id, text: row.title, type: 'reply' })}
+                    className="flex flex-col items-start p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-colors text-left"
+                  >
+                    <span className="text-sm font-medium">{row.title}</span>
+                    {row.description && (
+                      <span className="text-xs opacity-50 line-clamp-1">{row.description}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.nativeFlow && (
+        <div className="flex flex-col gap-1 mt-3">
+          {data.nativeFlow.buttons.map((btn, idx) => {
+            let params: any = {};
+            try {
+              params = typeof btn.buttonParamsJson === 'string' ? JSON.parse(btn.buttonParamsJson) : btn.buttonParamsJson;
+            } catch (e) {}
+            
+            return (
+              <button
+                key={idx}
+                onClick={() => onAction?.({ id: params.id || btn.name, text: params.display_text || btn.name, type: 'reply', params })}
+                className={cn(
+                  "flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium transition-all",
+                  "bg-white/10 hover:bg-white/20 border border-white/10 active:scale-[0.98]",
+                  isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                )}
+              >
+                {btn.name === 'cta_copy' && <Copy className="h-3.5 w-3.5" />}
+                {btn.name === 'cta_url' && <ExternalLink className="h-3.5 w-3.5" />}
+                {btn.name === 'cta_call' && <Phone className="h-3.5 w-3.5" />}
+                {btn.name === 'single_select' && <Reply className="h-3.5 w-3.5" />}
+                {params.display_text || params.title || btn.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 === FILE: packages\ui\src\components\chat\LinkPreview.tsx ===
 
 import React from 'react';
@@ -2166,6 +2596,110 @@ export function LinkPreview({ url, title, description, image, siteName, classNam
         </div>
       </div>
     </a>
+  );
+}
+
+
+
+=== FILE: packages\ui\src\components\chat\MediaLightbox.tsx ===
+
+import React, { useState, useEffect } from 'react';
+import { cn } from '../../utils/cn';
+import { X, ZoomIn, ZoomOut, Download, Maximize2, RotateCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface MediaLightboxProps {
+  isOpen: boolean;
+  onClose: () => void;
+  url: string;
+  type?: 'image' | 'video';
+  fileName?: string;
+  caption?: string;
+}
+
+export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, caption }: MediaLightboxProps) {
+  const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+      setScale(1);
+      setRotation(0);
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 3));
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 0.5));
+  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div 
+        className="fixed inset-0 z-[9999] flex flex-col bg-black/95 backdrop-blur-2xl overflow-hidden"
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        tabIndex={0}
+      >
+        {/* Toolbar */}
+        <div className="flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="text-white">
+              <p className="text-sm font-bold truncate max-w-[200px]">{fileName || 'Arquivo de Mídia'}</p>
+              <p className="text-[10px] text-white/50">WhatsApp Media Viewer</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button onClick={handleZoomOut} className="p-2.5 rounded-full hover:bg-white/10 text-white transition-all"><ZoomOut size={20} /></button>
+            <button onClick={handleZoomIn} className="p-2.5 rounded-full hover:bg-white/10 text-white transition-all"><ZoomIn size={20} /></button>
+            <button onClick={handleRotate} className="p-2.5 rounded-full hover:bg-white/10 text-white transition-all"><RotateCw size={20} /></button>
+            <div className="w-px h-6 bg-white/10 mx-1" />
+            <button onClick={onClose} className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 text-white transition-all shadow-xl"><X size={20} /></button>
+          </div>
+        </div>
+
+        {/* Content Viewport */}
+        <div className="flex-1 relative flex items-center justify-center p-4 sm:p-12 overflow-hidden">
+          <motion.div 
+            drag
+            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+            className="relative max-w-full max-h-full cursor-grab active:cursor-grabbing"
+            style={{ scale, rotate: rotation }}
+          >
+            {type === 'image' ? (
+              <img 
+                src={url} 
+                alt={caption || 'Media'} 
+                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-[0_0_100px_rgba(0,0,0,0.5)] select-none pointer-events-none" 
+              />
+            ) : (
+              <video 
+                src={url} 
+                controls 
+                autoPlay
+                className="max-w-full max-h-[80vh] rounded-lg shadow-2xl" 
+              />
+            )}
+          </motion.div>
+        </div>
+
+        {/* Footer / Caption */}
+        {caption && (
+          <div className="p-8 text-center bg-gradient-to-t from-black/50 to-transparent">
+            <p className="text-white text-base font-medium max-w-2xl mx-auto drop-shadow-md">
+              {caption}
+            </p>
+          </div>
+        )}
+      </div>
+    </AnimatePresence>
   );
 }
 
@@ -2228,7 +2762,7 @@ export function MentionList({ users, selectedIndex, onSelect, className, ...prop
 import React from 'react';
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
-import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Edit2, MapPin, User as UserIcon, FileText } from 'lucide-react';
+import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Star, Edit2, MapPin, User as UserIcon, FileText, Volume2, Lock } from 'lucide-react';
 import { Motion } from '../feedback/Motion';
 import { 
   DropdownMenu, 
@@ -2238,9 +2772,12 @@ import {
 } from '../overlay/DropdownMenu';
 import { Image } from '../data-display/Image';
 import { AudioPlayer } from './AudioPlayer';
+import { WaveformAudio } from './WaveformAudio';
 import { ReadReceipt } from './ReadReceipt';
 import { LinkPreview } from './LinkPreview';
 import { Avatar } from '../data-display/Avatar';
+import { InteractiveMessage } from './InteractiveMessage';
+import { CarouselMessage } from './CarouselMessage';
 
 interface MessageBubbleProps {
   message: Message;
@@ -2255,7 +2792,11 @@ interface MessageBubbleProps {
   onForward?: () => void;
   onCopy?: () => void;
   onPin?: () => void;
+  onStar?: (starred: boolean) => void;
   onSelect?: () => void;
+  onAction?: (action: any) => void;
+  onImageClick?: (url: string) => void;
+  onTTS?: () => void;
   isSelected?: boolean;
 }
 
@@ -2272,7 +2813,11 @@ export function MessageBubble({
   onForward,
   onCopy,
   onPin,
+  onStar,
   onSelect,
+  onAction,
+  onTTS,
+  onImageClick,
   isSelected
 }: MessageBubbleProps) {
   const renderStatus = () => {
@@ -2292,7 +2837,7 @@ export function MessageBubble({
     switch (message.type) {
       case 'audio':
         return (
-          <AudioPlayer 
+          <WaveformAudio 
             src={message.attachments?.[0]?.url || ""} 
             duration={message.attachments?.[0]?.duration} 
             isMe={isOwn} 
@@ -2345,6 +2890,47 @@ export function MessageBubble({
             />
           </div>
         );
+      case 'image':
+        return (
+          <div className="space-y-2">
+            <div 
+              className="relative rounded-2xl overflow-hidden border border-white/5 group/image cursor-pointer"
+              onClick={() => onImageClick?.(message.attachments?.[0]?.url || "")}
+            >
+              <Image 
+                src={message.attachments?.[0]?.url || ""} 
+                alt={message.content || "Image"}
+                className="max-h-[300px] w-auto object-contain bg-black/20 transition-transform duration-300 group-hover/image:scale-105"
+              />
+            </div>
+            {message.content && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-1">{message.content}</p>
+            )}
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="space-y-2">
+            <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-black/20 aspect-video flex items-center justify-center group/video">
+              <video 
+                src={message.attachments?.[0]?.url} 
+                controls 
+                className="max-h-[300px] w-full"
+              />
+            </div>
+            {message.content && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-1">{message.content}</p>
+            )}
+          </div>
+        );
+      case 'interactive':
+        if (message.interactive?.type === 'carousel' && message.interactive.cards) {
+          return <CarouselMessage cards={message.interactive.cards} isOwn={isOwn} onAction={onAction} />;
+        }
+        if (message.interactive) {
+          return <InteractiveMessage data={message.interactive} isOwn={isOwn} onAction={onAction} />;
+        }
+        return null;
       default:
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         const urls = message.content.match(urlRegex);
@@ -2375,9 +2961,10 @@ export function MessageBubble({
       {!isOwn && showAvatar && (
         <div className="mr-2 mt-auto">
           <Avatar 
-            src={message.senderId} // In real app, fetch user avatar
-            alt="User" 
+            src={message.contact?.avatar} 
+            alt={message.contact?.name || "User"} 
             className="w-8 h-8"
+            fallback={(message.contact?.name || message.senderId || "?").charAt(0).toUpperCase()}
           />
         </div>
       )}
@@ -2386,14 +2973,39 @@ export function MessageBubble({
         "relative max-w-[75%] sm:max-w-[60%] transition-all duration-300",
         isSelected && "scale-95 opacity-80"
       )}>
+        {message.agentName && (
+          <div className={cn(
+            "flex items-center gap-1.5 mb-1 px-2 opacity-50",
+            isOwn ? "justify-end" : "justify-start"
+          )}>
+            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white/10">
+              <UserIcon size={10} className="text-blue-400" />
+            </div>
+            <span className="text-[10px] font-bold tracking-wider uppercase">Agente: {message.agentName}</span>
+          </div>
+        )}
+
         <Motion preset="spring">
           <div className={cn(
             "relative p-3 rounded-2xl shadow-sm backdrop-blur-md border",
-            isOwn 
-              ? "bg-blue-600/90 dark:bg-blue-500/20 text-white border-blue-500/20 rounded-tr-none" 
-              : "bg-white/80 dark:bg-white/[0.05] text-gray-900 dark:text-white border-white/10 rounded-tl-none",
+            message.isInternalNote
+              ? "bg-amber-500/10 border-amber-500/20 text-amber-100 italic"
+              : (isOwn 
+                  ? "bg-blue-600/90 dark:bg-blue-500/20 text-white border-blue-500/20 rounded-tr-none" 
+                  : "bg-white/80 dark:bg-white/[0.05] text-gray-900 dark:text-white border-white/10 rounded-tl-none"),
             "hover:shadow-lg hover:shadow-blue-500/5 transition-shadow"
           )}>
+            {message.isInternalNote && (
+              <div className="flex items-center gap-1.5 mb-1.5 px-1.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 w-fit">
+                <Lock size={10} className="text-amber-500" />
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Nota Interna</span>
+              </div>
+            )}
+            {!isOwn && message.remoteJid?.endsWith('@g.us') && message.contact?.name && (
+              <p className="text-[11px] font-bold text-blue-500 dark:text-blue-400 mb-1 truncate">
+                {message.contact.name}
+              </p>
+            )}
             {renderContent()}
             
             <div className="flex items-center justify-end gap-1 mt-1 opacity-60 text-[10px]">
@@ -2457,6 +3069,14 @@ export function MessageBubble({
               <DropdownMenuItem onClick={onPin}>
                 <Pin className="h-4 w-4 mr-2" /> Pin
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onStar?.(true)}>
+                <Star className="h-4 w-4 mr-2" /> Star
+              </DropdownMenuItem>
+              {onTTS && message.type === 'text' && (
+                <DropdownMenuItem onClick={onTTS}>
+                  <Volume2 className="h-4 w-4 mr-2" /> Listen (TTS)
+                </DropdownMenuItem>
+              )}
               {isOwn && (
                 <>
                   <DropdownMenuItem onClick={onEdit}>
@@ -2479,11 +3099,11 @@ export function MessageBubble({
 
 === FILE: packages\ui\src\components\chat\MessageList.tsx ===
 
-import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffect } from 'react';
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
 import { MessageBubble } from './MessageBubble';
-import { useVirtualList } from '../../hooks/useVirtualList';
+import { StickyDateHeader } from './StickyDateHeader';
 import { MessageSquare, Calendar, ArrowDown } from 'lucide-react';
 
 interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onCopy' | 'onSelect'> {
@@ -2496,7 +3116,11 @@ interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   onForward?: (message: Message) => void;
   onCopy?: (message: Message) => void;
   onPin?: (message: Message) => void;
+  onStar?: (message: Message, starred: boolean) => void;
   onSelect?: (message: Message) => void;
+  onAction?: (message: Message, action: any) => void;
+  onImageClick?: (url: string) => void;
+  onTTS?: (message: Message) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
@@ -2516,7 +3140,11 @@ export function MessageList({
   onForward,
   onCopy,
   onPin,
+  onStar,
   onSelect,
+  onAction,
+  onImageClick,
+  onTTS,
   onLoadMore,
   hasMore,
   isLoadingMore,
@@ -2526,27 +3154,12 @@ export function MessageList({
   ...props 
 }: MessageListProps) {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  
-  // Estimate height based on message type and content length
-  const getMessageHeight = useCallback((index: number) => {
-    const msg = messages[index];
-    if (!msg) return 0;
-    
-    let height = 60; // Base height
-    if (msg.type === 'image' || msg.type === 'video') height += 200;
-    if (msg.type === 'audio') height += 40;
-    if (msg.content) height += Math.ceil(msg.content.length / 50) * 20;
-    if (msg.replyTo) height += 50;
-    if (msg.reactions && Object.keys(msg.reactions).length > 0) height += 30;
-    
-    return height + 16; // Add padding
-  }, [messages]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { containerRef, visibleItems, totalHeight, onScroll, scrollToBottom } = useVirtualList({
-    itemCount: messages.length,
-    itemHeight: getMessageHeight,
-    overscan: 15,
-  });
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'auto') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  }, []);
 
   useEffect(() => {
     if (shouldAutoScroll) {
@@ -2555,7 +3168,6 @@ export function MessageList({
   }, [messages.length, shouldAutoScroll, scrollToBottom]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    onScroll(e);
     const target = e.currentTarget;
     const isAtBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 100;
     setShouldAutoScroll(isAtBottom);
@@ -2584,23 +3196,27 @@ export function MessageList({
       <div 
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto scrollbar-hide p-4"
+        className="h-full overflow-y-auto p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
       >
-        <div className="relative" style={{ height: totalHeight }}>
-          {visibleItems.map(({ index, offsetTop, height }) => {
-            const message = messages[index];
-            if (!message) return null;
-
+        <div className="flex flex-col gap-4">
+          {messages.map((message, index) => {
             const isOwn = message.senderId === currentUserId;
             const prevMessage = index > 0 ? messages[index - 1] : null;
-            const showAvatar = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId);
+
+            // Date processing
+            const msgDate = new Date(message.timestamp);
+            const prevMsgDate = prevMessage ? new Date(prevMessage.timestamp) : null;
+            const showDate = groupByDate && (!prevMsgDate || msgDate.toDateString() !== prevMsgDate.toDateString());
+
+            const showAvatar = !isOwn && (!prevMessage || prevMessage.senderId !== message.senderId || showDate);
 
             return (
-              <div 
-                key={message.id} 
-                className="absolute left-0 right-0"
-                style={{ top: offsetTop, height }}
-              >
+              <React.Fragment key={message.id}>
+                {showDate && (
+                  <div className="my-4">
+                    <StickyDateHeader date={message.timestamp} />
+                  </div>
+                )}
                 <MessageBubble
                   message={message}
                   isOwn={isOwn}
@@ -2612,12 +3228,17 @@ export function MessageList({
                   onForward={() => onForward?.(message)}
                   onCopy={() => onCopy?.(message)}
                   onPin={() => onPin?.(message)}
+                  onStar={(starred) => onStar?.(message, starred)}
                   onSelect={() => onSelect?.(message)}
+                  onAction={(action) => onAction?.(message, action)}
+                  onImageClick={onImageClick}
+                  onTTS={onTTS ? () => onTTS(message) : undefined}
                   isSelected={selectedMessages.includes(message.id)}
                 />
-              </div>
+              </React.Fragment>
             );
           })}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -2846,6 +3467,45 @@ export function ReplyPreview({ message, onCancel, className, ...props }: ReplyPr
 
 
 
+=== FILE: packages\ui\src\components\chat\StickyDateHeader.tsx ===
+
+import React from 'react';
+import { cn } from '../../utils/cn';
+import { Calendar } from 'lucide-react';
+
+interface StickyDateHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  date: string | Date;
+  sticky?: boolean;
+}
+
+export function StickyDateHeader({ date, sticky = true, className, ...props }: StickyDateHeaderProps) {
+  const formattedDate = typeof date === 'string' ? date : date.toLocaleDateString('pt-BR', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+
+  return (
+    <div 
+      className={cn(
+        "flex justify-center my-6 z-20",
+        sticky && "sticky top-4",
+        className
+      )}
+      {...props}
+    >
+      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md shadow-lg">
+        <Calendar size={12} className="text-white/40" />
+        <span className="text-[11px] font-bold text-white/60 tracking-wider uppercase">
+          {formattedDate}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+
+
 === FILE: packages\ui\src\components\chat\SystemMessage.tsx ===
 
 import React from 'react';
@@ -2883,6 +3543,7 @@ export interface User {
   phone?: string;
   isOnline?: boolean;
   verified?: boolean;
+  tags?: string[];
 }
 
 export type MessageType = 
@@ -2909,7 +3570,7 @@ export interface ChatAttachment {
   url: string;
   name?: string;
   size?: string;
-  duration?: number; // for audio/video
+  duration?: number;
   thumbnail?: string;
   mimetype?: string;
   caption?: string;
@@ -2919,12 +3580,65 @@ export interface ChatAttachment {
 export interface PollOption {
   id: string;
   text: string;
-  votes: string[]; // user ids
+  votes: string[];
+}
+
+export interface InteractiveButton {
+  id: string;
+  text: string;
+  type: 'reply' | 'url' | 'call';
+  payload?: string;
+  params?: any;
+}
+
+export interface InteractiveListSection {
+  title?: string;
+  rows: {
+    id: string;
+    title: string;
+    description?: string;
+  }[];
+}
+
+export interface InteractiveCard {
+  header?: {
+    type: 'image' | 'video';
+    attachment: ChatAttachment;
+  };
+  body: string;
+  footer?: string;
+  buttons?: InteractiveButton[];
+  nativeFlow?: {
+    buttons: {
+      name: string;
+      buttonParamsJson: string;
+    }[];
+  };
+}
+
+export interface InteractiveContent {
+  type: 'button' | 'list' | 'carousel';
+  header?: {
+    type: 'text' | 'image' | 'video' | 'document';
+    text?: string;
+    attachment?: ChatAttachment;
+  };
+  body: string;
+  footer?: string;
+  buttons?: InteractiveButton[];
+  sections?: InteractiveListSection[];
+  cards?: InteractiveCard[];
+  nativeFlow?: {
+    buttons: {
+      name: string;
+      buttonParamsJson: string;
+    }[];
+  };
 }
 
 export interface Message {
   id: string;
-  remoteJid: string; // Baileys specific
+  remoteJid: string;
   content: string;
   senderId: string;
   timestamp: Date;
@@ -2952,23 +3666,28 @@ export interface Message {
     multipleChoice?: boolean;
     expiresAt?: Date;
   };
-  ephemeralExpiration?: number; // seconds
+  interactive?: InteractiveContent;
+  ephemeralExpiration?: number;
   isEdited?: boolean;
   isPinned?: boolean;
   isForwarded?: boolean;
   forwardingScore?: number;
   broadcast?: boolean;
   starred?: boolean;
+  
+  // CRM / AI Evolution
+  agentName?: string;
+  isInternalNote?: boolean;
 }
 
 export interface Conversation {
   id: string;
-  user?: User; // For 1-to-1
-  group?: GroupInfo; // For groups
+  user?: User;
+  group?: GroupInfo;
   lastMessage?: Message;
   unreadCount: number;
   isTyping?: boolean;
-  presence?: Record<string, PresenceStatus>; // userId -> status
+  presence?: Record<string, PresenceStatus>;
   isMuted?: boolean;
   muteExpiration?: number;
   isPinned?: boolean;
@@ -2985,12 +3704,12 @@ export interface GroupInfo {
   avatar?: string;
   description?: string;
   members: GroupMember[];
-  admins: string[]; // user ids
+  admins: string[];
   createdBy: string;
   createdAt: Date;
   inviteCode?: string;
-  restrict?: boolean; // only admins can send messages
-  announce?: boolean; // only admins can edit group info
+  restrict?: boolean;
+  announce?: boolean;
 }
 
 export interface GroupMember extends User {
@@ -3051,6 +3770,91 @@ export function TypingIndicator({ users = [], variant = 'default', className, ..
 
 
 
+=== FILE: packages\ui\src\components\chat\VirtualizedMessageList.tsx ===
+
+import React, { useRef, useMemo } from 'react';
+import { cn } from '../../utils/cn';
+import type { Message } from './types';
+import { MessageBubble } from './MessageBubble';
+import { useVirtualList } from '../../hooks/useVirtualList';
+import { StickyDateHeader } from './StickyDateHeader';
+
+interface VirtualizedMessageListProps {
+  messages: Message[];
+  currentUserId: string;
+  onReply?: (message: Message) => void;
+  onImageClick?: (url: string) => void;
+  className?: string;
+  itemHeight?: number; // Estimated height
+}
+
+export function VirtualizedMessageList({ 
+  messages, 
+  currentUserId, 
+  onReply,
+  onImageClick,
+  className,
+  itemHeight = 80
+}: VirtualizedMessageListProps) {
+  const { 
+    containerRef, 
+    visibleItems, 
+    totalHeight, 
+    onScroll 
+  } = useVirtualList({
+    itemCount: messages.length,
+    itemHeight: itemHeight,
+    startAtBottom: true,
+    overscan: 10
+  });
+
+  return (
+    <div 
+      ref={containerRef}
+      onScroll={onScroll}
+      className={cn("flex-1 overflow-y-auto relative no-scrollbar", className)}
+    >
+      <div 
+        className="w-full relative"
+        style={{ height: `${totalHeight}px` }}
+      >
+        {visibleItems.map(({ index, offsetTop, height }) => {
+          const message = messages[index];
+          if (!message) return null;
+
+          // Check if we should show a date header
+          const prevMessage = index > 0 ? messages[index - 1] : null;
+          const showDate = !prevMessage || 
+            new Date(prevMessage.timestamp).toDateString() !== new Date(message.timestamp).toDateString();
+
+          return (
+            <div 
+              key={message.id}
+              className="absolute left-0 w-full px-4"
+              style={{ top: `${offsetTop}px`, height: `${height}px` }}
+            >
+              {showDate && (
+                <StickyDateHeader 
+                  date={message.timestamp} 
+                  sticky={false} // In virtualized list, we handle sticky differently if needed
+                />
+              )}
+              <MessageBubble 
+                message={message}
+                isOwn={message.senderId === currentUserId}
+                onReply={() => onReply?.(message)}
+                onImageClick={onImageClick}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+
 === FILE: packages\ui\src\components\chat\VoiceRecorder.tsx ===
 
 import React, { useEffect } from 'react';
@@ -3077,7 +3881,7 @@ export function VoiceRecorder({ onSend, onCancel, className, ...props }: VoiceRe
   useEffect(() => {
     startRecording();
     return () => cancelRecording();
-  }, [startRecording, cancelRecording]);
+  }, []);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);
@@ -3138,6 +3942,142 @@ export function VoiceRecorder({ onSend, onCancel, className, ...props }: VoiceRe
             <Send className="h-4 w-4" />
           </Button>
         )}
+      </div>
+    </div>
+  );
+}
+
+
+
+=== FILE: packages\ui\src\components\chat\WaveformAudio.tsx ===
+
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { cn } from '../../utils/cn';
+import { Play, Pause, Smartphone } from 'lucide-react';
+
+interface WaveformAudioProps extends React.HTMLAttributes<HTMLDivElement> {
+  src: string;
+  duration?: number;
+  isMe?: boolean;
+  bars?: number;
+}
+
+export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...props }: WaveformAudioProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Generate deterministic bar heights for a given src to maintain visual consistency
+  const barHeights = useMemo(() => {
+    const heights = [];
+    const seed = src.length;
+    for (let i = 0; i < bars; i++) {
+      // Deterministic random between 20% and 100%
+      const h = ((Math.sin(seed + i * 1.5) + 1) / 2) * 80 + 20;
+      heights.push(Math.round(h));
+    }
+    return heights;
+  }, [src, bars]);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const progressPercentage = duration ? (currentTime / duration) : 0;
+  const activeBars = Math.floor(progressPercentage * bars);
+
+  return (
+    <div 
+      className={cn(
+        "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-[280px]",
+        isMe ? "bg-white/10 text-white" : "bg-white/[0.03] text-white/90 border border-white/10",
+        className
+      )} 
+      {...props}
+    >
+      <audio 
+        ref={audioRef} 
+        src={src} 
+        onTimeUpdate={handleTimeUpdate} 
+        onEnded={handleEnded}
+      />
+      
+      <div className="relative shrink-0">
+        <button 
+          onClick={togglePlay}
+          className={cn(
+            "w-12 h-12 rounded-full flex items-center justify-center transition-all group active:scale-95",
+            isMe ? "bg-white text-blue-600" : "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+          )}
+        >
+          {isPlaying ? (
+            <Pause className="h-6 w-6 fill-current" />
+          ) : (
+            <Play className="h-6 w-6 fill-current ml-1" />
+          )}
+        </button>
+        {/* Playback rate indicator if needed could go here */}
+      </div>
+
+      <div className="flex-1 flex flex-col gap-1">
+        <div className="flex items-end gap-[2px] h-8 w-full group cursor-pointer" 
+             onClick={(e) => {
+               if (!audioRef.current || !duration) return;
+               const rect = e.currentTarget.getBoundingClientRect();
+               const x = e.clientX - rect.left;
+               const newTime = (x / rect.width) * duration;
+               audioRef.current.currentTime = newTime;
+               setCurrentTime(newTime);
+             }}>
+          {barHeights.map((h, i) => (
+            <div 
+              key={i}
+              className={cn(
+                "flex-1 rounded-full transition-all duration-300",
+                i <= activeBars 
+                  ? (isMe ? "bg-white" : "bg-blue-500") 
+                  : (isMe ? "bg-white/30" : "bg-white/10")
+              )}
+              style={{ height: `${h}%` }}
+            />
+          ))}
+        </div>
+        
+        <div className="flex justify-between items-center px-0.5">
+          <span className="text-[10px] tabular-nums font-semibold opacity-60">
+            {formatTime(currentTime)}
+          </span>
+          <div className="flex items-center gap-1.5 grayscale opacity-40">
+            <span className="text-[10px] font-semibold">
+              {duration ? formatTime(duration) : '--:--'}
+            </span>
+            <Smartphone size={10} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -3521,9 +4461,12 @@ export function AreaChart<T = any>({
   onValueClick 
 }: AreaChartProps<T>) {
   const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
+  
+  if (!data || data.length === 0) return null;
+
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
-  const itemWidth = chartWidth / (data.length - 1); // Points are on edges
+  const itemWidth = data.length > 1 ? chartWidth / (data.length - 1) : chartWidth; 
 
   const colors = {
     cyan: { stroke: '#06b6d4', fill: 'rgba(6, 182, 212, 0.2)' },
@@ -3573,7 +4516,6 @@ export function AreaChart<T = any>({
         strokeWidth={3}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="animate-draw-line"
         style={{
             strokeDasharray: 2000,
             strokeDashoffset: 2000,
@@ -3687,6 +4629,9 @@ export function BarChart<T = any>({
   onValueClick 
 }: BarChartProps<T>) {
   const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
+
+  if (!data || data.length === 0) return null;
+
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const itemWidth = chartWidth / data.length;
@@ -3868,7 +4813,9 @@ export function ChartContainer<T = any>({
   }, []);
 
   const maxValue = useMemo(() => {
-    return Math.max(...data.map((d) => d.value)) * 1.1; // Add 10% headroom
+    if (!data || data.length === 0) return 1;
+    const max = Math.max(...data.map((d) => d.value));
+    return max === 0 ? 1 : max * 1.1; // Add 10% headroom, min 1
   }, [data]);
 
   return (
@@ -4039,13 +4986,16 @@ export function LineChart<T = any>({
   onValueClick 
 }: LineChartProps<T>) {
   const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
+
+  if (!data || data.length === 0) return null;
+
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   
   // Align 'center' matches BarChart (bands), 'edge' matches AreaChart (points)
   const itemWidth = align === 'center' 
     ? chartWidth / data.length 
-    : chartWidth / (data.length - 1);
+    : (data.length > 1 ? chartWidth / (data.length - 1) : chartWidth);
 
   const colors = {
     cyan: '#06b6d4',
@@ -4118,7 +5068,6 @@ export function LineChart<T = any>({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="animate-draw-line"
         style={{
             strokeDasharray: 3000,
             strokeDashoffset: 3000,
@@ -12185,21 +13134,61 @@ export interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
   gap?: number | string;
 }
 
+const colMap: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4',
+  5: 'grid-cols-5',
+  6: 'grid-cols-6',
+  7: 'grid-cols-7',
+  8: 'grid-cols-8',
+  9: 'grid-cols-9',
+  10: 'grid-cols-10',
+  11: 'grid-cols-11',
+  12: 'grid-cols-12',
+};
+
+const smMap: Record<number, string> = {
+  1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4',
+  5: 'sm:grid-cols-5', 6: 'sm:grid-cols-6', 7: 'sm:grid-cols-7', 8: 'sm:grid-cols-8',
+  9: 'sm:grid-cols-9', 10: 'sm:grid-cols-10', 11: 'sm:grid-cols-11', 12: 'sm:grid-cols-12',
+};
+
+const mdMap: Record<number, string> = {
+  1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3', 4: 'md:grid-cols-4',
+  5: 'md:grid-cols-5', 6: 'md:grid-cols-6', 7: 'md:grid-cols-7', 8: 'md:grid-cols-8',
+  9: 'md:grid-cols-9', 10: 'md:grid-cols-10', 11: 'md:grid-cols-11', 12: 'md:grid-cols-12',
+};
+
+const lgMap: Record<number, string> = {
+  1: 'lg:grid-cols-1', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5', 6: 'lg:grid-cols-6', 7: 'lg:grid-cols-7', 8: 'lg:grid-cols-8',
+  9: 'lg:grid-cols-9', 10: 'lg:grid-cols-10', 11: 'lg:grid-cols-11', 12: 'lg:grid-cols-12',
+};
+
+const xlMap: Record<number, string> = {
+  1: 'xl:grid-cols-1', 2: 'xl:grid-cols-2', 3: 'xl:grid-cols-3', 4: 'xl:grid-cols-4',
+  5: 'xl:grid-cols-5', 6: 'xl:grid-cols-6', 7: 'xl:grid-cols-7', 8: 'xl:grid-cols-8',
+  9: 'xl:grid-cols-9', 10: 'xl:grid-cols-10', 11: 'xl:grid-cols-11', 12: 'xl:grid-cols-12',
+};
+
 export const Grid = React.forwardRef<HTMLDivElement, GridProps>(
-  ({ className, cols = 1, sm, md, lg, xl, gap = 4, style, ...props }, ref) => {
+  ({ className, cols, sm, md, lg, xl, gap = 4, style, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
           'grid',
-          sm && `sm:grid-cols-${sm}`,
-          md && `md:grid-cols-${md}`,
-          lg && `lg:grid-cols-${lg}`,
-          xl && `xl:grid-cols-${xl}`,
+          cols && colMap[cols],
+          sm && smMap[sm],
+          md && mdMap[md],
+          lg && lgMap[lg],
+          xl && xlMap[xl],
           className
         )}
         style={{
-            gridTemplateColumns: cols ? `repeat(${cols}, minmax(0, 1fr))` : undefined,
+            gridTemplateColumns: (cols && !colMap[cols]) ? `repeat(${cols}, minmax(0, 1fr))` : undefined,
             gap: typeof gap === 'number' ? `${gap * 0.25}rem` : gap,
             ...style
         }}
@@ -12218,19 +13207,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface SpotlightProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   size?: number;
   color?: string;
+  fill?: string;
 }
 
 export const Spotlight = ({ 
   children, 
   className, 
   size = 300, 
-  color = "rgba(255, 255, 255, 0.1)",
+  color,
+  fill,
   ...props 
 }: SpotlightProps) => {
   const divRef = useRef<HTMLDivElement>(null);
+  const effectiveColor = fill || color || "rgba(255, 255, 255, 0.1)";
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = divRef.current;
@@ -12267,10 +13259,10 @@ export const Spotlight = ({
         className="pointer-events-none absolute -inset-px transition-opacity duration-300"
         style={{
           opacity: 'var(--opacity, 0)',
-          background: `radial-gradient(${size}px circle at var(--mouse-x, center) var(--mouse-y, center), ${color}, transparent 80%)`,
+          background: `radial-gradient(${size}px circle at var(--mouse-x, center) var(--mouse-y, center), ${effectiveColor}, transparent 80%)`,
         }}
       />
-      <div className="relative h-full">{children}</div>
+      {children && <div className="relative h-full">{children}</div>}
     </div>
   );
 };
@@ -12772,7 +13764,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         ref={ref}
         className={cn(
           "flex h-full w-64 flex-col border-r backdrop-blur-xl transition-colors duration-200",
-          "border-gray-200 bg-white/50",
+          "border-zinc-200 bg-white/80",
           "dark:border-white/10 dark:bg-black/20",
           className
         )}
@@ -13444,6 +14436,12 @@ export interface DialogProps {
 export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -13457,7 +14455,7 @@ export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
         dialog.close();
       }
     }
-  }, [isOpen]);
+  }, [isOpen, mounted]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -13470,7 +14468,7 @@ export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
 
     dialog.addEventListener('cancel', handleCancel);
     return () => dialog.removeEventListener('cancel', handleCancel);
-  }, [onClose]);
+  }, [onClose, mounted]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === dialogRef.current) {
@@ -13478,19 +14476,21 @@ export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
     }
   };
 
+  if (!mounted) return null;
+
   return createPortal(
     <dialog
       ref={dialogRef}
       onClick={handleBackdropClick}
       className={cn(
-        "fixed inset-0 z-[100] bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm",
+        "fixed inset-0 z-[100] m-auto bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
         "open:animate-in open:fade-in open:duration-200",
         className
       )}
     >
       <div
         className={cn(
-          "relative w-full max-w-lg scale-100 gap-4 border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
+          "relative w-full max-w-lg scale-100 gap-4 border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
           "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
         )}
       >
@@ -13922,6 +14922,12 @@ export interface ModalProps {
 export function Modal({ isOpen, onClose, children, className }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -13937,7 +14943,7 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
         document.body.style.overflow = 'unset';
       }
     }
-  }, [isOpen]);
+  }, [isOpen, mounted]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -13950,7 +14956,7 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
 
     dialog.addEventListener('cancel', handleCancel);
     return () => dialog.removeEventListener('cancel', handleCancel);
-  }, [onClose]);
+  }, [onClose, mounted]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === dialogRef.current) {
@@ -13958,19 +14964,21 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
     }
   };
 
+  if (!mounted) return null;
+
   return createPortal(
     <dialog
       ref={dialogRef}
       onClick={handleBackdropClick}
       className={cn(
-        "fixed inset-0 z-[100] bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
+        "fixed inset-0 z-[100] m-auto bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
         "animate-in fade-in duration-200",
         className
       )}
     >
       <div
         className={cn(
-          "relative w-full max-w-lg scale-100 gap-4 border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
+          "relative w-full max-w-lg scale-100 gap-4 border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
           "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
         )}
       >
@@ -14266,6 +15274,198 @@ export function Tooltip({
         document.body
       )}
     </div>
+  );
+}
+
+
+
+=== FILE: packages\ui\src\components\shared\BulkActionBar.tsx ===
+
+import React from 'react';
+import { cn } from '../../utils/cn';
+import { X, Trash2, Forward, CheckSquare, MessageSquare, Copy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface BulkActionBarProps {
+  isVisible: boolean;
+  selectedCount: number;
+  onClose: () => void;
+  onDelete?: () => void;
+  onForward?: () => void;
+  onMarkRead?: () => void;
+  onCopyAll?: () => void;
+}
+
+export function BulkActionBar({ 
+  isVisible, 
+  selectedCount, 
+  onClose, 
+  onDelete, 
+  onForward, 
+  onMarkRead,
+  onCopyAll
+}: BulkActionBarProps) {
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div 
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4"
+        >
+          <div className="bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 pl-2">
+              <button 
+                onClick={onClose}
+                className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all"
+              >
+                <X size={18} />
+              </button>
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-sm">{selectedCount} selecionados</span>
+                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Ações em massa</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <ActionButton 
+                icon={<Forward size={18} />} 
+                label="Encaminhar" 
+                onClick={onForward} 
+                variant="ghost"
+              />
+              <ActionButton 
+                icon={<Copy size={18} />} 
+                label="Copiar" 
+                onClick={onCopyAll} 
+                variant="ghost"
+              />
+              <ActionButton 
+                icon={<MessageSquare size={18} />} 
+                label="Lido" 
+                onClick={onMarkRead} 
+                variant="ghost"
+              />
+              <div className="w-px h-8 bg-white/10 mx-1" />
+              <ActionButton 
+                icon={<Trash2 size={18} />} 
+                label="Excluir" 
+                onClick={onDelete} 
+                variant="danger"
+              />
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function ActionButton({ 
+  icon, 
+  label, 
+  onClick, 
+  variant = 'ghost' 
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  onClick?: () => void;
+  variant?: 'ghost' | 'danger';
+}) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all group active:scale-95",
+        variant === 'ghost' 
+          ? "text-white/60 hover:text-white hover:bg-white/5" 
+          : "text-rose-500 hover:text-rose-400 hover:bg-rose-500/10"
+      )}
+    >
+      {icon}
+      <span className="text-[10px] mt-1 font-medium scale-90 group-hover:scale-100 transition-transform">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+
+
+=== FILE: packages\ui\src\components\shared\ConnectionStatusBanner.tsx ===
+
+import React from 'react';
+import { cn } from '../../utils/cn';
+import { WifiOff, RefreshCcw, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface ConnectionStatusBannerProps {
+  status: 'disconnected' | 'connecting' | 'reconnecting' | 'error';
+  onRetry?: () => void;
+  message?: string;
+}
+
+export function ConnectionStatusBanner({ status, onRetry, message }: ConnectionStatusBannerProps) {
+  const config = {
+    disconnected: {
+      bg: 'bg-rose-500/10',
+      border: 'border-rose-500/20',
+      text: 'text-rose-400',
+      icon: <WifiOff size={14} />,
+      label: 'Telefone Desconectado'
+    },
+    connecting: {
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/20',
+      text: 'text-amber-400',
+      icon: <RefreshCcw size={14} className="animate-spin" />,
+      label: 'Conectando...'
+    },
+    reconnecting: {
+      bg: 'bg-blue-500/10',
+      border: 'border-blue-500/20',
+      text: 'text-blue-400',
+      icon: <RefreshCcw size={14} className="animate-spin" />,
+      label: 'Tentando reconectar...'
+    },
+    error: {
+      bg: 'bg-rose-500/10',
+      border: 'border-rose-500/20',
+      text: 'text-rose-400',
+      icon: <AlertTriangle size={14} />,
+      label: 'Erro na conexão'
+    }
+  }[status];
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -20, opacity: 0 }}
+        className={cn(
+          "flex items-center justify-center gap-4 py-2 px-4 border-b backdrop-blur-md z-50",
+          config.bg,
+          config.border
+        )}
+      >
+        <div className={cn("flex items-center gap-2 text-xs font-bold uppercase tracking-widest", config.text)}>
+          {config.icon}
+          {message || config.label}
+        </div>
+        
+        {onRetry && (status === 'disconnected' || status === 'error') && (
+          <button 
+            onClick={onRetry}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-bold text-white transition-all active:scale-95"
+          >
+            Tentar agora
+            <RefreshCcw size={10} />
+          </button>
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -15169,7 +16369,7 @@ export function useChatSearch(messages: Message[]) {
 
 === FILE: packages\ui\src\hooks\useChatStore.ts ===
 
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, useMemo, useCallback } from 'react';
 import type { Conversation, Message, PresenceStatus } from '../components/chat/types';
 
 interface ChatState {
@@ -15196,7 +16396,8 @@ class ChatStore {
     return () => this.listeners.delete(listener);
   };
 
-  private emitChange() {
+  private emitChange(newState: ChatState) {
+    this.state = newState;
     for (const listener of this.listeners) {
       listener();
     }
@@ -15204,42 +16405,60 @@ class ChatStore {
 
   // Actions
   setConversations(conversations: Conversation[]) {
-    this.state.conversations = new Map(conversations.map(c => [c.id, c]));
-    this.emitChange();
+    this.emitChange({
+      ...this.state,
+      conversations: new Map(conversations.map(c => [c.id, c]))
+    });
   }
 
   upsertConversation(conversation: Partial<Conversation> & { id: string }) {
-    const existing = this.state.conversations.get(conversation.id);
-    this.state.conversations.set(conversation.id, {
+    const conversations = new Map(this.state.conversations);
+    const existing = conversations.get(conversation.id);
+    conversations.set(conversation.id, {
       ...(existing || { unreadCount: 0 }),
       ...conversation,
     } as Conversation);
-    this.emitChange();
+    
+    this.emitChange({
+      ...this.state,
+      conversations
+    });
   }
 
   setMessages(chatId: string, messages: Message[]) {
-    this.state.messages.set(chatId, messages);
-    this.emitChange();
+    const allMessages = new Map(this.state.messages);
+    allMessages.set(chatId, messages);
+    this.emitChange({
+      ...this.state,
+      messages: allMessages
+    });
   }
 
   addMessage(chatId: string, message: Message) {
     const current = this.state.messages.get(chatId) || [];
-    // Avoid duplicates
     if (current.some(m => m.id === message.id)) return;
     
-    this.state.messages.set(chatId, [...current, message]);
+    const allMessages = new Map(this.state.messages);
+    allMessages.set(chatId, [...current, message]);
     
+    let newState = {
+      ...this.state,
+      messages: allMessages
+    };
+
     // Update last message in conversation
     const conv = this.state.conversations.get(chatId);
     if (conv) {
-      this.upsertConversation({ 
-        id: chatId, 
+      const conversations = new Map(this.state.conversations);
+      conversations.set(chatId, {
+        ...conv,
         lastMessage: message,
         unreadCount: this.state.activeChatId === chatId ? 0 : (conv.unreadCount || 0) + 1
       });
+      newState.conversations = conversations;
     }
     
-    this.emitChange();
+    this.emitChange(newState);
   }
 
   updateMessageStatus(chatId: string, messageId: string, status: Message['status']) {
@@ -15252,60 +16471,180 @@ class ChatStore {
       const msg = updated[index];
       if (msg) {
         updated[index] = { ...msg, status } as Message;
-        this.state.messages.set(chatId, updated);
-        this.emitChange();
+        const allMessages = new Map(this.state.messages);
+        allMessages.set(chatId, updated);
+        this.emitChange({
+          ...this.state,
+          messages: allMessages
+        });
       }
+    }
+  }
+
+  updateMessage(chatId: string, messageId: string, updates: Partial<Message>) {
+    const current = this.state.messages.get(chatId);
+    if (!current) return;
+
+    const index = current.findIndex(m => m.id === messageId);
+    if (index !== -1) {
+      const updated = [...current];
+      updated[index] = { ...updated[index], ...updates } as Message;
+      const allMessages = new Map(this.state.messages);
+      allMessages.set(chatId, updated);
+      this.emitChange({
+        ...this.state,
+        messages: allMessages
+      });
+    }
+  }
+
+  addReaction(chatId: string, messageId: string, emoji: string, userId: string) {
+    const current = this.state.messages.get(chatId);
+    if (!current) return;
+
+    const index = current.findIndex(m => m.id === messageId);
+    if (index !== -1) {
+      const updated = [...current];
+      const msg = { ...updated[index] };
+      const reactions = { ...(msg.reactions || {}) };
+      const users = [...(reactions[emoji] || [])];
+      
+      if (!users.includes(userId)) {
+        users.push(userId);
+        reactions[emoji] = users;
+        msg.reactions = reactions;
+        updated[index] = msg as Message;
+        
+        const allMessages = new Map(this.state.messages);
+        allMessages.set(chatId, updated);
+        this.emitChange({ ...this.state, messages: allMessages });
+      }
+    }
+  }
+
+  removeReaction(chatId: string, messageId: string, emoji: string, userId: string) {
+    const current = this.state.messages.get(chatId);
+    if (!current) return;
+
+    const index = current.findIndex(m => m.id === messageId);
+    if (index !== -1) {
+      const updated = [...current];
+      const msg = { ...updated[index] };
+      const reactions = { ...(msg.reactions || {}) };
+      
+      if (reactions[emoji]) {
+        reactions[emoji] = reactions[emoji].filter(id => id !== userId);
+        if (reactions[emoji].length === 0) {
+          delete reactions[emoji];
+        }
+        msg.reactions = reactions;
+        updated[index] = msg as Message;
+        
+        const allMessages = new Map(this.state.messages);
+        allMessages.set(chatId, updated);
+        this.emitChange({ ...this.state, messages: allMessages });
+      }
+    }
+  }
+
+  deleteMessage(chatId: string, messageId: string) {
+    const current = this.state.messages.get(chatId);
+    if (!current) return;
+
+    const index = current.findIndex(m => m.id === messageId);
+    if (index !== -1) {
+      const updated = [...current];
+      updated[index] = {
+        ...updated[index],
+        type: 'revoked',
+        content: 'Esta mensagem foi apagada',
+        attachments: [],
+        reactions: {},
+      } as Message;
+      
+      const allMessages = new Map(this.state.messages);
+      allMessages.set(chatId, updated);
+      this.emitChange({ ...this.state, messages: allMessages });
     }
   }
 
   setActiveChat(chatId: string | null) {
-    this.state.activeChatId = chatId;
+    let newState = {
+      ...this.state,
+      activeChatId: chatId
+    };
+
     if (chatId) {
       const conv = this.state.conversations.get(chatId);
       if (conv && conv.unreadCount > 0) {
-        this.upsertConversation({ id: chatId, unreadCount: 0 });
+        const conversations = new Map(this.state.conversations);
+        conversations.set(chatId, { ...conv, unreadCount: 0 });
+        newState.conversations = conversations;
       }
     }
-    this.emitChange();
+    
+    this.emitChange(newState);
   }
 
   setUserPresence(userId: string, status: PresenceStatus) {
-    this.state.presence.set(userId, status);
-    this.emitChange();
+    const presence = new Map(this.state.presence);
+    presence.set(userId, status);
+    this.emitChange({
+      ...this.state,
+      presence
+    });
   }
 }
 
 export const chatStore = new ChatStore();
 
 export function useChatStore<T>(selector: (state: ChatState) => T): T {
-  return useSyncExternalStore(
+  const state = useSyncExternalStore(
     chatStore.subscribe,
-    () => selector(chatStore.getState())
+    chatStore.getState
   );
+  
+  // We use a stable selector if possible, but since users pass anonymous functions,
+  // we should at least ensure we don't loop.
+  return useMemo(() => selector(state), [state, selector]);
 }
 
-export function useConversations() {
-  return useChatStore(state => Array.from(state.conversations.values())
+const conversationsSelector = (state: ChatState) => 
+  Array.from(state.conversations.values())
     .sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
       const timeA = a.lastMessage?.timestamp.getTime() || 0;
       const timeB = b.lastMessage?.timestamp.getTime() || 0;
       return timeB - timeA;
-    })
-  );
+    });
+
+export function useConversations() {
+  return useChatStore(conversationsSelector);
 }
 
 export function useMessages(chatId: string | null) {
-  return useChatStore(state => chatId ? state.messages.get(chatId) || [] : []);
+  const selector = useCallback((state: ChatState) => 
+    chatId ? state.messages.get(chatId) || [] : [], 
+  [chatId]);
+  
+  return useChatStore(selector);
 }
 
 export function useActiveChat() {
-  return useChatStore(state => state.activeChatId ? state.conversations.get(state.activeChatId) : null);
+  const selector = useCallback((state: ChatState) => 
+    state.activeChatId ? state.conversations.get(state.activeChatId) : null,
+  []);
+  
+  return useChatStore(selector);
 }
 
 export function useUserPresence(userId: string) {
-  return useChatStore(state => state.presence.get(userId) || 'unavailable');
+  const selector = useCallback((state: ChatState) => 
+    state.presence.get(userId) || 'unavailable',
+  [userId]);
+  
+  return useChatStore(selector);
 }
 
 
@@ -17606,6 +18945,8 @@ export interface UseVirtualListOptions {
   overscan?: number;
   /** Initial scroll offset */
   initialScrollTop?: number;
+  /** Whether to start the list at the bottom (useful for chats) */
+  startAtBottom?: boolean;
 }
 
 /**
@@ -17616,11 +18957,13 @@ export function useVirtualList({
   itemCount, 
   itemHeight, 
   overscan = 5,
-  initialScrollTop = 0
+  initialScrollTop = 0,
+  startAtBottom = false
 }: UseVirtualListOptions) {
   const [scrollTop, setScrollTop] = useState(initialScrollTop);
   const [containerHeight, setContainerHeight] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasInitialScrolled = useRef(false);
   
   const getItemHeight = useCallback((index: number) => {
     return typeof itemHeight === 'function' ? itemHeight(index) : itemHeight;
@@ -17695,6 +19038,19 @@ export function useVirtualList({
     };
   }, [scrollTop, containerHeight, itemCount, getItemHeight, overscan]);
 
+  // Handle initial scroll to bottom
+  useLayoutEffect(() => {
+    if (startAtBottom && !hasInitialScrolled.current && totalHeight > 0 && containerRef.current && containerHeight > 0) {
+      const container = containerRef.current;
+      const initialScroll = totalHeight - containerHeight;
+      if (initialScroll > 0) {
+        container.scrollTop = initialScroll;
+        setScrollTop(initialScroll);
+      }
+      hasInitialScrolled.current = true;
+    }
+  }, [totalHeight, containerHeight, startAtBottom]);
+
   const scrollToIndex = useCallback((index: number, behavior: ScrollBehavior = 'auto') => {
     if (containerRef.current) {
       let offset = 0;
@@ -17750,7 +19106,13 @@ export function useVoiceRecorder(): VoiceRecorderHook {
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
+      
+      // WhatsApp prefers audio/ogg; codecs=opus for PTT
+      const mimeType = MediaRecorder.isTypeSupported('audio/ogg; codecs=opus') 
+        ? 'audio/ogg; codecs=opus' 
+        : 'audio/webm';
+        
+      mediaRecorder.current = new MediaRecorder(stream, { mimeType });
       chunks.current = [];
 
       mediaRecorder.current.ondataavailable = (e) => {
@@ -17760,7 +19122,7 @@ export function useVoiceRecorder(): VoiceRecorderHook {
       };
 
       mediaRecorder.current.onstop = () => {
-        const blob = new Blob(chunks.current, { type: 'audio/webm' });
+        const blob = new Blob(chunks.current, { type: mimeType });
         const url = URL.createObjectURL(blob);
         setAudioBlob(blob);
         setAudioUrl(url);

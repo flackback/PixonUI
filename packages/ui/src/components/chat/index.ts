@@ -22,3 +22,7 @@ export * from './InteractiveMessage';
 export * from './CarouselMessage';
 export * from './VoiceRecorder';
 export * from './MessageSearch';
+export * from './WaveformAudio';
+export * from './StickyDateHeader';
+export * from './MediaLightbox';
+export * from './VirtualizedMessageList';

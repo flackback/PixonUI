@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
-import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Star, Edit2, MapPin, User as UserIcon, FileText, Volume2 } from 'lucide-react';
+import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Star, Edit2, MapPin, User as UserIcon, FileText, Volume2, Lock } from 'lucide-react';
 import { Motion } from '../feedback/Motion';
 import { 
   DropdownMenu, 
@@ -11,6 +11,7 @@ import {
 } from '../overlay/DropdownMenu';
 import { Image } from '../data-display/Image';
 import { AudioPlayer } from './AudioPlayer';
+import { WaveformAudio } from './WaveformAudio';
 import { ReadReceipt } from './ReadReceipt';
 import { LinkPreview } from './LinkPreview';
 import { Avatar } from '../data-display/Avatar';
@@ -75,7 +76,7 @@ export function MessageBubble({
     switch (message.type) {
       case 'audio':
         return (
-          <AudioPlayer 
+          <WaveformAudio 
             src={message.attachments?.[0]?.url || ""} 
             duration={message.attachments?.[0]?.duration} 
             isMe={isOwn} 
@@ -211,14 +212,34 @@ export function MessageBubble({
         "relative max-w-[75%] sm:max-w-[60%] transition-all duration-300",
         isSelected && "scale-95 opacity-80"
       )}>
+        {message.agentName && (
+          <div className={cn(
+            "flex items-center gap-1.5 mb-1 px-2 opacity-50",
+            isOwn ? "justify-end" : "justify-start"
+          )}>
+            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white/10">
+              <UserIcon size={10} className="text-blue-400" />
+            </div>
+            <span className="text-[10px] font-bold tracking-wider uppercase">Agente: {message.agentName}</span>
+          </div>
+        )}
+
         <Motion preset="spring">
           <div className={cn(
             "relative p-3 rounded-2xl shadow-sm backdrop-blur-md border",
-            isOwn 
-              ? "bg-blue-600/90 dark:bg-blue-500/20 text-white border-blue-500/20 rounded-tr-none" 
-              : "bg-white/80 dark:bg-white/[0.05] text-gray-900 dark:text-white border-white/10 rounded-tl-none",
+            message.isInternalNote
+              ? "bg-amber-500/10 border-amber-500/20 text-amber-100 italic"
+              : (isOwn 
+                  ? "bg-blue-600/90 dark:bg-blue-500/20 text-white border-blue-500/20 rounded-tr-none" 
+                  : "bg-white/80 dark:bg-white/[0.05] text-gray-900 dark:text-white border-white/10 rounded-tl-none"),
             "hover:shadow-lg hover:shadow-blue-500/5 transition-shadow"
           )}>
+            {message.isInternalNote && (
+              <div className="flex items-center gap-1.5 mb-1.5 px-1.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 w-fit">
+                <Lock size={10} className="text-amber-500" />
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Nota Interna</span>
+              </div>
+            )}
             {!isOwn && message.remoteJid?.endsWith('@g.us') && message.contact?.name && (
               <p className="text-[11px] font-bold text-blue-500 dark:text-blue-400 mb-1 truncate">
                 {message.contact.name}
