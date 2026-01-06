@@ -8,9 +8,10 @@ export interface DialogProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  hideClose?: boolean;
 }
 
-export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
+export function Dialog({ isOpen, onClose, children, className, hideClose }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [mounted, setMounted] = React.useState(false);
@@ -61,27 +62,29 @@ export function Dialog({ isOpen, onClose, children, className }: DialogProps) {
       onClick={handleBackdropClick}
       className={cn(
         "fixed inset-0 z-[100] m-auto bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
-        "open:animate-in open:fade-in open:duration-200",
-        className
+        "open:animate-in open:fade-in open:duration-200"
       )}
     >
       <div
         className={cn(
           "relative w-full max-w-lg scale-100 gap-4 border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
-          "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
+          "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2",
+          className
         )}
       >
         {children}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/20 disabled:pointer-events-none"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-900 dark:text-white">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-          <span className="sr-only">Close</span>
-        </button>
+        {!hideClose && (
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/20 disabled:pointer-events-none"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-900 dark:text-white">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+            <span className="sr-only">Close</span>
+          </button>
+        )}
       </div>
     </dialog>,
     document.body

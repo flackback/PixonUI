@@ -36,6 +36,8 @@ interface MessageBubbleProps {
   onAction?: (action: any) => void;
   onImageClick?: (url: string) => void;
   onTTS?: () => void;
+  onTranscribe?: (message: Message) => void;
+  hasAi?: boolean;
   isSelected?: boolean;
 }
 
@@ -56,6 +58,8 @@ export function MessageBubble({
   onSelect,
   onAction,
   onTTS,
+  onTranscribe,
+  hasAi,
   onImageClick,
   isSelected
 }: MessageBubbleProps) {
@@ -76,11 +80,35 @@ export function MessageBubble({
     switch (message.type) {
       case 'audio':
         return (
-          <WaveformAudio 
-            src={message.attachments?.[0]?.url || ""} 
-            duration={message.attachments?.[0]?.duration} 
-            isMe={isOwn} 
-          />
+          <div className="space-y-2">
+            <WaveformAudio 
+              src={message.attachments?.[0]?.url || ""} 
+              duration={message.attachments?.[0]?.duration} 
+              isMe={isOwn} 
+            />
+            {(message.transcription || message.isTranscribing || hasAi) && (
+              <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+                {message.isTranscribing ? (
+                  <div className="flex items-center gap-2 text-[10px] text-blue-400 animate-pulse font-bold uppercase tracking-wider">
+                    <MoreHorizontal className="h-3 w-3" />
+                    Transcrevendo...
+                  </div>
+                ) : message.transcription ? (
+                  <div className="bg-black/10 dark:bg-black/40 p-3 rounded-xl text-xs italic opacity-90 leading-relaxed border-l-2 border-primary/50">
+                    {message.transcription}
+                  </div>
+                ) : hasAi && (
+                  <button 
+                    onClick={() => onTranscribe?.(message)}
+                    className="text-[10px] flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all w-fit font-bold uppercase tracking-wider"
+                  >
+                    <Volume2 className="h-3 w-3" />
+                    Transcrever com IA
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         );
       case 'location':
         return (

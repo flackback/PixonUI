@@ -147,6 +147,8 @@ export interface Message {
   // CRM / AI Evolution
   agentName?: string;
   isInternalNote?: boolean;
+  transcription?: string;
+  isTranscribing?: boolean;
 }
 
 export interface Conversation {
