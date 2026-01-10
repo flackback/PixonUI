@@ -23,14 +23,23 @@ export function useVoiceRecorder(): VoiceRecorderHook {
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true
+        } 
+      });
       
       // WhatsApp prefers audio/ogg; codecs=opus for PTT
       const mimeType = MediaRecorder.isTypeSupported('audio/ogg; codecs=opus') 
         ? 'audio/ogg; codecs=opus' 
-        : 'audio/webm';
+        : 'audio/webm; codecs=opus';
         
-      mediaRecorder.current = new MediaRecorder(stream, { mimeType });
+      mediaRecorder.current = new MediaRecorder(stream, { 
+        mimeType,
+        audioBitsPerSecond: 24000 // 24 kbps within 16-32 range
+      });
       chunks.current = [];
 
       mediaRecorder.current.ondataavailable = (e) => {
