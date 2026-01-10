@@ -59,7 +59,7 @@ export function ChatSidebar({
   };
 
   return (
-    <div className={cn("flex flex-col border-r border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]", !className?.includes('w-') && "w-80", className)} {...props}>
+    <div className={cn("flex flex-col bg-gray-50/50 dark:bg-white/[0.02]", !className?.includes('w-') && "w-80", className)} {...props}>
       {!hideHeader && (
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">

@@ -36,7 +36,7 @@ export function ChatHeader({
   return (
     <div 
       className={cn(
-        "flex h-16 items-center justify-between border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-black/40 backdrop-blur px-4 sticky top-0 z-10",
+        "flex h-16 items-center justify-between bg-white/80 dark:bg-black/40 backdrop-blur px-4 sticky top-0 z-10",
         className
       )} 
       {...props}
