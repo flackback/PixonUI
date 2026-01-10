@@ -194,7 +194,7 @@ export function ChatInput({
   };
 
   return (
-    <div className={cn("p-4 bg-white/80 dark:bg-black/40 backdrop-blur border-t border-gray-200 dark:border-white/10 relative", className)} {...props}>
+    <div className={cn("p-4 bg-white/80 dark:bg-black/40 backdrop-blur relative", className)} {...props}>
       {mentionSearch !== null && filteredUsers.length > 0 && (
         <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4">
           {filteredUsers.map((user, i) => (
@@ -297,8 +297,8 @@ export function ChatInput({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled}
-              rows={1}
-              className="w-full p-2.5 max-h-[300px] rounded-2xl bg-gray-100 dark:bg-white/[0.03] border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/[0.06] text-sm resize-none transition-all outline-none dark:text-white placeholder:text-gray-400 font-medium"
+              rows={2}
+              className="w-full p-2.5 min-h-[56px] max-h-[300px] rounded-2xl bg-gray-100 dark:bg-white/[0.03] border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/[0.06] text-sm resize-none transition-all outline-none dark:text-white placeholder:text-gray-400 font-medium"
             />
           )}
         </div>
