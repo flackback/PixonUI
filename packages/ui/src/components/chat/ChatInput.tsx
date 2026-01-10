@@ -1,6 +1,22 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Send, Paperclip, Smile, Mic, Image as ImageIcon, AtSign, X, MapPin, Gift, List, Layout } from 'lucide-react';
+import { 
+  Send, 
+  Paperclip, 
+  Smile, 
+  Mic, 
+  Image as ImageIcon, 
+  AtSign, 
+  X, 
+  MapPin, 
+  Gift, 
+  List, 
+  Layout,
+  Bold,
+  Italic,
+  Strikethrough,
+  Code
+} from 'lucide-react';
 import { Button } from '../button/Button';
 import type { User, Message } from './types';
 import { Surface } from '../../primitives/Surface';
@@ -108,8 +124,30 @@ export function ChatInput({
     // Auto-resize
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
     }
+  };
+
+  const insertFormatting = (prefix: string, suffix: string = prefix) => {
+    if (!textareaRef.current) return;
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    const selectedText = content.slice(start, end);
+    const textBefore = content.slice(0, start);
+    const textAfter = content.slice(end);
+
+    const newContent = textBefore + prefix + selectedText + suffix + textAfter;
+    setContent(newContent);
+    
+    // Reset height after content change
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
+      }
+    }, 0);
+
+    textareaRef.current.focus();
   };
 
   const insertMention = (user: User) => {
@@ -260,12 +298,29 @@ export function ChatInput({
               placeholder={placeholder}
               disabled={disabled}
               rows={1}
-              className="w-full p-2.5 max-h-[120px] rounded-2xl bg-gray-100 dark:bg-white/[0.03] border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/[0.06] text-sm resize-none transition-all outline-none dark:text-white placeholder:text-gray-400"
+              className="w-full p-2.5 max-h-[300px] rounded-2xl bg-gray-100 dark:bg-white/[0.03] border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-white/[0.06] text-sm resize-none transition-all outline-none dark:text-white placeholder:text-gray-400 font-medium"
             />
           )}
         </div>
 
-        <div className="flex items-center gap-1 mb-1">
+        <div className="flex flex-col items-center gap-1 mb-1">
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => insertFormatting('*')}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 hover:text-blue-500 transition-colors"
+              title="Bold"
+            >
+              <Bold className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => insertFormatting('_')}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 hover:text-blue-500 transition-colors"
+              title="Italic"
+            >
+              <Italic className="h-4 w-4" />
+            </button>
+          </div>
+          
           {content.trim() || isRecording ? (
             <button 
               onClick={handleSend}
