@@ -41,7 +41,7 @@ interface MessageBubbleProps {
   isSelected?: boolean;
 }
 
-export function MessageBubble({ 
+export const MessageBubble = React.memo(({ 
   message, 
   isOwn, 
   showAvatar, 
@@ -62,7 +62,7 @@ export function MessageBubble({
   hasAi,
   onImageClick,
   isSelected
-}: MessageBubbleProps) {
+}: MessageBubbleProps) => {
   const renderStatus = () => {
     if (!isOwn || !showStatus) return null;
     return <ReadReceipt status={message.status || 'sent'} className="ml-1" />;
@@ -360,4 +360,6 @@ export function MessageBubble({
       </div>
     </div>
   );
-}
+});
+
+MessageBubble.displayName = 'MessageBubble';
