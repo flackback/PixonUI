@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Play, Pause, Smartphone } from 'lucide-react';
+import { Play, Pause, Smartphone, Download } from 'lucide-react';
 
 interface WaveformAudioProps extends React.HTMLAttributes<HTMLDivElement> {
   src: string;
@@ -12,7 +12,15 @@ interface WaveformAudioProps extends React.HTMLAttributes<HTMLDivElement> {
 export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...props }: WaveformAudioProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Apply playback rate when it changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   // Generate deterministic bar heights for a given src to maintain visual consistency
   const barHeights = useMemo(() => {
@@ -44,6 +52,24 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
     }
   };
 
+  const togglePlaybackRate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const rates = [1, 1.5, 2];
+    const currentIndex = rates.indexOf(playbackRate);
+    const nextRate = rates[(currentIndex + 1) % rates.length] ?? 1;
+    setPlaybackRate(nextRate);
+  };
+
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const link = document.createElement('a');
+    link.href = src;
+    link.download = src.split('/').pop() || 'audio.mp3';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
@@ -67,7 +93,7 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
   return (
     <div 
       className={cn(
-        "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-[280px]",
+        "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-[320px] group/audio",
         isMe ? "bg-white/10 text-white" : "bg-white/[0.03] text-white/90 border border-white/10",
         className
       )} 
@@ -81,11 +107,11 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
         onEnded={handleEnded}
       />
       
-      <div className="relative shrink-0">
+      <div className="relative shrink-0 flex items-center gap-2">
         <button 
           onClick={togglePlay}
           className={cn(
-            "w-12 h-12 rounded-full flex items-center justify-center transition-all group active:scale-95",
+            "w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95",
             isMe ? "bg-white text-blue-600" : "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
           )}
         >
@@ -95,16 +121,25 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
             <Play className="h-6 w-6 fill-current ml-1" />
           )}
         </button>
-        {/* Playback rate indicator if needed could go here */}
+        
+        <button
+          onClick={togglePlaybackRate}
+          className={cn(
+            "text-[10px] font-bold px-1.5 py-1 rounded-full border border-white/20 hover:bg-white/10 transition-colors tabular-nums min-w-[32px] text-center",
+            playbackRate !== 1 ? "bg-blue-500 text-white border-blue-400" : "opacity-60"
+          )}
+        >
+          {playbackRate}x
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col gap-1">
-        <div className="flex items-end gap-[2px] h-8 w-full group cursor-pointer" 
+        <div className="flex items-end gap-[2px] h-8 w-full cursor-pointer relative" 
              onClick={(e) => {
                if (!audioRef.current || !duration) return;
                const rect = e.currentTarget.getBoundingClientRect();
                const x = e.clientX - rect.left;
-               const newTime = (x / rect.width) * duration;
+               const newTime = Math.max(0, Math.min(duration, (x / rect.width) * duration));
                audioRef.current.currentTime = newTime;
                setCurrentTime(newTime);
              }}>
@@ -112,7 +147,7 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
             <div 
               key={i}
               className={cn(
-                "flex-1 rounded-full transition-all duration-300",
+                "flex-1 rounded-full transition-colors duration-100",
                 i <= activeBars 
                   ? (isMe ? "bg-white" : "bg-blue-500") 
                   : (isMe ? "bg-white/30" : "bg-white/10")
@@ -126,11 +161,20 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
           <span className="text-[10px] tabular-nums font-semibold opacity-60">
             {formatTime(currentTime)}
           </span>
-          <div className="flex items-center gap-1.5 grayscale opacity-40">
-            <span className="text-[10px] font-semibold">
-              {duration ? formatTime(duration) : '--:--'}
-            </span>
-            <Smartphone size={10} />
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleDownload}
+              className="opacity-0 group-hover/audio:opacity-40 hover:!opacity-100 transition-opacity"
+              title="Download"
+            >
+              <Download size={12} />
+            </button>
+            <div className="flex items-center gap-1.5 grayscale opacity-40">
+              <span className="text-[10px] font-semibold">
+                {duration ? formatTime(duration) : '--:--'}
+              </span>
+              <Smartphone size={10} />
+            </div>
           </div>
         </div>
       </div>

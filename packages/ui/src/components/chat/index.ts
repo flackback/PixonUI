@@ -10,6 +10,7 @@ export * from './TypingIndicator';
 export * from './ReplyPreview';
 export * from './ChatBanner';
 export * from './AudioPlayer';
+export * from './WaveformAudio';
 export * from './DateSeparator';
 export * from './OnlineIndicator';
 export * from './ReadReceipt';
