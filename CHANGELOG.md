@@ -100,3 +100,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript arithmetic errors in RadarChart.
 - Accessibility roles in Combobox and Kanban.
 - Type safety in Slot utility.
+
+## [0.5.34] - 2026-01-12
+
+### Added
+- Release build and npm publication for `@pixonui/react@0.5.34`.
+
+### Changed
+- Improved audio playback: waveform seeking, variable playback speed, and download support in `WaveformAudio`.
+- Strict instance isolation: socket events now include `instanceId` and frontend filtering was tightened to avoid cross-instance bleeding.
+
+### Fixed
+- Reaction picker now closes after selection and reactions map correctly in message rendering.
+- Hidden Gupshup-only session window for Baileys provider to avoid irrelevant UI for web-emulated sessions.
+
