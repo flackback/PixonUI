@@ -4,7 +4,7 @@ import { Slot } from '../utils/Slot';
 import { cn } from '../utils/cn';
 
 const surfaceVariants = cva(
-  "rounded-2xl backdrop-blur-xl transition-all duration-300 bg-white/10 border border-white/10 shadow-sm text-zinc-900 dark:bg-white/[0.03] dark:border-white/10 dark:shadow-[0_18px_55px_rgba(0,0,0,.45)] dark:text-white",
+  "rounded-2xl backdrop-blur-xl transition-all duration-300 bg-white border border-gray-100 shadow-sm text-zinc-900 dark:bg-white/[0.03] dark:border-white/10 dark:shadow-[0_18px_55px_rgba(0,0,0,.45)] dark:text-white",
   {
     variants: {
       variant: {
