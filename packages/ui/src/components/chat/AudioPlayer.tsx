@@ -14,14 +14,21 @@ export function AudioPlayer({ src, duration, isMe, className, ...props }: AudioP
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play();
+        try {
+          await audioRef.current.play();
+          setIsPlaying(true);
+        } catch (error) {
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error('AudioPlayer playback failed:', error);
+          }
+        }
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -56,6 +63,7 @@ export function AudioPlayer({ src, duration, isMe, className, ...props }: AudioP
       <audio 
         ref={audioRef} 
         src={src} 
+        preload="none"
         onTimeUpdate={handleTimeUpdate} 
         onEnded={handleEnded}
       />

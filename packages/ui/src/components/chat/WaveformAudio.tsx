@@ -26,14 +26,21 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
     return heights;
   }, [src, bars]);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play();
+        try {
+          await audioRef.current.play();
+          setIsPlaying(true);
+        } catch (error) {
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error('WaveformAudio playback failed:', error);
+          }
+        }
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -69,6 +76,7 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
       <audio 
         ref={audioRef} 
         src={src} 
+        preload="none"
         onTimeUpdate={handleTimeUpdate} 
         onEnded={handleEnded}
       />
