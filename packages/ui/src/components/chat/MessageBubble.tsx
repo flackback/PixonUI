@@ -308,13 +308,13 @@ export const MessageBubble = React.memo(({
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" className="flex gap-1 p-1">
               {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => (
-                <button 
+                <DropdownMenuItem 
                   key={emoji}
                   onClick={() => onReact?.(emoji)}
-                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-transform hover:scale-125"
+                  className="w-auto p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-transform hover:scale-125 focus:bg-transparent"
                 >
                   {emoji}
-                </button>
+                </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
