@@ -39,7 +39,7 @@ export function LineChart<T = any>({
     rose: '#f43f5e',
   };
 
-  const strokeColor = colors[color];
+  const strokeColor = colors[color] || colors.cyan;
 
   // Generate Points
   const points = data.map((point, i) => {
@@ -61,14 +61,8 @@ export function LineChart<T = any>({
   if (points.length > 0) {
     d = `M ${points[0]!.x} ${points[0]!.y}`;
     
-    if (curve === 'smooth') {
-      // Simple Catmull-Rom or Bezier approximation could go here, 
-      // but for now let's use a simple cubic bezier strategy or just straight lines if complex.
-      // Actually, let's do a simple smoothing by using midpoints for control points if requested,
-      // or just standard SVG commands.
-      // For simplicity and robustness without a library like d3-shape, let's stick to linear or a basic smooth approximation.
-      
-      // Basic smooth strategy: Cubic Bezier between points
+    if (curve === 'smooth' && points.length > 1) {
+      // Cubic Bezier interpolation between points
       for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[i]!;
         const p1 = points[i + 1]!;
@@ -78,7 +72,7 @@ export function LineChart<T = any>({
         const cp2y = p1.y;
         d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
       }
-    } else if (curve === 'step') {
+    } else if (curve === 'step' && points.length > 1) {
       for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[i]!;
         const p1 = points[i + 1]!;
@@ -94,21 +88,52 @@ export function LineChart<T = any>({
 
   return (
     <g>
-      {/* The Line */}
-      <path
-        d={d}
-        fill="none"
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="animate-draw-line"
-        style={{
-            strokeDasharray: 3000,
-            strokeDashoffset: 3000,
-            animation: `draw-line 2.5s ease-out ${animationDelay}s forwards`
-        }}
-      />
+      <defs>
+        {/* Glow Vector Filter */}
+        <filter id={`line-glow-${color}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Glow Line Underlay */}
+      {d && (
+        <path
+          d={d}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth + 3}
+          opacity={0.15}
+          filter={`url(#line-glow-${color})`}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+              strokeDasharray: 3000,
+              strokeDashoffset: 3000,
+              animation: `draw-line 2.5s cubic-bezier(0.22, 1, 0.36, 1) ${animationDelay}s forwards`
+          }}
+        />
+      )}
+
+      {/* Primary Line */}
+      {d && (
+        <path
+          d={d}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+              strokeDasharray: 3000,
+              strokeDashoffset: 3000,
+              animation: `draw-line 2.5s cubic-bezier(0.22, 1, 0.36, 1) ${animationDelay}s forwards`
+          }}
+        />
+      )}
 
       {/* Interactive Points */}
       {points.map((p, i) => (
@@ -137,12 +162,25 @@ export function LineChart<T = any>({
                           y1={padding.top}
                           x2={p.x}
                           y2={height - padding.bottom}
-                          stroke="white"
+                          stroke="rgba(255, 255, 255, 0.2)"
                           strokeWidth={1}
                           strokeDasharray="4 4"
-                          className="opacity-50"
                       />
                     )}
+
+                    {/* Glowing Pulsing Ring */}
+                    {hoveredIndex === i && (
+                      <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r={12}
+                          fill={strokeColor}
+                          opacity={0.3}
+                          className="animate-ping-slow"
+                          style={{ pointerEvents: 'none' }}
+                      />
+                    )}
+                    
                     <circle
                         cx={p.x}
                         cy={p.y}
@@ -150,7 +188,7 @@ export function LineChart<T = any>({
                         fill={strokeColor}
                         stroke="white"
                         strokeWidth={2}
-                        style={{ transition: 'r 0.2s ease-out' }}
+                        style={{ transition: 'r 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                     />
                     {showValues && (
                       <text
@@ -158,11 +196,11 @@ export function LineChart<T = any>({
                           y={p.y - 12}
                           textAnchor="middle"
                           fill="white"
-                          fontSize={12}
-                          fontWeight={500}
+                          fontSize={11}
+                          fontWeight={600}
                           style={{ 
                               opacity: 0,
-                              animation: `fade-in-up 0.5s ease-out ${animationDelay + 1 + i * 0.1}s forwards`,
+                              animation: `fade-in-up 0.5s ease-out ${animationDelay + 0.8 + i * 0.05}s forwards`,
                               textShadow: '0 2px 4px rgba(0,0,0,0.5)'
                           }}
                       >
@@ -179,8 +217,17 @@ export function LineChart<T = any>({
           to { stroke-dashoffset: 0; }
         }
         @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-ping-slow {
+          animation: ping-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping-pulse {
+          75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+          }
         }
       `}</style>
     </g>

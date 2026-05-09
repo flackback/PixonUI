@@ -153,40 +153,62 @@ export function ChartXAxis() {
   );
 }
 
+export interface ChartTooltipProps {
+  align?: 'center' | 'edge';
+  renderTooltip?: (data: ChartDataPoint) => React.ReactNode;
+}
+
 export function ChartTooltip({ 
+  align = 'center',
   renderTooltip 
-}: { 
-  renderTooltip?: (data: ChartDataPoint) => React.ReactNode 
-}) {
-  const { hoveredIndex, data, width, padding } = useChart();
+}: ChartTooltipProps) {
+  const { hoveredIndex, data, width, height, padding, maxValue } = useChart();
   
   if (hoveredIndex === null) return null;
 
   const chartWidth = width - padding.left - padding.right;
-  const itemWidth = chartWidth / data.length;
-  const x = padding.left + itemWidth * hoveredIndex + itemWidth / 2;
-  const point = data[hoveredIndex];
+  const chartHeight = height - padding.top - padding.bottom;
+  
+  // Align correctly based on chart layout
+  const itemWidth = align === 'center' 
+    ? chartWidth / data.length 
+    : chartWidth / (data.length - 1);
 
+  const x = align === 'center'
+    ? padding.left + itemWidth * hoveredIndex + itemWidth / 2
+    : padding.left + itemWidth * hoveredIndex;
+
+  const point = data[hoveredIndex];
   if (!point) return null;
+
+  // Calculate accurate Y position of the point
+  const y = height - padding.bottom - (point.value / maxValue) * chartHeight;
 
   // Simple default tooltip if none provided
   const content = renderTooltip ? renderTooltip(point) : (
-    <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white/90 dark:bg-black/80 px-3 py-2 text-xs shadow-xl backdrop-blur-md">
-      <div className="font-semibold text-gray-900 dark:text-white">{point.label}</div>
-      <div className="text-gray-500 dark:text-white/70">Value: {point.value}</div>
+    <div className="rounded-xl border border-gray-100 dark:border-white/5 bg-gray-950/90 text-white px-3 py-2 text-xs shadow-2xl backdrop-blur-md flex flex-col gap-0.5 min-w-[120px] relative">
+      <div className="font-semibold text-gray-300">{point.label}</div>
+      <div className="text-sm font-black text-cyan-400">
+        {point.value}
+      </div>
+      {/* Decorative tooltip caret arrow pointing down */}
+      <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-950/90 rotate-45 border-r border-b border-white/5" />
     </div>
   );
 
   return (
     <foreignObject
-      x={x - 75} // Center roughly (150px width assumed)
-      y={0}
+      x={x - 75} // Center horizontally (assuming 150px container width)
+      y={y - 68} // Position beautifully floating 68px above the point
       width={150}
-      height="100%"
+      height={80}
       className="pointer-events-none overflow-visible"
+      style={{
+        transition: 'all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1)',
+      }}
     >
-      <div className="flex h-full flex-col justify-center items-center">
-         <div className="animate-in fade-in zoom-in-95 duration-200">
+      <div className="flex flex-col items-center justify-end h-full w-full">
+         <div className="animate-in fade-in zoom-in-95 duration-150">
             {content}
          </div>
       </div>

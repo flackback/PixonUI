@@ -120,6 +120,22 @@ export function KanbanBoard({
     [tasks, selectedTaskId]
   );
 
+  const tasksByColumn = useMemo(() => {
+    const map: Record<string, KanbanTask[]> = {};
+    columns.forEach(col => {
+      map[col.id] = [];
+    });
+    filteredTasks.forEach(task => {
+      let list = map[task.columnId];
+      if (!list) {
+        list = [];
+        map[task.columnId] = list;
+      }
+      list.push(task);
+    });
+    return map;
+  }, [columns, filteredTasks]);
+
   const renderView = () => {
     const handleTaskClick = (task: KanbanTask) => {
       setSelectedTaskId(task.id);
@@ -182,7 +198,7 @@ export function KanbanBoard({
               <KanbanColumn
                 key={column.id}
                 column={column}
-                tasks={filteredTasks.filter(t => t.columnId === column.id)}
+                tasks={tasksByColumn[column.id] || []}
                 onTaskClick={handleTaskClick}
                 onAddTask={() => onTaskAdd?.(column.id, 'New Task')}
                 onAction={(action) => onColumnAction?.(column.id, action)}

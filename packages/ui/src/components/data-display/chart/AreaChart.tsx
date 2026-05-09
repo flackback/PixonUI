@@ -7,6 +7,7 @@ export interface AreaChartProps<T = any> {
   color?: 'cyan' | 'purple' | 'emerald' | 'amber' | 'rose';
   showValues?: boolean;
   animationDelay?: number;
+  curve?: 'linear' | 'smooth';
   onValueClick?: (data: ChartDataPoint<T>) => void;
 }
 
@@ -14,12 +15,15 @@ export function AreaChart<T = any>({
   color = 'purple', 
   showValues = false, 
   animationDelay = 0,
+  curve = 'smooth',
   onValueClick 
 }: AreaChartProps<T>) {
   const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
-  const itemWidth = chartWidth / (data.length - 1); // Points are on edges
+  
+  // Points are placed on edges for a continuous wave
+  const itemWidth = data.length > 1 ? chartWidth / (data.length - 1) : chartWidth;
 
   const colors = {
     cyan: { stroke: '#06b6d4', fill: 'rgba(6, 182, 212, 0.2)' },
@@ -29,7 +33,7 @@ export function AreaChart<T = any>({
     rose: { stroke: '#f43f5e', fill: 'rgba(244, 63, 94, 0.2)' },
   };
 
-  const theme = colors[color];
+  const theme = colors[color] || colors.purple;
 
   // Generate Path Data
   const points = data.map((point, i) => {
@@ -38,44 +42,100 @@ export function AreaChart<T = any>({
     return { x, y, item: point };
   });
 
-  // Simple Line Path
-  const linePath = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ');
+  // Generate Smooth/Bezier Line Path
+  let linePath = '';
+  if (points.length > 0) {
+    linePath = `M ${points[0]!.x} ${points[0]!.y}`;
+    if (curve === 'smooth' && points.length > 1) {
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i]!;
+        const p1 = points[i + 1]!;
+        const cp1x = p0.x + (p1.x - p0.x) / 2;
+        const cp1y = p0.y;
+        const cp2x = p0.x + (p1.x - p0.x) / 2;
+        const cp2y = p1.y;
+        linePath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
+      }
+    } else {
+      for (let i = 1; i < points.length; i++) {
+        linePath += ` L ${points[i]!.x} ${points[i]!.y}`;
+      }
+    }
+  }
 
-  // Area Path (closes the loop)
-  const areaPath = `
+  // Area Path (closes the loop to the bottom of the grid)
+  const areaPath = points.length > 0 ? `
     ${linePath}
-    L ${width - padding.right} ${height - padding.bottom}
+    L ${padding.left + itemWidth * (points.length - 1)} ${height - padding.bottom}
     L ${padding.left} ${height - padding.bottom}
     Z
-  `;
+  ` : '';
 
   return (
     <g>
-      {/* Area Fill */}
-      <path
-        d={areaPath}
-        fill={theme.fill}
-        style={{ 
-            opacity: 0,
-            animation: `fade-in 1s ease-out ${animationDelay}s forwards` 
-        }}
-      />
+      <defs>
+        {/* Dynamic Glowing linear gradient under the curve */}
+        <linearGradient id={`area-grad-${color}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={theme.stroke} stopOpacity={0.35} />
+          <stop offset="100%" stopColor={theme.stroke} stopOpacity={0.0} />
+        </linearGradient>
+        {/* Neon Glow Vector filter */}
+        <filter id={`area-glow-${color}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
 
-      {/* Stroke Line */}
-      <path
-        d={linePath}
-        fill="none"
-        stroke={theme.stroke}
-        strokeWidth={3}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="animate-draw-line"
-        style={{
-            strokeDasharray: 2000,
-            strokeDashoffset: 2000,
-            animation: `draw-line 2s ease-out ${animationDelay}s forwards`
-        }}
-      />
+      {/* Area Gradient Fill */}
+      {areaPath && (
+        <path
+          d={areaPath}
+          fill={`url(#area-grad-${color})`}
+          style={{ 
+              opacity: 0,
+              animation: `area-fade-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${animationDelay}s forwards` 
+          }}
+        />
+      )}
+
+      {/* Neon Glow Line Underlay */}
+      {linePath && (
+        <path
+          d={linePath}
+          fill="none"
+          stroke={theme.stroke}
+          strokeWidth={6}
+          opacity={0.15}
+          filter={`url(#area-glow-${color})`}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+              strokeDasharray: 2000,
+              strokeDashoffset: 2000,
+              animation: `draw-line 2s cubic-bezier(0.22, 1, 0.36, 1) ${animationDelay}s forwards`
+          }}
+        />
+      )}
+
+      {/* Primary Sharp Stroke Line */}
+      {linePath && (
+        <path
+          d={linePath}
+          fill="none"
+          stroke={theme.stroke}
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+              strokeDasharray: 2000,
+              strokeDashoffset: 2000,
+              animation: `draw-line 2s cubic-bezier(0.22, 1, 0.36, 1) ${animationDelay}s forwards`
+          }}
+        />
+      )}
 
       {/* Interactive Points */}
       {points.map((p, i) => (
@@ -104,12 +164,26 @@ export function AreaChart<T = any>({
                           y1={padding.top}
                           x2={p.x}
                           y2={height - padding.bottom}
-                          stroke="white"
+                          stroke="rgba(255, 255, 255, 0.25)"
                           strokeWidth={1}
                           strokeDasharray="4 4"
-                          className="opacity-50"
                       />
                     )}
+                    
+                    {/* Concentric Halo Glowing Pulse */}
+                    {hoveredIndex === i && (
+                      <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r={12}
+                          fill={theme.stroke}
+                          opacity={0.3}
+                          className="animate-ping-slow"
+                          style={{ pointerEvents: 'none' }}
+                      />
+                    )}
+
+                    {/* Main Bullet Point */}
                     <circle
                         cx={p.x}
                         cy={p.y}
@@ -118,7 +192,7 @@ export function AreaChart<T = any>({
                         stroke="white"
                         strokeWidth={2}
                         style={{
-                            transition: 'r 0.2s ease-out'
+                            transition: 'r 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
                         }}
                     />
                     {showValues && (
@@ -127,11 +201,11 @@ export function AreaChart<T = any>({
                           y={p.y - 12}
                           textAnchor="middle"
                           fill="white"
-                          fontSize={12}
-                          fontWeight={500}
+                          fontSize={11}
+                          fontWeight={600}
                           style={{ 
                               opacity: 0,
-                              animation: `fade-in-up 0.5s ease-out ${animationDelay + 1 + i * 0.1}s forwards`,
+                              animation: `fade-in-up 0.5s ease-out ${animationDelay + 0.8 + i * 0.05}s forwards`,
                               textShadow: '0 2px 4px rgba(0,0,0,0.5)'
                           }}
                       >
@@ -147,13 +221,22 @@ export function AreaChart<T = any>({
         @keyframes draw-line {
           to { stroke-dashoffset: 0; }
         }
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
+        @keyframes area-fade-in {
+          from { opacity: 0; transform: scaleY(0.95); transform-origin: bottom; }
+          to { opacity: 1; transform: scaleY(1); transform-origin: bottom; }
         }
         @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-ping-slow {
+          animation: ping-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping-pulse {
+          75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+          }
         }
       `}</style>
     </g>

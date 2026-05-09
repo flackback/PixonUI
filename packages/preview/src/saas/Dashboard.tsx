@@ -5,6 +5,7 @@ import {
   AreaChart, 
   BarChart, 
   ChartYAxis, 
+  ChartTooltip,
   Heading, 
   Text, 
   Surface, 
@@ -224,6 +225,7 @@ export function Dashboard() {
                 <ChartContainer data={conversationData} padding={{ top: 20, right: 20, bottom: 40, left: 40 }}>
                   <ChartYAxis />
                   <AreaChart color="cyan" />
+                  <ChartTooltip align="edge" />
                 </ChartContainer>
               </div>
             </Surface>
@@ -242,6 +244,7 @@ export function Dashboard() {
                 <ChartContainer data={responseTimeData} padding={{ top: 20, right: 20, bottom: 40, left: 40 }}>
                   <ChartYAxis />
                   <BarChart color="purple" />
+                  <ChartTooltip align="center" />
                 </ChartContainer>
               </div>
             </Surface>

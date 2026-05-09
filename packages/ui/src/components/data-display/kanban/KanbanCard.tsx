@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Trash2, GripVertical, MessageSquare, Paperclip, Clock, Play, Pause } from 'lucide-react';
+import { Lock, Trash2, GripVertical, MessageSquare, Paperclip, Clock, Play, Pause, CheckSquare } from 'lucide-react';
 import { Surface } from '../../../primitives/Surface';
 import { Badge } from '../../../primitives/Badge';
 import { Text } from '../../typography/Text';
@@ -47,6 +47,10 @@ export const KanbanCard = React.memo(({
   isDragged
 }: KanbanCardProps) => {
   if (renderCard) return <>{renderCard(task)}</>;
+
+  const subtasksCount = task.subtasks?.length || 0;
+  const completedSubtasksCount = task.subtasks?.filter(s => s.completed).length || 0;
+  const subtaskPercentage = subtasksCount > 0 ? Math.round((completedSubtasksCount / subtasksCount) * 100) : 0;
 
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
@@ -129,6 +133,23 @@ export const KanbanCard = React.memo(({
               <div 
                 className="h-full bg-cyan-500 transition-all duration-500" 
                 style={{ width: `${task.progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {subtasksCount > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-gray-400 dark:text-white/30 uppercase font-bold tracking-wider flex items-center gap-1">
+                <CheckSquare className="h-3 w-3 text-cyan-500" /> Checklist
+              </span>
+              <span className="text-gray-500 dark:text-white/50 font-bold">{completedSubtasksCount}/{subtasksCount} ({subtaskPercentage}%)</span>
+            </div>
+            <div className="h-1 w-full bg-gray-100 dark:bg-white/[0.03] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-cyan-500 transition-all duration-500" 
+                style={{ width: `${subtaskPercentage}%` }}
               />
             </div>
           </div>
