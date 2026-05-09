@@ -108,7 +108,7 @@ export function MessageList({
         {hasMore && (
           <div className="flex justify-center py-4">
             {isLoadingMore ? (
-              <div className="flex items-center gap-2 text-xs text-white/40">
+              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40">
                 <div className="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
                 Loading older messages...
               </div>

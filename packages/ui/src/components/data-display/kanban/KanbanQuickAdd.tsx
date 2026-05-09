@@ -27,7 +27,7 @@ export function KanbanQuickAdd({ columnId, onAdd, placeholder = "Add task...", c
       <button
         onClick={() => setIsAdding(true)}
         className={cn(
-          "w-full flex items-center gap-2 p-3 rounded-2xl border border-dashed border-white/10 text-white/40 hover:border-white/20 hover:bg-white/5 transition-all text-sm",
+          "w-full flex items-center gap-2 p-3 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 text-gray-400 dark:text-white/40 hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-sm",
           className
         )}
       >
@@ -40,14 +40,14 @@ export function KanbanQuickAdd({ columnId, onAdd, placeholder = "Add task...", c
   return (
     <form 
       onSubmit={handleSubmit}
-      className={cn("bg-white/[0.03] border border-white/10 rounded-2xl p-3 space-y-3", className)}
+      className={cn("bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl p-3 space-y-3 shadow-sm", className)}
     >
       <input
         autoFocus
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="What needs to be done?"
-        className="w-full bg-transparent border-none outline-none text-sm text-white placeholder:text-white/20"
+        className="w-full bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20"
         onKeyDown={(e) => {
           if (e.key === 'Escape') setIsAdding(false);
         }}
@@ -57,7 +57,7 @@ export function KanbanQuickAdd({ columnId, onAdd, placeholder = "Add task...", c
           variant="ghost" 
           size="sm" 
           onClick={() => setIsAdding(false)}
-          className="h-8 text-white/40 hover:text-white"
+          className="h-8 text-gray-400 dark:text-white/40 hover:text-gray-950 dark:hover:text-white"
         >
           Cancel
         </Button>
@@ -65,7 +65,7 @@ export function KanbanQuickAdd({ columnId, onAdd, placeholder = "Add task...", c
           size="sm" 
           onClick={() => handleSubmit()}
           disabled={!title.trim()}
-          className="h-8"
+          className="h-8 bg-cyan-500 hover:bg-cyan-400 text-black border-none"
         >
           Add Task
         </Button>

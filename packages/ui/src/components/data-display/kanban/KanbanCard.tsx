@@ -64,7 +64,7 @@ export const KanbanCard = React.memo(({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={cn(
-        "p-6 border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group cursor-grab active:cursor-grabbing",
+        "p-6 border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.03] hover:bg-gray-100/50 dark:hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 dark:hover:border-white/20",
         task.blockedBy && task.blockedBy.length > 0 && "border-red-500/30 bg-red-500/[0.02]",
         isSelected && "ring-2 ring-cyan-500/50 bg-cyan-500/[0.02]",
         cardClassName
@@ -88,7 +88,7 @@ export const KanbanCard = React.memo(({
               <Lock className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
             )}
             <Text className={cn(
-              "font-medium text-sm leading-tight group-hover:text-cyan-400 transition-colors truncate",
+              "font-medium text-sm leading-tight text-gray-900 dark:text-white group-hover:text-cyan-500 dark:group-hover:text-cyan-400 transition-colors truncate",
               task.blockedBy && task.blockedBy.length > 0 && "text-red-400/80"
             )}>
               {task.title}
@@ -101,17 +101,17 @@ export const KanbanCard = React.memo(({
                   e.stopPropagation();
                   onDelete(task.id);
                 }}
-                className="p-1 rounded-md hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-colors"
+                className="p-1 rounded-md hover:bg-red-500/10 dark:hover:bg-red-500/20 text-gray-400 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
-            {draggable && <GripVertical className="h-4 w-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
+            {draggable && <GripVertical className="h-4 w-4 text-gray-400 dark:text-white/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
           </div>
         </div>
 
         {task.description && (
-          <Text className="text-xs text-white/50 line-clamp-2">
+          <Text className="text-xs text-gray-500 dark:text-white/50 line-clamp-2">
             {task.description}
           </Text>
         )}
@@ -119,10 +119,10 @@ export const KanbanCard = React.memo(({
         {task.progress !== undefined && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[10px]">
-              <span className="text-white/30 uppercase font-bold tracking-wider">Progress</span>
-              <span className="text-white/50">{task.progress}%</span>
+              <span className="text-gray-400 dark:text-white/30 uppercase font-bold tracking-wider">Progress</span>
+              <span className="text-gray-500 dark:text-white/50">{task.progress}%</span>
             </div>
-            <div className="h-1 w-full bg-white/[0.03] rounded-full overflow-hidden">
+            <div className="h-1 w-full bg-gray-100 dark:bg-white/[0.03] rounded-full overflow-hidden">
               <div 
                 className="h-full bg-cyan-500 transition-all duration-500" 
                 style={{ width: `${task.progress}%` }}
@@ -138,18 +138,18 @@ export const KanbanCard = React.memo(({
             </Badge>
           )}
           {task.tags?.map(tag => (
-            <Badge key={tag} variant="neutral" className="text-[10px] px-1.5 py-0 bg-white/[0.03] border-white/5">
+            <Badge key={tag} variant="neutral" className="text-[10px] px-1.5 py-0 bg-gray-100 dark:bg-white/[0.03] border-gray-200 dark:border-white/5">
               {tag}
             </Badge>
           ))}
         </div>
 
-        <div className="flex items-center justify-between mt-2 pt-3 border-t border-white/5">
-          <div className="flex items-center gap-3 text-[10px] text-white/30">
+        <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-100 dark:border-white/5">
+          <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-white/30">
             {task.timeSpent !== undefined && (
               <div className={cn(
                 "flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-colors",
-                activeTimerTaskId === task.id ? "bg-cyan-500/20 text-cyan-400" : "bg-white/[0.03]"
+                activeTimerTaskId === task.id ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400" : "bg-gray-100 dark:bg-white/[0.03]"
               )}>
                 {activeTimerTaskId === task.id ? (
                   <Pause 
@@ -195,7 +195,7 @@ export const KanbanCard = React.memo(({
           
           {task.assignee && (
             <div className="flex -space-x-2">
-              <div className="h-6 w-6 rounded-full border-2 border-[#0a0a0a] bg-white/[0.06] flex items-center justify-center text-[10px] font-bold overflow-hidden">
+              <div className="h-6 w-6 rounded-full border-2 border-white dark:border-[#0a0a0a] bg-gray-100 dark:bg-white/[0.06] flex items-center justify-center text-[10px] font-bold overflow-hidden">
                 {task.assignee.avatar ? (
                   <img src={task.assignee.avatar} alt={task.assignee.name} className="h-full w-full object-cover" />
                 ) : (

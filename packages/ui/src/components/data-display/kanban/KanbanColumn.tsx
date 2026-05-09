@@ -55,7 +55,7 @@ export function KanbanColumn({
         <div className="flex items-center gap-2 min-w-0">
           <button 
             onClick={() => onCollapse?.(column.id)}
-            className="p-1 rounded hover:bg-white/5 text-white/40"
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 dark:text-white/40"
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
@@ -66,8 +66,8 @@ export function KanbanColumn({
                 className="h-2 w-2 rounded-full" 
                 style={{ backgroundColor: column.color || '#3b82f6' }} 
               />
-              <h3 className="font-bold text-sm text-white truncate">{column.title}</h3>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/5 text-white/40">
+              <h3 className="font-bold text-sm text-gray-950 dark:text-white truncate">{column.title}</h3>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-white/40">
                 {tasks.length}
               </span>
             </>
@@ -79,7 +79,7 @@ export function KanbanColumn({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-white/40 hover:text-white"
+              className="h-8 w-8 text-gray-400 hover:text-gray-900 dark:text-white/40 dark:hover:text-white"
               onClick={() => onAddTask?.(column.id)}
             >
               <Plus className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function KanbanColumn({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-white/40 hover:text-white"
+              className="h-8 w-8 text-gray-400 hover:text-gray-900 dark:text-white/40 dark:hover:text-white"
               onClick={() => onAction?.('more')}
             >
               <MoreVertical className="h-4 w-4" />
@@ -123,7 +123,7 @@ export function KanbanColumn({
       {/* Collapsed Label */}
       {isCollapsed && (
         <div className="flex-1 flex items-center justify-center">
-          <span className="rotate-90 whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-white/20">
+          <span className="rotate-90 whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/20">
             {column.title}
           </span>
         </div>

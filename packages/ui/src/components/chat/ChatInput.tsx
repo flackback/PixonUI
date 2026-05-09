@@ -6,7 +6,9 @@ import type { User, Message } from './types';
 import { Surface } from '../../primitives/Surface';
 import { Avatar } from '../data-display/Avatar';
 
-interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onChange'> {
+  value?: string;
+  onChange?: (value: string) => void;
   onSend?: (content: string) => void;
   onAttach?: () => void;
   onMic?: () => void;
@@ -23,6 +25,8 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
 }
 
 export function ChatInput({ 
+  value: propValue,
+  onChange: propOnChange,
   onSend, 
   onAttach, 
   onMic,
@@ -39,11 +43,19 @@ export function ChatInput({
   className, 
   ...props 
 }: ChatInputProps) {
-  const [content, setContent] = useState("");
+  const [internalContent, setInternalContent] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [mentionSearch, setMentionSearch] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const content = propValue !== undefined ? propValue : internalContent;
+  const setContent = (val: string) => {
+    if (propValue === undefined) {
+      setInternalContent(val);
+    }
+    propOnChange?.(val);
+  };
 
   const filteredUsers = useMemo(() => {
     if (mentionSearch === null) return [];

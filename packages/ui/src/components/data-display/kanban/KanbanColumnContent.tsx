@@ -90,10 +90,10 @@ export const KanbanColumnContent = ({
     <div className="flex flex-col gap-4 h-full min-h-0">
       {/* Quick Add Input */}
       {quickAddColumnId === `${groupName}-${column.id}` ? (
-        <div className="p-4 bg-white/[0.03] border border-cyan-500/30 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="p-4 bg-gray-100/50 dark:bg-white/[0.03] border border-cyan-500/30 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
           <input
             autoFocus
-            className="w-full bg-transparent border-none outline-none text-sm text-white placeholder:text-white/20"
+            className="w-full bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20"
             placeholder="Task title..."
             value={quickAddValue}
             onChange={(e) => setQuickAddValue(e.target.value)}
@@ -106,12 +106,12 @@ export const KanbanColumnContent = ({
             }}
           />
           <div className="flex items-center justify-between mt-3">
-            <Text className="text-[10px] text-white/30 uppercase font-bold">Press Enter to save</Text>
+            <Text className="text-[10px] text-gray-400 dark:text-white/30 uppercase font-bold">Press Enter to save</Text>
             <div className="flex gap-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-7 px-2 text-[10px] hover:bg-white/[0.06]"
+                className="h-7 px-2 text-[10px] text-gray-500 hover:bg-gray-200/50 dark:hover:bg-white/[0.06] dark:text-gray-300"
                 onClick={() => setQuickAddColumnId(null)}
               >
                 Cancel
@@ -119,7 +119,7 @@ export const KanbanColumnContent = ({
               <Button 
                 variant="primary" 
                 size="sm" 
-                className="h-7 px-3 text-[10px] bg-cyan-500 hover:bg-cyan-400 text-black font-bold"
+                className="h-7 px-3 text-[10px] bg-cyan-500 hover:bg-cyan-400 text-black font-bold border-none"
                 onClick={() => handleQuickAdd(column.id, groupName)}
               >
                 Add Task
@@ -130,10 +130,10 @@ export const KanbanColumnContent = ({
       ) : (
         <button 
           onClick={() => handleSetQuickAdd(column.id, groupName)}
-          className="group/add flex items-center justify-center gap-2 p-4 border border-dashed border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/[0.02] rounded-2xl transition-all duration-200"
+          className="group/add flex items-center justify-center gap-2 p-4 border border-dashed border-gray-200 dark:border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/[0.01] dark:hover:bg-cyan-500/[0.02] rounded-2xl transition-all duration-200"
         >
-          <Plus className="h-4 w-4 text-white/20 group-hover/add:text-cyan-400 transition-colors" />
-          <Text className="text-xs font-bold text-white/20 group-hover/add:text-cyan-400 uppercase tracking-widest transition-colors">
+          <Plus className="h-4 w-4 text-gray-300 dark:text-white/20 group-hover/add:text-cyan-500 dark:group-hover/add:text-cyan-400 transition-colors" />
+          <Text className="text-xs font-bold text-gray-400 dark:text-white/20 group-hover/add:text-cyan-500 dark:group-hover/add:text-cyan-400 uppercase tracking-widest transition-colors">
             Add New Task
           </Text>
         </button>
@@ -197,7 +197,7 @@ export const KanbanColumnContent = ({
         {hasMore && (
           <button
             onClick={() => handleLoadMore(column.id)}
-            className="flex items-center justify-center gap-2 p-4 text-white/30 hover:text-cyan-400 transition-colors"
+            className="flex items-center justify-center gap-2 p-4 text-gray-400 dark:text-white/30 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors"
           >
             <Plus className="h-4 w-4" />
             <span className="text-xs font-bold uppercase tracking-widest">
@@ -208,7 +208,7 @@ export const KanbanColumnContent = ({
 
         {/* Empty State */}
         {columnTasks.length === 0 && !draggedTaskId && (
-          <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-white/5 rounded-[2rem] opacity-20">
+          <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 dark:border-white/5 rounded-[2rem] text-gray-400 dark:text-white/20">
             <LayoutGrid className="h-8 w-8 mb-3" />
             <Text className="text-xs font-medium">No tasks yet</Text>
           </div>

@@ -173,7 +173,7 @@ export function KanbanBoard({
         }
 
         return (
-          <div className="flex gap-6 overflow-x-auto pb-4 min-h-[500px] scrollbar-thin scrollbar-thumb-white/10">
+          <div className="flex gap-6 overflow-x-auto pb-4 min-h-[500px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-white/10">
             {columns.map(column => (
               <KanbanColumn
                 key={column.id}
