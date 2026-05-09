@@ -6,13 +6,19 @@ export interface HistoryState<T> {
   future: T[];
 }
 
+export interface UseHistoryOptions {
+  /** Maximum number of history states to retain in the undo buffer. Prevents memory leaks. */
+  maxHistoryLimit?: number;
+}
+
 /**
  * A generic hook for managing state with Undo and Redo capabilities.
  * 
  * @example
- * const { state, set, undo, redo, canUndo, canRedo } = useHistory(initialData);
+ * const { state, set, undo, redo, canUndo, canRedo } = useHistory(initialData, { maxHistoryLimit: 50 });
  */
-export function useHistory<T>(initialState: T) {
+export function useHistory<T>(initialState: T, options: UseHistoryOptions = {}) {
+  const { maxHistoryLimit } = options;
   const [history, setHistory] = useState<HistoryState<T>>({
     past: [],
     present: initialState,
@@ -64,13 +70,18 @@ export function useHistory<T>(initialState: T) {
 
       if (prev.present === resolved) return prev;
 
+      let newPast = [...prev.past, prev.present];
+      if (maxHistoryLimit && newPast.length > maxHistoryLimit) {
+        newPast = newPast.slice(newPast.length - maxHistoryLimit);
+      }
+
       return {
-        past: [...prev.past, prev.present],
+        past: newPast,
         present: resolved,
         future: [],
       };
     });
-  }, []);
+  }, [maxHistoryLimit]);
 
   const clear = useCallback(() => {
     setHistory({

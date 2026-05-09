@@ -3,6 +3,7 @@ export * from './components/button/Button';
 export * from './components/button/GlowButton';
 export * from './components/card/MetricCard';
 export * from './components/card/Card';
+export * from './components/card/GlowCard';
 export * from './components/typography/Text';
 export * from './components/typography/Heading';
 export * from './components/typography/TextGradient';

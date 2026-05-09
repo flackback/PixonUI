@@ -291,7 +291,7 @@ export function Inbox() {
     let updatedVotes: string[];
     if (userVotes.includes('me')) {
       // Toggle off
-      updatedVotes = userVotes.filter(v => v !== 'me');
+      updatedVotes = userVotes.filter((v: string) => v !== 'me');
     } else {
       // Toggle on
       updatedVotes = [...userVotes, 'me'];

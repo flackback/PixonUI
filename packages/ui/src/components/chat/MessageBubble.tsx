@@ -31,22 +31,41 @@ interface MessageBubbleProps {
   isSelected?: boolean;
 }
 
-export function MessageBubble({ 
-  message, 
-  isOwn, 
-  showAvatar, 
-  showStatus = true, 
-  className,
-  onReply,
-  onReact,
-  onDelete,
-  onEdit,
-  onForward,
-  onCopy,
-  onPin,
-  onSelect,
-  isSelected
-}: MessageBubbleProps) {
+const areReactionsEqual = (a: any, b: any) => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    const arrA = a[key];
+    const arrB = b[key];
+    if (!arrB) return false;
+    if (arrA.length !== arrB.length) return false;
+    for (let i = 0; i < arrA.length; i++) {
+      if (arrA[i] !== arrB[i]) return false;
+    }
+  }
+  return true;
+};
+
+export const MessageBubble = React.memo(
+  function MessageBubble({ 
+    message, 
+    isOwn, 
+    showAvatar, 
+    showStatus = true, 
+    className,
+    onReply,
+    onReact,
+    onDelete,
+    onEdit,
+    onForward,
+    onCopy,
+    onPin,
+    onSelect,
+    isSelected
+  }: MessageBubbleProps) {
   const renderContent = () => {
     switch (message.type) {
       case 'audio':
@@ -279,4 +298,19 @@ export function MessageBubble({
       </div>
     </Motion>
   );
-}
+},
+(prevProps, nextProps) => {
+  return (
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isOwn === nextProps.isOwn &&
+    prevProps.showAvatar === nextProps.showAvatar &&
+    prevProps.showStatus === nextProps.showStatus &&
+    prevProps.className === nextProps.className &&
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.status === nextProps.message.status &&
+    prevProps.message.type === nextProps.message.type &&
+    prevProps.message.timestamp.getTime() === nextProps.message.timestamp.getTime() &&
+    areReactionsEqual(prevProps.message.reactions, nextProps.message.reactions)
+  );
+});

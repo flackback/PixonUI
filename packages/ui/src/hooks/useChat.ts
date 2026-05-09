@@ -16,6 +16,8 @@ export interface UseChatOptions {
   onSendMessage?: (content: string) => Promise<void>;
   /** Threshold in pixels to trigger auto-scroll */
   scrollThreshold?: number;
+  /** Unique key to persist drafted input in local storage */
+  draftKey?: string;
 }
 
 /**
@@ -29,13 +31,49 @@ export interface UseChatOptions {
 export function useChat({ 
   initialMessages = [], 
   onSendMessage,
-  scrollThreshold = 100 
+  scrollThreshold = 100,
+  draftKey
 }: UseChatOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottom = useRef(true);
+  const messagesRef = useRef(messages);
+
+  // Keep messages reference updated for stable callback dependencies
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // Draft state management
+  const [draft, setDraftState] = useState<string>(() => {
+    if (draftKey && typeof window !== 'undefined') {
+      return localStorage.getItem(draftKey) || '';
+    }
+    return '';
+  });
+
+  // Track draftKey changes
+  useEffect(() => {
+    if (draftKey && typeof window !== 'undefined') {
+      setDraftState(localStorage.getItem(draftKey) || '');
+    }
+  }, [draftKey]);
+
+  const setDraft = useCallback((value: string | ((prev: string) => string)) => {
+    setDraftState((prev) => {
+      const next = typeof value === 'function' ? value(prev) : value;
+      if (draftKey && typeof window !== 'undefined') {
+        if (next) {
+          localStorage.setItem(draftKey, next);
+        } else {
+          localStorage.removeItem(draftKey);
+        }
+      }
+      return next;
+    });
+  }, [draftKey]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     if (scrollRef.current) {
@@ -93,6 +131,31 @@ export function useChat({
   }, [onSendMessage]);
 
   /**
+   * Retries sending a failed message.
+   */
+  const retryMessage = useCallback(async (messageId: string) => {
+    const messageToRetry = messagesRef.current.find((msg) => msg.id === messageId);
+    if (!messageToRetry || messageToRetry.status !== 'error') return;
+
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === messageId ? { ...msg, status: 'sending' as const } : msg))
+    );
+
+    try {
+      if (onSendMessage) {
+        await onSendMessage(messageToRetry.content);
+      }
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, status: 'sent' as const } : msg))
+      );
+    } catch (error) {
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, status: 'error' as const } : msg))
+      );
+    }
+  }, [onSendMessage]);
+
+  /**
    * Clears all messages from the state.
    */
   const clearMessages = useCallback(() => {
@@ -103,7 +166,10 @@ export function useChat({
     messages,
     setMessages,
     sendMessage,
+    retryMessage,
     clearMessages,
+    draft,
+    setDraft,
     isTyping,
     setIsTyping,
     isLoading,

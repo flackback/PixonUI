@@ -5,11 +5,13 @@ interface SpringConfig {
   damping?: number;
   mass?: number;
   precision?: number;
+  onUpdate?: (v: number) => void;
 }
 
 /**
  * A lightweight spring physics hook for smooth value transitions.
  * Zero dependencies, high performance using requestAnimationFrame.
+ * Optional onUpdate callback bypasses React state rerenders for direct DOM styling.
  */
 export function useSpring(
   targetValue: number,
@@ -19,13 +21,20 @@ export function useSpring(
     stiffness = 0.15,
     damping = 0.8,
     mass = 1,
-    precision = 0.01
+    precision = 0.01,
+    onUpdate
   } = config;
 
   const [currentValue, setCurrentValue] = useState(targetValue);
   const velocityRef = useRef(0);
   const currentRef = useRef(targetValue);
   const requestRef = useRef<number>();
+  const onUpdateRef = useRef(onUpdate);
+
+  // Keep callback ref updated to prevent effect re-runs
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
 
   useEffect(() => {
     const animate = () => {
@@ -38,12 +47,20 @@ export function useSpring(
 
       if (Math.abs(distance) < precision && Math.abs(velocityRef.current) < precision) {
         currentRef.current = targetValue;
-        setCurrentValue(targetValue);
+        if (onUpdateRef.current) {
+          onUpdateRef.current(targetValue);
+        } else {
+          setCurrentValue(targetValue);
+        }
         requestRef.current = undefined;
         return;
       }
 
-      setCurrentValue(currentRef.current);
+      if (onUpdateRef.current) {
+        onUpdateRef.current(currentRef.current);
+      } else {
+        setCurrentValue(currentRef.current);
+      }
       requestRef.current = requestAnimationFrame(animate);
     };
 
@@ -55,5 +72,5 @@ export function useSpring(
     };
   }, [targetValue, stiffness, damping, mass, precision]);
 
-  return currentValue;
+  return onUpdate ? targetValue : currentValue;
 }
