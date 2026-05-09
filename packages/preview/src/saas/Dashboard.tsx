@@ -11,9 +11,10 @@ import {
   Surface, 
   Grid, 
   Stack, 
-  Badge,
-  Button,
+  Badge, 
+  Button, 
   Skeleton,
+  AnimatedList,
 } from '@pixonui/react';
 import { 
   MessageSquare, 
@@ -48,6 +49,13 @@ const responseTimeData = [
   { label: 'Sun', value: 13 },
 ];
 
+const conversationsMock = [
+  { id: 1, name: 'John Doe', avatar: 'JD', text: '"I\'m having trouble with the new integration..."', time: '2m ago', badge: 'Pending', badgeVariant: 'warning' },
+  { id: 2, name: 'Sarah Connor', avatar: 'SC', text: '"The API latency increased suddenly this afternoon."', time: '14m ago', badge: 'Open', badgeVariant: 'info' },
+  { id: 3, name: 'Bruce Wayne', avatar: 'BW', text: '"Could we upgrade our enterprise support plan?"', time: '1h ago', badge: 'Completed', badgeVariant: 'success' },
+  { id: 4, name: 'Peter Parker', avatar: 'PP', text: '"Is there any issue with the billing webhook?"', time: '3h ago', badge: 'Pending', badgeVariant: 'warning' },
+];
+
 const MetricCardSkeleton = () => (
   <Surface className="p-6 border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.03] rounded-2xl flex flex-col gap-4">
     <div className="flex items-center justify-between">
@@ -62,7 +70,7 @@ const MetricCardSkeleton = () => (
 );
 
 const ChartSkeleton = ({ withBar }: { withBar?: boolean }) => (
-  <Surface className="p-8 border-gray-200 dark:border-white/5 bg-white dark:bg-black/40 rounded-2xl flex flex-col gap-6">
+  <Surface className="p-8 border border-gray-200 dark:border-white/5 bg-white dark:bg-black/40 rounded-2xl flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <div className="flex flex-col gap-2">
         <Skeleton variant="text" className="h-6 w-36" />
@@ -119,7 +127,7 @@ export function Dashboard() {
   return (
     <Stack gap={8}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <Heading as="h1" className="text-3xl font-bold tracking-tight">Dashboard Overview</Heading>
           <Text className="text-gray-500 dark:text-white/40 mt-1">Welcome back, Alex. Here&apos;s what&apos;s happening today.</Text>
@@ -230,7 +238,7 @@ export function Dashboard() {
               </div>
             </Surface>
 
-            <Surface className="p-8 border-gray-200 dark:border-white/5 bg-white dark:bg-black/40">
+            <Surface className="p-8 border border-gray-200 dark:border-white/5 bg-white dark:bg-black/40">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <Heading as="h3" className="text-lg font-bold">Response Time</Heading>
@@ -253,40 +261,53 @@ export function Dashboard() {
       </Grid>
 
       {/* Recent Activity / Table Preview */}
-      <Surface className="p-8 border-gray-200 dark:border-white/5 bg-white dark:bg-black/40">
+      <Surface className="p-8 border border-gray-200 dark:border-white/5 bg-white dark:bg-black/40">
         <div className="flex items-center justify-between mb-8">
           <Heading as="h3" className="text-lg font-bold">Recent Conversations</Heading>
           <Button variant="ghost" size="sm" className="text-cyan-500 font-bold hover:bg-cyan-500/10">View All</Button>
         </div>
-        <div className="space-y-4">
-          {isLoading ? (
-            <>
-              <ConversationSkeleton />
-              <ConversationSkeleton />
-              <ConversationSkeleton />
-              <ConversationSkeleton />
-            </>
-          ) : (
-            [1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 hover:border-cyan-500/30 transition-colors cursor-pointer group">
+        
+        {isLoading ? (
+          <div className="space-y-4">
+            <ConversationSkeleton />
+            <ConversationSkeleton />
+            <ConversationSkeleton />
+            <ConversationSkeleton />
+          </div>
+        ) : (
+          /* Stagger the list of items beautifully using our new AnimatedList! */
+          <AnimatedList stagger={60} duration={350} animation="fade-up" className="space-y-4">
+            {conversationsMock.map((conv) => (
+              <div key={conv.id} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 hover:border-cyan-500/30 transition-colors cursor-pointer group">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-white/10 dark:to-white/5 flex items-center justify-center font-bold text-xs">
-                    JD
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-indigo-600 dark:from-cyan-500/10 dark:to-indigo-500/10 border border-cyan-500/20 flex items-center justify-center font-bold text-xs text-white">
+                    {conv.avatar}
                   </div>
                   <div>
-                    <Text className="font-bold">John Doe</Text>
-                    <Text className="text-xs text-gray-500 dark:text-white/30">&quot;I&apos;m having trouble with the new integration...&quot;</Text>
+                    <Text className="font-bold">{conv.name}</Text>
+                    <Text className="text-xs text-gray-500 dark:text-white/30">{conv.text}</Text>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
-                  <Badge variant="neutral" className="bg-amber-500/10 text-amber-500 border-amber-500/20">Pending</Badge>
-                  <Text className="text-xs text-gray-400">2m ago</Text>
+                  <Badge 
+                    variant={conv.badgeVariant as any} 
+                    className={
+                      conv.badgeVariant === 'success' 
+                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                        : conv.badgeVariant === 'info'
+                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                        : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                    }
+                  >
+                    {conv.badge}
+                  </Badge>
+                  <Text className="text-xs text-gray-400">{conv.time}</Text>
                   <ArrowUpRight className="h-4 w-4 text-gray-300 group-hover:text-cyan-500 transition-colors" />
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </AnimatedList>
+        )}
       </Surface>
     </Stack>
   );

@@ -1,3 +1,4 @@
+export * from './useAnimate';
 export * from './useAsync';
 export * from './useChat';
 export * from './useChatMessages';
@@ -20,6 +21,7 @@ export * from './useKeyboardShortcuts';
 export * from './useLifecycle';
 export * from './useLocalStorage';
 export * from './useMousePosition';
+export * from './useMotionValue';
 export * from './useOrientation';
 export * from './usePrevious';
 export * from './useReadReceipts';

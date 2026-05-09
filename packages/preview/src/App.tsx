@@ -20,6 +20,11 @@ import { Dashboard } from './saas/Dashboard';
 import { Inbox } from './saas/Inbox';
 import { KanbanView } from './saas/KanbanView';
 import { Settings } from './saas/Settings';
+import { CRMView } from './saas/CRMView';
+import { ERPView } from './saas/ERPView';
+import { AnalyticsView } from './saas/AnalyticsView';
+import { HelpDeskView } from './saas/HelpDeskView';
+import { ProjectPortalView } from './saas/ProjectPortalView';
 
 export default function App() {
   const [view, setView] = useState<'landing' | 'gallery' | 'saas'>('landing');
@@ -68,7 +73,11 @@ export default function App() {
           {saasTab === 'inbox' && <Inbox />}
           {saasTab === 'kanban' && <KanbanView />}
           {saasTab === 'settings' && <Settings />}
-          {/* Add other tabs as needed */}
+          {saasTab === 'crm' && <CRMView />}
+          {saasTab === 'erp' && <ERPView />}
+          {saasTab === 'analytics' && <AnalyticsView />}
+          {saasTab === 'helpdesk' && <HelpDeskView />}
+          {saasTab === 'projectportal' && <ProjectPortalView />}
         </SaaSLayout>
       </ThemeProvider>
     );

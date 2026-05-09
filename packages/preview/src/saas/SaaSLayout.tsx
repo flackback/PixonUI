@@ -24,7 +24,12 @@ import {
   Command,
   HelpCircle,
   BarChart3,
-  ShieldCheck
+  ShieldCheck,
+  HeartHandshake,
+  Truck,
+  LineChart,
+  LifeBuoy,
+  ClipboardList
 } from 'lucide-react';
 
 interface SaaSLayoutProps {
@@ -77,6 +82,45 @@ export function SaaSLayout({ children, activeTab, onTabChange, onBackToLanding }
               onClick={() => onTabChange('kanban')}
             >
               Kanban
+            </SidebarItem>
+          </SidebarGroup>
+
+          <SidebarGroup label="Enterprise Core" className="mt-6">
+            <SidebarItem 
+              icon={<HeartHandshake className="h-4 w-4" />} 
+              active={activeTab === 'crm'}
+              onClick={() => onTabChange('crm')}
+            >
+              CRM Pipeline
+            </SidebarItem>
+            <SidebarItem 
+              icon={<Truck className="h-4 w-4" />} 
+              active={activeTab === 'erp'}
+              onClick={() => onTabChange('erp')}
+            >
+              ERP Supply Chain
+            </SidebarItem>
+            <SidebarItem 
+              icon={<LineChart className="h-4 w-4" />} 
+              active={activeTab === 'analytics'}
+              onClick={() => onTabChange('analytics')}
+            >
+              System Telemetry
+            </SidebarItem>
+            <SidebarItem 
+              icon={<LifeBuoy className="h-4 w-4" />} 
+              active={activeTab === 'helpdesk'}
+              onClick={() => onTabChange('helpdesk')}
+              badge="AI"
+            >
+              HelpDesk Hub
+            </SidebarItem>
+            <SidebarItem 
+              icon={<ClipboardList className="h-4 w-4" />} 
+              active={activeTab === 'projectportal'}
+              onClick={() => onTabChange('projectportal')}
+            >
+              Project Portal
             </SidebarItem>
           </SidebarGroup>
 

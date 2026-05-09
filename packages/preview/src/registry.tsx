@@ -88,6 +88,15 @@ import StatusDotSource from '../../ui/src/components/data-display/StatusDot.tsx?
 import StepperSource from '../../ui/src/components/navigation/Stepper.tsx?raw';
 import SpotlightSource from '../../ui/src/components/layout/Spotlight.tsx?raw';
 
+import { CreativeComponentsDemo } from './demos/CreativeComponentsDemo';
+import ConfettiSource from '../../ui/src/components/effects/Confetti.tsx?raw';
+import RetroGridSource from '../../ui/src/components/effects/RetroGrid.tsx?raw';
+import DockSource from '../../ui/src/components/navigation/Dock.tsx?raw';
+import AnimatedListSource from '../../ui/src/components/data-display/AnimatedList.tsx?raw';
+import CopyBlockSource from '../../ui/src/components/data-display/CopyBlock.tsx?raw';
+import GallerySource from '../../ui/src/components/data-display/Gallery.tsx?raw';
+import TestimonialCardSource from '../../ui/src/components/shared/TestimonialCard.tsx?raw';
+
 
 
 export type ComponentItem = {
@@ -1200,5 +1209,53 @@ ${SpotlightSource}`,
   ]}
 />`,
     demo: <CRMAdvancedDemo />
+  },
+  {
+    id: 'creative-components',
+    title: 'Creative Animations',
+    category: 'Templates',
+    description: 'Efeitos visuais dinâmicos e componentes criativos premium: Confetti, RetroGrid, Dock, Spotlight, AnimatedList, CopyBlock, Gallery e TestimonialGrid.',
+    code: `import { 
+  Confetti, 
+  RetroGrid, 
+  Dock, 
+  AnimatedList, 
+  CopyBlock, 
+  Gallery, 
+  TestimonialGrid,
+  SpotlightEffectCard 
+} from '@pixonui/react';
+
+// Confetti
+confettiRef.current.fire({ count: 100 });
+
+// Mac-like Zoom Dock
+<Dock items={items} />
+
+// Staggered Entrance List
+<AnimatedList stagger={60}>
+  <Item />
+</AnimatedList>`,
+    componentSource: `// Confetti.tsx
+${ConfettiSource}
+
+// RetroGrid.tsx
+${RetroGridSource}
+
+// Dock.tsx
+${DockSource}
+
+// AnimatedList.tsx
+${AnimatedListSource}
+
+// CopyBlock.tsx
+${CopyBlockSource}
+
+// Gallery.tsx
+${GallerySource}
+
+// TestimonialCard.tsx
+${TestimonialCardSource}`,
+    demo: <CreativeComponentsDemo />
   }
 ];

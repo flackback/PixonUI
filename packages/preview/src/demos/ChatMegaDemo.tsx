@@ -9,9 +9,9 @@ import {
   useConversations, 
   useMessages, 
   useActiveChat, 
-  chatStore
-} from '../../../ui/src';
-import type { Message, Conversation } from '../../../ui/src/components/chat/types';
+  chatStore,
+} from '@pixonui/react';
+import type { Message, Conversation } from '../../../ui/src';
 
 // Simulation constants
 const CONVERSATION_COUNT = 1000;

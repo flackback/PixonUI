@@ -1,0 +1,410 @@
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { cn } from '../../utils/cn';
+import { Label } from './Label';
+import { Search, X, Check, ChevronDown } from 'lucide-react';
+import { Badge } from '../../primitives/Badge';
+
+export interface AdvancedSelectOption {
+  label: string;
+  value: string;
+  description?: string;
+  icon?: React.ReactNode;
+  avatar?: string;
+}
+
+export interface AdvancedSelectProps {
+  label?: string;
+  name?: string;
+  options: AdvancedSelectOption[];
+  value?: string | string[];
+  defaultValue?: string | string[];
+  onChange?: (value: any) => void;
+  placeholder?: string;
+  error?: string;
+  disabled?: boolean;
+  className?: string;
+  /** Enable multiple item selections (renders selection as interactive chip tags) */
+  multiple?: boolean;
+  /** Include real-time query search input filter in dropdown */
+  searchable?: boolean;
+  /** Let the user clear current selection with one click */
+  clearable?: boolean;
+}
+
+/**
+ * An extremely powerful and premium Dropdown Select.
+ * Supports multi-select chips, real-time query filtering, option avatars/descriptions,
+ * full keyboard trapping, and fluid animations.
+ */
+export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectProps>(
+  ({ 
+    label, 
+    name, 
+    options, 
+    value, 
+    defaultValue, 
+    onChange, 
+    placeholder = 'Select options...', 
+    error, 
+    disabled, 
+    className,
+    multiple = false,
+    searchable = true,
+    clearable = true
+  }, ref) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [internalValue, setInternalValue] = useState<string | string[]>(
+      defaultValue !== undefined ? defaultValue : (multiple ? [] : '')
+    );
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const listboxRef = useRef<HTMLUListElement>(null);
+    const id = React.useId();
+
+    const isControlled = value !== undefined;
+    const currentValues = useMemo<string[]>(() => {
+      const val = isControlled ? value : internalValue;
+      if (!val) return [];
+      return Array.isArray(val) ? val : [val];
+    }, [isControlled, value, internalValue]);
+
+    // Filtered Options list
+    const filteredOptions = useMemo(() => {
+      if (!searchQuery) return options;
+      const lower = searchQuery.toLowerCase();
+      return options.filter(opt => 
+        opt.label.toLowerCase().includes(lower) || 
+        opt.description?.toLowerCase().includes(lower) ||
+        opt.value.toLowerCase().includes(lower)
+      );
+    }, [options, searchQuery]);
+
+    // Active/Selected option tags or strings
+    const selectedOptions = useMemo(() => {
+      return options.filter(opt => currentValues.includes(opt.value));
+    }, [options, currentValues]);
+
+    // Automatically focus search on open
+    useEffect(() => {
+      if (isOpen && searchable) {
+        // Subtle delay to allow container animation to mount smoothly
+        setTimeout(() => searchInputRef.current?.focus(), 50);
+      } else {
+        setSearchQuery('');
+      }
+    }, [isOpen, searchable]);
+
+    // Handle clicking outside to close
+    useEffect(() => {
+      const clickOutside = (e: MouseEvent) => {
+        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+          setIsOpen(false);
+        }
+      };
+      document.addEventListener('mousedown', clickOutside);
+      return () => document.removeEventListener('mousedown', clickOutside);
+    }, []);
+
+    // Reset list active index when filter changes
+    useEffect(() => {
+      setActiveIndex(0);
+    }, [searchQuery]);
+
+    const handleSelectOption = (optionValue: string) => {
+      if (disabled) return;
+
+      let nextValue: string | string[];
+
+      if (multiple) {
+        if (currentValues.includes(optionValue)) {
+          // Remove if already selected
+          nextValue = currentValues.filter(val => val !== optionValue);
+        } else {
+          // Add to selections
+          nextValue = [...currentValues, optionValue];
+        }
+      } else {
+        nextValue = optionValue;
+        setIsOpen(false);
+      }
+
+      if (!isControlled) {
+        setInternalValue(nextValue);
+      }
+      onChange?.(nextValue);
+    };
+
+    const handleClearAll = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (disabled) return;
+
+      const nextValue = multiple ? [] : '';
+      if (!isControlled) {
+        setInternalValue(nextValue);
+      }
+      onChange?.(nextValue);
+    };
+
+    const handleRemoveChip = (e: React.MouseEvent, chipValue: string) => {
+      e.stopPropagation();
+      if (disabled) return;
+
+      const nextValue = currentValues.filter(v => v !== chipValue);
+      if (!isControlled) {
+        setInternalValue(nextValue);
+      }
+      onChange?.(nextValue);
+    };
+
+    // Keyboard Accessibility Mapping
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (disabled) return;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (isOpen) {
+          if (filteredOptions[activeIndex]) {
+            handleSelectOption(filteredOptions[activeIndex]!.value);
+          }
+        } else {
+          setIsOpen(true);
+        }
+      } else if (e.key === ' ' && !searchQuery) {
+        e.preventDefault();
+        setIsOpen(true);
+      } else if (e.key === 'Escape') {
+        setIsOpen(false);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex(prev => (prev + 1) % Math.max(filteredOptions.length, 1));
+          // Scroll list item into focus view
+          const activeEl = listboxRef.current?.children[activeIndex + 1] as HTMLElement;
+          if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex(prev => (prev - 1 + filteredOptions.length) % Math.max(filteredOptions.length, 1));
+          const activeEl = listboxRef.current?.children[activeIndex - 1] as HTMLElement;
+          if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    };
+
+    return (
+      <div 
+        ref={containerRef} 
+        className={cn("flex flex-col gap-1.5 relative w-full", className)}
+        onKeyDown={handleKeyDown}
+      >
+        {label && (
+          <Label 
+            htmlFor={id}
+            className={cn(disabled && "opacity-50 cursor-not-allowed")}
+          >
+            {label}
+          </Label>
+        )}
+
+        {/* Input Header Button box */}
+        <div
+          ref={ref}
+          id={id}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          tabIndex={disabled ? -1 : 0}
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          className={cn(
+            'min-h-[3rem] w-full rounded-2xl bg-zinc-50 dark:bg-white/[0.04] px-4 py-2.5',
+            'border border-zinc-200 dark:border-white/[0.08]',
+            'text-zinc-900 dark:text-white flex items-center justify-between gap-2',
+            'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
+            'hover:bg-zinc-100 dark:hover:bg-white/[0.06] cursor-pointer transition-all duration-200',
+            disabled && 'cursor-not-allowed opacity-50 hover:bg-zinc-50 dark:hover:bg-white/[0.04]',
+            isOpen && 'border-purple-500/50 dark:border-purple-500/50 ring-2 ring-purple-500/20',
+            error && 'border-rose-400/30 focus:ring-rose-400/20'
+          )}
+        >
+          {/* Display Values tags or placeholder */}
+          <div className="flex flex-wrap gap-1.5 items-center max-w-[90%] truncate">
+            {selectedOptions.length === 0 ? (
+              <span className="text-zinc-400 dark:text-zinc-500 text-sm">{placeholder}</span>
+            ) : multiple ? (
+              selectedOptions.map(opt => (
+                <Badge
+                  key={opt.value}
+                  variant="default"
+                  className={cn(
+                    "pl-2 pr-1.5 py-0.5 rounded-lg border text-xs flex items-center gap-1.5",
+                    "bg-purple-50 border-purple-100 text-purple-700",
+                    "dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300"
+                  )}
+                >
+                  {opt.avatar && (
+                    <img 
+                      src={opt.avatar} 
+                      alt={opt.label} 
+                      className="h-3.5 w-3.5 rounded-full object-cover shrink-0" 
+                    />
+                  )}
+                  <span>{opt.label}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemoveChip(e, opt.value)}
+                    className="hover:bg-purple-200 dark:hover:bg-purple-400/20 rounded-md p-0.5 transition-colors"
+                  >
+                    <X className="h-2.5 w-2.5 shrink-0" />
+                  </button>
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm font-medium flex items-center gap-2">
+                {selectedOptions[0]?.icon}
+                {selectedOptions[0]?.avatar && (
+                  <img 
+                    src={selectedOptions[0].avatar} 
+                    alt={selectedOptions[0].label} 
+                    className="h-5 w-5 rounded-full object-cover shrink-0" 
+                  />
+                )}
+                {selectedOptions[0]?.label}
+              </span>
+            )}
+          </div>
+
+          {/* Interactive controls */}
+          <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500 shrink-0">
+            {clearable && selectedOptions.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="hover:text-zinc-600 dark:hover:text-zinc-300 p-0.5 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            <ChevronDown className={cn("h-4 w-4 transition-transform duration-250", isOpen && "rotate-180")} />
+          </div>
+        </div>
+
+        {/* Floating Dropdown Listbox */}
+        {isOpen && (
+          <div className={cn(
+            "absolute top-full left-0 z-[120] mt-2 w-full overflow-hidden rounded-2xl",
+            "border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 shadow-xl",
+            "animate-in fade-in slide-in-from-top-1 duration-150 p-1.5"
+          )}>
+            {/* Search Input Filter */}
+            {searchable && (
+              <div className="relative flex items-center border-b border-zinc-100 dark:border-white/5 pb-1.5 mb-1.5">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Pesquisar..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={cn(
+                    "w-full bg-transparent pl-9 pr-4 py-2 text-sm outline-none text-zinc-800 dark:text-white placeholder-zinc-400"
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Scrolling Options UL */}
+            <ul
+              ref={listboxRef}
+              id={`${id}-listbox`}
+              role="listbox"
+              className="max-h-60 overflow-y-auto flex flex-col gap-0.5"
+            >
+              {filteredOptions.length === 0 ? (
+                <div className="py-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                  Nenhum resultado encontrado
+                </div>
+              ) : (
+                filteredOptions.map((option, index) => {
+                  const isSelected = currentValues.includes(option.value);
+                  const isActive = activeIndex === index;
+
+                  return (
+                    <li
+                      key={option.value}
+                      id={`${id}-option-${index}`}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => handleSelectOption(option.value)}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      className={cn(
+                        'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3',
+                        isSelected 
+                          ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
+                          : 'text-zinc-700 dark:text-zinc-300',
+                        isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
+                      )}
+                    >
+                      {/* Avatar/Thumbnail */}
+                      {option.avatar && (
+                        <img 
+                          src={option.avatar} 
+                          alt={option.label} 
+                          className="h-7 w-7 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-white/10" 
+                        />
+                      )}
+
+                      {/* Icon */}
+                      {option.icon && (
+                        <div className={cn(
+                          "flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/[0.04]",
+                          isSelected && "text-purple-500 bg-purple-100/50 dark:bg-purple-500/20"
+                        )}>
+                          {option.icon}
+                        </div>
+                      )}
+
+                      {/* Content block */}
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <span className="text-sm truncate">{option.label}</span>
+                        {option.description && (
+                          <span className={cn(
+                            "text-[10px] truncate leading-tight mt-0.5",
+                            isSelected ? "text-purple-400/80" : "text-zinc-400 dark:text-zinc-500"
+                          )}>
+                            {option.description}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Check icon status indicator */}
+                      {isSelected && (
+                        <Check className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                      )}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
+        )}
+
+        {error && (
+          <p className="text-xs text-rose-500 animate-in slide-in-from-top-0.5 fade-in duration-150">
+            {error}
+          </p>
+        )}
+        <input type="hidden" name={name} value={currentValues.join(',')} />
+      </div>
+    );
+  }
+);
+
+AdvancedSelect.displayName = 'AdvancedSelect';
