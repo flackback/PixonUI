@@ -136,6 +136,6 @@ export function Settings() {
   );
 }
 
-function cn(...classes: any[]) {
+function cn(...classes: (string | boolean | undefined | null | unknown)[]) {
   return classes.filter(Boolean).join(' ');
 }

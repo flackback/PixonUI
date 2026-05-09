@@ -194,6 +194,12 @@ export function KanbanBoard({
 
   return (
     <div className={cn("flex flex-col gap-4 h-full", className)}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        body.is-dragging-task,
+        body.is-dragging-task * {
+          cursor: grabbing !important;
+        }
+      ` }} />
       <KanbanHeader 
         title="Project Board"
         view={view}

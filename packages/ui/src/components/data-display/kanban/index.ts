@@ -19,6 +19,10 @@ export * from './useKanbanUndo';
 export * from './useKanbanKeyboard';
 export * from './useKanbanSync';
 export * from './useKanbanHistory';
+export * from './useKanbanTasks';
+export * from './useKanbanDragAndDrop';
+export * from './useKanbanBoardScroll';
+export * from './useKanbanAnalytics';
 
 // Sub-components
 export * from './components/SubtaskList';

@@ -36,6 +36,9 @@ export function useKanbanDragAndDrop({
       setDraggedTaskId(id);
       e.dataTransfer.setData('taskId', id);
       onTaskDragStart?.(id);
+      if (typeof document !== 'undefined') {
+        document.body.classList.add('is-dragging-task');
+      }
     } else {
       setDraggedColumnId(id);
       e.dataTransfer.setData('columnId', id);
@@ -46,6 +49,9 @@ export function useKanbanDragAndDrop({
   const handleDragEnd = useCallback(() => {
     if (draggedTaskId) {
       onTaskDragEnd?.(draggedTaskId);
+    }
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('is-dragging-task');
     }
     setDraggedTaskId(null);
     setDraggedColumnId(null);

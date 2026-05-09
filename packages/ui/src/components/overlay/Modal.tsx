@@ -9,9 +9,18 @@ export interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
 
-export function Modal({ isOpen, onClose, children, className }: ModalProps) {
+const sizeClasses = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-5xl',
+  full: 'max-w-full m-4',
+};
+
+export function Modal({ isOpen, onClose, children, className, size = 'md' }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -62,7 +71,8 @@ export function Modal({ isOpen, onClose, children, className }: ModalProps) {
     >
       <div
         className={cn(
-          "relative w-full max-w-lg scale-100 gap-4 border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/90 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
+          "relative w-full scale-100 flex flex-col max-h-[90vh] border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/95 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
+          sizeClasses[size],
           "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
         )}
       >

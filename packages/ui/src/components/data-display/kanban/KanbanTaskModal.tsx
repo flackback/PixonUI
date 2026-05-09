@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, ModalHeader, ModalTitle, ModalFooter } from '../../overlay/Modal';
 import { Button } from '../../button/Button';
+import { ScrollArea } from '../../data-display/ScrollArea';
 import { TextInput } from '../../form/TextInput';
 import { Textarea } from '../../form/Textarea';
 import { Select } from '../../form/Select';
@@ -99,7 +100,7 @@ export function KanbanTaskModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalHeader className="flex items-center justify-between pr-12">
         <ModalTitle>{task ? 'Edit Task' : 'Create New Task'}</ModalTitle>
         <div className="flex items-center gap-2">
@@ -119,7 +120,8 @@ export function KanbanTaskModal({
         </div>
       </ModalHeader>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-6">
+      <ScrollArea className="flex-1 pr-4 -mr-4" style={{ maxHeight: 'calc(90vh - 160px)' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           <div className="space-y-2">
@@ -206,6 +208,7 @@ export function KanbanTaskModal({
           <TimeTracker initialSeconds={task?.timeSpent} />
         </div>
       </div>
+    </ScrollArea>
 
       <ModalFooter className="border-t border-white/5 pt-6">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>

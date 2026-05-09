@@ -247,9 +247,10 @@ export function Inbox() {
   };
 
   const triggerContactReply = (userText: string) => {
+    const targetContactId = selectedContactId;
     // Wait 1.5 seconds, then type for 2 seconds, then reply
     setTimeout(() => {
-      setTypingContactId(selectedContactId);
+      setTypingContactId(targetContactId);
     }, 1500);
 
     setTimeout(() => {
@@ -266,10 +267,10 @@ export function Inbox() {
       };
 
       setChatMessages(prev => {
-        const current = prev[selectedContactId] || [];
+        const current = prev[targetContactId] || [];
         return {
           ...prev,
-          [selectedContactId]: [...current, replyMsg]
+          [targetContactId]: [...current, replyMsg]
         };
       });
 
@@ -277,8 +278,13 @@ export function Inbox() {
 
       // Update contact's last message in sidebar
       setContacts(prev => prev.map(c => 
-        c.id === selectedContactId 
-          ? { ...c, lastMessage: replyText, time: new Date(), unread: selectedContactId !== selectedContactId ? c.unread + 1 : 0 }
+        c.id === targetContactId 
+          ? { 
+              ...c, 
+              lastMessage: replyText, 
+              time: new Date(), 
+              unread: selectedContactId === targetContactId ? 0 : c.unread + 1 
+            }
           : c
       ));
     }, 3500);

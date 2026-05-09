@@ -56,7 +56,6 @@ import { LoadingDemo } from './demos/LoadingDemo';
 import { CardsDemo } from './demos/CardsDemo';
 import { OverlaysPageDemo } from './demos/OverlaysPageDemo';
 import { PageLoaderDemo } from './demos/PageLoaderDemo';
-import { ChatDemo } from './demos/ChatDemo';
 import { KanbanDemo } from './demos/KanbanDemo';
 import { NewComponentsDemo } from './demos/NewComponentsDemo';
 import { TenNewComponentsDemo } from './demos/TenNewComponentsDemo';
