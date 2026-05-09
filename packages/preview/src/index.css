@@ -10,3 +10,9 @@ body {
   @apply bg-zinc-950 text-white antialiased selection:bg-white/20;
   min-height: 100vh;
 }
+
+/* Drag cursor overrides to ensure high-fidelity grabbing feedback */
+body.is-dragging-task,
+body.is-dragging-task * {
+  cursor: grabbing !important;
+}
