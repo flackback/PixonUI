@@ -24,16 +24,20 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 - `Card`: Glassmorphic card. Supports `glow` prop for mouse-follow effect.
 - `Kanban`: Board with native DnD. Uses `columns` and `tasks` props.
 
-### Chat System (Mega Expansion)
+### Chat System (Enterprise-Grade)
+- **Architecture**: Uses `useSyncExternalStore` for O(1) state updates, decoupled from React's render cycle.
+- **Scalability**: Optimized for 10,000+ conversations and 100,000+ messages using binary-search-based virtualization.
+- **Baileys/WhatsApp Support**: Native support for JIDs, presence (composing, recording), message status (played, read), and ephemeral messages.
 - `ChatLayout`: Main container for chat interfaces.
-- `MessageList`: Virtualized-ready list with date grouping and sticky headers.
-- `MessageBubble`: Rich media renderer with automatic `LinkPreview` detection.
-- `ChatInput`: Advanced input with mentions, replies, and action hooks.
-- `EmojiPicker`: Manual, lightweight emoji selection (no external libs).
-- `VoiceRecorder`: Native-first audio recording with duration and waveform.
-- `AudioPlayer`: Specialized component for voice messages.
-- `TypingIndicator`: Standalone component for real-time feedback.
-- `ChatSidebar`: Conversation management with integrated `TypingIndicator`.
+- `MessageList`: Virtualized list with dynamic height support and auto-scroll logic.
+- `MessageBubble`: Rich media renderer (stickers, audio, location, contacts) with reactions, replies, and interactive message support.
+- `InteractiveMessage`: WhatsApp-style interactive messages with buttons (reply, URL, call) and list menus.
+- `CarouselMessage`: Horizontal scrolling cards for product showcases or multi-option selections.
+- `ChatInput`: Advanced input with mentions, recording state, attachment menus, and reply preview.
+- `ChatSidebar`: Virtualized conversation list with real-time presence and unread counters.
+- `useChatStore`: Centralized, high-performance store for all chat data.
+- `useSocket`: Robust Socket.io hook with room management and event buffering.
+- `useBaileysSync`: Specialized hook for mapping Baileys events to the UI state.
 
 ### Kanban System (Mega Expansion)
 - `KanbanBoard`: Professional board with WIP limits, swimlanes, and multiple views.
@@ -55,11 +59,15 @@ PixonUI is built to be lightweight, stable, and performant by leveraging native 
 - `ScrollProgress`: Page reading indicator.
 
 ## 4. Native Hooks
-- `useChatMessages(initialMessages)`: Advanced chat state management.
+- `useChatStore(selector)`: High-performance state access for chat data.
+- `useConversations()`: Returns sorted, virtualized-ready conversation list.
+- `useMessages(chatId)`: Returns messages for a specific chat with O(1) lookup.
+- `useSocket(url, options)`: Enterprise-grade Socket.io integration.
+- `useBaileysSync(socket)`: Automatic synchronization for WhatsApp/Baileys events.
+- `useVirtualList(options)`: Core performance primitive for 120fps scrolling.
 - `useVoiceRecorder()`: Native `MediaRecorder` wrapper.
 - `useReadReceipts(messages, onRead)`: Visibility-based tracking.
-- `useTypingIndicator()`: Real-time typing state.
-- `useChatSearch(messages)`: High-performance local search.
+- `useChatSearchWorker(messages)`: Off-thread high-performance local search.
 - `useKanbanFilters(tasks)`: Complex task filtering and searching.
 - `useKanbanUndo(tasks)`: History management with Undo/Redo support.
 - `useKanbanKeyboard()`: Global keyboard shortcuts for Kanban.

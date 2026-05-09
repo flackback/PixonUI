@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '../../utils/cn';
 import { Skeleton } from '../feedback/Skeleton';
 
@@ -11,6 +11,16 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
   ({ className, containerClassName, alt, src, fallback, onLoad, onError, ...props }, ref) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const [isInstant, setIsInstant] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    // Synchronous check if image is already cached
+    useEffect(() => {
+      if (imgRef.current?.complete) {
+        setIsLoading(false);
+        setIsInstant(true);
+      }
+    }, [src]);
 
     const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
       setIsLoading(false);
@@ -33,13 +43,19 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
            <Skeleton className="absolute inset-0 h-full w-full" />
         )}
         <img
-          ref={ref}
+          ref={(node) => {
+            // Support both forwardRef and internal ref
+            (imgRef as any).current = node;
+            if (typeof ref === 'function') ref(node);
+            else if (ref) (ref as any).current = node;
+          }}
           src={src}
           alt={alt}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
-            "h-full w-full object-cover transition-opacity duration-300",
+            "h-full w-full object-cover",
+            !isInstant && "transition-opacity duration-300",
             isLoading ? "opacity-0" : "opacity-100",
             className
           )}

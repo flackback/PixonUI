@@ -23,6 +23,12 @@ const sizeClasses = {
 export function Modal({ isOpen, onClose, children, className, size = 'md' }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -38,7 +44,7 @@ export function Modal({ isOpen, onClose, children, className, size = 'md' }: Mod
         document.body.style.overflow = 'unset';
       }
     }
-  }, [isOpen]);
+  }, [isOpen, mounted]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -51,7 +57,7 @@ export function Modal({ isOpen, onClose, children, className, size = 'md' }: Mod
 
     dialog.addEventListener('cancel', handleCancel);
     return () => dialog.removeEventListener('cancel', handleCancel);
-  }, [onClose]);
+  }, [onClose, mounted]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === dialogRef.current) {
@@ -59,12 +65,14 @@ export function Modal({ isOpen, onClose, children, className, size = 'md' }: Mod
     }
   };
 
+  if (!mounted) return null;
+
   return createPortal(
     <dialog
       ref={dialogRef}
       onClick={handleBackdropClick}
       className={cn(
-        "fixed inset-0 z-[100] bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
+        "fixed inset-0 z-[100] m-auto bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:items-center open:justify-center",
         "animate-in fade-in duration-200",
         className
       )}

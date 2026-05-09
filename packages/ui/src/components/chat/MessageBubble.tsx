@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import type { Message } from './types';
-import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Edit2, MapPin, User as UserIcon, FileText } from 'lucide-react';
+import { Check, CheckCheck, MoreHorizontal, Reply, Trash2, Copy, Smile, Forward, Pin, Star, Edit2, MapPin, User as UserIcon, FileText, Volume2, Lock } from 'lucide-react';
 import { Motion } from '../feedback/Motion';
 import { 
   DropdownMenu, 
@@ -11,8 +11,12 @@ import {
 } from '../overlay/DropdownMenu';
 import { Image } from '../data-display/Image';
 import { AudioPlayer } from './AudioPlayer';
+import { WaveformAudio } from './WaveformAudio';
 import { ReadReceipt } from './ReadReceipt';
 import { LinkPreview } from './LinkPreview';
+import { Avatar } from '../data-display/Avatar';
+import { InteractiveMessage } from './InteractiveMessage';
+import { CarouselMessage } from './CarouselMessage';
 
 interface MessageBubbleProps {
   message: Message;
@@ -27,7 +31,13 @@ interface MessageBubbleProps {
   onForward?: () => void;
   onCopy?: () => void;
   onPin?: () => void;
+  onStar?: (starred: boolean) => void;
   onSelect?: () => void;
+  onAction?: (action: any) => void;
+  onImageClick?: (url: string) => void;
+  onTTS?: () => void;
+  onTranscribe?: (message: Message) => void;
+  hasAi?: boolean;
   isSelected?: boolean;
 }
 
@@ -63,18 +73,60 @@ export const MessageBubble = React.memo(
     onForward,
     onCopy,
     onPin,
+    onStar,
     onSelect,
+    onAction,
+    onTTS,
+    onTranscribe,
+    hasAi,
+    onImageClick,
     isSelected
   }: MessageBubbleProps) {
+    const renderStatus = () => {
+      if (!isOwn || !showStatus) return null;
+      return <ReadReceipt status={message.status || 'sent'} className="ml-1" />;
+    };
   const renderContent = () => {
+    if (message.type === 'revoked') {
+      return (
+        <p className="text-sm italic opacity-50 flex items-center gap-2">
+          <Trash2 className="h-3 w-3" /> This message was deleted
+        </p>
+      );
+    }
+
     switch (message.type) {
       case 'audio':
         return (
-          <AudioPlayer 
-            src={message.attachments?.[0]?.url || ""} 
-            duration={message.attachments?.[0]?.duration} 
-            isMe={isOwn} 
-          />
+          <div className="space-y-2">
+            <WaveformAudio 
+              src={message.attachments?.[0]?.url || ""} 
+              duration={message.attachments?.[0]?.duration} 
+              isMe={isOwn} 
+            />
+            {(message.transcription || message.isTranscribing || hasAi) && (
+              <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+                {message.isTranscribing ? (
+                  <div className="flex items-center gap-2 text-[10px] text-blue-400 animate-pulse font-bold uppercase tracking-wider">
+                    <MoreHorizontal className="h-3 w-3" />
+                    Transcrevendo...
+                  </div>
+                ) : message.transcription ? (
+                  <div className="bg-black/10 dark:bg-black/40 p-3 rounded-xl text-xs italic opacity-90 leading-relaxed border-l-2 border-primary/50">
+                    {message.transcription}
+                  </div>
+                ) : hasAi && (
+                  <button 
+                    onClick={() => onTranscribe?.(message)}
+                    className="text-[10px] flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all w-fit font-bold uppercase tracking-wider"
+                  >
+                    <Volume2 className="h-3 w-3" />
+                    Transcrever com IA
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         );
       case 'location':
         return (
@@ -83,15 +135,16 @@ export const MessageBubble = React.memo(
               <MapPin className="h-4 w-4" />
               <span className="text-sm font-medium">{message.location?.address || "Shared Location"}</span>
             </div>
-            <div className="aspect-video rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-              <MapPin className="h-8 w-8 opacity-20" />
+            <div className="aspect-video rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center overflow-hidden relative group/map">
+              <MapPin className="h-8 w-8 opacity-20 group-hover/map:scale-110 transition-transform" />
+              <div className="absolute inset-0 bg-blue-500/5 group-hover/map:bg-blue-500/10 transition-colors" />
             </div>
           </div>
         );
       case 'contact':
         return (
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-gray-100 dark:bg-white/10">
-            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-black/5 dark:bg-white/10 border border-white/5">
+            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
               <UserIcon className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0 text-inherit">
@@ -102,20 +155,81 @@ export const MessageBubble = React.memo(
         );
       case 'file':
         return (
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/5">
-            <FileText className="h-8 w-8 text-blue-500" />
-            <div className="flex-1 min-w-0 text-inherit">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/10 border border-white/5 hover:bg-black/10 dark:hover:bg-white/20 transition-colors cursor-pointer">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500">
+              <FileText className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{message.attachments?.[0]?.name || "File"}</p>
               <p className="text-[10px] opacity-60 uppercase">{message.attachments?.[0]?.size || "Unknown size"}</p>
             </div>
           </div>
         );
+      case 'sticker':
+        return (
+          <div className="relative group/sticker">
+            <img 
+              src={message.attachments?.[0]?.url} 
+              alt="Sticker" 
+              className="w-32 h-32 object-contain"
+            />
+          </div>
+        );
+      case 'image':
+        return (
+          <div className="space-y-2">
+            <div 
+              className="relative rounded-2xl overflow-hidden border border-white/5 group/image cursor-pointer"
+              onClick={() => onImageClick?.(message.attachments?.[0]?.url || "")}
+            >
+              <Image 
+                src={message.attachments?.[0]?.url || ""} 
+                alt={message.content || "Image"}
+                className="max-h-[300px] w-auto object-contain bg-black/20 transition-transform duration-300 group-hover/image:scale-105"
+              />
+            </div>
+            {message.content && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-1">{message.content}</p>
+            )}
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="space-y-2">
+            <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-black/20 aspect-video flex items-center justify-center group/video">
+              <video 
+                src={message.attachments?.[0]?.url} 
+                controls 
+                className="max-h-[300px] w-full"
+              />
+            </div>
+            {message.content && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-1">{message.content}</p>
+            )}
+          </div>
+        );
+      case 'interactive':
+        if (message.interactive?.type === 'carousel' && message.interactive.cards) {
+          return <CarouselMessage cards={message.interactive.cards} isOwn={isOwn} onAction={onAction} />;
+        }
+        if (message.interactive) {
+          return <InteractiveMessage data={message.interactive} isOwn={isOwn} onAction={onAction} />;
+        }
+        return null;
       default:
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         const urls = message.content.match(urlRegex);
         
         return (
           <div className="space-y-2">
+            {message.replyTo && (
+              <div className="mb-2 p-2 rounded-lg bg-black/5 dark:bg-white/5 border-l-4 border-blue-500 text-xs">
+                <p className="font-bold text-blue-500 truncate">
+                  {message.replyTo.senderId === message.senderId ? 'You' : 'Other'}
+                </p>
+                <p className="opacity-60 truncate">{message.replyTo.content}</p>
+              </div>
+            )}
             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
             {urls && urls.map((url, i) => (
               <LinkPreview 
@@ -133,131 +247,134 @@ export const MessageBubble = React.memo(
   };
 
   return (
-    <Motion 
-      preset="spring"
+    <div 
+      onClick={() => onSelect?.()}
       className={cn(
-        "flex w-full gap-2 mb-1 group relative",
+        "flex w-full mb-4 group/bubble relative cursor-pointer select-none",
         isOwn ? "justify-end" : "justify-start",
-        isSelected && "bg-blue-500/5",
         className
       )}
-      onClick={() => onSelect?.()}
     >
-      {/* Quick Emoji Reaction Bar (Hover) */}
       <div className={cn(
-        "absolute -top-7 opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-10 flex items-center gap-1 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-gray-200 dark:border-neutral-800 p-1 rounded-full shadow-lg",
-        isOwn ? "right-4" : "left-4"
+        "relative max-w-[75%] sm:max-w-[60%] transition-all duration-300",
+        isSelected && "scale-95 opacity-80"
       )}>
-        {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => {
-          const hasReacted = message.reactions?.[emoji]?.includes('me') || message.reactions?.[emoji]?.includes('You');
-          return (
-            <button
-              key={emoji}
-              onClick={(e) => {
-                e.stopPropagation();
-                onReact?.(emoji);
-              }}
-              className={cn(
-                "hover:scale-125 transition-transform p-1 text-sm duration-150 rounded-full",
-                hasReacted && "bg-blue-500/10 scale-110"
-              )}
-            >
-              {emoji}
-            </button>
-          );
-        })}
-        <div className="w-px h-3 bg-gray-200 dark:bg-neutral-800 mx-1" />
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onReply?.();
-          }}
-          className="p-1 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all"
-          title="Reply"
-        >
-          <Reply className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {/* Actions Menu (Hover) */}
-      <div className={cn(
-        "absolute top-2 opacity-0 group-hover:opacity-100 transition-opacity z-10",
-        isOwn ? "left-0 -translate-x-full pr-2" : "right-0 translate-x-full pl-2"
-      )}>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400">
-            <MoreHorizontal className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align={isOwn ? "end" : "start"}>
-            <DropdownMenuItem onClick={() => onReply?.()}>
-              <Reply className="h-4 w-4 mr-2" /> Reply
-            </DropdownMenuItem>
-            {onEdit && (
-              <DropdownMenuItem onClick={() => onEdit?.()}>
-                <Edit2 className="h-4 w-4 mr-2" /> Edit
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => onCopy?.()}>
-              <Copy className="h-4 w-4 mr-2" /> Copy
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onForward?.()}>
-              <Forward className="h-4 w-4 mr-2" /> Forward
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPin?.()}>
-              <Pin className="h-4 w-4 mr-2" /> Pin
-            </DropdownMenuItem>
-            {isOwn && onDelete && (
-              <DropdownMenuItem onClick={() => onDelete?.()} className="text-red-500">
-                <Trash2 className="h-4 w-4 mr-2" /> Delete
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="flex flex-col max-w-[70%]">
-        <div className={cn(
-          "relative px-4 py-2 rounded-2xl shadow-sm transition-all",
-          isOwn 
-            ? "bg-blue-600 text-white rounded-tr-sm" 
-            : "bg-white dark:bg-white/[0.06] text-gray-900 dark:text-white rounded-tl-sm border border-gray-200 dark:border-transparent",
-          message.isPinned && "ring-2 ring-blue-500/50"
-        )}>
-          {/* Reply Context */}
-          {message.replyTo && (
-            <div className={cn(
-              "mb-2 rounded px-2 py-1 text-xs border-l-2 opacity-80",
-              isOwn ? "bg-white/[0.1] border-white/50" : "bg-gray-100 dark:bg-black/20 border-blue-500"
-            )}>
-              <p className="font-bold opacity-60">Replying to</p>
-              <p className="truncate text-gray-700 dark:text-gray-300">{message.replyTo.content}</p>
-            </div>
-          )}
-
-          {/* Attachments (Images) */}
-          {message.attachments && message.attachments.length > 0 && message.type === 'image' && (
-            <div className="mb-2 space-y-2">
-              {message.attachments.map(att => (
-                <Image 
-                  key={att.id} 
-                  src={att.url} 
-                  alt="Attachment" 
-                  className="rounded-2xl max-h-60 object-cover w-full"
-                />
-              ))}
-            </div>
-          )}
-
-          {renderContent()}
-
+        {message.agentName && (
           <div className={cn(
-            "flex items-center justify-end gap-1 mt-1 text-[10px]",
-            isOwn ? "text-white/60" : "text-gray-400"
+            "flex items-center gap-1.5 mb-1 px-2 opacity-50",
+            isOwn ? "justify-end" : "justify-start"
           )}>
-            {message.isEdited && <span>edited</span>}
-            <span>{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            {isOwn && message.status && <ReadReceipt status={message.status} />}
+            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white/10">
+              <UserIcon size={10} className="text-blue-400" />
+            </div>
+            <span className="text-[10px] font-bold tracking-wider uppercase">Agente: {message.agentName}</span>
           </div>
+        )}
+
+        <Motion preset="spring">
+          <div className={cn(
+            "relative p-3 rounded-2xl shadow-sm backdrop-blur-md border",
+            message.isInternalNote
+              ? "bg-amber-500/10 border-amber-500/20 text-amber-100 italic"
+              : (isOwn 
+                  ? "bg-blue-600/90 dark:bg-blue-500/20 text-white border-blue-500/20 rounded-tr-none" 
+                  : "bg-white/80 dark:bg-white/[0.05] text-gray-900 dark:text-white border-white/10 rounded-tl-none"),
+            "hover:shadow-lg hover:shadow-blue-500/5 transition-shadow"
+          )}>
+            {message.isInternalNote && (
+              <div className="flex items-center gap-1.5 mb-1.5 px-1.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 w-fit">
+                <Lock size={10} className="text-amber-500" />
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Nota Interna</span>
+              </div>
+            )}
+            {!isOwn && message.remoteJid?.endsWith('@g.us') && message.contact?.name && (
+              <p className="text-[11px] font-bold text-blue-500 dark:text-blue-400 mb-1 truncate">
+                {message.contact.name}
+              </p>
+            )}
+            {renderContent()}
+            
+            <div className="flex items-center justify-end gap-1 mt-1 opacity-60 text-[10px]">
+              <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              {renderStatus()}
+            </div>
+
+            {/* Reactions */}
+            {message.reactions && Object.keys(message.reactions).length > 0 && (
+              <div className="absolute -bottom-3 right-2 flex -space-x-1">
+                {Object.entries(message.reactions).map(([emoji, users]) => (
+                  <div 
+                    key={emoji}
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-full px-1.5 py-0.5 text-xs shadow-sm animate-in zoom-in-50"
+                    title={users.join(', ')}
+                  >
+                    {emoji}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Motion>
+
+        {/* Actions Menu */}
+        <div className={cn(
+          "absolute top-0 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1",
+          isOwn ? "right-full mr-2" : "left-full ml-2"
+        )}>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
+              <Smile className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" className="flex gap-1 p-1">
+              {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => (
+                <DropdownMenuItem 
+                  key={emoji}
+                  onClick={() => onReact?.(emoji)}
+                  className="w-auto p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-transform hover:scale-125 focus:bg-transparent"
+                >
+                  {emoji}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align={isOwn ? "end" : "start"}>
+              <DropdownMenuItem onClick={onReply}>
+                <Reply className="h-4 w-4 mr-2" /> Reply
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onCopy}>
+                <Copy className="h-4 w-4 mr-2" /> Copy
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onForward}>
+                <Forward className="h-4 w-4 mr-2" /> Forward
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPin}>
+                <Pin className="h-4 w-4 mr-2" /> Pin
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onStar?.(true)}>
+                <Star className="h-4 w-4 mr-2" /> Star
+              </DropdownMenuItem>
+              {onTTS && message.type === 'text' && (
+                <DropdownMenuItem onClick={onTTS}>
+                  <Volume2 className="h-4 w-4 mr-2" /> Listen (TTS)
+                </DropdownMenuItem>
+              )}
+              {isOwn && (
+                <>
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Edit2 className="h-4 w-4 mr-2" /> Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500" onClick={onDelete}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Reactions List */}
@@ -296,7 +413,7 @@ export const MessageBubble = React.memo(
           </div>
         )}
       </div>
-    </Motion>
+    </div>
   );
 },
 (prevProps, nextProps) => {
@@ -310,7 +427,9 @@ export const MessageBubble = React.memo(
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.status === nextProps.message.status &&
     prevProps.message.type === nextProps.message.type &&
-    prevProps.message.timestamp.getTime() === nextProps.message.timestamp.getTime() &&
+    new Date(prevProps.message.timestamp).getTime() === new Date(nextProps.message.timestamp).getTime() &&
     areReactionsEqual(prevProps.message.reactions, nextProps.message.reactions)
   );
 });
+
+MessageBubble.displayName = 'MessageBubble';

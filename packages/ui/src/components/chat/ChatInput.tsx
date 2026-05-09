@@ -1,20 +1,51 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '../../utils/cn';
-import { Send, Paperclip, Smile, Mic, Image as ImageIcon, AtSign, X, MapPin, Gift } from 'lucide-react';
+import { 
+  Send, 
+  Paperclip, 
+  Smile, 
+  Mic, 
+  Image as ImageIcon, 
+  AtSign, 
+  X, 
+  MapPin, 
+  Gift, 
+  List, 
+  Layout,
+  Bold,
+  Italic,
+  Strikethrough,
+  Code
+} from 'lucide-react';
 import { Button } from '../button/Button';
 import type { User, Message } from './types';
 import { Surface } from '../../primitives/Surface';
 import { Avatar } from '../data-display/Avatar';
+import { VoiceRecorder } from './VoiceRecorder';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from '../overlay/DropdownMenu';
 
 interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onChange'> {
   value?: string;
-  onChange?: (value: string) => void;
+  onValueChange?: (value: string) => void;
   onSend?: (content: string) => void;
+  onChange?: (content: string) => void;
   onAttach?: () => void;
   onMic?: () => void;
+  onVoiceEnd?: (blob: Blob, duration: number) => void;
   onEmoji?: () => void;
   onGif?: () => void;
   onLocation?: () => void;
+  onContact?: () => void;
+  onPoll?: () => void;
+  onPix?: () => void;
+  onCarousel?: () => void;
+  onButtons?: () => void;
+  onList?: () => void;
   onCancelReply?: () => void;
   placeholder?: string;
   users?: User[];
@@ -25,14 +56,22 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
 }
 
 export function ChatInput({ 
-  value: propValue,
-  onChange: propOnChange,
+  value,
+  onValueChange,
   onSend, 
+  onChange,
   onAttach, 
   onMic,
+  onVoiceEnd,
   onEmoji,
   onGif,
   onLocation,
+  onContact,
+  onPoll,
+  onPix,
+  onCarousel,
+  onButtons,
+  onList,
   onCancelReply,
   placeholder = "Type a message...", 
   users = [],
@@ -49,12 +88,12 @@ export function ChatInput({
   const [mentionIndex, setMentionIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const content = propValue !== undefined ? propValue : internalContent;
+  const content = value !== undefined ? value : internalContent;
   const setContent = (val: string) => {
-    if (propValue === undefined) {
+    if (value === undefined) {
       setInternalContent(val);
     }
-    propOnChange?.(val);
+    onValueChange?.(val);
   };
 
   const filteredUsers = useMemo(() => {
@@ -70,6 +109,7 @@ export function ChatInput({
     if (maxLength && value.length > maxLength) return;
     
     setContent(value);
+    onChange?.(value);
     
     // Mention logic
     const lastChar = value[e.target.selectionStart - 1];
@@ -86,8 +126,30 @@ export function ChatInput({
     // Auto-resize
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
     }
+  };
+
+  const insertFormatting = (prefix: string, suffix: string = prefix) => {
+    if (!textareaRef.current) return;
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    const selectedText = content.slice(start, end);
+    const textBefore = content.slice(0, start);
+    const textAfter = content.slice(end);
+
+    const newContent = textBefore + prefix + selectedText + suffix + textAfter;
+    setContent(newContent);
+    
+    // Reset height after content change
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
+      }
+    }, 0);
+
+    textareaRef.current.focus();
   };
 
   const insertMention = (user: User) => {
@@ -125,7 +187,7 @@ export function ChatInput({
   };
 
   const handleSend = () => {
-    if (disabled || !content.trim()) return;
+    if (disabled || (!content.trim() && !isRecording)) return;
     onSend?.(content);
     setContent("");
     if (textareaRef.current) {
@@ -134,130 +196,171 @@ export function ChatInput({
   };
 
   return (
-    <div className={cn("p-4 bg-white/80 dark:bg-black/40 backdrop-blur border-t border-gray-200 dark:border-white/10", className)} {...props}>
+    <div className={cn("p-4 bg-background dark:bg-zinc-950/20 backdrop-blur relative border-t border-transparent", className)} {...props}>
+      {mentionSearch !== null && filteredUsers.length > 0 && (
+        <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4">
+          {filteredUsers.map((user, i) => (
+            <button
+              key={user.id}
+              onClick={() => insertMention(user)}
+              className={cn(
+                "w-full flex items-center gap-3 p-3 text-left transition-colors",
+                i === mentionIndex ? "bg-blue-500/10 dark:bg-white/10" : "hover:bg-gray-50 dark:hover:bg-white/5"
+              )}
+            >
+              <Avatar src={user.avatar} alt={user.name} className="w-8 h-8" />
+              <div>
+                <p className="text-sm font-bold dark:text-white">{user.name}</p>
+                <p className="text-xs text-gray-500 dark:text-white/40">@{user.name.toLowerCase().replace(/\s/g, '')}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
       {replyingTo && (
-        <div className="mb-3 flex items-center justify-between p-2 rounded-xl bg-blue-500/5 border-l-4 border-blue-500 animate-in slide-in-from-bottom-2">
+        <div className="mb-3 flex items-center justify-between p-3 rounded-2xl bg-blue-500/5 border-l-4 border-blue-500 animate-in slide-in-from-bottom-2">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-blue-500">Replying to</p>
             <p className="text-sm text-gray-600 dark:text-white/60 truncate">{replyingTo.content}</p>
           </div>
           <button 
             onClick={onCancelReply}
-            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400"
+            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      <div className="flex items-end gap-2">
-        <div className="flex items-center gap-1 mb-1">
-          <button 
-            onClick={onAttach}
-            disabled={disabled}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
-          >
-            <Paperclip className="h-5 w-5" />
-          </button>
-          <button 
-            onClick={onEmoji}
-            disabled={disabled}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
-          >
-            <Smile className="h-5 w-5" />
-          </button>
-        </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-end gap-2">
+          <div className="flex items-center mb-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger 
+                disabled={disabled}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
+              >
+                <Paperclip className="h-5 w-5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="top">
+                <DropdownMenuItem onClick={onAttach}>
+                  <ImageIcon className="h-4 w-4 mr-2" /> Image & Video
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onAttach}>
+                  <Paperclip className="h-4 w-4 mr-2" /> Document
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onLocation}>
+                  <MapPin className="h-4 w-4 mr-2" /> Location
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onContact}>
+                  <AtSign className="h-4 w-4 mr-2" /> Contact
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onPoll}>
+                  <AtSign className="h-4 w-4 mr-2" /> Poll
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onPix}>
+                  <AtSign className="h-4 w-4 mr-2" /> PIX
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onCarousel}>
+                  <Layout className="h-4 w-4 mr-2" /> Carousel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onButtons}>
+                  <Layout className="h-4 w-4 mr-2" /> Buttons
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onList}>
+                  <List className="h-4 w-4 mr-2" /> List Menu
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onGif}>
+                  <Gift className="h-4 w-4 mr-2" /> GIF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-        <div className="flex-1 relative">
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            placeholder={isRecording ? "Recording..." : placeholder}
-            disabled={disabled || isRecording}
-            rows={1}
-            className={cn(
-              "w-full resize-none rounded-2xl bg-gray-100 dark:bg-white/[0.03] border-none px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-gray-400 dark:text-white",
-              isRecording && "animate-pulse text-red-500"
+          <div className="flex-1 relative">
+            {isRecording ? (
+              <VoiceRecorder 
+                onSend={(blob, duration) => onVoiceEnd?.(blob, duration)}
+                onCancel={() => onCancelReply?.()}
+              />
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={handleInput}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder}
+                disabled={disabled}
+                rows={1}
+                className="w-full p-3 min-h-[48px] max-h-[300px] rounded-2xl bg-gray-100 dark:bg-zinc-900/50 border border-transparent focus:border-primary/50 focus:bg-white dark:focus:bg-zinc-900 text-sm resize-none transition-all outline-none dark:text-white placeholder:text-gray-400 font-medium"
+              />
             )}
-          />
-          
-          {mentionSearch !== null && filteredUsers.length > 0 && (
-            <Surface className="absolute bottom-full left-0 mb-2 w-64 overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-2">
-              <div className="p-1">
-                {filteredUsers.map((user, i) => (
-                  <button
-                    key={user.id}
-                    onClick={() => insertMention(user)}
-                    className={cn(
-                      "w-full flex items-center gap-2 p-2 rounded-xl text-left transition-colors",
-                      i === mentionIndex ? "bg-blue-500 text-white" : "hover:bg-gray-100 dark:hover:bg-white/[0.06]"
-                    )}
-                  >
-                    <Avatar src={user.avatar} alt={user.name} fallback={user.name[0]} size="sm" />
-                    <span className="text-sm font-medium">{user.name}</span>
-                  </button>
-                ))}
-              </div>
-            </Surface>
-          )}
+          </div>
+
+          <div className="flex items-center mb-1">
+            {content.trim() || isRecording ? (
+              <button 
+                onClick={handleSend}
+                disabled={disabled}
+                className="p-3 rounded-full bg-primary text-white hover:opacity-90 shadow-lg shadow-primary/20 transition-all active:scale-95"
+              >
+                <Send className="h-5 w-5" />
+              </button>
+            ) : (
+              <button 
+                onClick={onMic}
+                disabled={disabled}
+                className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
+              >
+                <Mic className="h-5 w-5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-1 mb-1">
-          {!content.trim() && !isRecording && (
-            <>
-              <button 
-                onClick={onGif}
-                disabled={disabled}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
-              >
-                <Gift className="h-5 w-5" />
-              </button>
-              <button 
-                onClick={onLocation}
-                disabled={disabled}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
-              >
-                <MapPin className="h-5 w-5" />
-              </button>
-            </>
-          )}
-          
-          {isRecording ? (
-            <Button 
-              size="icon" 
-              variant="ghost"
-              onClick={onMic}
-              className="rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 animate-pulse"
-            >
-              <Mic className="h-5 w-5" />
-            </Button>
-          ) : content.trim() ? (
-            <Button 
-              size="icon" 
-              onClick={handleSend}
-              disabled={disabled}
-              className="rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
-          ) : (
+        {!isRecording && (
+          <div className="flex items-center gap-1 text-gray-400 dark:text-white/30">
             <button 
-              onClick={onMic}
+              onClick={onEmoji}
               disabled={disabled}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-500 dark:text-white/50 transition-colors disabled:opacity-50"
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-primary transition-colors disabled:opacity-50"
+              title="Emoji"
             >
-              <Mic className="h-5 w-5" />
+              <Smile className="h-4 w-4" />
             </button>
-          )}
-        </div>
+            <div className="w-px h-3 bg-gray-200 dark:bg-white/10 mx-1" />
+            <button 
+              onClick={() => insertFormatting('*')}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-primary transition-colors"
+              title="Bold"
+            >
+              <Bold className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => insertFormatting('_')}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-primary transition-colors"
+              title="Italic"
+            >
+              <Italic className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => insertFormatting('~')}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-primary transition-colors"
+              title="Strikethrough"
+            >
+              <Strikethrough className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => insertFormatting('```', '```')}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-primary transition-colors"
+              title="Monospace"
+            >
+              <Code className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
-      {maxLength && (
-        <div className="mt-1 text-[10px] text-right text-gray-400">
-          {content.length} / {maxLength}
-        </div>
-      )}
     </div>
   );
 }

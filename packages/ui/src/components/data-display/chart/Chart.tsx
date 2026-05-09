@@ -66,7 +66,9 @@ export function ChartContainer<T = any>({
   }, []);
 
   const maxValue = useMemo(() => {
-    return Math.max(...data.map((d) => d.value)) * 1.1; // Add 10% headroom
+    if (!data || data.length === 0) return 1;
+    const max = Math.max(...data.map((d) => d.value));
+    return max === 0 ? 1 : max * 1.1; // Add 10% headroom, min 1
   }, [data]);
 
   return (

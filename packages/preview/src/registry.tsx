@@ -63,6 +63,7 @@ import { HooksDemo } from './demos/HooksDemo';
 import { BackgroundDemo } from './demos/BackgroundDemo';
 import { HeroDemo } from './demos/HeroDemo';
 import { DashboardDemo } from './demos/DashboardDemo';
+import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
 import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
 import HeroTextSource from '../../ui/src/components/typography/HeroText.tsx?raw';
 import LetterPullupSource from '../../ui/src/components/typography/LetterPullup.tsx?raw';
@@ -1012,12 +1013,16 @@ ${PageTransitionSource}`,
     id: 'chat',
     title: 'Chat System (Mega)',
     category: 'Data Display',
-    description: 'A complete, modern chat interface with voice recording, replies, reactions, and more.',
+    description: 'Enterprise-grade chat system with virtualization, interactive messages, carousels, reactions, and real-time sync.',
     code: `import { 
   ChatLayout, ChatSidebar, ChatHeader, 
-  MessageList, ChatInput, useChatMessages 
+  MessageList, ChatInput, InteractiveMessage,
+  CarouselMessage, useChatStore 
 } from '@pixonui/react';
 
+// High-performance store with O(1) updates
+// Virtualized list for 100k+ messages
+// Native Baileys/WhatsApp support
 // See ChatMegaDemo.tsx for full implementation`,
     demo: <ChatMegaDemo />
   },
@@ -1149,5 +1154,49 @@ ${StepperSource}
 // Spotlight.tsx
 ${SpotlightSource}`,
     demo: <TenNewComponentsDemo />
+  },
+  {
+    id: 'crm-advanced',
+    title: 'CRM & AI Advanced',
+    category: 'Templates',
+    description: 'Componentes avançados para sistemas de atendimento, CRM e IA, incluindo waveforms de áudio, resumos inteligentes e banners de status.',
+    code: `import { 
+  WaveformAudio, 
+  AISummaryCard, 
+  SmartReplySuggestions, 
+  BulkActionBar,
+  ConnectionStatusBanner 
+} from '@pixonui/react';
+
+// Waveform Audio (WhatsApp Style)
+<WaveformAudio 
+  audioUrl="..." 
+  duration={180} 
+/>
+
+// AI Insights
+<AISummaryCard 
+  summary="Resumo da conversa..."
+  sentiment="positive"
+/>
+
+// Smart Replies
+<SmartReplySuggestions 
+  suggestions={["Ok", "Entendido"]}
+  onSelect={(s) => ...}
+/>
+
+// Connection Status
+<ConnectionStatusBanner status="disconnected" />
+
+// Bulk Actions
+<BulkActionBar 
+  isVisible={true}
+  selectedCount={3}
+  actions={[
+    { label: 'Excluir', icon: <Trash2 />, onClick: () => {} }
+  ]}
+/>`,
+    demo: <CRMAdvancedDemo />
   }
 ];

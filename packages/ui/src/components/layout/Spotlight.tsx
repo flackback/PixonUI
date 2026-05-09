@@ -2,19 +2,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface SpotlightProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   size?: number;
   color?: string;
+  fill?: string;
 }
 
 export const Spotlight = ({ 
   children, 
   className, 
   size = 300, 
-  color = "rgba(255, 255, 255, 0.1)",
+  color,
+  fill,
   ...props 
 }: SpotlightProps) => {
   const divRef = useRef<HTMLDivElement>(null);
+  const effectiveColor = fill || color || "rgba(255, 255, 255, 0.1)";
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = divRef.current;
@@ -51,10 +54,10 @@ export const Spotlight = ({
         className="pointer-events-none absolute -inset-px transition-opacity duration-300"
         style={{
           opacity: 'var(--opacity, 0)',
-          background: `radial-gradient(${size}px circle at var(--mouse-x, center) var(--mouse-y, center), ${color}, transparent 80%)`,
+          background: `radial-gradient(${size}px circle at var(--mouse-x, center) var(--mouse-y, center), ${effectiveColor}, transparent 80%)`,
         }}
       />
-      <div className="relative h-full">{children}</div>
+      {children && <div className="relative h-full">{children}</div>}
     </div>
   );
 };

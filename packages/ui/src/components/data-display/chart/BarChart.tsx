@@ -17,6 +17,9 @@ export function BarChart<T = any>({
   onValueClick 
 }: BarChartProps<T>) {
   const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
+
+  if (!data || data.length === 0) return null;
+
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const itemWidth = chartWidth / data.length;

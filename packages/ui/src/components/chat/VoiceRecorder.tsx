@@ -22,7 +22,7 @@ export function VoiceRecorder({ onSend, onCancel, className, ...props }: VoiceRe
   useEffect(() => {
     startRecording();
     return () => cancelRecording();
-  }, [startRecording, cancelRecording]);
+  }, []);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);

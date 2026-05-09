@@ -23,13 +23,16 @@ export function LineChart<T = any>({
   onValueClick 
 }: LineChartProps<T>) {
   const { width, height, padding, data, maxValue, setHoveredIndex, hoveredIndex } = useChart<T>();
+
+  if (!data || data.length === 0) return null;
+
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   
   // Align 'center' matches BarChart (bands), 'edge' matches AreaChart (points)
   const itemWidth = align === 'center' 
     ? chartWidth / data.length 
-    : chartWidth / (data.length - 1);
+    : (data.length > 1 ? chartWidth / (data.length - 1) : chartWidth);
 
   const colors = {
     cyan: '#06b6d4',

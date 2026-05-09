@@ -8,11 +8,18 @@ import { Separator } from '../data-display/Separator';
 import { Switch } from '../form/Switch';
 
 interface ChatProfileProps extends React.HTMLAttributes<HTMLDivElement> {
-  user: User;
+  user?: User;
+  group?: any;
   onClose?: () => void;
 }
 
-export function ChatProfile({ user, onClose, className, ...props }: ChatProfileProps) {
+export function ChatProfile({ user, group, onClose, className, ...props }: ChatProfileProps) {
+  const displayName = user?.name || group?.name || "Info";
+  const avatarUrl = user?.avatar || group?.avatar;
+  const fallbackChar = displayName.charAt(0).toUpperCase();
+  const phone = user?.phone || "";
+  const bio = user?.bio || group?.description || (group ? "Group conversation" : "Hey there! I am using Pixon Chat.");
+
   return (
     <div className={cn("w-80 border-l border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 flex flex-col", className)} {...props}>
       <div className="h-16 flex items-center px-4 border-b border-gray-200 dark:border-white/10">
@@ -24,13 +31,13 @@ export function ChatProfile({ user, onClose, className, ...props }: ChatProfileP
 
       <ScrollArea className="flex-1">
         <div className="p-6 flex flex-col items-center text-center">
-          <Avatar src={user.avatar} alt={user.name} fallback={user.name[0]} className="h-24 w-24 mb-4 text-2xl" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user.name}</h2>
-          <p className="text-sm text-gray-500 dark:text-white/50 mt-1">{user.phone || '+1 (555) 000-0000'}</p>
+          <Avatar src={avatarUrl} alt={displayName} fallback={fallbackChar} className="h-24 w-24 mb-4 text-2xl" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{displayName}</h2>
+          {phone && <p className="text-sm text-gray-500 dark:text-white/50 mt-1">{phone}</p>}
           
           <div className="mt-6 w-full">
             <p className="text-sm text-gray-500 dark:text-white/50 mb-1 text-left">About</p>
-            <p className="text-sm text-gray-900 dark:text-white text-left">{user.bio || "Hey there! I am using Pixon Chat."}</p>
+            <p className="text-sm text-gray-900 dark:text-white text-left">{bio}</p>
           </div>
         </div>
 
@@ -67,7 +74,7 @@ export function ChatProfile({ user, onClose, className, ...props }: ChatProfileP
         <div className="p-4 space-y-2">
           <button className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors text-sm font-medium">
             <Ban className="h-5 w-5" />
-            Block {user.name}
+            Block {displayName}
           </button>
           <button className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors text-sm font-medium">
             <Trash2 className="h-5 w-5" />

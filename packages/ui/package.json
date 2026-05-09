@@ -1,17 +1,17 @@
 {
   "name": "@pixonui/react",
-  "version": "0.3.0",
+  "version": "0.5.35",
   "description": "Modern, decoupled, glassmorphic UI library for React with zero heavy dependencies.",
   "author": "PixonUI Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pixonui/pixonui.git"
+    "url": "git+https://github.com/flackback/pixonui.git"
   },
   "bugs": {
-    "url": "https://github.com/pixonui/pixonui/issues"
+    "url": "https://github.com/flackback/pixonui/issues"
   },
-  "homepage": "https://github.com/pixonui/pixonui#readme",
+  "homepage": "https://pixonui.lovable.app",
   "keywords": [
     "react",
     "ui",
@@ -41,6 +41,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "prepare": "npm run build",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -48,12 +49,13 @@
   },
   "peerDependencies": {
     "lucide-react": "^0.561.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {

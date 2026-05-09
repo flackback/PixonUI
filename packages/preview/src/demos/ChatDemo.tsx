@@ -44,8 +44,8 @@ export function ChatDemo() {
 
   const conversations: Conversation[] = [
     { id: '1', user: USERS['1']!, lastMessage: messages[messages.length - 1], unreadCount: 2 },
-    { id: '2', user: USERS['2']!, lastMessage: { id: '1', content: 'Did you see the latest design updates?', senderId: '2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), status: 'read' } },
-    { id: '3', user: USERS['3']!, lastMessage: { id: '0', content: 'Call me later', senderId: '3', timestamp: new Date() } },
+    { id: '2', user: USERS['2']!, lastMessage: { id: '1', content: 'Did you see the latest design updates?', senderId: '2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), status: 'read' }, unreadCount: 0 },
+    { id: '3', user: USERS['3']!, lastMessage: { id: '0', content: 'Call me later', senderId: '3', timestamp: new Date() }, unreadCount: 0 },
   ];
 
   const handleSend = (content: string) => {
