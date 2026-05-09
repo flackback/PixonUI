@@ -167,21 +167,23 @@ const { results, query, setQuery } = useSearch(items, { keys: ['name'] });`,
     title: 'Button',
     category: 'Inputs',
     description: 'Interactive element that triggers an action. Supports multiple variants and sizes.',
-    code: `import { Button } from '@pixonui/react';
+    code: `import { Button, GlowButton } from '@pixonui/react';
 import { Zap, Trash2, Check, AlertTriangle } from 'lucide-react';
 
 <div className="flex flex-wrap gap-4">
-  <Button variant="primary" leftIcon={<Zap size={18} />}>Primary</Button>
+  <Button variant="primary" leftIcon={<Zap size={18} />}>Primary Gradient</Button>
+  <Button variant="glass">Glassmorphic</Button>
+  <Button variant="shine">Metallic Shine</Button>
+  <Button variant="cyber">Cyber Glow</Button>
   <Button variant="secondary">Secondary</Button>
   <Button variant="outline">Outline</Button>
-  <Button variant="ghost">Ghost</Button>
-  <Button variant="success" leftIcon={<Check size={18} />}>Success</Button>
-  <Button variant="alert" leftIcon={<AlertTriangle size={18} />}>Alert</Button>
-  <Button variant="danger" leftIcon={<Trash2 size={18} />}>Danger</Button>
 </div>`,
     demo: (
       <div className="flex flex-wrap gap-4 items-center justify-center">
         <Button variant="primary" leftIcon={<Zap size={18} />}>Primary</Button>
+        <Button variant="glass">Glass</Button>
+        <Button variant="shine">Shine</Button>
+        <Button variant="cyber">Cyber</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="outline">Outline</Button>
         <Button variant="ghost">Ghost</Button>
