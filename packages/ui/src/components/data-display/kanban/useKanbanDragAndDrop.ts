@@ -33,12 +33,15 @@ export function useKanbanDragAndDrop({
 
   const handleDragStart = (e: React.DragEvent, id: string, type: 'task' | 'column') => {
     if (type === 'task') {
-      setDraggedTaskId(id);
       e.dataTransfer.setData('taskId', id);
       onTaskDragStart?.(id);
       if (typeof document !== 'undefined') {
         document.body.classList.add('is-dragging-task');
       }
+      // Delay state update so the browser captures the original full-opacity element as the drag image first
+      setTimeout(() => {
+        setDraggedTaskId(id);
+      }, 0);
     } else {
       setDraggedColumnId(id);
       e.dataTransfer.setData('columnId', id);

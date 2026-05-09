@@ -19,6 +19,8 @@ interface KanbanColumnProps {
   isCollapsed?: boolean;
   children?: React.ReactNode;
   className?: string;
+  isDragOver?: boolean;
+  draggedTaskId?: string | null;
 }
 
 export function KanbanColumn({ 
@@ -33,13 +35,16 @@ export function KanbanColumn({
   onDrop, 
   isCollapsed, 
   children,
-  className 
+  className,
+  isDragOver,
+  draggedTaskId
 }: KanbanColumnProps) {
   return (
     <div 
       className={cn(
-        "flex flex-col h-full transition-all duration-300",
+        "flex flex-col h-full transition-all duration-300 rounded-3xl border border-transparent p-2",
         isCollapsed ? "w-12" : "w-80",
+        isDragOver && !isCollapsed && "bg-cyan-500/[0.02] border-cyan-500/20 shadow-lg scale-[1.01] backdrop-blur-md",
         className
       )}
       onDragOver={(e) => onDragOver?.(e)}
@@ -116,6 +121,7 @@ export function KanbanColumn({
             onDragStart={(e) => onDragStart?.(e, task.id, 'task')}
             onDragOver={(e) => onDragOver?.(e, task.id)}
             onDrop={(e) => onDrop?.(e, task.id)}
+            isDragged={draggedTaskId === task.id}
           />
         ))}
       </div>

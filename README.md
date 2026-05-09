@@ -53,12 +53,14 @@
 - **ChatInput**: Advanced input with voice recording, mentions, and replies.
 - **Hooks**: `useChatMessages`, `useVoiceRecorder`, `useReadReceipts`, `useTypingIndicator`, `useChatSearch`.
 
-### 📋 Kanban System (Mega Expansion)
-- **KanbanBoard**: Professional project management board with WIP limits and swimlanes.
-- **KanbanTaskModal**: Rich task editing with subtasks, checklists, and activity feeds.
-- **Multiple Views**: Switch between Board, List, Timeline, and Table visualizations.
-- **Advanced Filtering**: `KanbanFilterBar` with saved filters and multi-criteria search.
-- **Hooks**: `useKanbanUndo` (Undo/Redo), `useKanbanKeyboard` (Shortcuts), `useKanbanFilters`.
+- **Hooks**:
+  - `useKanbanAnalytics` 🧠: **Next-Gen Heuristic Intelligence Engine** that calculates cycle times, predicts completion hours with confidence scoring, detects WIP and queue bottlenecks, and alerts on assignee workload overloads locally in microseconds.
+  - `useKanbanTasks`: Highly optimized local task grouping, sorting, and lazy load pagination.
+  - `useKanbanDragAndDrop`: Secure multitouch browser HTML5 drag-and-drop controller.
+  - `useKanbanBoardScroll`: Dynamic horizontal viewport auto-scroller for active drag-and-drop operations.
+  - `useKanbanUndo`: Instant state timeline history and keyboard-driven Undo/Redo operations.
+  - `useKanbanKeyboard`: High-speed navigation and accessibility shortcuts (Space, Arrow keys, Edit keys).
+  - `useKanbanFilters`: Real-time fuzzy querying and saved search states.
 - **Time Tracking**: Integrated time tracking and due date management.
 
 ### 🏗️ Layout & Structure

@@ -24,6 +24,7 @@ interface KanbanCardProps {
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
   renderCard?: (task: KanbanTask) => React.ReactNode;
+  isDragged?: boolean;
 }
 
 export const KanbanCard = React.memo(({
@@ -42,7 +43,8 @@ export const KanbanCard = React.memo(({
   onDragStart,
   onDragOver,
   onDrop,
-  renderCard
+  renderCard,
+  isDragged
 }: KanbanCardProps) => {
   if (renderCard) return <>{renderCard(task)}</>;
 
@@ -67,6 +69,7 @@ export const KanbanCard = React.memo(({
         "p-6 border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.03] hover:bg-gray-100/50 dark:hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 dark:hover:border-white/20",
         task.blockedBy && task.blockedBy.length > 0 && "border-red-500/30 bg-red-500/[0.02]",
         isSelected && "ring-2 ring-cyan-500/50 bg-cyan-500/[0.02]",
+        isDragged && "opacity-30 border-dashed border-cyan-500/50 bg-cyan-500/[0.02] scale-[0.98]",
         cardClassName
       )}
     >

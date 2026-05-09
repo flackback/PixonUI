@@ -80,7 +80,9 @@ export function KanbanBoard({
     handleDragStart,
     handleDragOver,
     handleDrop,
-    handleDragEnd
+    handleDragEnd,
+    draggedTaskId,
+    dragOverColumnId
   } = useKanbanDragAndDrop({ 
     columns, 
     tasks, 
@@ -163,6 +165,8 @@ export function KanbanBoard({
                         onDragStart={handleDragStart}
                         onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
                         onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
+                        isDragOver={dragOverColumnId === column.id}
+                        draggedTaskId={draggedTaskId}
                       />
                     ))}
                   </div>
@@ -185,6 +189,8 @@ export function KanbanBoard({
                 onDragStart={handleDragStart}
                 onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
                 onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
+                isDragOver={dragOverColumnId === column.id}
+                draggedTaskId={draggedTaskId}
               />
             ))}
           </div>
