@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
-import { generateSpringTrajectory, SpringConfig } from '../utils/motion';
+import { generateSpringTrajectory, parseStyleShortcuts, SpringConfig } from '../utils/motion';
 
 export interface PixonAnimateOptions extends KeyframeAnimationOptions {
   /** If provided, compiles a custom physical spring instead of standard easing */
@@ -7,10 +7,10 @@ export interface PixonAnimateOptions extends KeyframeAnimationOptions {
 }
 
 export interface UsePixonAnimateReturn<T extends HTMLElement = HTMLDivElement> {
-  ref: React.RefObject<T | null>;
+  ref: React.RefObject<T>;
   /** Trigger a high-performance, WAAPI-driven spring/easing animation */
   animate: (
-    keyframes: Keyframe[] | PropertyIndexedKeyframes,
+    keyframes: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>,
     options?: PixonAnimateOptions
   ) => Animation | null;
   /** Whether an animation is currently active */
@@ -48,7 +48,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
   }, []);
 
   const animate = useCallback((
-    keyframes: Keyframe[] | PropertyIndexedKeyframes,
+    keyframes: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>,
     options: PixonAnimateOptions = {}
   ): Animation | null => {
     const el = ref.current;
@@ -57,13 +57,22 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     cancel(); // Clear any previous running animations
 
     const { spring, ...waapiOptions } = options;
-    let finalKeyframes = keyframes;
+    
+    // Parse shorthand style shortcuts
+    let parsedKeyframes: Keyframe[] | PropertyIndexedKeyframes;
+    if (Array.isArray(keyframes)) {
+      parsedKeyframes = keyframes.map(kf => parseStyleShortcuts(kf));
+    } else {
+      parsedKeyframes = [parseStyleShortcuts(keyframes as Record<string, any>)];
+    }
+
+    let finalKeyframes = parsedKeyframes;
     let finalDuration = waapiOptions.duration ?? 400;
     let finalEasing = waapiOptions.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)';
 
-    if (spring && Array.isArray(keyframes) && keyframes.length >= 2) {
-      const first = keyframes[0]!;
-      const last = keyframes[keyframes.length - 1]!;
+    if (spring && Array.isArray(finalKeyframes) && finalKeyframes.length >= 2) {
+      const first = finalKeyframes[0]!;
+      const last = finalKeyframes[finalKeyframes.length - 1]!;
 
       // Generate a perfect spring trajectory progress (0 to 1)
       const { progress, duration } = generateSpringTrajectory(0, 1, spring);

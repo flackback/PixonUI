@@ -11,13 +11,73 @@ import {
   NumberTicker,
   Heading,
   PageLoader,
-  PageTransition
+  PageTransition,
+  usePixonAnimate,
+  calculateStagger,
+  timeline
 } from '@pixonui/react';
 
 export function MotionDemo() {
   const [key, setKey] = React.useState(0);
 
-  const reload = () => setKey(prev => prev + 1);
+  // ── States for our brand-new demos ───────────────────────────────────
+  const [expanded, setExpanded] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState('Home');
+  const [gridKey, setGridKey] = React.useState(0);
+
+  const { ref: springRef, pulse, shake, animate } = usePixonAnimate<HTMLDivElement>();
+
+  // Refs for the Ultimate Timeline Demo
+  const timelineTitleRef = React.useRef<HTMLHeadingElement>(null);
+  const timelineBadgeRef = React.useRef<HTMLSpanElement>(null);
+  const item1Ref = React.useRef<HTMLDivElement>(null);
+  const item2Ref = React.useRef<HTMLDivElement>(null);
+  const item3Ref = React.useRef<HTMLDivElement>(null);
+
+  const triggerSequence = () => {
+    // Instantly reset states to starting values so they can be re-run
+    timeline()
+      .add(timelineTitleRef, { opacity: 0, y: -25 })
+      .add(timelineBadgeRef, { opacity: 0, scale: 0 })
+      .add([item1Ref, item2Ref, item3Ref], { opacity: 0, y: 30 })
+      .play()
+      .finished.then(() => {
+        // Run the beautiful reveal sequence
+        timeline()
+          .add(timelineTitleRef, { opacity: 1, y: 0 }, { duration: 500, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' })
+          .add(timelineBadgeRef, { opacity: 1, scale: 1 }, { offset: '<+=150', spring: { stiffness: 260, damping: 14 } })
+          .add([item1Ref, item2Ref, item3Ref], { opacity: 1, y: 0 }, { offset: '>-150', stagger: 80, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' })
+          .play();
+      });
+  };
+
+  React.useEffect(() => {
+    // Run initial sequence after a tiny delay to allow mount rendering
+    const timer = setTimeout(() => {
+      triggerSequence();
+    }, 450);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const triggerCustomSpring = () => {
+    animate(
+      [
+        { transform: 'translate3d(0px, 0, 0) rotate(0deg)' },
+        { transform: 'translate3d(120px, -40px, 0) rotate(45deg)' }
+      ],
+      {
+        spring: { stiffness: 220, damping: 12 },
+      }
+    );
+  };
+
+  const reload = () => {
+    setKey(prev => prev + 1);
+    setGridKey(prev => prev + 1);
+    setTimeout(() => {
+      triggerSequence();
+    }, 150);
+  };
 
   return (
     <PageTransition key={key} preset="fade" duration={500}>
@@ -31,6 +91,181 @@ export function MotionDemo() {
           </p>
         </div>
         <Button onClick={reload}>Replay Animations</Button>
+      </div>
+
+      {/* Brand-New Native-First WAAPI Motion Features */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 border-b border-white/5 pb-12">
+        
+        {/* 1. Off-Thread GPU Spring Hook (usePixonAnimate) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-purple-400 font-bold">Off-Thread GPU Springs</h3>
+            <span className="text-xs bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2.5 py-0.5 rounded-full font-mono">usePixonAnimate</span>
+          </div>
+          <Surface className="p-8 flex flex-col justify-between min-h-[320px] bg-glass">
+            <div className="flex flex-col items-center justify-center flex-1 py-8">
+              <div 
+                ref={springRef}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 shadow-xl shadow-purple-500/25 flex items-center justify-center text-2xl cursor-pointer"
+              >
+                🔮
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <Button size="sm" variant="outline" onClick={() => pulse(1.25)}>Pulse</Button>
+              <Button size="sm" variant="outline" onClick={() => shake(14)}>Shake</Button>
+              <Button size="sm" variant="primary" onClick={triggerCustomSpring}>Custom Path</Button>
+            </div>
+          </Surface>
+        </div>
+
+        {/* 2. Euclidean Grid Staggers (calculateStagger) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-cyan-400 font-bold">Euclidean Radial Grid Stagger</h3>
+            <Button size="sm" variant="ghost" onClick={() => setGridKey(prev => prev + 1)}>Replay Stagger</Button>
+          </div>
+          <Surface className="p-8 flex items-center justify-center min-h-[320px] bg-glass">
+            <div key={gridKey} className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 16 }).map((_, i) => {
+                const cols = 4;
+                const delay = calculateStagger(i, 16, {
+                  delay: 60,
+                  from: 'center',
+                  grid: [cols, 4]
+                });
+                return (
+                  <Motion
+                    key={i}
+                    from={{ opacity: 0, scale: 0.1, y: 15 }}
+                    to={{ opacity: 1, scale: 1, y: 0 }}
+                    delay={delay}
+                    easing="spring"
+                    spring={{ stiffness: 280, damping: 14 }}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-white/[0.05] border border-white/10 hover:border-cyan-500/30 flex items-center justify-center text-xs text-cyan-300 font-bold transition-all duration-300 hover:scale-105 hover:bg-cyan-500/5 cursor-pointer">
+                      {i + 1}
+                    </div>
+                  </Motion>
+                );
+              })}
+            </div>
+          </Surface>
+        </div>
+
+        {/* 3. Hardware-Accelerated FLIP Layout transitions (layout) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-amber-400 font-bold">Hardware-Accelerated FLIP Layout</h3>
+            <span className="text-xs bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-mono">layout</span>
+          </div>
+          <Surface className="p-8 flex items-center justify-center min-h-[320px] bg-glass">
+            <Motion
+              layout
+              onClick={() => setExpanded(!expanded)}
+              className="p-6 bg-slate-900/60 border border-white/10 rounded-2xl cursor-pointer w-full max-w-[360px] overflow-hidden select-none"
+              easing="spring"
+              spring={{ stiffness: 300, damping: 20 }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white text-md">Click to {expanded ? 'Collapse' : 'Expand'}</span>
+                <span className="text-amber-300 text-lg">{expanded ? '▲' : '▼'}</span>
+              </div>
+              {expanded && (
+                <Motion
+                  from={{ opacity: 0, y: 10 }}
+                  to={{ opacity: 1, y: 0 }}
+                  delay={100}
+                  className="mt-4 text-sm text-white/60 leading-relaxed"
+                >
+                  This entire container, layout boundaries, and children elements morph and scale smoothly using the <strong>GPU-powered FLIP Projection Engine</strong> in PixonUI. Zero main thread reflow lag!
+                </Motion>
+              )}
+            </Motion>
+          </Surface>
+        </div>
+
+        {/* 4. Shared Layout Transitions (layoutId) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-emerald-400 font-bold">Elastic Shared Layout Transitions</h3>
+            <span className="text-xs bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono">layoutId</span>
+          </div>
+          <Surface className="p-8 flex flex-col items-center justify-center min-h-[320px] bg-glass">
+            <div className="flex flex-wrap gap-2 p-2 bg-black/40 border border-white/5 rounded-2xl w-full max-w-[320px]">
+              {['Home', 'Inbox', 'SaaS', 'Config'].map((tab) => {
+                const isActive = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className="relative flex-1 flex items-center justify-center py-2 text-xs font-semibold text-white transition-colors focus:outline-none"
+                  >
+                    {isActive && (
+                      <Motion
+                        layoutId="demo-active-indicator"
+                        className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl -z-10 shadow-lg shadow-emerald-500/20"
+                        easing="spring"
+                        spring={{ stiffness: 350, damping: 24 }}
+                      >
+                        <div className="absolute inset-0 rounded-xl" />
+                      </Motion>
+                    )}
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-8 text-xs text-white/40 text-center max-w-[280px] leading-relaxed">
+              Click different tabs above. The glossy green highlighter background will slide and morph seamlessly between separate elements!
+            </p>
+          </Surface>
+        </div>
+
+        {/* 5. Ultimate Timeline Orchestration */}
+        <div className="space-y-4 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-purple-400 font-bold">PixonUI Ultimate Timeline Orchestrator</h3>
+            <span className="text-xs bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2.5 py-0.5 rounded-full font-mono font-bold">timeline()</span>
+          </div>
+          <Surface className="p-8 flex flex-col md:flex-row items-center justify-between gap-8 min-h-[320px] bg-glass">
+            <div className="flex flex-col flex-1 space-y-6 w-full max-w-[400px]">
+              <div className="flex items-center justify-between w-full">
+                <h4 ref={timelineTitleRef} className="text-xl font-bold text-white tracking-tight opacity-0">
+                  SaaS Revenue Report
+                </h4>
+                <span ref={timelineBadgeRef} className="text-xs bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono font-bold opacity-0">
+                  Live +24.8%
+                </span>
+              </div>
+              
+              <div className="space-y-3 w-full">
+                <div ref={item1Ref} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between opacity-0 hover:border-purple-500/20 transition-colors">
+                  <span className="text-sm text-white/70">Monthly Recurring Revenue</span>
+                  <span className="text-sm font-bold text-white">$42,850</span>
+                </div>
+                <div ref={item2Ref} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between opacity-0 hover:border-purple-500/20 transition-colors">
+                  <span className="text-sm text-white/70">Customer Acquisition Cost</span>
+                  <span className="text-sm font-bold text-white">$120</span>
+                </div>
+                <div ref={item3Ref} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between opacity-0 hover:border-purple-500/20 transition-colors">
+                  <span className="text-sm text-white/70">Active Paid Subscriptions</span>
+                  <span className="text-sm font-bold text-white">842</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-center justify-center space-y-4 max-w-[280px]">
+              <p className="text-xs text-white/50 text-center leading-relaxed">
+                Experience the magic of native multi-target spring & layout sequencing compiled entirely off-thread into WAAPI layers.
+              </p>
+              <Button size="lg" variant="primary" className="shadow-lg shadow-purple-500/20" onClick={triggerSequence}>
+                ⚡ Replay Timeline Sequence
+              </Button>
+            </div>
+          </Surface>
+        </div>
+
       </div>
 
       {/* Mask Reveal */}

@@ -552,11 +552,27 @@ export function Motion({
     const el = ref.current;
     if (!el) return;
 
-    // Get current actual position and size
+    // Get current visual position (could be currently animating)
+    const animatingRect = el.getBoundingClientRect();
+
+    // Cancel active FLIP animations to snap element to its clean DOM destination layout
+    const activeAnims = el.getAnimations ? el.getAnimations() : [];
+    let wasAnimating = false;
+    activeAnims.forEach((anim) => {
+      if (anim.id === 'pixon-flip') {
+        wasAnimating = true;
+        anim.cancel();
+      }
+    });
+
+    // Measure the clean un-transformed destination layout
     const currentRect = el.getBoundingClientRect();
     let prev: DOMRect | null = null;
 
-    if (layoutId) {
+    if (wasAnimating) {
+      // Smoothly continue animation from its current visual position
+      prev = animatingRect;
+    } else if (layoutId) {
       const cached = sharedLayoutRegistry.get(layoutId);
       if (cached && Date.now() - cached.timestamp < 150) {
         prev = cached.rect;
@@ -597,6 +613,7 @@ export function Motion({
             },
           ],
           {
+            id: 'pixon-flip',
             duration: resolvedDuration,
             easing: easingCSS,
           }

@@ -91,9 +91,15 @@ export const BackgroundGlow = ({
         }
         .animate-bg-glow-float {
           animation: bgGlowFloat ease-in-out infinite;
+          will-change: transform;
+          backface-visibility: hidden;
+          transform: translateZ(0);
         }
         .animate-bg-glow-float-reverse {
           animation: bgGlowFloatReverse ease-in-out infinite;
+          will-change: transform;
+          backface-visibility: hidden;
+          transform: translateZ(0);
         }
       `}</style>
     </div>

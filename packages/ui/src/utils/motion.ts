@@ -8,6 +8,8 @@
  * Runs 100% on the compositor thread of the browser, avoiding the JS main thread.
  */
 
+import type { RefObject } from 'react';
+
 // ============================================================================
 // 1. Spring Physics Mathematical Compiler
 // ============================================================================
@@ -170,16 +172,23 @@ export function calculateStagger(
 }
 
 // ============================================================================
-// 3. Chained Web Animations API (WAAPI) Timeline Scheduler
+// 3. Chained Web Animations API (WAAPI) Timeline Scheduler & Shortcuts
 // ============================================================================
 
-export type AnimatableTarget = string | HTMLElement | HTMLElement[] | NodeListOf<HTMLElement>;
+export type AnimatableTarget =
+  | string
+  | HTMLElement
+  | HTMLElement[]
+  | NodeListOf<HTMLElement>
+  | RefObject<HTMLElement | null>
+  | Array<HTMLElement | RefObject<HTMLElement | null> | null>;
 
 export interface TimelineTrack {
   target: AnimatableTarget;
   keyframes: Keyframe[] | PropertyIndexedKeyframes;
   duration?: number;
   delay?: number;
+  stagger?: number;
   easing?: string;
   spring?: SpringConfig;
   /**
@@ -188,7 +197,19 @@ export interface TimelineTrack {
    * - number (e.g. 500): Absolute time from timeline start.
    * - '+=100': Relative delay from previous track end.
    * - '-=150': Overlap with previous track.
+   * - '<': Starts at the exact start time of the previous track.
+   * - '<+=100': Starts 100ms after the start of the previous track.
+   * - '>-150': Starts 150ms before the end of the previous track.
    */
+  offset?: string | number;
+}
+
+export interface UltimateAnimationOptions {
+  duration?: number;
+  delay?: number;
+  stagger?: number;
+  easing?: string;
+  spring?: SpringConfig;
   offset?: string | number;
 }
 
@@ -202,6 +223,58 @@ export interface PixonTimelineController {
   finished: Promise<void>;
   /** Get all playing WAAPI active Animation objects */
   getAnimations: () => Animation[];
+}
+
+/**
+ * Translates shorthand CSS transition properties like x, y, scale, rotate
+ * into high-performance, hardware-accelerated 'transform' rules.
+ */
+export function parseStyleShortcuts(style: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  const transforms: string[] = [];
+
+  // Parse translation shorthand (x, y)
+  const tx = style.x !== undefined ? (typeof style.x === 'number' ? `${style.x}px` : style.x) : null;
+  const ty = style.y !== undefined ? (typeof style.y === 'number' ? `${style.y}px` : style.y) : null;
+  if (tx !== null || ty !== null) {
+    transforms.push(`translate3d(${tx ?? '0px'}, ${ty ?? '0px'}, 0)`);
+  }
+
+  // Parse scale shorthand
+  if (style.scale !== undefined) {
+    transforms.push(`scale(${style.scale})`);
+  }
+
+  // Parse rotation shorthand
+  if (style.rotate !== undefined) {
+    transforms.push(`rotate(${typeof style.rotate === 'number' ? `${style.rotate}deg` : style.rotate})`);
+  }
+
+  // Parse skew shorthand
+  if (style.skewX !== undefined) {
+    transforms.push(`skewX(${typeof style.skewX === 'number' ? `${style.skewX}deg` : style.skewX})`);
+  }
+  if (style.skewY !== undefined) {
+    transforms.push(`skewY(${typeof style.skewY === 'number' ? `${style.skewY}deg` : style.skewY})`);
+  }
+
+  // Parse blur shorthand
+  if (style.blur !== undefined) {
+    result.filter = `blur(${typeof style.blur === 'number' ? `${style.blur}px` : style.blur})`;
+  }
+
+  // Apply build transforms
+  if (transforms.length > 0) {
+    result.transform = transforms.join(' ');
+  }
+
+  // Copy other properties
+  Object.keys(style).forEach((key) => {
+    if (['x', 'y', 'scale', 'rotate', 'skewX', 'skewY', 'blur'].includes(key)) return;
+    result[key] = style[key];
+  });
+
+  return result;
 }
 
 /**
@@ -221,17 +294,58 @@ export class PixonTimeline {
   }
 
   /**
-   * Add a new animation track to the timeline
+   * Add a new animation track to the timeline (supports direct overloads)
    */
-  public add(track: TimelineTrack): this {
-    this.tracks.push(track);
+  public add(track: TimelineTrack): this;
+  public add(
+    target: AnimatableTarget,
+    styles: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>,
+    options?: UltimateAnimationOptions
+  ): this;
+  public add(
+    targetOrTrack: AnimatableTarget | TimelineTrack,
+    styles?: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>,
+    options?: UltimateAnimationOptions
+  ): this {
+    if (styles === undefined) {
+      // Backwards compatible: standard TimelineTrack object
+      const track = targetOrTrack as TimelineTrack;
+      if (Array.isArray(track.keyframes)) {
+        track.keyframes = track.keyframes.map((kf) => parseStyleShortcuts(kf));
+      } else if (track.keyframes && typeof track.keyframes === 'object') {
+        track.keyframes = parseStyleShortcuts(track.keyframes as any) as any;
+      }
+      this.tracks.push(track);
+    } else {
+      // Short / Ultimate React syntax called!
+      const target = targetOrTrack as AnimatableTarget;
+      let keyframes: Keyframe[] | PropertyIndexedKeyframes;
+
+      if (Array.isArray(styles)) {
+        keyframes = styles.map((kf) => parseStyleShortcuts(kf));
+      } else {
+        keyframes = [parseStyleShortcuts(styles as Record<string, any>)];
+      }
+
+      this.tracks.push({
+        target,
+        keyframes,
+        duration: options?.duration,
+        delay: options?.delay,
+        stagger: options?.stagger,
+        easing: options?.easing,
+        spring: options?.spring,
+        offset: options?.offset,
+      });
+    }
     return this;
   }
 
   /**
-   * Evaluates targets (resolving strings as query selectors, handling arrays)
+   * Evaluates targets (resolving strings as query selectors, handling arrays and refs)
    */
   private resolveTargets(target: AnimatableTarget): HTMLElement[] {
+    if (!target) return [];
     if (typeof target === 'string') {
       return Array.from(document.querySelectorAll(target)) as HTMLElement[];
     }
@@ -242,7 +356,17 @@ export class PixonTimeline {
       return Array.from(target) as HTMLElement[];
     }
     if (Array.isArray(target)) {
-      return target;
+      return (target as any[]).flatMap((t) => {
+        if (!t) return [];
+        if (t instanceof HTMLElement) return [t];
+        if (typeof t === 'object' && 'current' in t) {
+          return t.current ? [t.current] : [];
+        }
+        return [];
+      });
+    }
+    if (typeof target === 'object' && 'current' in target) {
+      return (target as any).current ? [(target as any).current] : [];
     }
     return [];
   }
@@ -254,8 +378,8 @@ export class PixonTimeline {
     this.cancel(); // Reset any existing running sequences
     this.activeAnimations = [];
 
-    let cursor = 0; // The continuous timeline clock in milliseconds
-    let lastTrackEnd = 0;
+    let prevTrackStart = 0;
+    let prevTrackEnd = 0;
 
     const completedPromises: Promise<void>[] = [];
 
@@ -263,107 +387,156 @@ export class PixonTimeline {
       const targets = this.resolveTargets(track.target);
       if (targets.length === 0) return;
 
-      // Calculate absolute start time for this track based on offset
-      let trackStart = lastTrackEnd;
+      // Calculate absolute start time based on offset with anchors support (<, >)
+      let trackStart = prevTrackEnd;
 
       if (track.offset !== undefined) {
         if (typeof track.offset === 'number') {
           trackStart = track.offset;
         } else if (typeof track.offset === 'string') {
-          if (track.offset.startsWith('+=')) {
-            trackStart = lastTrackEnd + parseFloat(track.offset.slice(2));
-          } else if (track.offset.startsWith('-=')) {
-            trackStart = lastTrackEnd - parseFloat(track.offset.slice(2));
+          const offsetStr = track.offset.trim();
+          if (offsetStr.startsWith('+=')) {
+            trackStart = prevTrackEnd + parseFloat(offsetStr.slice(2));
+          } else if (offsetStr.startsWith('-=')) {
+            trackStart = prevTrackEnd - parseFloat(offsetStr.slice(2));
+          } else if (offsetStr.startsWith('<')) {
+            const modifier = offsetStr.slice(1); // e.g. "+=100"
+            if (modifier.startsWith('+=')) {
+              trackStart = prevTrackStart + parseFloat(modifier.slice(2));
+            } else if (modifier.startsWith('-=')) {
+              trackStart = prevTrackStart - parseFloat(modifier.slice(2));
+            } else if (modifier) {
+              trackStart = prevTrackStart + parseFloat(modifier);
+            } else {
+              trackStart = prevTrackStart;
+            }
+          } else if (offsetStr.startsWith('>')) {
+            const modifier = offsetStr.slice(1);
+            if (modifier.startsWith('+=')) {
+              trackStart = prevTrackEnd + parseFloat(modifier.slice(2));
+            } else if (modifier.startsWith('-=')) {
+              trackStart = prevTrackEnd - parseFloat(modifier.slice(2));
+            } else if (modifier) {
+              trackStart = prevTrackEnd + parseFloat(modifier);
+            } else {
+              trackStart = prevTrackEnd;
+            }
           }
         }
       }
+
+      trackStart = Math.max(0, trackStart);
 
       // Handle custom physics spring compiled inside WAAPI
       let resolvedKeyframes = track.keyframes;
       let resolvedDuration = track.duration ?? 400;
       let resolvedEasing = track.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)';
 
-      if (track.spring && Array.isArray(track.keyframes) && track.keyframes.length >= 2) {
-        // Find properties to animate
-        const first = track.keyframes[0]!;
-        const last = track.keyframes[track.keyframes.length - 1]!;
+      if (track.spring && Array.isArray(track.keyframes)) {
+        let first: Keyframe = {};
+        let last: Keyframe = {};
 
-        // Compile physical spring progress
-        const { progress, duration } = generateSpringTrajectory(0, 1, track.spring);
-        resolvedDuration = duration;
-        resolvedEasing = 'linear'; // Springs are pre-interpolated linearly
+        if (track.keyframes.length >= 2) {
+          first = track.keyframes[0]!;
+          last = track.keyframes[track.keyframes.length - 1]!;
+        } else if (track.keyframes.length === 1) {
+          // Auto-capture starting state from first matched DOM element
+          const el = targets[0];
+          if (el) {
+            last = track.keyframes[0]!;
+            const style = window.getComputedStyle(el);
 
-        // Interpolate keys
-        const springKeys: Keyframe[] = [];
-        const numericProps: string[] = [];
-        const otherProps: string[] = [];
+            Object.keys(last).forEach((key) => {
+              if (key === 'transform') return;
+              if (key === 'opacity') {
+                first.opacity = parseFloat(style.opacity) || 1;
+              } else if (typeof last[key] === 'number') {
+                first[key] = parseFloat(style[key as any] ?? '') || 0;
+              }
+            });
 
-        // Distinguish numeric props (can be springed) and other props
-        Object.keys(last).forEach((key) => {
-          if (key === 'offset' || key === 'easing' || key === 'composite') return;
-          const valStart = first[key];
-          const valEnd = last[key];
-          if (typeof valStart === 'number' && typeof valEnd === 'number') {
-            numericProps.push(key);
-          } else {
-            otherProps.push(key);
+            if (last.transform) {
+              const hasTranslate = String(last.transform).includes('translate3d');
+              const hasScale = String(last.transform).includes('scale');
+              const hasRotate = String(last.transform).includes('rotate');
+
+              if (hasTranslate) first.transform = (first.transform ?? '') + ' translate3d(0px, 0px, 0)';
+              if (hasScale) first.transform = (first.transform ?? '') + ' scale(1)';
+              if (hasRotate) first.transform = (first.transform ?? '') + ' rotate(0deg)';
+            }
           }
-        });
+        }
 
-        // Parse translate / scale shorthand if present
-        // (If values are strings like 'translate3d(0px, 0px, 0)' or 'scale(1)', we extract numbers)
-        const parseTranslateX = (val: any): number => {
-          if (typeof val === 'number') return val;
-          const match = String(val).match(/translate3d\(([-\d.]+)px/);
-          return match && match[1] ? parseFloat(match[1]) : 0;
-        };
+        if (first && last && Object.keys(last).length > 0) {
+          const { progress, duration } = generateSpringTrajectory(0, 1, track.spring);
+          resolvedDuration = duration;
+          resolvedEasing = 'linear';
 
-        const parseScale = (val: any): number => {
-          if (typeof val === 'number') return val;
-          const match = String(val).match(/scale\(([-\d.]+)\)/);
-          return match && match[1] ? parseFloat(match[1]) : 1;
-        };
+          const springKeys: Keyframe[] = [];
+          const numericProps: string[] = [];
+          const otherProps: string[] = [];
 
-        const hasTranslate = first.transform && String(first.transform).includes('translate3d');
-        const hasScale = first.transform && String(first.transform).includes('scale');
-
-        const txStart = hasTranslate ? parseTranslateX(first.transform) : 0;
-        const txEnd = hasTranslate ? parseTranslateX(last.transform) : 0;
-        const scStart = hasScale ? parseScale(first.transform) : 1;
-        const scEnd = hasScale ? parseScale(last.transform) : 1;
-
-        progress.forEach((p) => {
-          const key: Keyframe = {};
-          // Interpolate simple numeric props (like opacity, blur)
-          numericProps.forEach((prop) => {
-            key[prop] = interpolateValue(first[prop] as number, last[prop] as number, p);
+          Object.keys(last).forEach((key) => {
+            if (key === 'offset' || key === 'easing' || key === 'composite') return;
+            const valStart = first[key];
+            const valEnd = last[key];
+            if (typeof valStart === 'number' && typeof valEnd === 'number') {
+              numericProps.push(key);
+            } else {
+              otherProps.push(key);
+            }
           });
 
-          // Interpolate transform shorthands
-          const transforms: string[] = [];
-          if (hasTranslate) {
-            transforms.push(`translate3d(${interpolateValue(txStart, txEnd, p)}px, 0, 0)`);
-          }
-          if (hasScale) {
-            transforms.push(`scale(${interpolateValue(scStart, scEnd, p)})`);
-          }
-          if (transforms.length) {
-            key.transform = transforms.join(' ');
-          }
+          const parseTranslateX = (val: any): number => {
+            if (typeof val === 'number') return val;
+            const match = String(val).match(/translate3d\(([-\d.]+)px/);
+            return match && match[1] ? parseFloat(match[1]) : 0;
+          };
 
-          // Fallback other properties
-          otherProps.forEach((prop) => {
-            key[prop] = p < 0.5 ? first[prop] : last[prop];
+          const parseScale = (val: any): number => {
+            if (typeof val === 'number') return val;
+            const match = String(val).match(/scale\(([-\d.]+)\)/);
+            return match && match[1] ? parseFloat(match[1]) : 1;
+          };
+
+          const hasTranslate = first.transform && String(first.transform).includes('translate3d');
+          const hasScale = first.transform && String(first.transform).includes('scale');
+
+          const txStart = hasTranslate ? parseTranslateX(first.transform) : 0;
+          const txEnd = hasTranslate ? parseTranslateX(last.transform) : 0;
+          const scStart = hasScale ? parseScale(first.transform) : 1;
+          const scEnd = hasScale ? parseScale(last.transform) : 1;
+
+          progress.forEach((p) => {
+            const key: Keyframe = {};
+            numericProps.forEach((prop) => {
+              key[prop] = interpolateValue(first[prop] as number, last[prop] as number, p);
+            });
+
+            const transforms: string[] = [];
+            if (hasTranslate) {
+              transforms.push(`translate3d(${interpolateValue(txStart, txEnd, p)}px, 0, 0)`);
+            }
+            if (hasScale) {
+              transforms.push(`scale(${interpolateValue(scStart, scEnd, p)})`);
+            }
+            if (transforms.length) {
+              key.transform = transforms.join(' ');
+            }
+
+            otherProps.forEach((prop) => {
+              key[prop] = p < 0.5 ? first[prop] : last[prop];
+            });
+
+            springKeys.push(key);
           });
 
-          springKeys.push(key);
-        });
-
-        resolvedKeyframes = springKeys;
+          resolvedKeyframes = springKeys;
+        }
       }
 
       // Dynamic track duration (including stagger if target has multiple elements)
-      const staggerDelay = track.delay ?? 0;
+      const staggerDelay = track.stagger ?? track.delay ?? 0;
       let maxElementDuration = 0;
 
       targets.forEach((el, index) => {
@@ -389,7 +562,8 @@ export class PixonTimeline {
         completedPromises.push(p);
       });
 
-      lastTrackEnd = maxElementDuration;
+      prevTrackStart = trackStart;
+      prevTrackEnd = maxElementDuration;
     });
 
     // Notify timeline completion
