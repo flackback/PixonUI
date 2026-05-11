@@ -29,6 +29,46 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./button": {
+      "types": "./dist/components/button/Button.d.ts",
+      "import": "./dist/components/button/Button.mjs",
+      "require": "./dist/components/button/Button.js"
+    },
+    "./card": {
+      "types": "./dist/components/card/Card.d.ts",
+      "import": "./dist/components/card/Card.mjs",
+      "require": "./dist/components/card/Card.js"
+    },
+    "./chat": {
+      "types": "./dist/components/chat/index.d.ts",
+      "import": "./dist/components/chat/index.mjs",
+      "require": "./dist/components/chat/index.js"
+    },
+    "./kanban": {
+      "types": "./dist/components/data-display/kanban/index.d.ts",
+      "import": "./dist/components/data-display/kanban/index.mjs",
+      "require": "./dist/components/data-display/kanban/index.js"
+    },
+    "./datatable": {
+      "types": "./dist/components/data-display/DataTable.d.ts",
+      "import": "./dist/components/data-display/DataTable.mjs",
+      "require": "./dist/components/data-display/DataTable.js"
+    },
+    "./slider": {
+      "types": "./dist/components/form/Slider.d.ts",
+      "import": "./dist/components/form/Slider.mjs",
+      "require": "./dist/components/form/Slider.js"
+    },
+    "./theme": {
+      "types": "./dist/theme/ThemeProvider.d.ts",
+      "import": "./dist/theme/ThemeProvider.mjs",
+      "require": "./dist/theme/ThemeProvider.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.mjs",
+      "require": "./dist/hooks/index.js"
     }
   },
   "files": [

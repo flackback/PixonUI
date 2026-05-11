@@ -21,23 +21,38 @@ interface DataTableProps<T> {
   className?: string;
   maxHeight?: number;
   rounded?: boolean;
+  rtl?: boolean;
+  locale?: 'en' | 'pt';
+  translations?: {
+    noResults?: string;
+    searchPlaceholder?: string;
+  };
 }
 
 export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
   searchKeys,
   onRowClick,
   className,
   maxHeight,
-  rounded = true
+  rounded = true,
+  rtl,
+  locale = 'en',
+  translations
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof T | string; direction: 'asc' | 'desc' | null }>({
     key: '',
     direction: null
   });
+
+  // Automatically determine if document is in RTL mode
+  const isRtl = rtl ?? (typeof document !== 'undefined' ? document.documentElement.dir === 'rtl' : false);
+
+  const activePlaceholder = translations?.searchPlaceholder || searchPlaceholder || (locale === 'pt' ? "Pesquisar..." : "Search...");
+  const activeNoResults = translations?.noResults || (locale === 'pt' ? "Nenhum resultado encontrado para" : "No results found for");
 
   // Optimized search and sort logic with useMemo
   const processedData = useMemo(() => {
@@ -76,11 +91,11 @@ export function DataTable<T extends Record<string, unknown>>({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-4", className)} dir={isRtl ? "rtl" : "ltr"}>
       {searchKeys && (
-        <div className="relative max-w-sm">
+        <div className={cn("relative max-w-sm", isRtl ? "mr-0 ml-auto" : "ml-0 mr-auto")}>
           <TextInput
-            placeholder={searchPlaceholder}
+            placeholder={activePlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             leftIcon={<Search className="w-4 h-4 text-white/40" />}
@@ -96,19 +111,10 @@ export function DataTable<T extends Record<string, unknown>>({
                 key={String(col.key)} 
                 className={cn(col.sortable && "cursor-pointer select-none hover:text-cyan-500 transition-colors", col.className)}
                 onClick={() => col.sortable && handleSort(col.key)}
+                sortDirection={sortConfig.key === col.key ? sortConfig.direction : null}
+                sortable={col.sortable}
               >
-                <div className="flex items-center gap-2">
-                  {col.header}
-                  {col.sortable && (
-                    <span className="text-white/30">
-                      {sortConfig.key === col.key ? (
-                        sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-cyan-500" /> : <ArrowDown className="w-3 h-3 text-cyan-500" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3" />
-                      )}
-                    </span>
-                  )}
-                </div>
+                {col.header}
               </TableHead>
             ))}
           </TableRow>
@@ -130,7 +136,7 @@ export function DataTable<T extends Record<string, unknown>>({
           {processedData.length === 0 && (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-32 text-center text-white/40">
-                No results found for "{search}"
+                {activeNoResults} "{search}"
               </TableCell>
             </TableRow>
           )}

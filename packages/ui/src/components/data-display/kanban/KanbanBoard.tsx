@@ -37,6 +37,9 @@ export function KanbanBoard({
   sortOrder = 'asc',
   isLoading = false,
   maxVisibleCards,
+  rtl,
+  locale = 'en',
+  translations,
   ...props
 }: KanbanProps) {
   const [internalView, setInternalView] = useState<'board' | 'list' | 'calendar' | 'timeline' | 'table'>(propView || 'board');
@@ -298,9 +301,10 @@ export function KanbanBoard({
         );
     }
   };
+  const isRtl = rtl ?? (typeof document !== 'undefined' ? document.documentElement.dir === 'rtl' : false);
 
   return (
-    <div className={cn("flex flex-col gap-4 h-full", className)}>
+    <div className={cn("flex flex-col gap-4 h-full", className)} dir={isRtl ? "rtl" : "ltr"}>
       <style dangerouslySetInnerHTML={{ __html: `
         body.is-dragging-task,
         body.is-dragging-task * {
@@ -308,18 +312,22 @@ export function KanbanBoard({
         }
       ` }} />
       <KanbanHeader 
-        title="Project Board"
+        title={translations?.projectBoard || (locale === 'pt' ? "Quadro de Projetos" : "Project Board")}
         view={view}
         onViewChange={(v) => setView(v as any)}
         canUndo={canUndo}
         canRedo={canRedo}
         onUndo={undo}
         onRedo={redo}
+        locale={locale}
+        translations={translations}
       />
       
       <KanbanFilterBar 
         onSearchChange={setSearchQuery}
         onFilterChange={setActiveFilters}
+        locale={locale}
+        translations={translations}
       />
 
       <div className="flex-1 overflow-hidden">

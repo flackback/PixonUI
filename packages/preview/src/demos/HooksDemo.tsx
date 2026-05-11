@@ -53,7 +53,7 @@ export function HooksDemo() {
   // 5. useKeyboardShortcuts Demo
   const [shortcutTriggered, setShortcutTriggered] = useState(false);
   useKeyboardShortcuts({
-    'mod+s': (e) => {
+    'mod+s': (e: any) => {
       e.preventDefault();
       setShortcutTriggered(true);
       setTimeout(() => setShortcutTriggered(false), 2000);

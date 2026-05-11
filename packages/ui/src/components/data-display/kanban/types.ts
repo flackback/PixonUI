@@ -116,6 +116,9 @@ export interface KanbanProps {
   activeTimerTaskId?: string | null;
   isLoading?: boolean;
   maxVisibleCards?: number;
+  rtl?: boolean;
+  locale?: 'en' | 'pt';
+  translations?: Record<string, string>;
 }
 
 export interface SortConfig {

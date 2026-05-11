@@ -60,6 +60,8 @@ interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onS
   disabled?: boolean;
   files?: File[];
   onFilesChange?: (files: File[]) => void;
+  locale?: 'en' | 'pt';
+  translations?: Record<string, string>;
 }
 
 export const ChatInput = React.memo(function ChatInput({ 
@@ -80,7 +82,7 @@ export const ChatInput = React.memo(function ChatInput({
   onButtons,
   onList,
   onCancelReply,
-  placeholder = "Type a message...", 
+  placeholder, 
   users = [],
   replyingTo,
   isRecording,
@@ -88,6 +90,8 @@ export const ChatInput = React.memo(function ChatInput({
   disabled,
   files: externalFiles,
   onFilesChange,
+  locale = 'en',
+  translations,
   className, 
   ...props 
 }: ChatInputProps) {
@@ -96,6 +100,7 @@ export const ChatInput = React.memo(function ChatInput({
   const [mentionSearch, setMentionSearch] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  const activePlaceholder = placeholder || translations?.typeMessage || (locale === 'pt' ? "Digite uma mensagem..." : "Type a message...");
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -373,13 +378,13 @@ export const ChatInput = React.memo(function ChatInput({
         <div className="mb-4 flex flex-col gap-2 bg-gray-500/[0.04] dark:bg-white/[0.02] rounded-2xl p-3 border border-gray-200/50 dark:border-white/5 animate-in slide-in-from-bottom-2">
           <div className="flex items-center justify-between px-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500">
-              Arquivos anexados ({selectedFiles.length})
+              {translations?.attachedFiles || (locale === 'pt' ? "Arquivos anexados" : "Attached files")} ({selectedFiles.length})
             </span>
             <button 
               onClick={() => setSelectedFiles([])}
               className="text-[10px] font-bold text-red-500 hover:underline transition-all"
             >
-              Limpar tudo
+              {translations?.clearAll || (locale === 'pt' ? "Limpar tudo" : "Clear all")}
             </button>
           </div>
           
@@ -432,7 +437,7 @@ export const ChatInput = React.memo(function ChatInput({
       {replyingTo && (
         <div className="mb-3 flex items-center justify-between p-3 rounded-2xl bg-blue-500/5 border-l-4 border-blue-500 animate-in slide-in-from-bottom-2">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-blue-500">Replying to</p>
+            <p className="text-xs font-bold text-blue-500">{translations?.replyingTo || (locale === 'pt' ? "Respondendo a" : "Replying to")}</p>
             <p className="text-sm text-gray-600 dark:text-white/60 truncate">{replyingTo.content}</p>
           </div>
           <button 
@@ -456,34 +461,34 @@ export const ChatInput = React.memo(function ChatInput({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" side="top">
                 <DropdownMenuItem onClick={handleTriggerFileInput}>
-                  <ImageIcon className="h-4 w-4 mr-2" /> Image & Video
+                  <ImageIcon className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.imageVideo || (locale === 'pt' ? "Imagem & Vídeo" : "Image & Video")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleTriggerFileInput}>
-                  <Paperclip className="h-4 w-4 mr-2" /> Document
+                  <Paperclip className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.document || (locale === 'pt' ? "Documento" : "Document")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onLocation}>
-                  <MapPin className="h-4 w-4 mr-2" /> Location
+                  <MapPin className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.location || (locale === 'pt' ? "Localização" : "Location")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onContact}>
-                  <AtSign className="h-4 w-4 mr-2" /> Contact
+                  <AtSign className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.contact || (locale === 'pt' ? "Contato" : "Contact")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onPoll}>
-                  <AtSign className="h-4 w-4 mr-2" /> Poll
+                  <AtSign className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.poll || (locale === 'pt' ? "Enquete" : "Poll")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onPix}>
-                  <AtSign className="h-4 w-4 mr-2" /> PIX
+                  <AtSign className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.pix || (locale === 'pt' ? "PIX" : "PIX")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onCarousel}>
-                  <Layout className="h-4 w-4 mr-2" /> Carousel
+                  <Layout className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.carousel || (locale === 'pt' ? "Carrossel" : "Carousel")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onButtons}>
-                  <Layout className="h-4 w-4 mr-2" /> Buttons
+                  <Layout className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.buttons || (locale === 'pt' ? "Botões" : "Buttons")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onList}>
-                  <List className="h-4 w-4 mr-2" /> List Menu
+                  <List className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.listMenu || (locale === 'pt' ? "Menu de Lista" : "List Menu")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onGif}>
-                  <Gift className="h-4 w-4 mr-2" /> GIF
+                  <Gift className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" /> {translations?.gif || (locale === 'pt' ? "GIF" : "GIF")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -502,7 +507,7 @@ export const ChatInput = React.memo(function ChatInput({
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
-                placeholder={placeholder}
+                placeholder={activePlaceholder}
                 disabled={disabled}
                 rows={1}
                 className="w-full p-3 min-h-[48px] max-h-[300px] rounded-2xl bg-transparent border border-transparent text-sm resize-none transition-all outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/30 font-medium"

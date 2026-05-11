@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, X, ChevronDown, Check, SortAsc, Layout, List, Calendar, Clock } from 'lucide-react';
+import { Search, Filter, X, ChevronDown, Check, SortAsc } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { Surface } from '../../../primitives/Surface';
 import { Button } from '../../button/Button';
@@ -23,6 +23,8 @@ export interface KanbanFilterBarProps {
   savedFilters?: SavedFilter[];
   onSaveFilter?: (filter: SavedFilter) => void;
   className?: string;
+  locale?: 'en' | 'pt';
+  translations?: Record<string, string>;
 }
 
 export function KanbanFilterBar({
@@ -39,11 +41,12 @@ export function KanbanFilterBar({
   groupOptions = [],
   savedFilters = [],
   onSaveFilter,
-  className
+  className,
+  locale = 'en',
+  translations
 }: KanbanFilterBarProps) {
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
-  const [currentView, setCurrentView] = useState('board');
 
   const toggleFilter = (category: string, value: string) => {
     const current = activeFilters[category] || [];
@@ -73,7 +76,7 @@ export function KanbanFilterBar({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-white/20" />
         <input 
           type="text"
-          placeholder="Search tasks..."
+          placeholder={translations?.searchPlaceholder || (locale === 'pt' ? 'Pesquisar tarefas...' : 'Search tasks...')}
           className="w-full pl-10 pr-4 py-2 text-sm rounded-2xl border border-zinc-250 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-cyan-550/50 dark:focus:ring-cyan-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-white/20 text-zinc-900 dark:text-white font-medium"
           value={search}
           onChange={(e) => {
@@ -85,24 +88,30 @@ export function KanbanFilterBar({
 
       <div className="flex items-center gap-2">
         <FilterPopover 
-          label="Priority" 
+          label={translations?.priority || (locale === 'pt' ? 'Prioridade' : 'Priority')} 
           options={priorityOptions} 
           selected={activeFilters['priority'] || []}
           onSelect={(val) => toggleFilter('priority', val)}
+          locale={locale}
+          translations={translations}
         />
 
         <FilterPopover 
-          label="Tags" 
+          label={translations?.tags || (locale === 'pt' ? 'Tags' : 'Tags')} 
           options={tagOptions} 
           selected={activeFilters['tags'] || []}
           onSelect={(val) => toggleFilter('tags', val)}
+          locale={locale}
+          translations={translations}
         />
 
         <FilterPopover 
-          label="Assignee" 
+          label={translations?.assignee || (locale === 'pt' ? 'Responsável' : 'Assignee')} 
           options={assigneeOptions} 
           selected={activeFilters['assignee'] || []}
           onSelect={(val) => toggleFilter('assignee', val)}
+          locale={locale}
+          translations={translations}
         />
 
         <div className="w-px h-4 bg-zinc-200 dark:bg-white/10 mx-1" />
@@ -111,7 +120,7 @@ export function KanbanFilterBar({
           <PopoverTrigger>
             <Button variant="ghost" size="sm" className="h-9 gap-2 text-zinc-600 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5">
               <SortAsc className="h-4 w-4" />
-              Sort
+              {translations?.sort || (locale === 'pt' ? 'Ordenar' : 'Sort')}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl rounded-2xl">
@@ -134,7 +143,7 @@ export function KanbanFilterBar({
             onClick={clearFilters}
             className="h-9 px-3 text-xs text-zinc-500 hover:text-zinc-900 dark:text-white/40 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 gap-2 transition-all"
           >
-            <X className="h-3.5 w-3.5" /> Clear
+            <X className="h-3.5 w-3.5" /> {translations?.clear || (locale === 'pt' ? 'Limpar' : 'Clear')}
             <Badge variant="neutral" className="bg-zinc-200 dark:bg-white/[0.06] border-zinc-300 dark:border-white/10 ml-1 text-zinc-700 dark:text-white/80">
               {activeCount}
             </Badge>
@@ -145,11 +154,13 @@ export function KanbanFilterBar({
   );
 }
 
-function FilterPopover({ label, options, selected, onSelect }: { 
+function FilterPopover({ label, options, selected, onSelect, locale, translations }: { 
   label: string, 
   options: FilterOption[], 
   selected: string[],
-  onSelect: (val: string) => void 
+  onSelect: (val: string) => void,
+  locale: 'en' | 'pt',
+  translations?: Record<string, string>
 }) {
   return (
     <Popover>
@@ -176,7 +187,7 @@ function FilterPopover({ label, options, selected, onSelect }: {
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden">
         <Command>
-          <CommandInput placeholder={`Search ${label.toLowerCase()}...`} className="border-none bg-transparent" />
+          <CommandInput placeholder={translations?.searchPopover || (locale === 'pt' ? `Pesquisar ${label.toLowerCase()}...` : `Search ${label.toLowerCase()}...`)} className="border-none bg-transparent" />
           <CommandList className="max-h-[240px]">
             <CommandGroup className="p-1">
               {options.map((option) => (

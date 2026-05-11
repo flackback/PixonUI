@@ -25,7 +25,7 @@ export const Table = React.forwardRef<HTMLTableElement, TableProps>(
       <table
         ref={ref}
         className={cn(
-          'w-full caption-bottom text-sm text-left',
+          'w-full caption-bottom text-sm text-start',
           striped && '[&_tbody_tr:nth-child(even)]:bg-gray-50/50 dark:[&_tbody_tr:nth-child(even)]:bg-white/[0.015]',
           compact && '[&_th]:py-2 [&_th]:px-3 [&_td]:py-2 [&_td]:px-3',
           className
@@ -136,7 +136,7 @@ export const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
     <th
       ref={ref}
       className={cn(
-        'h-10 px-5 py-3 text-left align-middle font-semibold text-gray-500 dark:text-white/55 [&:has([role=checkbox])]:pr-0 whitespace-nowrap text-xs uppercase tracking-wider',
+        'h-10 px-5 py-3 text-start align-middle font-semibold text-gray-500 dark:text-white/55 [&:has([role=checkbox])]:pr-0 whitespace-nowrap text-xs uppercase tracking-wider',
         sortable && 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-white/80 transition-colors',
         className
       )}
