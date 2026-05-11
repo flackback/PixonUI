@@ -317,11 +317,11 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
           
           <div className="relative z-10 flex flex-col items-center">
             <div className={cn(
-              "mb-4 rounded-2xl bg-white/5 border border-white/10 p-3.5 shadow-md",
+              "mb-4 rounded-2xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-3.5 shadow-md",
               "group-hover/dropzone:scale-110 group-hover/dropzone:border-purple-500/30 transition-all duration-300",
               isDragActive && "scale-110 border-purple-500 bg-purple-500/10 text-purple-400 animate-pulse"
             )}>
-              <Upload className={cn("h-6 w-6 text-white/50 transition-colors duration-300 group-hover/dropzone:text-purple-400", isDragActive && "text-purple-400")} />
+              <Upload className={cn("h-6 w-6 text-zinc-400 dark:text-white/50 transition-colors duration-300 group-hover/dropzone:text-purple-400", isDragActive && "text-purple-400")} />
             </div>
             
             <div className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
@@ -355,7 +355,7 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
                 key={item.id} 
                 className={cn(
                   "relative overflow-hidden flex flex-col rounded-xl border p-3.5 transition-all duration-300",
-                  "border-white/5 bg-white/[0.02] hover:bg-white/[0.04]",
+                  "border-zinc-200 bg-zinc-50/50 hover:bg-zinc-100 dark:border-white/5 dark:bg-white/[0.02] dark:hover:bg-white/[0.04]",
                   item.status === 'success' && "border-emerald-500/20 bg-emerald-500/[0.01]"
                 )}
               >
@@ -371,7 +371,7 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
                   <div className="flex items-center gap-3 min-w-0">
                     {/* Render high-fidelity image thumbnail or specific icon */}
                     {showThumbnails && item.thumbnailUrl ? (
-                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/15 bg-black/40">
+                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-zinc-200 dark:border-white/15 bg-black/40">
                         <img 
                           src={item.thumbnailUrl} 
                           alt={item.name} 
@@ -379,7 +379,7 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
                         />
                       </div>
                     ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/10 shadow-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 shadow-sm">
                         {getFileIcon(item.type)}
                       </div>
                     )}
@@ -390,7 +390,7 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
                       </span>
                       <span className="text-[10px] font-bold text-zinc-500 dark:text-white/30 uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
                         {formatSize(item.size)}
-                        <span className="h-1 w-1 rounded-full bg-white/10" />
+                        <span className="h-1 w-1 rounded-full bg-zinc-200 dark:bg-white/10" />
                         {item.status === 'uploading' ? (
                           <span className="text-purple-400 animate-pulse">Enviando ({item.progress}%)</span>
                         ) : (
@@ -407,7 +407,7 @@ export const FileDropzone = React.forwardRef<HTMLDivElement, FileDropzoneProps>(
                       e.stopPropagation();
                       removeFile(item.id);
                     }}
-                    className="rounded-lg p-2 hover:bg-white/5 text-white/40 hover:text-white transition-all active:scale-95 shrink-0"
+                    className="rounded-lg p-2 hover:bg-zinc-200/50 dark:hover:bg-white/5 text-zinc-400 dark:text-white/40 hover:text-zinc-700 dark:hover:text-white transition-all active:scale-95 shrink-0"
                     title="Remover arquivo"
                   >
                     <X className="h-4 w-4" />

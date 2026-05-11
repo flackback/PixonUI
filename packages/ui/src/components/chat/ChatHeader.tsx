@@ -71,7 +71,7 @@ export function ChatHeader({
             {user?.tags && user.tags.length > 0 && (
               <div className="flex gap-1">
                 {user.tags.slice(0, 2).map((tag, i) => (
-                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
+                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 font-medium">
                     {tag}
                   </span>
                 ))}

@@ -2,10 +2,13 @@ import { useState, useRef, useCallback } from 'react';
 
 export interface VoiceRecorderHook {
   isRecording: boolean;
+  isPaused: boolean;
   duration: number;
   audioBlob: Blob | null;
   audioUrl: string | null;
   startRecording: () => Promise<void>;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
   stopRecording: () => void;
   cancelRecording: () => void;
   clearAudio: () => void;
@@ -13,6 +16,7 @@ export interface VoiceRecorderHook {
 
 export function useVoiceRecorder(): VoiceRecorderHook {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [duration, setDuration] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -20,6 +24,7 @@ export function useVoiceRecorder(): VoiceRecorderHook {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const timerInterval = useRef<number | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const isPausedRef = useRef(false);
 
   const startRecording = useCallback(async () => {
     try {
@@ -60,10 +65,14 @@ export function useVoiceRecorder(): VoiceRecorderHook {
 
       mediaRecorder.current.start();
       setIsRecording(true);
+      setIsPaused(false);
+      isPausedRef.current = false;
       setDuration(0);
 
       timerInterval.current = window.setInterval(() => {
-        setDuration(prev => prev + 1);
+        if (!isPausedRef.current) {
+          setDuration(prev => prev + 1);
+        }
       }, 1000);
     } catch (err) {
       console.error('Failed to start recording', err);
@@ -71,10 +80,28 @@ export function useVoiceRecorder(): VoiceRecorderHook {
     }
   }, []);
 
+  const pauseRecording = useCallback(() => {
+    if (mediaRecorder.current && isRecording && !isPausedRef.current) {
+      mediaRecorder.current.pause();
+      isPausedRef.current = true;
+      setIsPaused(true);
+    }
+  }, [isRecording]);
+
+  const resumeRecording = useCallback(() => {
+    if (mediaRecorder.current && isRecording && isPausedRef.current) {
+      mediaRecorder.current.resume();
+      isPausedRef.current = false;
+      setIsPaused(false);
+    }
+  }, [isRecording]);
+
   const stopRecording = useCallback(() => {
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop();
       setIsRecording(false);
+      setIsPaused(false);
+      isPausedRef.current = false;
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
       }
@@ -85,6 +112,8 @@ export function useVoiceRecorder(): VoiceRecorderHook {
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop();
       setIsRecording(false);
+      setIsPaused(false);
+      isPausedRef.current = false;
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
       }
@@ -98,14 +127,19 @@ export function useVoiceRecorder(): VoiceRecorderHook {
     setAudioBlob(null);
     setAudioUrl(null);
     setDuration(0);
+    setIsPaused(false);
+    isPausedRef.current = false;
   }, []);
 
   return {
     isRecording,
+    isPaused,
     duration,
     audioBlob,
     audioUrl,
     startRecording,
+    pauseRecording,
+    resumeRecording,
     stopRecording,
     cancelRecording,
     clearAudio

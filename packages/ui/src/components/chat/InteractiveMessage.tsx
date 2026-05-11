@@ -40,9 +40,10 @@ export function InteractiveMessage({ data, isOwn, onAction }: InteractiveMessage
               key={btn.id}
               onClick={() => onAction?.(btn)}
               className={cn(
-                "flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium transition-all",
-                "bg-white/10 hover:bg-white/20 border border-white/10 active:scale-[0.98]",
-                isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                "flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium transition-all active:scale-[0.98] border",
+                isOwn 
+                  ? "bg-white/15 hover:bg-white/25 border-white/20 text-white" 
+                  : "bg-white hover:bg-gray-50 border-gray-200/80 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10 text-blue-600 dark:text-blue-400"
               )}
             >
               {btn.type === 'url' && <ExternalLink className="h-3.5 w-3.5" />}
@@ -68,7 +69,12 @@ export function InteractiveMessage({ data, isOwn, onAction }: InteractiveMessage
                   <button
                     key={row.id}
                     onClick={() => onAction?.({ id: row.id, text: row.title, type: 'reply' })}
-                    className="flex flex-col items-start p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-colors text-left"
+                    className={cn(
+                      "flex flex-col items-start p-3 rounded-xl transition-colors text-left border active:scale-[0.98]",
+                      isOwn
+                        ? "bg-white/5 hover:bg-white/10 border-white/5 text-white"
+                        : "bg-white hover:bg-gray-50 border-gray-200/80 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/5 text-gray-900 dark:text-white"
+                    )}
                   >
                     <span className="text-sm font-medium">{row.title}</span>
                     {row.description && (
@@ -95,9 +101,10 @@ export function InteractiveMessage({ data, isOwn, onAction }: InteractiveMessage
                 key={idx}
                 onClick={() => onAction?.({ id: params.id || btn.name, text: params.display_text || btn.name, type: 'reply', params })}
                 className={cn(
-                  "flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium transition-all",
-                  "bg-white/10 hover:bg-white/20 border border-white/10 active:scale-[0.98]",
-                  isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                  "flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium transition-all active:scale-[0.98] border",
+                  isOwn 
+                    ? "bg-white/15 hover:bg-white/25 border-white/20 text-white" 
+                    : "bg-white hover:bg-gray-50 border-gray-200/80 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10 text-blue-600 dark:text-blue-400"
                 )}
               >
                 {btn.name === 'cta_copy' && <Copy className="h-3.5 w-3.5" />}

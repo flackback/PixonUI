@@ -29,7 +29,9 @@ export type MessageType =
   | 'template'
   | 'interactive'
   | 'reaction'
-  | 'revoked';
+  | 'revoked'
+  | 'qrcode'
+  | 'group';
 
 export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed' | 'played';
 

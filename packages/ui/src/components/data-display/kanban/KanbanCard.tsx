@@ -62,7 +62,9 @@ export const KanbanCard = React.memo(({
     }
   };
 
-  return (
+  const hasSpinningBorder = task.effect === 'spinning-border' && !isDragged;
+
+  const cardContent = (
     <Surface 
       onClick={(e) => onTaskClick?.(e, task)}
       draggable={draggable}
@@ -70,14 +72,15 @@ export const KanbanCard = React.memo(({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={cn(
-        "p-6 border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.03] hover:bg-gray-100/50 dark:hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 dark:hover:border-white/20",
+        "p-6 border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm hover:bg-gray-100/50 dark:hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 dark:hover:border-white/20 h-full w-full",
         task.blockedBy && task.blockedBy.length > 0 && "border-red-500/30 bg-red-500/[0.02]",
         isSelected && "ring-2 ring-cyan-500/50 bg-cyan-500/[0.02]",
-        isDragged && "opacity-30 border-dashed border-cyan-500/50 bg-cyan-500/[0.02] scale-[0.98]",
+        isDragged && "bg-white/40 dark:bg-black/40 backdrop-blur-md border-dashed border-cyan-500/40 dark:border-cyan-500/30 scale-[0.98] shadow-lg shadow-cyan-500/5 select-none pointer-events-none",
+        hasSpinningBorder && "border-transparent dark:border-transparent bg-white/90 dark:bg-[#0f172a]/95",
         cardClassName
       )}
     >
-      <div className="flex flex-col gap-3">
+      <div className={cn("flex flex-col gap-3 transition-all duration-300", isDragged && "opacity-10 blur-[4px] select-none pointer-events-none")}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {selectable && (
@@ -122,6 +125,25 @@ export const KanbanCard = React.memo(({
             {task.description}
           </Text>
         )}
+
+        {task.prediction && (
+          <div className={cn(
+            "flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-[10px] font-semibold tracking-wide w-full shrink-0",
+            task.prediction.risk === 'high' && "bg-red-500/10 border-red-500/20 text-red-500 dark:text-red-400",
+            task.prediction.risk === 'medium' && "bg-amber-500/10 border-amber-500/20 text-amber-500 dark:text-amber-400",
+            task.prediction.risk === 'low' && "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 dark:text-emerald-400"
+          )}>
+            <span className={cn(
+              "h-1.5 w-1.5 rounded-full animate-pulse",
+              task.prediction.risk === 'high' && "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+              task.prediction.risk === 'medium' && "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]",
+              task.prediction.risk === 'low' && "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+            )} />
+            <span className="opacity-80 uppercase tracking-wider font-bold">Previsão IA:</span>
+            <span className="truncate">{task.prediction.message}</span>
+          </div>
+        )}
+
 
         {task.progress !== undefined && (
           <div className="space-y-1.5">
@@ -193,7 +215,7 @@ export const KanbanCard = React.memo(({
                   />
                 )}
                 <span className="font-mono">
-                  {Math.floor(task.timeSpent / 3600)}h {Math.floor((task.timeSpent % 3600) / 60)}m
+                  {Math.floor(task.timeSpent / 3600)}h {Math.floor((task.timeSpent % 3600) / 60)}m {task.timeSpent % 60}s
                 </span>
               </div>
             )}
@@ -219,7 +241,12 @@ export const KanbanCard = React.memo(({
           
           {task.assignee && (
             <div className="flex -space-x-2">
-              <div className="h-6 w-6 rounded-full border-2 border-white dark:border-[#0a0a0a] bg-gray-100 dark:bg-white/[0.06] flex items-center justify-center text-[10px] font-bold overflow-hidden">
+              <div className={cn(
+                "h-6 w-6 rounded-full border-2 bg-gray-100 dark:bg-white/[0.06] flex items-center justify-center text-[10px] font-bold overflow-hidden transition-all duration-300",
+                activeTimerTaskId === task.id 
+                  ? "border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)] ring-2 ring-cyan-400/20 animate-pulse" 
+                  : "border-white dark:border-[#0a0a0a]"
+              )}>
                 {task.assignee.avatar ? (
                   <img src={task.assignee.avatar} alt={task.assignee.name} className="h-full w-full object-cover" />
                 ) : (
@@ -232,6 +259,19 @@ export const KanbanCard = React.memo(({
       </div>
     </Surface>
   );
+
+  if (hasSpinningBorder) {
+    return (
+      <div className="relative p-[2px] rounded-2xl overflow-hidden group/spinning hover:shadow-xl dark:hover:shadow-cyan-500/10 transition-all duration-300">
+        <div className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#06b6d4_0%,#3b82f6_25%,#f43f5e_50%,#3b82f6_75%,#06b6d4_100%)] opacity-80 group-hover/spinning:opacity-100 transition-opacity duration-300" />
+        <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-white dark:bg-[#0f172a] z-10">
+          {cardContent}
+        </div>
+      </div>
+    );
+  }
+
+  return cardContent;
 });
 
 KanbanCard.displayName = 'KanbanCard';

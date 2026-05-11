@@ -64,6 +64,9 @@ import { BackgroundDemo } from './demos/BackgroundDemo';
 import { HeroDemo } from './demos/HeroDemo';
 import { DashboardDemo } from './demos/DashboardDemo';
 import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
+import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
+import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
+import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
 import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
 import HeroTextSource from '../../ui/src/components/typography/HeroText.tsx?raw';
 import LetterPullupSource from '../../ui/src/components/typography/LetterPullup.tsx?raw';
@@ -97,7 +100,13 @@ import CopyBlockSource from '../../ui/src/components/data-display/CopyBlock.tsx?
 import GallerySource from '../../ui/src/components/data-display/Gallery.tsx?raw';
 import TestimonialCardSource from '../../ui/src/components/shared/TestimonialCard.tsx?raw';
 
-
+// Next-Gen Additions
+import { NextGenDemo } from './demos/NextGenDemo';
+import TiltSource from '../../ui/src/components/effects/Tilt.tsx?raw';
+import InteractiveMeshGradientSource from '../../ui/src/components/effects/InteractiveMeshGradient.tsx?raw';
+import WaveformVisualizerSource from '../../ui/src/components/chat/WaveformVisualizer.tsx?raw';
+import ScrollSpySource from '../../ui/src/components/navigation/ScrollSpy.tsx?raw';
+import useScrollSpySource from '../../ui/src/hooks/useScrollSpy.ts?raw';
 
 export type ComponentItem = {
   id: string;
@@ -1257,5 +1266,76 @@ ${GallerySource}
 // TestimonialCard.tsx
 ${TestimonialCardSource}`,
     demo: <CreativeComponentsDemo />
+  },
+  {
+    id: 'task-timeline',
+    title: 'Task Timeline Grid',
+    category: 'Data Display',
+    description: 'Componente de cronograma estilo Monday.com para planejamento visual de tarefas em tempo real, com movimentação por arraste, redimensionamento de dias e cálculo automático de estatísticas.',
+    code: `import { TaskTimeline, useTaskTimeline } from '@pixonui/react';
+
+const { groups, stats, ...actions } = useTaskTimeline({ initialGroups });
+
+<TaskTimeline
+  groups={groups}
+  columnsCount={14}
+  onToggleGroup={actions.toggleGroup}
+  onAddTask={actions.addTask}
+  onUpdateTask={actions.updateTask}
+  onDeleteTask={actions.deleteTask}
+  onStartDrag={actions.startDrag}
+  onUpdateDrag={actions.updateDrag}
+  onEndDrag={actions.endDrag}
+/>`,
+    componentSource: `// TaskTimeline.tsx
+\${TaskTimelineSource}
+
+// useTaskTimeline.ts
+\${useTaskTimelineSource}`,
+    demo: <TaskTimelineDemo />
+  },
+  {
+    id: 'next-gen',
+    title: 'Next-Gen Expansion',
+    category: 'Templates',
+    description: 'A showcase of our advanced, performance-optimized visual additions: InteractiveMeshGradient, Tilt 3D Containers, WaveformVisualizer, ScrollSpy, and Kanban AI Risk Overlays.',
+    code: `import { 
+  Tilt, 
+  InteractiveMeshGradient, 
+  WaveformVisualizer, 
+  ScrollSpy, 
+  useScrollSpy,
+  KanbanCard
+} from '@pixonui/react';
+
+// Use InteractiveMeshGradient for gorgeous dynamic fluid background
+<InteractiveMeshGradient speed={1.5} />
+
+// Wrap elements with Tilt to apply smooth 3D mouse perspective physics
+<Tilt maxTilt={15} scale={1.02}>
+  <Card>...</Card>
+</Tilt>
+
+// Display voice waveform line amplitudes with dynamic progress coloring
+<WaveformVisualizer isPlaying={isPlaying} barsCount={48} color="#06b6d4" />
+
+// Highlight active section dynamically on sidebar using IntersectionObserver
+<ScrollSpy items={sections} />`,
+    componentSource: `// InteractiveMeshGradient.tsx
+${InteractiveMeshGradientSource}
+
+// Tilt.tsx
+${TiltSource}
+
+// WaveformVisualizer.tsx
+${WaveformVisualizerSource}
+
+// ScrollSpy.tsx
+${ScrollSpySource}
+
+// useScrollSpy.ts
+${useScrollSpySource}`,
+    demo: <NextGenDemo />
   }
 ];
+

@@ -68,13 +68,13 @@ export function KanbanFilterBar({
   const activeCount = Object.values(activeFilters).flat().length;
 
   return (
-    <Surface className={cn("p-2 flex flex-wrap items-center gap-3 bg-white/[0.02] border-white/5", className)}>
+    <Surface className={cn("p-2 flex flex-wrap items-center gap-3 bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 shadow-sm dark:shadow-none", className)}>
       <div className="relative flex-1 min-w-[200px]">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-white/20" />
         <input 
           type="text"
           placeholder="Search tasks..."
-          className="w-full pl-10 pr-4 py-2 text-sm rounded-2xl border border-white/10 bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-white/20 text-white"
+          className="w-full pl-10 pr-4 py-2 text-sm rounded-2xl border border-zinc-250 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-cyan-550/50 dark:focus:ring-cyan-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-white/20 text-zinc-900 dark:text-white font-medium"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -105,20 +105,20 @@ export function KanbanFilterBar({
           onSelect={(val) => toggleFilter('assignee', val)}
         />
 
-        <div className="w-px h-4 bg-white/10 mx-1" />
+        <div className="w-px h-4 bg-zinc-200 dark:bg-white/10 mx-1" />
 
         <Popover>
           <PopoverTrigger>
-            <Button variant="ghost" size="sm" className="h-9 gap-2 text-white/60">
+            <Button variant="ghost" size="sm" className="h-9 gap-2 text-zinc-600 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5">
               <SortAsc className="h-4 w-4" />
               Sort
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-1 bg-gray-900 border-white/10">
+          <PopoverContent className="w-48 p-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl rounded-2xl">
             {sortOptions.map(opt => (
               <button
                 key={opt.value}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-600 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors font-medium"
                 onClick={() => onSortChange?.(opt.value, 'asc')}
               >
                 {opt.label}
@@ -132,10 +132,10 @@ export function KanbanFilterBar({
             variant="ghost" 
             size="sm" 
             onClick={clearFilters}
-            className="h-9 px-3 text-xs text-white/40 hover:text-white gap-2"
+            className="h-9 px-3 text-xs text-zinc-500 hover:text-zinc-900 dark:text-white/40 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 gap-2 transition-all"
           >
             <X className="h-3.5 w-3.5" /> Clear
-            <Badge variant="neutral" className="bg-white/[0.06] border-white/10 ml-1">
+            <Badge variant="neutral" className="bg-zinc-200 dark:bg-white/[0.06] border-zinc-300 dark:border-white/10 ml-1 text-zinc-700 dark:text-white/80">
               {activeCount}
             </Badge>
           </Button>
@@ -158,13 +158,15 @@ function FilterPopover({ label, options, selected, onSelect }: {
           variant="ghost" 
           size="sm" 
           className={cn(
-            "h-9 gap-2 text-xs transition-all",
-            selected.length > 0 ? "bg-blue-500/10 text-blue-400" : "text-white/60 hover:text-white"
+            "h-9 gap-2 text-xs transition-all font-semibold",
+            selected.length > 0 
+              ? "bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400" 
+              : "text-zinc-600 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5"
           )}
         >
           {label}
           {selected.length > 0 ? (
-            <Badge variant="info" className="h-4 min-w-[16px] px-1 bg-blue-500 text-white border-none">
+            <Badge variant="info" className="h-4 min-w-[16px] px-1 bg-blue-500 text-white border-none text-[10px] flex items-center justify-center font-bold">
               {selected.length}
             </Badge>
           ) : (
@@ -172,21 +174,21 @@ function FilterPopover({ label, options, selected, onSelect }: {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-0 bg-gray-900 border-white/10 shadow-2xl">
+      <PopoverContent className="w-56 p-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden">
         <Command>
-          <CommandInput placeholder={`Search ${label.toLowerCase()}...`} className="border-none" />
+          <CommandInput placeholder={`Search ${label.toLowerCase()}...`} className="border-none bg-transparent" />
           <CommandList className="max-h-[240px]">
-            <CommandGroup>
+            <CommandGroup className="p-1">
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.value}
                   onClick={() => onSelect(option.value)}
-                  className="flex items-center justify-between py-2 px-3 cursor-pointer hover:bg-white/5"
+                  className="flex items-center justify-between py-2 px-3 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
                 >
-                  <span className="text-xs text-white/80">{option.label}</span>
+                  <span className="text-xs text-zinc-800 dark:text-white/80 font-medium">{option.label}</span>
                   {selected.includes(option.value) && (
-                    <Check className="h-3.5 w-3.5 text-blue-500" />
+                    <Check className="h-3.5 w-3.5 text-cyan-600 dark:text-blue-500" />
                   )}
                 </CommandItem>
               ))}

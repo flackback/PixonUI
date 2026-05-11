@@ -194,7 +194,7 @@ export const AdvancedSlider = React.forwardRef<HTMLDivElement, AdvancedSliderPro
             isDragging ? "opacity-100 scale-105" : "opacity-0 group-hover:opacity-100 scale-100"
           )}
           style={{ 
-            left: `calc(${percentage}% - 14px)`,
+            left: `${percentage}%`,
             transform: 'translateX(-50%) translateY(-100%)'
           }}
         >

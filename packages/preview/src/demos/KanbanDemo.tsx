@@ -59,6 +59,7 @@ export function KanbanDemo() {
       assignee: { id: 'u2', name: 'Alex Chen', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
       progress: 65,
       timeSpent: 3600 * 5 + 1200,
+      effect: 'spinning-border',
       customFields: {
         'Estimate': '12h',
         'Repository': 'https://github.com/pixonui/core',
@@ -266,69 +267,73 @@ export function KanbanDemo() {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <Surface className="p-2 flex flex-wrap items-center justify-between gap-4">
+      <Surface className="p-2 flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-zinc-950/40 border border-zinc-200 dark:border-white/10">
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Text className="text-xs text-white/40 uppercase font-bold tracking-wider">Group By:</Text>
+              <Text className="text-xs text-zinc-500 dark:text-white/40 uppercase font-bold tracking-wider">Group By:</Text>
               <select 
-                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                className="bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs text-zinc-850 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all cursor-pointer"
                 value={groupBy || ''}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGroupBy(e.target.value as any || undefined)}
               >
-                <option value="">None</option>
-                <option value="priority">Priority</option>
-                <option value="assignee.name">Assignee</option>
+                <option value="" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">None</option>
+                <option value="priority" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Priority</option>
+                <option value="assignee.name" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Assignee</option>
               </select>
             </div>
 
             <div className="flex items-center gap-2">
-              <Text className="text-xs text-white/40 uppercase font-bold tracking-wider">Swimlanes:</Text>
+              <Text className="text-xs text-zinc-500 dark:text-white/40 uppercase font-bold tracking-wider">Swimlanes:</Text>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className={cn("h-7 px-2 text-[10px]", swimlanes ? "bg-cyan-500/20 text-cyan-400" : "text-white/40")}
+                className={cn("h-7 px-2 text-[10px]", swimlanes ? "bg-cyan-550/20 text-cyan-600 dark:text-cyan-400" : "text-zinc-400 dark:text-white/40")}
                 onClick={() => setSwimlanes(!swimlanes)}
               >
                 {swimlanes ? 'ON' : 'OFF'}
               </Button>
               {swimlanes && (
                 <select 
-                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                  className="bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs text-zinc-850 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all cursor-pointer"
                   value={swimlaneBy}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSwimlaneBy(e.target.value as any)}
                 >
-                  <option value="priority">By Priority</option>
-                  <option value="assignee.name">By Assignee</option>
+                  <option value="priority" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">By Priority</option>
+                  <option value="assignee.name" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">By Assignee</option>
                 </select>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              <Text className="text-xs text-white/40 uppercase font-bold tracking-wider">Sort:</Text>
+              <Text className="text-xs text-zinc-500 dark:text-white/40 uppercase font-bold tracking-wider">Sort:</Text>
               <select 
-                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                className="bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs text-zinc-850 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all cursor-pointer"
                 value={sortBy}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as any)}
               >
-                <option value="priority">Priority</option>
-                <option value="dueDate">Due Date</option>
-                <option value="title">Title</option>
+                <option value="priority" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Priority</option>
+                <option value="dueDate" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Due Date</option>
+                <option value="title" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">Title</option>
               </select>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-7 w-7 p-0 text-white/40"
+                className="h-7 w-7 p-0 text-zinc-400 dark:text-white/40 hover:bg-zinc-100 dark:hover:bg-white/5"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </Button>
             </div>
           </div>
-          <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+          <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-white/5 rounded-xl border border-zinc-200 dark:border-white/10 shadow-inner">
             <Button 
               variant="ghost" 
               size="sm" 
-              className={cn("h-8 px-3", view === 'board' ? "bg-white/10 text-cyan-400" : "text-gray-400")}
+              className={cn("h-8 px-3 font-semibold text-xs transition-all duration-300", 
+                view === 'board' 
+                  ? "bg-white dark:bg-white/10 text-cyan-600 dark:text-cyan-400 shadow-sm" 
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white hover:bg-zinc-200/50 dark:hover:bg-white/5"
+              )}
               onClick={() => setView('board')}
             >
               <Layout className="h-4 w-4 mr-2" /> Board
@@ -336,7 +341,11 @@ export function KanbanDemo() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className={cn("h-8 px-3", view === 'list' ? "bg-white/10 text-cyan-400" : "text-gray-400")}
+              className={cn("h-8 px-3 font-semibold text-xs transition-all duration-300", 
+                view === 'list' 
+                  ? "bg-white dark:bg-white/10 text-cyan-600 dark:text-cyan-400 shadow-sm" 
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white hover:bg-zinc-200/50 dark:hover:bg-white/5"
+              )}
               onClick={() => setView('list')}
             >
               <List className="h-4 w-4 mr-2" /> List
@@ -344,7 +353,11 @@ export function KanbanDemo() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className={cn("h-8 px-3", view === 'calendar' ? "bg-white/10 text-cyan-400" : "text-gray-400")}
+              className={cn("h-8 px-3 font-semibold text-xs transition-all duration-300", 
+                view === 'calendar' 
+                  ? "bg-white dark:bg-white/10 text-cyan-600 dark:text-cyan-400 shadow-sm" 
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white hover:bg-zinc-200/50 dark:hover:bg-white/5"
+              )}
               onClick={() => setView('calendar')}
             >
               <CalendarIcon className="h-4 w-4 mr-2" /> Calendar
@@ -407,38 +420,38 @@ export function KanbanDemo() {
 
       {/* Usage Info */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Surface className="p-6 border-cyan-500/20 bg-cyan-500/[0.02]">
+        <Surface className="p-6 border-cyan-500/20 dark:border-cyan-500/10 bg-cyan-50 dark:bg-cyan-500/[0.02] text-zinc-900 dark:text-white">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400">
+            <div className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400">
               <Activity className="h-5 w-5" />
             </div>
-            <Heading as="h4" className="text-sm font-bold uppercase tracking-wider">Ultra Performance</Heading>
+            <Heading as="h4" className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Ultra Performance</Heading>
           </div>
-          <Text className="text-xs text-white/50 leading-relaxed">
+          <Text className="text-xs text-zinc-600 dark:text-white/50 leading-relaxed">
             Built for enterprise datasets. Uses <strong>IntersectionObserver</strong> for lazy loading and independent column scrolling to maintain 120fps even with thousands of tasks.
           </Text>
         </Surface>
 
-        <Surface className="p-6 border-purple-500/20 bg-purple-500/[0.02]">
+        <Surface className="p-6 border-purple-500/20 dark:border-purple-500/10 bg-purple-50 dark:bg-purple-500/[0.02] text-zinc-900 dark:text-white">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400">
               <Zap className="h-5 w-5" />
             </div>
-            <Heading as="h4" className="text-sm font-bold uppercase tracking-wider">Event API</Heading>
+            <Heading as="h4" className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Event API</Heading>
           </div>
-          <Text className="text-xs text-white/50 leading-relaxed">
+          <Text className="text-xs text-zinc-600 dark:text-white/50 leading-relaxed">
             Comprehensive lifecycle events: <strong>onTaskDrop</strong>, <strong>onTaskDragStart</strong>, and <strong>onTaskRemove</strong>. Perfect for real-time backend synchronization.
           </Text>
         </Surface>
 
-        <Surface className="p-6 border-amber-500/20 bg-amber-500/[0.02]">
+        <Surface className="p-6 border-amber-500/20 dark:border-amber-500/10 bg-amber-50 dark:bg-amber-500/[0.02] text-zinc-900 dark:text-white">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400">
               <Layout className="h-5 w-4" />
             </div>
-            <Heading as="h4" className="text-sm font-bold uppercase tracking-wider">Smart Layout</Heading>
+            <Heading as="h4" className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-100">Smart Layout</Heading>
           </div>
-          <Text className="text-xs text-white/50 leading-relaxed">
+          <Text className="text-xs text-zinc-600 dark:text-white/50 leading-relaxed">
             Supports <strong>Horizontal Drag-to-Scroll</strong>, <strong>WIP Limits</strong>, and precise insertion between cards with zero layout thrashing.
           </Text>
         </Surface>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   ChatLayout, 
   ChatSidebar, 
@@ -12,6 +12,8 @@ import {
   ScrollArea,
   Stack,
   cn,
+  UnifiedPreviewModal,
+  FileAttachment
 } from '@pixonui/react';
 import type {
   Conversation,
@@ -57,14 +59,66 @@ const initialChatMessages: Record<string, Message[]> = {
     { id: '1-3', content: 'Does it include custom SSO integration?', senderId: 'user', timestamp: new Date(Date.now() - 300000), status: 'read' },
     { id: '1-4', content: 'Yes, it does! We support SAML, OIDC, and most major providers.', senderId: 'me', timestamp: new Date(Date.now() - 200000), status: 'read' },
     { id: '1-5', content: 'The integration is working perfectly!', senderId: 'user', timestamp: new Date(Date.now() - 100000), status: 'delivered' },
+    { 
+      id: '1-6', 
+      content: '', 
+      senderId: 'user', 
+      timestamp: new Date(Date.now() - 80000), 
+      status: 'read', 
+      type: 'file', 
+      attachments: [{ id: 'att-1-6', type: 'file', name: 'Relatorio_Performance_PixonUI.pdf', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', size: '1.2 MB' }] 
+    },
+    { 
+      id: '1-7', 
+      content: '', 
+      senderId: 'me', 
+      timestamp: new Date(Date.now() - 60000), 
+      status: 'read', 
+      type: 'file', 
+      attachments: [{ id: 'att-1-7', type: 'file', name: 'Relatorio_Vendas_May_2026.xlsx', url: '', size: '420 KB' }] 
+    },
+    { 
+      id: '1-8', 
+      content: '00020126580014BR.GOV.BCB.PIX0136pixonui-supremo-key-payment-address520400005303986540510.005802BR5924PIXONUI ENTERPRISE LTD6009SAO PAULO62070503***6304BF92', 
+      senderId: 'user', 
+      timestamp: new Date(Date.now() - 40000), 
+      status: 'read', 
+      type: 'qrcode' 
+    },
+    { 
+      id: '1-9', 
+      content: '🚀 PixonUI Supremo Core Team', 
+      senderId: 'me', 
+      timestamp: new Date(Date.now() - 20000), 
+      status: 'read', 
+      type: 'group' 
+    }
   ],
   '2': [
     { id: '2-1', content: 'Hey Anderson, did you check the new PixonUI design?', senderId: 'user', timestamp: new Date(Date.now() - 7200000), status: 'read' },
     { id: '2-2', content: 'Yes, it looks absolutely stunning!', senderId: 'me', timestamp: new Date(Date.now() - 3600000), status: 'read' },
     { id: '2-3', content: 'Can we schedule a call for tomorrow?', senderId: 'user', timestamp: new Date(Date.now() - 1800000), status: 'delivered' },
+    { 
+      id: '2-4', 
+      content: '', 
+      senderId: 'user', 
+      timestamp: new Date(Date.now() - 900000), 
+      status: 'read', 
+      type: 'file', 
+      attachments: [{ id: 'att-2-4', type: 'file', name: 'Proposta_Comercial_PixonUI.docx', url: '', size: '154 KB' }] 
+    },
+    { 
+      id: '2-5', 
+      content: '', 
+      senderId: 'me', 
+      timestamp: new Date(Date.now() - 300000), 
+      status: 'read', 
+      type: 'file', 
+      attachments: [{ id: 'att-2-5', type: 'audio', name: 'Auditoria_Audio_Sync.mp3', url: '', size: '2.8 MB' }] 
+    }
   ],
   '3': [
-    { id: '3-1', content: 'Hi! Let me know when you receive the contract.', senderId: 'user', timestamp: new Date(Date.now() - 86400000), status: 'read' },
+    { id: '3-1', content: 'Hi! Let know when you receive the contract.', senderId: 'user', timestamp: new Date(Date.now() - 86400000), status: 'read' },
     { id: '3-2', content: 'I sent the documents to your email.', senderId: 'user', timestamp: new Date(Date.now() - 43200000), status: 'read' },
   ],
   '4': [
@@ -110,6 +164,36 @@ export function Inbox() {
   const [dragActive, setDragActive] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Direct contact hover drag tracking state
+  const [dragOverContactId, setDragOverContactId] = useState<string | null>(null);
+
+  // File queue state to bind to ChatInput queue
+  const [inputFiles, setInputFiles] = useState<File[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const [previewFile, setPreviewFile] = useState<FileAttachment | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Loading States for Skeletons
+  const [isConversationsLoading, setIsConversationsLoading] = useState(true);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsConversationsLoading(false);
+    }, 1200);
+    return () => {
+      clearTimeout(timer);
+      if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    };
+  }, []);
+
+  const handleFileClick = (file: FileAttachment) => {
+    setPreviewFile(file);
+    setIsPreviewOpen(true);
+  };
+
   const selectedContact = contacts.find(c => c.id === selectedContactId);
   
   const selectedUser = useMemo(() => ({
@@ -119,7 +203,7 @@ export function Inbox() {
     status: selectedContact?.status
   }), [selectedContact]);
 
-  // Compute conversations dynamically for the sidebar to ensure instant syncing with state updates
+  // Compute conversations dynamically for the sidebar
   const conversations = useMemo<Conversation[]>(() => {
     return contacts.map(c => {
       const msgs = chatMessages[c.id] || [];
@@ -158,6 +242,8 @@ export function Inbox() {
   }, [contacts, searchTerm]);
 
   const handleSelectContact = (id: string) => {
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    setIsMessagesLoading(true);
     setSelectedContactId(id);
     setContacts(prev => prev.map(c => 
       c.id === id ? { ...c, unread: 0 } : c
@@ -165,11 +251,18 @@ export function Inbox() {
     setReplyToMessage(null);
     setEditMessage(null);
     setInputValue("");
+    setInputFiles([]);
     setShowSlashMenu(false);
+
+    messageTimerRef.current = setTimeout(() => {
+      setIsMessagesLoading(false);
+    }, 600);
   };
 
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
+  const handleSend = (text: string, files?: File[]) => {
+    const hasText = text.trim().length > 0;
+    const hasFiles = files && files.length > 0;
+    if (!hasText && !hasFiles) return;
 
     if (editMessage) {
       // Editing Mode
@@ -186,15 +279,47 @@ export function Inbox() {
     }
 
     const newMsgId = getUniqueId('msg');
-    const newMsg: Message = {
-      id: newMsgId,
-      content: text,
-      senderId: 'me',
-      timestamp: new Date(),
-      status: 'sending',
-      replyTo: replyToMessage || undefined,
-      replyToId: replyToMessage?.id || undefined
-    };
+    let newMsg: Message;
+
+    if (hasFiles) {
+      const firstFile = files![0] as File;
+      const isImage = firstFile.type.startsWith('image/');
+      const isVideo = firstFile.type.startsWith('video/');
+      const isAudio = firstFile.type.startsWith('audio/');
+      
+      let msgType: 'image' | 'video' | 'audio' | 'file' = 'file';
+      if (isImage) msgType = 'image';
+      else if (isVideo) msgType = 'video';
+      else if (isAudio) msgType = 'audio';
+
+      newMsg = {
+        id: newMsgId,
+        content: text || `Sent file: ${firstFile.name}`,
+        senderId: 'me',
+        timestamp: new Date(),
+        status: 'sending',
+        type: msgType,
+        replyTo: replyToMessage || undefined,
+        replyToId: replyToMessage?.id || undefined,
+        attachments: files.map(f => ({
+          id: getUniqueId('att'),
+          type: f.type.startsWith('image/') ? 'image' : f.type.startsWith('video/') ? 'video' : 'file',
+          url: f.type.startsWith('image/') ? URL.createObjectURL(f) : '#',
+          name: f.name,
+          size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`
+        }))
+      };
+    } else {
+      newMsg = {
+        id: newMsgId,
+        content: text,
+        senderId: 'me',
+        timestamp: new Date(),
+        status: 'sending',
+        replyTo: replyToMessage || undefined,
+        replyToId: replyToMessage?.id || undefined
+      };
+    }
 
     // Append to list
     const currentMsgs = chatMessages[selectedContactId] || [];
@@ -203,18 +328,20 @@ export function Inbox() {
       [selectedContactId]: [...currentMsgs, newMsg]
     }));
 
-    // Clear input & reply
+    // Clear inputs
     setInputValue("");
+    setInputFiles([]);
     setReplyToMessage(null);
 
-    // Update contacts list to have this as the last message
+    // Update contacts list lastMessage
+    const displayLastMsg = hasFiles ? `📁 Encolheu ${files.length} arquivos` : text;
     setContacts(prev => prev.map(c => 
       c.id === selectedContactId 
-        ? { ...c, lastMessage: text, time: new Date() }
+        ? { ...c, lastMessage: displayLastMsg, time: new Date() }
         : c
     ));
 
-    // Simulate sending progress states
+    // Simulate states
     setTimeout(() => {
       setChatMessages(prev => ({
         ...prev,
@@ -242,19 +369,16 @@ export function Inbox() {
       }));
     }, 1500);
 
-    // Simulate Typing response
-    triggerContactReply(text);
+    triggerContactReply(hasFiles ? `[File Attachments PREVIEW]` : text);
   };
 
   const triggerContactReply = (userText: string) => {
     const targetContactId = selectedContactId;
-    // Wait 1.5 seconds, then type for 2 seconds, then reply
     setTimeout(() => {
       setTypingContactId(targetContactId);
     }, 1500);
 
     setTimeout(() => {
-      // Find what reply to send
       const replyText = getAIResponse(userText, selectedContact?.name || "Sarah Wilson");
       const replyMsgId = getUniqueId('reply');
       
@@ -276,7 +400,6 @@ export function Inbox() {
 
       setTypingContactId(null);
 
-      // Update contact's last message in sidebar
       setContacts(prev => prev.map(c => 
         c.id === targetContactId 
           ? { 
@@ -296,10 +419,8 @@ export function Inbox() {
     
     let updatedVotes: string[];
     if (userVotes.includes('me')) {
-      // Toggle off
       updatedVotes = userVotes.filter((v: string) => v !== 'me');
     } else {
-      // Toggle on
       updatedVotes = [...userVotes, 'me'];
     }
 
@@ -308,7 +429,6 @@ export function Inbox() {
       [emoji]: updatedVotes
     };
 
-    // Clean up empty keys
     if (updatedVotes.length === 0) {
       delete updatedReactions[emoji];
     }
@@ -392,7 +512,51 @@ export function Inbox() {
     setShowSlashMenu(false);
   };
 
-  // Drag and Drop File Handlers
+  const handleVoiceSend = (blob: Blob, duration: number) => {
+    const newMsgId = getUniqueId('msg');
+    const newMsg: Message = {
+      id: newMsgId,
+      content: "Mensagem de voz",
+      senderId: 'me',
+      timestamp: new Date(),
+      status: 'sending',
+      type: 'audio',
+      attachments: [{
+        id: getUniqueId('voice'),
+        type: 'audio',
+        url: URL.createObjectURL(blob),
+        name: 'voice_note.ogg',
+        duration
+      }]
+    };
+
+    setChatMessages(prev => ({
+      ...prev,
+      [selectedContactId]: [...(prev[selectedContactId] || []), newMsg]
+    }));
+
+    setIsRecording(false);
+
+    setContacts(prev => prev.map(c => 
+      c.id === selectedContactId 
+        ? { ...c, lastMessage: "🎙️ Mensagem de voz", time: new Date() }
+        : c
+    ));
+
+    // Simulate sending progress
+    setTimeout(() => {
+      setChatMessages(prev => ({
+        ...prev,
+        [selectedContactId]: prev[selectedContactId]?.map(m => 
+          m.id === newMsgId ? { ...m, status: 'read' } : m
+        ) || []
+      }));
+    }, 1500);
+
+    triggerContactReply("Enviou mensagem de voz");
+  };
+
+  // Drag and Drop File Handlers for container backdrop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -412,71 +576,8 @@ export function Inbox() {
 
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      if (!file) return;
-      const isImage = file.type.startsWith('image/');
-      
-      const newMsgId = getUniqueId('msg');
-      const newMsg: Message = {
-        id: newMsgId,
-        content: `Sent file: ${file.name}`,
-        senderId: 'me',
-        timestamp: new Date(),
-        status: 'sending',
-        type: isImage ? 'image' : 'file',
-        attachments: [{
-          id: getUniqueId('att'),
-          type: isImage ? 'image' : 'file',
-          url: isImage ? URL.createObjectURL(file) : '#',
-          name: file.name,
-          size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-        }]
-      };
-
-      setChatMessages(prev => {
-        const current = prev[selectedContactId] || [];
-        return {
-          ...prev,
-          [selectedContactId]: [...current, newMsg]
-        };
-      });
-
-      // Update contact last message in sidebar
-      setContacts(prev => prev.map(c => 
-        c.id === selectedContactId 
-          ? { ...c, lastMessage: `Sent file: ${file.name}`, time: new Date() }
-          : c
-      ));
-
-      // Simulate sending transitions
-      setTimeout(() => {
-        setChatMessages(prev => ({
-          ...prev,
-          [selectedContactId]: prev[selectedContactId]?.map(m => 
-            m.id === newMsgId ? { ...m, status: 'sent' } : m
-          ) || []
-        }));
-      }, 500);
-
-      setTimeout(() => {
-        setChatMessages(prev => ({
-          ...prev,
-          [selectedContactId]: prev[selectedContactId]?.map(m => 
-            m.id === newMsgId ? { ...m, status: 'delivered' } : m
-          ) || []
-        }));
-      }, 1000);
-
-      setTimeout(() => {
-        setChatMessages(prev => ({
-          ...prev,
-          [selectedContactId]: prev[selectedContactId]?.map(m => 
-            m.id === newMsgId ? { ...m, status: 'read' } : m
-          ) || []
-        }));
-      }, 1500);
-
-      triggerContactReply(`[File Attachment: ${file.name}]`);
+      // Put file inside the input upload queue instantly!
+      setInputFiles(Array.from(files));
     }
   };
 
@@ -513,54 +614,111 @@ export function Inbox() {
           
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
-              {filteredContacts.map((contact) => (
-                <div 
-                  key={contact.id}
-                  onClick={() => handleSelectContact(contact.id)}
-                  className={cn(
-                    "flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all duration-300 relative group border",
-                    selectedContactId === contact.id 
-                      ? "bg-cyan-500/10 border-cyan-500/20 shadow-lg shadow-cyan-500/5" 
-                      : "hover:bg-gray-50/80 dark:hover:bg-white/[0.02] border-transparent"
-                  )}
-                >
-                  <div className="relative">
-                    <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden flex items-center justify-center font-bold text-gray-700 dark:text-gray-200">
-                      {contact.avatar ? <img src={contact.avatar} alt={contact.name} className="h-full w-full object-cover" /> : contact.name[0]}
+              {isConversationsLoading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <div 
+                    key={`sidebar-skeleton-${idx}`}
+                    className="flex items-center gap-3 p-4 rounded-2xl border border-transparent animate-pulse"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-white/[0.04] shrink-0" />
+                    <div className="flex-1 space-y-2.5 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div className="h-4 w-28 bg-gray-200 dark:bg-white/[0.04] rounded" />
+                        <div className="h-3 w-8 bg-gray-200 dark:bg-white/[0.04] rounded" />
+                      </div>
+                      <div className="h-3.5 w-40 bg-gray-200 dark:bg-white/[0.04] rounded" />
                     </div>
-                    <div className={cn(
-                      "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-black",
-                      contact.status === 'online' ? "bg-emerald-500" : contact.status === 'busy' ? "bg-rose-500" : "bg-gray-400"
-                    )} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <Text className="font-bold truncate text-gray-900 dark:text-white">{contact.name}</Text>
-                      <Text className="text-[10px] text-gray-400">
-                        {contact.time instanceof Date ? contact.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : contact.time}
+                ))
+              ) : filteredContacts.length === 0 ? (
+                <div className="text-center py-8 text-xs text-gray-400">Nenhuma conversa encontrada</div>
+              ) : (
+                filteredContacts.map((contact) => (
+                  <div 
+                    key={contact.id}
+                    onClick={() => handleSelectContact(contact.id)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDragOverContactId(contact.id);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDragOverContactId(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDragOverContactId(null);
+                      handleSelectContact(contact.id);
+                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        setInputFiles(Array.from(e.dataTransfer.files));
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all duration-300 relative group border",
+                      selectedContactId === contact.id 
+                        ? "bg-cyan-500/10 border-cyan-500/20 shadow-lg shadow-cyan-500/5" 
+                        : dragOverContactId === contact.id
+                          ? "bg-cyan-500/20 border-cyan-500/50 scale-[1.02] shadow-[0_0_12px_rgba(6,182,212,0.3)] animate-pulse"
+                          : "hover:bg-gray-50/80 dark:hover:bg-white/[0.02] border-transparent"
+                    )}
+                  >
+                    <div className="relative">
+                      <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden flex items-center justify-center font-bold text-gray-700 dark:text-gray-200">
+                        {contact.avatar ? <img src={contact.avatar} alt={contact.name} className="h-full w-full object-cover" /> : contact.name[0]}
+                      </div>
+                      <div className={cn(
+                        "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-black",
+                        contact.status === 'online' ? "bg-emerald-500" : contact.status === 'busy' ? "bg-rose-500" : "bg-gray-400"
+                      )} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <Text className="font-bold truncate text-gray-900 dark:text-white">{contact.name}</Text>
+                        <Text className="text-[10px] text-gray-400">
+                          {contact.time instanceof Date ? contact.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : contact.time}
+                        </Text>
+                      </div>
+                      <Text className="text-xs text-gray-500 dark:text-white/40 truncate">
+                        {typingContactId === contact.id ? (
+                          <span className="text-cyan-500 font-medium animate-pulse">typing...</span>
+                        ) : (
+                          contact.lastMessage
+                        )}
                       </Text>
                     </div>
-                    <Text className="text-xs text-gray-500 dark:text-white/40 truncate">
-                      {typingContactId === contact.id ? (
-                        <span className="text-cyan-500 font-medium animate-pulse">typing...</span>
-                      ) : (
-                        contact.lastMessage
-                      )}
-                    </Text>
+                    {contact.unread > 0 && selectedContactId !== contact.id && (
+                      <div className="h-5 w-5 rounded-full bg-cyan-500 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-cyan-500/20">
+                        {contact.unread}
+                      </div>
+                    )}
                   </div>
-                  {contact.unread > 0 && selectedContactId !== contact.id && (
-                    <div className="h-5 w-5 rounded-full bg-cyan-500 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-cyan-500/20">
-                      {contact.unread}
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </ScrollArea>
         </ChatSidebar>
 
         {/* Center: Active Chat */}
-        <div className="flex-1 flex flex-col bg-white/40 dark:bg-black/10 backdrop-blur-sm relative">
+        <div 
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className="flex-1 flex flex-col bg-white/40 dark:bg-black/10 backdrop-blur-sm relative"
+        >
+          {/* Custom File Drag Overlay Banner */}
+          {dragActive && (
+            <div className="absolute inset-0 z-50 bg-cyan-500/10 dark:bg-cyan-500/5 backdrop-blur-sm border-2 border-dashed border-cyan-500/50 m-4 rounded-3xl flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+              <div className="h-16 w-16 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-2xl shadow-cyan-500/30">
+                <Paperclip className="h-8 w-8 animate-bounce" />
+              </div>
+              <Heading as="h4" className="text-lg font-bold text-cyan-600 dark:text-cyan-400">Arraste para enviar arquivos</Heading>
+              <Text className="text-xs text-gray-500 dark:text-white/40">Solte para colocar os arquivos diretamente na fila de envio</Text>
+            </div>
+          )}
+
           <ChatHeader 
             user={selectedUser}
             onInfo={() => setShowProfile(!showProfile)}
@@ -568,93 +726,98 @@ export function Inbox() {
           >
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden flex items-center justify-center font-bold text-gray-700 dark:text-gray-200">
-                  {selectedUser.avatar ? 
-                    <img src={selectedUser.avatar} className="h-full w-full object-cover" /> : 
-                    selectedUser.name[0]
-                  }
+                <div className="relative">
+                  <div className="h-12 w-12 rounded-2xl bg-cyan-500 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-cyan-500/15 overflow-hidden">
+                    {selectedContact?.avatar ? <img src={selectedContact?.avatar} alt={selectedContact?.name} className="h-full w-full object-cover" /> : selectedContact?.name[0]}
+                  </div>
+                  <div className={cn(
+                    "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-black",
+                    selectedContact?.status === 'online' ? "bg-emerald-500" : selectedContact?.status === 'busy' ? "bg-rose-500" : "bg-gray-400"
+                  )} />
                 </div>
                 <div>
-                  <Text className="font-bold text-gray-950 dark:text-white">{selectedUser.name}</Text>
-                  <div className="flex items-center gap-1.5">
-                    <div className={cn(
-                      "h-1.5 w-1.5 rounded-full",
-                      selectedUser.status === 'online' ? "bg-emerald-500 animate-pulse" : selectedUser.status === 'busy' ? "bg-rose-500" : "bg-gray-400"
-                    )} />
-                    <Text className={cn(
-                      "text-[9px] font-bold uppercase tracking-widest",
-                      selectedUser.status === 'online' ? "text-emerald-500" : selectedUser.status === 'busy' ? "text-rose-500" : "text-gray-400"
-                    )}>
-                      {selectedUser.status === 'online' ? "Online" : selectedUser.status === 'busy' ? "Busy" : "Offline"}
-                    </Text>
-                  </div>
+                  <Heading as="h4" className="text-sm font-bold text-gray-950 dark:text-white">{selectedContact?.name}</Heading>
+                  <Text className="text-xs text-emerald-500 dark:text-emerald-400 flex items-center gap-1.5 mt-0.5 font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active now
+                  </Text>
                 </div>
               </div>
+
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300"><Phone className="h-4.5 w-4.5" /></Button>
-                <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300"><Video className="h-4.5 w-4.5" /></Button>
-                <div className="h-6 w-px bg-gray-200 dark:bg-white/10 mx-2" />
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300">
+                  <Phone className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300">
+                  <Video className="h-4 w-4" />
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={cn("h-10 w-10 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300", showProfile && "bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 hover:bg-cyan-500/20")}
                   onClick={() => setShowProfile(!showProfile)}
+                  className={cn(
+                    "h-10 w-10 p-0 rounded-xl transition-all text-gray-600 dark:text-gray-300",
+                    showProfile ? "bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/15" : "hover:bg-gray-100 dark:hover:bg-white/5"
+                  )}
                 >
-                  <Info className="h-4.5 w-4.5" />
+                  <Info className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </ChatHeader>
 
-          {/* Scrolling message list & drag overlay */}
-          <div 
-            className="flex-1 overflow-hidden relative"
-            onDragOver={handleDragOver}
-            onDragEnter={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <MessageList 
-              messages={currentMessages} 
-              currentUserId="me"
-              className="p-8"
-              onReact={handleReact}
-              onReply={handleReply}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onPin={handlePin}
-            />
-
-            {/* Custom animated Typing Bubble */}
-            {typingContactId === selectedContactId && (
-              <div className="flex justify-start gap-2 items-center mb-6 pl-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden flex items-center justify-center font-bold text-xs flex-shrink-0 text-gray-700 dark:text-gray-300">
-                  {selectedContact?.avatar ? <img src={selectedContact.avatar} className="h-full w-full object-cover" /> : selectedContact?.name[0]}
+          <div className="flex-1 overflow-hidden relative">
+            {isMessagesLoading ? (
+              <div className="px-8 py-6 h-full overflow-y-auto space-y-6 animate-in fade-in duration-300">
+                {/* Left Bubble (Received) */}
+                <div className="flex items-start gap-3 max-w-[70%]">
+                  <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-white/[0.04] animate-pulse shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-12 w-48 bg-gray-200 dark:bg-white/[0.04] rounded-2xl rounded-tl-none animate-pulse" />
+                    <div className="h-3 w-16 bg-gray-100 dark:bg-white/[0.02] rounded animate-pulse" />
+                  </div>
                 </div>
-                <div className="bg-gray-100/90 dark:bg-white/[0.05] border border-gray-200/50 dark:border-white/5 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1 items-center shadow-lg">
-                  <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+
+                {/* Right Bubble (Sent) */}
+                <div className="flex items-start gap-3 max-w-[70%] ml-auto justify-end">
+                  <div className="space-y-2 flex-1 flex flex-col items-end">
+                    <div className="h-16 w-64 bg-cyan-500/10 dark:bg-cyan-500/5 rounded-2xl rounded-tr-none animate-pulse" />
+                    <div className="h-3 w-12 bg-gray-100 dark:bg-white/[0.02] rounded animate-pulse" />
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-cyan-500/10 dark:bg-cyan-500/5 animate-pulse shrink-0" />
+                </div>
+
+                {/* Left Bubble (Received) */}
+                <div className="flex items-start gap-3 max-w-[70%]">
+                  <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-white/[0.04] animate-pulse shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-20 w-80 bg-gray-200 dark:bg-white/[0.04] rounded-2xl rounded-tl-none animate-pulse" />
+                    <div className="h-3 w-20 bg-gray-100 dark:bg-white/[0.02] rounded animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Right Bubble (Sent) */}
+                <div className="flex items-start gap-3 max-w-[70%] ml-auto justify-end">
+                  <div className="space-y-2 flex-1 flex flex-col items-end">
+                    <div className="h-10 w-40 bg-cyan-500/10 dark:bg-cyan-500/5 rounded-2xl rounded-tr-none animate-pulse" />
+                    <div className="h-3 w-12 bg-gray-100 dark:bg-white/[0.02] rounded animate-pulse" />
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-cyan-500/10 dark:bg-cyan-500/5 animate-pulse shrink-0" />
                 </div>
               </div>
-            )}
-
-            {/* Beautiful Drag-and-Drop Glassmorphic Overlay */}
-            {dragActive && (
-              <div 
-                className="absolute inset-0 bg-cyan-500/[0.04] dark:bg-cyan-500/[0.02] backdrop-blur-md border-4 border-dashed border-cyan-500/40 rounded-[2rem] m-6 flex flex-col items-center justify-center gap-4 z-40 animate-in fade-in zoom-in-95 duration-200"
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                <div className="p-6 rounded-full bg-cyan-500/10 text-cyan-500 animate-bounce">
-                  <Paperclip className="h-10 w-10" />
-                </div>
-                <div className="text-center space-y-1">
-                  <Heading as="h4" className="text-lg font-bold text-gray-950 dark:text-white">Drop files to attach to this chat</Heading>
-                  <Text className="text-sm text-gray-500 dark:text-white/40">Images, PDFs, zip, up to 50MB each</Text>
-                </div>
-              </div>
+            ) : (
+              <MessageList 
+                messages={currentMessages}
+                currentUserId="me"
+                onReact={(msg, emoji) => handleReact(msg, emoji)}
+                onReply={handleReply}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onPin={handlePin}
+                onFileClick={handleFileClick}
+                hasAi={true}
+                className="px-8 py-6 h-full overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-black/10 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
+              />
             )}
           </div>
 
@@ -710,10 +873,18 @@ export function Inbox() {
               value={inputValue}
               onChange={handleInputChange}
               onSend={handleSend}
+              files={inputFiles}
+              onFilesChange={setInputFiles}
+              isRecording={isRecording}
+              onMic={() => setIsRecording(true)}
+              onVoiceEnd={handleVoiceSend}
               replyingTo={replyToMessage || undefined}
-              onCancelReply={() => setReplyToMessage(null)}
-              placeholder="Type your message here... (try '/' for commands)"
-              className="bg-gray-100 dark:bg-white/5 border-none rounded-2xl h-14 px-6 focus-within:ring-2 focus-within:ring-cyan-500/30 transition-all"
+              onCancelReply={() => {
+                setReplyToMessage(null);
+                setIsRecording(false);
+              }}
+              placeholder="Digite sua mensagem rica aqui... Ex: *negrito*, _itálico_, ~riscado~ ou `/ai`"
+              className="bg-gray-100 dark:bg-white/5 border-none rounded-3xl px-4 py-3 focus-within:ring-2 focus-within:ring-cyan-500/30 transition-all shadow-lg shadow-black/[0.02]"
             />
           </div>
         </div>
@@ -799,6 +970,12 @@ export function Inbox() {
           </div>
         )}
       </ChatLayout>
+
+      <UnifiedPreviewModal 
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        file={previewFile}
+      />
     </div>
   );
 }

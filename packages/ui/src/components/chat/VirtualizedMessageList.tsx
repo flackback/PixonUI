@@ -10,6 +10,7 @@ interface VirtualizedMessageListProps {
   currentUserId: string;
   onReply?: (message: Message) => void;
   onImageClick?: (url: string) => void;
+  onFileClick?: (file: any) => void;
   className?: string;
   itemHeight?: number; // Estimated height
 }
@@ -19,6 +20,7 @@ export function VirtualizedMessageList({
   currentUserId, 
   onReply,
   onImageClick,
+  onFileClick,
   className,
   itemHeight = 80
 }: VirtualizedMessageListProps) {
@@ -70,6 +72,7 @@ export function VirtualizedMessageList({
                 isOwn={message.senderId === currentUserId}
                 onReply={() => onReply?.(message)}
                 onImageClick={onImageClick}
+                onFileClick={onFileClick}
               />
             </div>
           );

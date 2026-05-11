@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { cn } from '../../../utils/cn';
 import { KanbanHeader } from './KanbanHeader';
-import { KanbanColumn } from './KanbanColumn';
+import { KanbanColumn, KanbanColumnSkeleton } from './KanbanColumn';
 import { KanbanListView } from './KanbanListView';
 import { KanbanTimelineView } from './KanbanTimelineView';
 import { KanbanTableView } from './KanbanTableView';
@@ -13,6 +13,7 @@ import { useKanbanFilters } from './useKanbanFilters';
 import { useKanbanUndo } from './useKanbanUndo';
 import { useKanbanKeyboard } from './useKanbanKeyboard';
 import { useKanbanDragAndDrop } from './useKanbanDragAndDrop';
+import { useKanbanBoardScroll } from './useKanbanBoardScroll';
 import type { KanbanProps, KanbanTask, KanbanColumnDef } from './types';
 
 export function KanbanBoard({
@@ -28,11 +29,27 @@ export function KanbanBoard({
   view: propView,
   onViewChange,
   className,
+  selectable = false,
+  selectedTaskIds = [],
+  onTaskSelectionChange,
+  activeTimerTaskId = null,
+  sortBy = 'order',
+  sortOrder = 'asc',
+  isLoading = false,
+  maxVisibleCards,
   ...props
 }: KanbanProps) {
   const [internalView, setInternalView] = useState<'board' | 'list' | 'calendar' | 'timeline' | 'table'>(propView || 'board');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [collapsedSwimlanes, setCollapsedSwimlanes] = useState<string[]>([]);
+
+  const {
+    boardRef,
+    isDraggingBoard,
+    handleBoardMouseDown,
+    handleBoardMouseMove,
+    handleBoardMouseUp
+  } = useKanbanBoardScroll();
 
   const view = propView || internalView;
   const setView = (v: 'board' | 'list' | 'calendar' | 'timeline' | 'table') => {
@@ -120,12 +137,42 @@ export function KanbanBoard({
     [tasks, selectedTaskId]
   );
 
+  const sortedTasks = useMemo(() => {
+    const list = [...filteredTasks];
+    if (!sortBy) return list;
+
+    list.sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'title') {
+        comparison = (a.title || '').localeCompare(b.title || '');
+      } else if (sortBy === 'priority') {
+        const priorityWeight = { urgent: 4, high: 3, medium: 2, low: 1 };
+        const aWeight = priorityWeight[a.priority as keyof typeof priorityWeight] || 0;
+        const bWeight = priorityWeight[b.priority as keyof typeof priorityWeight] || 0;
+        comparison = aWeight - bWeight;
+      } else if (sortBy === 'dueDate') {
+        const aDate = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+        const bDate = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+        comparison = aDate - bDate;
+      } else if (sortBy === 'created') {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        comparison = aTime - bTime;
+      } else {
+        comparison = (a.order || 0) - (b.order || 0);
+      }
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    return list;
+  }, [filteredTasks, sortBy, sortOrder]);
+
   const tasksByColumn = useMemo(() => {
     const map: Record<string, KanbanTask[]> = {};
     columns.forEach(col => {
       map[col.id] = [];
     });
-    filteredTasks.forEach(task => {
+    sortedTasks.forEach(task => {
       let list = map[task.columnId];
       if (!list) {
         list = [];
@@ -134,13 +181,27 @@ export function KanbanBoard({
       list.push(task);
     });
     return map;
-  }, [columns, filteredTasks]);
+  }, [columns, sortedTasks]);
 
   const renderView = () => {
     const handleTaskClick = (task: KanbanTask) => {
       setSelectedTaskId(task.id);
       onTaskClick?.(task);
     };
+
+    // ─── SKELETON LOADING STATE ───
+    if (isLoading) {
+      return (
+        <div className="flex gap-6 overflow-x-auto pb-4 min-h-[500px]">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <div className="w-px self-stretch bg-gray-200/50 dark:bg-white/5 mx-1 my-4 flex-shrink-0" />}
+              <KanbanColumnSkeleton />
+            </React.Fragment>
+          ))}
+        </div>
+      );
+    }
 
     switch (view) {
       case 'list':
@@ -170,20 +231,27 @@ export function KanbanBoard({
                   )}
                 >
                   <div className="flex gap-6 min-h-[200px]">
-                    {columns.map(column => (
-                      <KanbanColumn
-                        key={column.id}
-                        column={column}
-                        tasks={groupTasks.filter(t => t.columnId === column.id)}
-                        onTaskClick={handleTaskClick}
-                        onAddTask={() => onTaskAdd?.(column.id, 'New Task')}
-                        onAction={(action) => onColumnAction?.(column.id, action)}
-                        onDragStart={handleDragStart}
-                        onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
-                        onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
-                        isDragOver={dragOverColumnId === column.id}
-                        draggedTaskId={draggedTaskId}
-                      />
+                    {columns.map((column, index) => (
+                      <React.Fragment key={column.id}>
+                        {index > 0 && <div className="w-px self-stretch bg-gray-200/50 dark:bg-white/5 mx-1 my-4 flex-shrink-0" />}
+                        <KanbanColumn
+                          column={column}
+                          tasks={groupTasks.filter(t => t.columnId === column.id)}
+                          onTaskClick={handleTaskClick}
+                          onAddTask={() => onTaskAdd?.(column.id, 'New Task')}
+                          onAction={(action) => onColumnAction?.(column.id, action)}
+                          onDragStart={handleDragStart}
+                          onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
+                          onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
+                          isDragOver={dragOverColumnId === column.id}
+                          draggedTaskId={draggedTaskId}
+                          selectable={selectable}
+                          selectedTaskIds={selectedTaskIds}
+                          onTaskSelectionChange={onTaskSelectionChange}
+                          activeTimerTaskId={activeTimerTaskId}
+                          maxVisibleCards={maxVisibleCards}
+                        />
+                      </React.Fragment>
                     ))}
                   </div>
                 </KanbanSwimlane>
@@ -193,21 +261,38 @@ export function KanbanBoard({
         }
 
         return (
-          <div className="flex gap-6 overflow-x-auto pb-4 min-h-[500px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-white/10">
-            {columns.map(column => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                tasks={tasksByColumn[column.id] || []}
-                onTaskClick={handleTaskClick}
-                onAddTask={() => onTaskAdd?.(column.id, 'New Task')}
-                onAction={(action) => onColumnAction?.(column.id, action)}
-                onDragStart={handleDragStart}
-                onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
-                onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
-                isDragOver={dragOverColumnId === column.id}
-                draggedTaskId={draggedTaskId}
-              />
+          <div 
+            ref={boardRef}
+            onMouseDown={handleBoardMouseDown}
+            onMouseMove={handleBoardMouseMove}
+            onMouseUp={handleBoardMouseUp}
+            onMouseLeave={handleBoardMouseUp}
+            className={cn(
+              "flex gap-6 overflow-x-auto pb-4 min-h-[500px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-white/10",
+              isDraggingBoard ? "cursor-grabbing select-none" : "cursor-grab"
+            )}
+          >
+            {columns.map((column, index) => (
+              <React.Fragment key={column.id}>
+                {index > 0 && <div className="w-px self-stretch bg-gray-200/50 dark:bg-white/5 mx-1 my-4 flex-shrink-0" />}
+                <KanbanColumn
+                  column={column}
+                  tasks={tasksByColumn[column.id] || []}
+                  onTaskClick={handleTaskClick}
+                  onAddTask={() => onTaskAdd?.(column.id, 'New Task')}
+                  onAction={(action) => onColumnAction?.(column.id, action)}
+                  onDragStart={handleDragStart}
+                  onDragOver={(e, taskId) => handleDragOver(e, column.id, taskId)}
+                  onDrop={(e, taskId) => handleDrop(e, column.id, taskId)}
+                  isDragOver={dragOverColumnId === column.id}
+                  draggedTaskId={draggedTaskId}
+                  selectable={selectable}
+                  selectedTaskIds={selectedTaskIds}
+                  onTaskSelectionChange={onTaskSelectionChange}
+                  activeTimerTaskId={activeTimerTaskId}
+                  maxVisibleCards={maxVisibleCards}
+                />
+              </React.Fragment>
             ))}
           </div>
         );

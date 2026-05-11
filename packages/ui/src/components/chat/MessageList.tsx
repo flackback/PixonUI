@@ -19,12 +19,14 @@ interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   onSelect?: (message: Message) => void;
   onAction?: (message: Message, action: any) => void;
   onImageClick?: (url: string) => void;
+  onFileClick?: (file: any) => void;
   onTTS?: (message: Message) => void;
   onTranscribe?: (message: Message) => void;
   hasAi?: boolean;
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
+  isLoading?: boolean;
   selectedMessages?: string[];
   dateFormat?: string;
   groupByDate?: boolean;
@@ -45,12 +47,14 @@ export function MessageList({
   onSelect,
   onAction,
   onImageClick,
+  onFileClick,
   onTTS,
   onTranscribe,
   hasAi,
   onLoadMore,
   hasMore,
   isLoadingMore,
+  isLoading = false,
   selectedMessages = [],
   dateFormat = 'MMMM d, yyyy',
   groupByDate = true,
@@ -79,6 +83,59 @@ export function MessageList({
       onLoadMore();
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className={cn("flex-1 overflow-hidden relative bg-transparent", className)} {...props}>
+        <div className="h-full overflow-y-auto p-4 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent">
+          {/* Item 1: Received message */}
+          <div className="flex items-end gap-3 max-w-[75%] animate-pulse">
+            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/[0.06] shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="h-3 w-20 bg-gray-200 dark:bg-white/[0.06] rounded" />
+              <div className="p-4 rounded-2xl rounded-bl-none bg-gray-100 dark:bg-white/[0.03] space-y-2">
+                <div className="h-3 w-48 bg-gray-200 dark:bg-white/[0.06] rounded" />
+                <div className="h-3 w-32 bg-gray-200 dark:bg-white/[0.06] rounded" />
+              </div>
+            </div>
+          </div>
+
+          {/* Item 2: Sent message */}
+          <div className="flex items-end justify-end gap-3 max-w-[75%] ml-auto animate-pulse">
+            <div className="space-y-2 flex-1">
+              <div className="p-4 rounded-2xl rounded-br-none bg-blue-500/10 dark:bg-blue-500/5 space-y-2 flex flex-col items-end">
+                <div className="h-3 w-40 bg-blue-500/20 dark:bg-blue-500/10 rounded" />
+                <div className="h-3 w-28 bg-blue-500/20 dark:bg-blue-500/10 rounded" />
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-blue-500/10 dark:bg-blue-500/5 shrink-0" />
+          </div>
+
+          {/* Item 3: Received message (rich-media skeleton) */}
+          <div className="flex items-end gap-3 max-w-[75%] animate-pulse">
+            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/[0.06] shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="h-3 w-16 bg-gray-200 dark:bg-white/[0.06] rounded" />
+              <div className="p-3 rounded-2xl rounded-bl-none bg-gray-100 dark:bg-white/[0.03] space-y-3">
+                <div className="h-28 w-52 bg-gray-200/60 dark:bg-white/[0.04] rounded-xl" />
+                <div className="h-3 w-32 bg-gray-200 dark:bg-white/[0.06] rounded" />
+              </div>
+            </div>
+          </div>
+
+          {/* Item 4: Sent message */}
+          <div className="flex items-end justify-end gap-3 max-w-[75%] ml-auto animate-pulse">
+            <div className="space-y-2 flex-1">
+              <div className="p-4 rounded-2xl rounded-br-none bg-blue-500/10 dark:bg-blue-500/5 space-y-2 flex flex-col items-end">
+                <div className="h-3 w-32 bg-blue-500/20 dark:bg-blue-500/10 rounded" />
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-blue-500/10 dark:bg-blue-500/5 shrink-0" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (messages.length === 0 && !isLoadingMore) {
     return (
@@ -143,6 +200,7 @@ export function MessageList({
                   onSelect={() => onSelect?.(message)}
                   onAction={(action) => onAction?.(message, action)}
                   onImageClick={onImageClick}
+                  onFileClick={onFileClick}
                   onTTS={onTTS ? () => onTTS(message) : undefined}
                   onTranscribe={onTranscribe}
                   hasAi={hasAi}

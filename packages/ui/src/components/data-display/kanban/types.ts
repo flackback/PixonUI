@@ -114,6 +114,8 @@ export interface KanbanProps {
   selectable?: boolean;
   selectedTaskIds?: string[];
   activeTimerTaskId?: string | null;
+  isLoading?: boolean;
+  maxVisibleCards?: number;
 }
 
 export interface SortConfig {

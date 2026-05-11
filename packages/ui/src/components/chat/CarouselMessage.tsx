@@ -31,7 +31,12 @@ export function CarouselMessage({ cards, isOwn, onAction }: CarouselMessageProps
         {cards.map((card, idx) => (
           <div 
             key={idx}
-            className="flex-shrink-0 w-[240px] snap-start rounded-2xl bg-white/5 dark:bg-white/[0.03] border border-white/10 overflow-hidden flex flex-col"
+            className={cn(
+              "flex-shrink-0 w-[240px] snap-start rounded-2xl border overflow-hidden flex flex-col",
+              isOwn
+                ? "bg-white/5 border-white/10"
+                : "bg-white dark:bg-white/[0.03] border-gray-200/80 dark:border-white/10"
+            )}
           >
             {card.header?.attachment && (
               <div className="aspect-video w-full overflow-hidden">
@@ -52,9 +57,10 @@ export function CarouselMessage({ cards, isOwn, onAction }: CarouselMessageProps
                     key={btn.id}
                     onClick={() => onAction?.(btn)}
                     className={cn(
-                      "flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium transition-all",
-                      "bg-white/10 hover:bg-white/20 border border-white/10",
-                      isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                      "flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium transition-all border",
+                      isOwn
+                        ? "bg-white/10 hover:bg-white/20 border-white/10 text-white"
+                        : "bg-gray-50/80 hover:bg-gray-100/80 border-gray-200/80 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10 text-blue-600 dark:text-blue-400"
                     )}
                   >
                     {btn.type === 'url' && <ExternalLink className="h-3 w-3" />}
@@ -73,9 +79,10 @@ export function CarouselMessage({ cards, isOwn, onAction }: CarouselMessageProps
                       key={idx}
                       onClick={() => onAction?.({ id: params.id || btn.name, text: params.display_text || btn.name, type: 'reply', params })}
                       className={cn(
-                        "flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium transition-all",
-                        "bg-white/10 hover:bg-white/20 border border-white/10",
-                        isOwn ? "text-white" : "text-blue-500 dark:text-blue-400"
+                        "flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium transition-all border",
+                        isOwn
+                          ? "bg-white/10 hover:bg-white/20 border-white/10 text-white"
+                          : "bg-gray-50/80 hover:bg-gray-100/80 border-gray-200/80 dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/10 text-blue-600 dark:text-blue-400"
                       )}
                     >
                       {btn.name === 'cta_copy' && <Copy className="h-3 w-3" />}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type {
   Conversation,
   Message,
@@ -34,6 +34,8 @@ const INITIAL_MESSAGES: Message[] = [
 export function ChatDemo() {
   const [activeId, setActiveId] = useState('1');
   const [showProfile, setShowProfile] = useState(true);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   
   const { 
     messages, 
@@ -41,6 +43,21 @@ export function ChatDemo() {
   } = useChatMessages(INITIAL_MESSAGES);
 
   const { isTyping, setTyping } = useTypingIndicator();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoadingChats(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleSelectChat = (id: string) => {
+    setIsLoadingMessages(true);
+    setActiveId(id);
+    setTimeout(() => {
+      setIsLoadingMessages(false);
+    }, 800);
+  };
 
   const conversations: Conversation[] = [
     { id: '1', user: USERS['1']!, lastMessage: messages[messages.length - 1], unreadCount: 2 },
@@ -88,7 +105,8 @@ export function ChatDemo() {
       <ChatSidebar 
         conversations={conversations} 
         activeId={activeId} 
-        onSelect={setActiveId}
+        onSelect={handleSelectChat}
+        isLoading={isLoadingChats}
         className="hidden md:flex"
       />
       
@@ -101,6 +119,7 @@ export function ChatDemo() {
         <MessageList 
           messages={messages} 
           currentUserId={CURRENT_USER_ID} 
+          isLoading={isLoadingMessages}
           onReply={handleReply}
           onReact={handleReact}
           onDelete={(id) => console.log('Delete:', id)}

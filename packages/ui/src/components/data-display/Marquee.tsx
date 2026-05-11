@@ -62,7 +62,7 @@ export function Marquee({
   return (
     <div
       className={cn(
-        'relative overflow-hidden',
+        'relative overflow-hidden marquee-container',
         isVertical ? 'flex flex-col' : 'flex',
         className
       )}
@@ -73,15 +73,13 @@ export function Marquee({
         <div
           key={i}
           className={cn(
-            'flex shrink-0',
+            'flex shrink-0 marquee-track',
             isVertical ? 'flex-col' : 'flex-row',
-            pauseOnHover && '[.group:hover_&]:animation-play-state-paused',
           )}
           style={{
             gap: `${gap}px`,
             animation: `marquee-${isVertical ? 'vertical' : 'horizontal'} ${speed}s linear infinite`,
             animationDirection: isReverse ? 'reverse' : 'normal',
-            ...(pauseOnHover ? {} : {}),
           }}
           aria-hidden={i > 0}
         >
@@ -99,8 +97,7 @@ export function Marquee({
           to { transform: translateY(-100%); }
         }
         ${pauseOnHover ? `
-        .group:hover > div > div,
-        div:hover > div {
+        .marquee-container:hover .marquee-track {
           animation-play-state: paused !important;
         }
         ` : ''}

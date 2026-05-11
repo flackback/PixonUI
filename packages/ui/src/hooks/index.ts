@@ -45,3 +45,6 @@ export * from './useTypingIndicator';
 export * from './useViewTransition';
 export * from './useVirtualList';
 export * from './useVoiceRecorder';
+export * from './useTaskTimeline';
+export * from './useAudioVisualizer';
+export * from './usePointerSpring';

@@ -134,4 +134,12 @@ export * from './components/effects/Confetti';
 export * from './components/effects/Spotlight';
 export * from './components/effects/RetroGrid';
 export * from './components/shared/TestimonialCard';
+export * from './components/data-display/TaskTimeline';
+
+// Next-Gen additions
+export * from './components/effects/Tilt';
+export * from './components/effects/InteractiveMeshGradient';
+export * from './components/navigation/ScrollSpy';
+export { useScrollSpy } from './hooks/useScrollSpy';
+export * from './components/chat/WaveformVisualizer';
 

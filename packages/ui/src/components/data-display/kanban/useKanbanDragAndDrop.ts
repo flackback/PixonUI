@@ -41,7 +41,7 @@ export function useKanbanDragAndDrop({
       // Delay state update so the browser captures the original full-opacity element as the drag image first
       setTimeout(() => {
         setDraggedTaskId(id);
-      }, 0);
+      }, 50);
     } else {
       setDraggedColumnId(id);
       e.dataTransfer.setData('columnId', id);

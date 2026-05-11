@@ -23,9 +23,15 @@ export function ChatMegaDemo() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | undefined>();
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   // Initialize store with massive data
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoadingChats(false);
+    }, 1200);
+
     const mockConversations: Conversation[] = Array.from({ length: CONVERSATION_COUNT }).map((_, i) => ({
       id: `chat-${i}`,
       user: {
@@ -112,6 +118,8 @@ export function ChatMegaDemo() {
       ];
       chatStore.setMessages(conv.id, mockMessages);
     });
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleLoadMore = () => {
@@ -183,7 +191,14 @@ export function ChatMegaDemo() {
         <ChatSidebar 
           conversations={conversations}
           activeId={activeChat?.id}
-          onSelect={(id) => chatStore.setActiveChat(id)}
+          onSelect={(id) => {
+            setIsLoadingMessages(true);
+            chatStore.setActiveChat(id);
+            setTimeout(() => {
+              setIsLoadingMessages(false);
+            }, 800);
+          }}
+          isLoading={isLoadingChats}
         />
         
         <div className="flex-1 flex flex-col min-w-0 bg-white/5">
@@ -200,6 +215,7 @@ export function ChatMegaDemo() {
                 onLoadMore={handleLoadMore}
                 hasMore={true}
                 isLoadingMore={isLoadingMore}
+                isLoading={isLoadingMessages}
                 onReply={(msg) => setReplyingTo(msg)}
                 onReact={(msg, emoji) => chatStore.addReaction(activeChat.id, msg.id, emoji, 'me')}
                 onDelete={(msg) => chatStore.deleteMessage(activeChat.id, msg.id)}

@@ -96,7 +96,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
           
           {/* Reactive Character Counter */}
           {showCharacterCount && maxLength && (
-            <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
+            <span className="text-[10px] font-bold text-gray-400 dark:text-white/30 uppercase tracking-widest">
               {value ? String(value).length : 0} / {maxLength}
             </span>
           )}
@@ -131,7 +131,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
             <button
               type="button"
               onClick={onClear}
-              className="absolute right-3.5 p-1 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all active:scale-90"
+              className="absolute right-3.5 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white transition-all active:scale-90"
               title="Limpar campo"
             >
               <X size={14} />

@@ -8,6 +8,18 @@ export default {
   ],
   theme: {
     extend: {
+      colors: {
+        background: 'rgb(var(--color-background, 255 255 255) / <alpha-value>)',
+        foreground: 'rgb(var(--color-foreground, 9 9 11) / <alpha-value>)',
+        primary: {
+          DEFAULT: 'rgb(var(--color-primary, 59 130 246) / <alpha-value>)',
+          foreground: 'rgb(var(--color-primary-foreground, 255 255 255) / <alpha-value>)',
+        },
+        muted: {
+          DEFAULT: 'rgb(var(--color-muted, 244 244 245) / <alpha-value>)',
+          foreground: 'rgb(var(--color-muted-foreground, 113 113 122) / <alpha-value>)',
+        },
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
