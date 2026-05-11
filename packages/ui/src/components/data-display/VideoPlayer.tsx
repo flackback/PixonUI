@@ -277,14 +277,27 @@ export function VideoPlayer({
     }, 600);
   };
 
-  // Custom Context Menu Right Click Interceptor
+  // Custom Context Menu Right Click Interceptor with Collision Avoidance
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    // Dimensions of the context menu (w-52 is 208px, max-height with 7 items is ~310px)
+    const menuWidth = 208;
+    const menuHeight = 310;
+
+    // Check if x coordinate + menuWidth overflows the container width
+    const x = clickX + menuWidth > rect.width ? rect.width - menuWidth - 8 : clickX;
+
+    // Check if y coordinate + menuHeight overflows the container height
+    const y = clickY + menuHeight > rect.height ? rect.height - menuHeight - 8 : clickY;
+
     setContextMenu({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: Math.max(8, x),
+      y: Math.max(8, y),
       visible: true
     });
   };
