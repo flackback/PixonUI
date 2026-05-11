@@ -44,3 +44,7 @@ yarn-error.log*
 # PixonUI specific
 packages/preview/dist
 packages/ui/dist
+
+# TypeScript cache
+*.tsbuildinfo
+.tsbuildinfo
