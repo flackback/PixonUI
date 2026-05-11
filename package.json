@@ -10,11 +10,13 @@
     "typecheck": "tsc -b",
     "check": "npm run lint && npm run typecheck",
     "test": "npm run test -w packages/ui",
+    "test:e2e": "playwright test",
     "mcp:build": "npm run build -w @pixonui/mcp",
     "mcp:start": "npm run start -w @pixonui/mcp",
     "context:generate": "node scripts/generate-llm-context.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
     "eslint": "^8.56.0",
