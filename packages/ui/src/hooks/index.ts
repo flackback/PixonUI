@@ -49,4 +49,4 @@ export * from './useTaskTimeline';
 export * from './useAudioVisualizer';
 export * from './usePointerSpring';
 export * from './usePixonAnimate';
-
+export * from './usePixonVideoPlayer';

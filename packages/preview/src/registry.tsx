@@ -47,6 +47,7 @@ import { ChartDemo } from './demos/ChartDemo';
 import { ExtrasDemo } from './demos/ExtrasDemo';
 import { TableDemo } from './demos/TableDemo';
 import { MotionDemo } from './demos/MotionDemo';
+import { VideoPlayerDemo } from './demos/VideoPlayerDemo';
 import { StructureDemo } from './demos/StructureDemo';
 import { ChatMegaDemo } from './demos/ChatMegaDemo';
 import StructureDemoSource from './demos/StructureDemo.tsx?raw';
@@ -813,6 +814,23 @@ const { toast } = useToast();
       </div>
     )
   },
+  {
+    id: 'video-player',
+    title: 'Video Player',
+    category: 'Data Display',
+    description: 'A hardware-accelerated HTML5 Video Player with cinematic Ambient Glow, gestures, atalhos, double-tap seek, and draggable miniplayer.',
+    code: `import { VideoPlayer } from '@pixonui/react';
+
+<VideoPlayer
+  src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+  poster="https://images.unsplash.com/photo-1536440136628-849c177e76a1"
+  title="Sintel Trailer"
+  accentColor="bg-orange-500"
+  enableAmbientGlow={true}
+/>`,
+    demo: <VideoPlayerDemo />
+  },
+
   {
     id: 'layout-primitives',
     title: 'Layout Primitives',
