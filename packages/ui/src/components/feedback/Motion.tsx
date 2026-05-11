@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useId, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useId, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
@@ -140,6 +140,12 @@ export interface MotionProps extends React.HTMLAttributes<HTMLDivElement> {
   innerRef?: React.Ref<HTMLDivElement>;
   /** Custom physical spring configuration. Automatically enables WAAPI spring keyframes when set. */
   spring?: SpringConfig;
+  /** Enable automatic layout (FLIP) transition on layout/children updates */
+  layout?: boolean | 'position' | 'size';
+  /** Shared layout transition ID. Syncs and morphs unmounted to mounted elements. */
+  layoutId?: string;
+  /** Custom dependencies to trigger layout measurement updates */
+  layoutDependency?: any;
 }
 
 // ---------------------------------------------------------------------------
@@ -347,9 +353,8 @@ function buildKeyframesCSS(name: string, steps: MotionStyle[]): string {
   return lines.join('\n');
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+// Shared Layout Registry for Page-wide elements matching layoutId
+const sharedLayoutRegistry = new Map<string, { rect: DOMRect; timestamp: number }>();
 
 export function Motion({
   children,
@@ -389,6 +394,10 @@ export function Motion({
   spring,
   className,
   style,
+  // Layout Props
+  layout,
+  layoutId,
+  layoutDependency,
   ...props
 }: MotionProps) {
   // ── Accessibility: reduced motion ─────────────────────────────────────
@@ -534,6 +543,82 @@ export function Motion({
   const isKeyframeMode = !!(resolvedKeyframes && resolvedKeyframes.length > 0);
   const resolvedDuration = isSpringEasing ? springDuration : duration;
   const easingCSS = isSpringEasing ? 'linear' : resolveEasing(easing);
+
+  // ── Native FLIP Layout & Shared Layout Registry System ───────────────
+  const layoutRef = useRef<DOMRect | null>(null);
+
+  useLayoutEffect(() => {
+    if (!layout && !layoutId) return;
+    const el = ref.current;
+    if (!el) return;
+
+    // Get current actual position and size
+    const currentRect = el.getBoundingClientRect();
+    let prev: DOMRect | null = null;
+
+    if (layoutId) {
+      const cached = sharedLayoutRegistry.get(layoutId);
+      if (cached && Date.now() - cached.timestamp < 150) {
+        prev = cached.rect;
+        sharedLayoutRegistry.delete(layoutId);
+      }
+    }
+
+    if (!prev && layout && layoutRef.current) {
+      prev = layoutRef.current;
+    }
+
+    if (prev) {
+      const dx = prev.left - currentRect.left;
+      const dy = prev.top - currentRect.top;
+      const dw = prev.width / (currentRect.width || 1);
+      const dh = prev.height / (currentRect.height || 1);
+
+      // Filter animations based on layout types ('position' or 'size')
+      const animatePosition = layout !== 'size';
+      const animateSize = layout !== 'position';
+
+      const tx = animatePosition ? dx : 0;
+      const ty = animatePosition ? dy : 0;
+      const sx = animateSize ? dw : 1;
+      const sy = animateSize ? dh : 1;
+
+      if (tx !== 0 || ty !== 0 || sx !== 1 || sy !== 1) {
+        // Trigger high-performance hardware-accelerated off-thread animation
+        el.animate(
+          [
+            {
+              transform: `translate3d(${tx}px, ${ty}px, 0) scale(${sx}, ${sy})`,
+              transformOrigin: 'top left',
+            },
+            {
+              transform: 'translate3d(0px, 0px, 0) scale(1, 1)',
+              transformOrigin: 'top left',
+            },
+          ],
+          {
+            duration: resolvedDuration,
+            easing: easingCSS,
+          }
+        );
+      }
+    }
+
+    layoutRef.current = currentRect;
+  });
+
+  useLayoutEffect(() => {
+    if (!layoutId) return;
+    return () => {
+      const el = ref.current;
+      if (el) {
+        sharedLayoutRegistry.set(layoutId, {
+          rect: el.getBoundingClientRect(),
+          timestamp: Date.now(),
+        });
+      }
+    };
+  }, [layoutId]);
 
   // For non-keyframe mode: build inline styles for the current state
   const activeStyle = shouldShow ? to : from;

@@ -213,6 +213,96 @@ const items = Array.from({ length: totalItems }).map((_, i) => {
 
 ---
 
+## Hardware-Accelerated FLIP Layout Transitions
+
+Typical animation libraries (like Anime.js) animate layout changes by mutating properties like `width`, `height`, `top`, or `left`. This is extremely slow because it forces the browser to calculate **Reflows (Layout)** and **Repaints** on every single frame, causing heavy frame drops.
+
+PixonUI introduces a high-performance **FLIP (First, Last, Invert, Play)** Layout engine built directly into `<Motion>`. It computes layout changes right before the browser paints (`useLayoutEffect`), and then plays the transitions using hardware-accelerated CSS `transform` properties (`translate3d`, `scale`) via the Web Animations API.
+
+This executes **100% on the GPU compositor thread**, keeping animations at a silky-smooth 120fps.
+
+### 1. Automatic Layout Transitions (`layout`)
+Adding `layout` to any element automatically morphs its size/position smoothly when its parent layout, list items, or children states change:
+
+```tsx
+import { useState } from 'react';
+import { Motion } from '@pixonui/react';
+
+export default function LayoutDemo() {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <Motion
+      layout
+      onClick={() => setExpanded(!expanded)}
+      className="p-6 bg-slate-950 border border-white/10 rounded-2xl cursor-pointer"
+      style={{ width: expanded ? '400px' : '200px' }}
+      easing="spring"
+    >
+      <h3 className="font-bold text-white">Click to Expand</h3>
+      {expanded && (
+        <p className="mt-4 text-white/60">
+          This container expanded smoothly on the GPU using FLIP!
+        </p>
+      )}
+    </Motion>
+  );
+}
+```
+
+### 2. Layout Transitions Modes
+You can fine-tune layout transitions to only animate position or only animate size:
+- `layout={true}` (or just `layout`): Animates both size and position.
+- `layout="position"`: Animates position change only (perfect for reordering lists without scaling children).
+- `layout="size"`: Animates size change only.
+
+---
+
+## Shared Layout Transitions (`layoutId`)
+
+Shared Layout transitions let you animate the path between completely separate, unmounting and mounting DOM elements in the tree (for example, sliding an active-tab highlighter background between different navigation tabs).
+
+When an element with `layoutId` unmounts, its last physical position is cached in a global, fast, and secure registry. When the new element mounts, PixonUI calculates the delta and slides it seamlessly.
+
+```tsx
+import { useState } from 'react';
+import { Motion } from '@pixonui/react';
+
+const tabs = ['Home', 'SaaS', 'Inbox', 'Settings'];
+
+export default function TabBar() {
+  const [activeTab, setActiveTab] = useState('Home');
+
+  return (
+    <div className="flex gap-2 p-2 bg-slate-900 border border-white/10 rounded-2xl">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab;
+        return (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="relative px-4 py-2 text-sm font-medium text-white transition-colors"
+          >
+            {isActive && (
+              // The bubble background morphs and slides smoothly from tab to tab!
+              <Motion
+                layoutId="active-indicator"
+                className="absolute inset-0 bg-purple-600 rounded-xl -z-10"
+                easing="spring"
+                spring={{ stiffness: 350, damping: 25 }}
+              />
+            )}
+            {tab}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+```
+
+---
+
 ## Best Practices & Performance Optimization
 
 1. **Leverage Composite-safe Properties**: Only animate `transform`, `opacity`, and `filter`. These properties do not trigger browser layouts or repaints, running entirely off-thread on the GPU.
