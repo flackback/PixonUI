@@ -30,6 +30,6 @@ describe('Avatar', () => {
 
   it('applies size classes correctly', () => {
     const { container } = render(<Avatar size="lg" />);
-    expect(container.firstChild).toHaveClass('h-14 w-14');
+    expect(container.firstElementChild?.firstElementChild).toHaveClass('h-14 w-14');
   });
 });

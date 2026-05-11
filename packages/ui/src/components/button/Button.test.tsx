@@ -29,6 +29,6 @@ describe('Button', () => {
 
   it('applies variant classes correctly', () => {
     const { container } = render(<Button variant="primary">Primary</Button>);
-    expect(container.firstChild).toHaveClass('from-blue-600');
+    expect(container.firstChild).toHaveClass('from-purple-600');
   });
 });
