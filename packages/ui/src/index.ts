@@ -143,5 +143,5 @@ export * from './components/navigation/ScrollSpy';
 export { useScrollSpy } from './hooks/useScrollSpy';
 export * from './components/chat/WaveformVisualizer';
 export * from './utils/motion';
-
-
+export * from './components/data-display/VideoPlayer';
+export * from './hooks/usePixonVideoPlayer';
