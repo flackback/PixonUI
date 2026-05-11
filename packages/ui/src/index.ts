@@ -142,4 +142,6 @@ export * from './components/effects/InteractiveMeshGradient';
 export * from './components/navigation/ScrollSpy';
 export { useScrollSpy } from './hooks/useScrollSpy';
 export * from './components/chat/WaveformVisualizer';
+export * from './utils/motion';
+
 

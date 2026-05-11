@@ -3,6 +3,8 @@ import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { generateSpringTrajectory, SpringConfig } from '../../utils/motion';
+
 
 // ---------------------------------------------------------------------------
 // Types
@@ -136,6 +138,8 @@ export interface MotionProps extends React.HTMLAttributes<HTMLDivElement> {
   onExitStart?: () => void;
   /** Ref forwarding */
   innerRef?: React.Ref<HTMLDivElement>;
+  /** Custom physical spring configuration. Automatically enables WAAPI spring keyframes when set. */
+  spring?: SpringConfig;
 }
 
 // ---------------------------------------------------------------------------
@@ -382,6 +386,7 @@ export function Motion({
   onComplete,
   onExitStart,
   innerRef,
+  spring,
   className,
   style,
   ...props
@@ -453,11 +458,82 @@ export function Motion({
     );
   }
 
-  // ── Resolved easing ───────────────────────────────────────────────────
-  const easingCSS = resolveEasing(easing);
+  // ── Resolved spring physical keyframes compiler ──────────────────────
+  const isSpringEasing = easing === 'spring' || !!spring;
 
-  // ── Transition mode (from → to) ──────────────────────────────────────
-  const isKeyframeMode = keyframes && keyframes.length > 0;
+  const { springKeyframes, springDuration } = useMemo(() => {
+    if (!isSpringEasing) return { springKeyframes: null, springDuration: duration };
+
+    // Solves spring trajectory
+    const { progress, duration: sDuration } = generateSpringTrajectory(0, 1, spring);
+
+    const steps = progress.length;
+    const springKeys: MotionStyle[] = [];
+
+    const parseVal = (v: any, fallback = 0): number => {
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string') {
+        const parsed = parseFloat(v);
+        return isNaN(parsed) ? fallback : parsed;
+      }
+      return fallback;
+    };
+
+    const getSuffix = (v: any, fallback = ''): string => {
+      if (typeof v === 'string') {
+        const match = v.match(/[a-zA-Z%]+$/);
+        return match ? match[0] : fallback;
+      }
+      return fallback;
+    };
+
+    const animKeys = new Set<keyof MotionStyle>();
+    [...Object.keys(from), ...Object.keys(to)].forEach((k) => {
+      const key = k as keyof MotionStyle;
+      if (
+        key !== 'backgroundColor' &&
+        key !== 'color' &&
+        key !== 'borderColor' &&
+        key !== 'boxShadow'
+      ) {
+        animKeys.add(key);
+      }
+    });
+
+    for (let i = 0; i < steps; i++) {
+      const p = progress[i]!;
+      const keyframe: MotionStyle = {};
+
+      animKeys.forEach((k) => {
+        const startVal = parseVal(from[k], k === 'scale' || k === 'scaleX' || k === 'scaleY' ? 1 : 0);
+        const endVal = parseVal(to[k], k === 'scale' || k === 'scaleX' || k === 'scaleY' ? 1 : 0);
+        const suffix = getSuffix(to[k] !== undefined ? to[k] : from[k], k === 'x' || k === 'y' ? 'px' : '');
+
+        const interpolated = startVal + (endVal - startVal) * p;
+        if (suffix) {
+          keyframe[k] = `${interpolated}${suffix}` as any;
+        } else {
+          keyframe[k] = interpolated as any;
+        }
+      });
+
+      const blendStyle = p < 0.5 ? from : to;
+      if (blendStyle.backgroundColor) keyframe.backgroundColor = blendStyle.backgroundColor;
+      if (blendStyle.color) keyframe.color = blendStyle.color;
+      if (blendStyle.borderColor) keyframe.borderColor = blendStyle.borderColor;
+      if (blendStyle.boxShadow) keyframe.boxShadow = blendStyle.boxShadow;
+
+      springKeys.push(keyframe);
+    }
+
+    return { springKeyframes: springKeys, springDuration: sDuration };
+  }, [isSpringEasing, from, to, spring, duration]);
+
+  // Override keyframe parameters if spring is enabled
+  const resolvedKeyframes = isSpringEasing ? springKeyframes : keyframes;
+  const isKeyframeMode = !!(resolvedKeyframes && resolvedKeyframes.length > 0);
+  const resolvedDuration = isSpringEasing ? springDuration : duration;
+  const easingCSS = isSpringEasing ? 'linear' : resolveEasing(easing);
 
   // For non-keyframe mode: build inline styles for the current state
   const activeStyle = shouldShow ? to : from;
@@ -498,11 +574,11 @@ export function Motion({
         : loop ? 'infinite' : 1;
 
       Object.assign(inlineStyles, {
-        animation: `${kfName} ${duration}ms ${easingCSS} ${delay}ms ${iterCount} ${direction} ${fillMode}`,
+        animation: `${kfName} ${resolvedDuration}ms ${easingCSS} ${delay}ms ${iterCount} ${direction} ${fillMode}`,
       });
     } else {
       // Before triggering: apply first keyframe state
-      const first = keyframes![0] || {};
+      const first = resolvedKeyframes![0] || {};
       Object.assign(inlineStyles, {
         opacity: first.opacity ?? 0,
         transform: buildTransform(first),
@@ -513,7 +589,7 @@ export function Motion({
     // Transition mode: CSS transitions between from ↔ to
     Object.assign(inlineStyles, {
       transitionProperty: transitionProps,
-      transitionDuration: `${duration}ms`,
+      transitionDuration: `${resolvedDuration}ms`,
       transitionTimingFunction: easingCSS,
       transitionDelay: `${delay}ms`,
       opacity: activeStyle.opacity ?? 1,
@@ -558,7 +634,7 @@ export function Motion({
       blocks.push(`
         .${scopeClass} {
           transition-property: ${transitionProps};
-          transition-duration: ${duration}ms;
+          transition-duration: ${resolvedDuration}ms;
           transition-timing-function: ${easingCSS};
         }
       `);
@@ -588,12 +664,12 @@ export function Motion({
       `);
     }
 
-    if (isKeyframeMode && keyframes) {
-      blocks.push(buildKeyframesCSS(kfName, keyframes));
+    if (isKeyframeMode && resolvedKeyframes) {
+      blocks.push(buildKeyframesCSS(kfName, resolvedKeyframes));
     }
 
     return blocks.join('\n');
-  }, [scopeClass, hover, tap, focus, isKeyframeMode, keyframes, kfName, duration, easingCSS, transitionProps]);
+  }, [scopeClass, hover, tap, focus, isKeyframeMode, resolvedKeyframes, kfName, resolvedDuration, easingCSS, transitionProps]);
 
   return (
     <>
@@ -619,3 +695,4 @@ export function Motion({
 }
 
 Motion.displayName = 'Motion';
+

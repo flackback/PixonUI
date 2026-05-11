@@ -48,3 +48,5 @@ export * from './useVoiceRecorder';
 export * from './useTaskTimeline';
 export * from './useAudioVisualizer';
 export * from './usePointerSpring';
+export * from './usePixonAnimate';
+
