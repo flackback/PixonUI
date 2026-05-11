@@ -10,7 +10,10 @@ export interface DragState {
  * Hook to provide basic drag gesture support.
  * Zero dependencies, works with mouse and touch.
  */
-export function useDrag(onDrag?: (state: DragState) => void) {
+export function useDrag(
+  onDrag?: (state: DragState) => void,
+  constrain?: (offset: { x: number; y: number }) => { x: number; y: number }
+) {
   const [isDragging, setIsDragging] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   
@@ -29,9 +32,15 @@ export function useDrag(onDrag?: (state: DragState) => void) {
   const handleMove = useCallback((x: number, y: number) => {
     if (!isDragging) return;
 
-    const newX = x - startPos.current.x;
-    const newY = y - startPos.current.y;
+    let newX = x - startPos.current.x;
+    let newY = y - startPos.current.y;
     
+    if (constrain) {
+      const constrained = constrain({ x: newX, y: newY });
+      newX = constrained.x;
+      newY = constrained.y;
+    }
+
     const currentTime = Date.now();
     const deltaTime = currentTime - lastTime.current;
     
@@ -47,7 +56,7 @@ export function useDrag(onDrag?: (state: DragState) => void) {
     lastTime.current = currentTime;
 
     onDrag?.({ isDragging: true, offset: { x: newX, y: newY }, velocity: velocity.current });
-  }, [isDragging, onDrag]);
+  }, [isDragging, onDrag, constrain]);
 
   const handleEnd = useCallback(() => {
     setIsDragging(false);
@@ -80,6 +89,7 @@ export function useDrag(onDrag?: (state: DragState) => void) {
   return {
     isDragging,
     offset,
+    setOffset,
     dragProps: {
       onMouseDown: (e: React.MouseEvent) => handleStart(e.clientX, e.clientY),
       onTouchStart: (e: React.TouchEvent) => {

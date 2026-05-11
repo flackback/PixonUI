@@ -3,7 +3,7 @@ import { VideoPlayer } from '@pixonui/react';
 import { Card, MetricCard } from '@pixonui/react';
 import { 
   Play, Volume2, Settings, Tv, Sparkles, Keyboard, 
-  Film, RefreshCw, Layers, Monitor, Sliders, PlaySquare
+  Film, RefreshCw, Layers, Monitor, Sliders, PlaySquare, Link
 } from 'lucide-react';
 
 interface VideoSource {
@@ -70,19 +70,18 @@ export function VideoPlayerDemo() {
         {/* Left column (Player & Source selection) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Main VideoPlayer Component Instance */}
-          <div className="relative rounded-3xl border border-white/10 overflow-hidden shadow-2xl bg-zinc-950/80 backdrop-blur-md">
-            <VideoPlayer
-              key={activeVideo.id}
-              src={activeVideo.url}
-              poster={activeVideo.poster}
-              title={activeVideo.title}
-              accentColor={activeVideo.accent}
-              enableAmbientGlow={ambientGlow}
-            />
-          </div>
+          <VideoPlayer
+            key={activeVideo.id}
+            src={activeVideo.url}
+            poster={activeVideo.poster}
+            title={activeVideo.title}
+            accentColor={activeVideo.accent}
+            enableAmbientGlow={ambientGlow}
+            className="border border-white/10 shadow-2xl bg-zinc-950/80 backdrop-blur-md"
+          />
 
           {/* Source Selectors Cards */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h3 className="text-sm font-bold uppercase tracking-wider text-white/60 flex items-center gap-2">
               <Film className="h-4 w-4 text-zinc-400" />
               Selecione a Fonte de Mídia
@@ -118,6 +117,48 @@ export function VideoPlayerDemo() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Injetor de URL do Usuário */}
+            <div className="p-5 rounded-2xl bg-zinc-950/60 border border-white/10 backdrop-blur-md space-y-3 shadow-xl">
+              <div className="flex flex-col gap-1">
+                <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                  <Link className="h-4 w-4 text-cyan-400" />
+                  Injetar URL de Vídeo Personalizada (MP4 / WebM)
+                </h4>
+                <p className="text-[10px] text-zinc-400 leading-relaxed">
+                  Insira o link direto de qualquer fluxo de vídeo (.mp4, .webm, ou similar) para carregar no player com aceleração de GPU.
+                  Nota: Links de páginas do YouTube dependem de iframes proprietários bloqueados por CORS e não rodam em players HTML5 customizados nativos.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+                  id="custom-video-input"
+                  className="flex-1 px-3.5 py-2 text-xs rounded-xl bg-zinc-900 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                />
+                <button
+                  onClick={() => {
+                    const input = document.getElementById('custom-video-input') as HTMLInputElement;
+                    if (input && input.value.trim()) {
+                      setActiveVideo({
+                        id: 'custom_injected',
+                        title: 'Vídeo Externo Injetado',
+                        description: 'Vídeo externo carregado sob demanda de um link customizado.',
+                        url: input.value.trim(),
+                        poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000',
+                        accent: 'bg-cyan-400'
+                      });
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-cyan-500 text-black text-xs font-bold hover:bg-cyan-400 transition-colors flex items-center gap-1.5"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Carregar Vídeo
+                </button>
+              </div>
             </div>
           </div>
         </div>
