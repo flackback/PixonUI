@@ -15,11 +15,13 @@ export interface AnimatedListProps extends React.HTMLAttributes<HTMLDivElement> 
   once?: boolean;
 }
 
-interface ItemState {
-  key: string | number;
-  element: React.ReactNode;
-  visible: boolean;
-}
+const ANIMATION_STYLES = {
+  'fade-up': { from: 'translate3d(0, 16px, 0) scale(0.97)', to: 'translate3d(0, 0, 0) scale(1)', filterFrom: '', filterTo: '' },
+  'fade-left': { from: 'translate3d(-24px, 0, 0)', to: 'translate3d(0, 0, 0)', filterFrom: '', filterTo: '' },
+  'fade-right': { from: 'translate3d(24px, 0, 0)', to: 'translate3d(0, 0, 0)', filterFrom: '', filterTo: '' },
+  'scale': { from: 'scale(0.8)', to: 'scale(1)', filterFrom: '', filterTo: '' },
+  'blur': { from: 'translate3d(0, 8px, 0) scale(0.98)', to: 'translate3d(0, 0, 0) scale(1)', filterFrom: 'blur(4px)', filterTo: 'blur(0)' },
+};
 
 /**
  * Automatically animates children into view with staggered timing.
@@ -47,8 +49,6 @@ export function AnimatedList({
 }: AnimatedListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(!viewport);
-  const [visibleCount, setVisibleCount] = useState(0);
-  const prevCountRef = useRef(0);
   const rawId = useId();
   const scopeClass = `px-alist-${rawId.replace(/:/g, '')}`;
 
@@ -69,7 +69,6 @@ export function AnimatedList({
           if (once) observer.disconnect();
         } else if (!once) {
           setIsInView(false);
-          setVisibleCount(0);
         }
       },
       { threshold: 0.1 }
@@ -79,41 +78,37 @@ export function AnimatedList({
     return () => observer.disconnect();
   }, [viewport, once]);
 
-  // Stagger reveal
+  // Stagger reveal via direct DOM manipulation
   useEffect(() => {
-    if (!isInView) return;
+    if (!containerRef.current) return;
 
-    const targetCount = childArray.length;
-    if (visibleCount >= targetCount) return;
-
-    const startFrom = prevCountRef.current;
-    let current = startFrom;
-
-    const interval = setInterval(() => {
-      current++;
-      setVisibleCount(current);
-      if (current >= targetCount) {
-        clearInterval(interval);
+    if (!isInView) {
+      if (!once) {
+        // Remove visible class from all items when out of view
+        const items = containerRef.current.querySelectorAll(`.${scopeClass}-item.visible`);
+        items.forEach((item) => item.classList.remove('visible'));
       }
-    }, stagger);
+      return;
+    }
 
-    return () => clearInterval(interval);
-  }, [isInView, childArray.length, stagger]);
+    const items = containerRef.current.querySelectorAll(`.${scopeClass}-item:not(.visible)`);
+    if (items.length === 0) return;
 
-  // Track previous count for dynamic additions
-  useEffect(() => {
-    prevCountRef.current = visibleCount;
-  }, [visibleCount]);
+    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
 
-  const animationStyles = {
-    'fade-up': { from: 'translate3d(0, 16px, 0) scale(0.97)', to: 'translate3d(0, 0, 0) scale(1)', filterFrom: '', filterTo: '' },
-    'fade-left': { from: 'translate3d(-24px, 0, 0)', to: 'translate3d(0, 0, 0)', filterFrom: '', filterTo: '' },
-    'fade-right': { from: 'translate3d(24px, 0, 0)', to: 'translate3d(0, 0, 0)', filterFrom: '', filterTo: '' },
-    'scale': { from: 'scale(0.8)', to: 'scale(1)', filterFrom: '', filterTo: '' },
-    'blur': { from: 'translate3d(0, 8px, 0) scale(0.98)', to: 'translate3d(0, 0, 0) scale(1)', filterFrom: 'blur(4px)', filterTo: 'blur(0)' },
-  };
+    items.forEach((item, index) => {
+      const timeoutId = setTimeout(() => {
+        item.classList.add('visible');
+      }, index * stagger);
+      timeoutIds.push(timeoutId);
+    });
 
-  const anim = animationStyles[animation];
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [isInView, childArray.map(c => (c as React.ReactElement).key).join(','), stagger, scopeClass, once]);
+
+  const anim = ANIMATION_STYLES[animation];
 
   return (
     <>
@@ -140,10 +135,7 @@ export function AnimatedList({
         {childArray.map((child, index) => (
           <div
             key={(child as React.ReactElement).key ?? index}
-            className={cn(
-              `${scopeClass}-item`,
-              index < visibleCount && 'visible',
-            )}
+            className={`${scopeClass}-item`}
           >
             {child}
           </div>
