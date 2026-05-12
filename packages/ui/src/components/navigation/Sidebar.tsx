@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { cn } from '../../utils/cn';
+import { Tooltip } from '../overlay/Tooltip';
 
 const SidebarContext = createContext<{ collapsed: boolean }>({ collapsed: false });
 
@@ -87,12 +88,14 @@ export interface SidebarItemProps extends React.ButtonHTMLAttributes<HTMLButtonE
   active?: boolean;
   icon?: React.ReactNode;
   badge?: React.ReactNode;
+  tooltip?: React.ReactNode;
 }
 
 export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>(
-  ({ className, children, active, icon, badge, ...props }, ref) => {
+  ({ className, children, active, icon, badge, tooltip, ...props }, ref) => {
     const { collapsed } = useContext(SidebarContext);
-    return (
+
+    const buttonElement = (
       <button
         ref={ref}
         className={cn(
@@ -115,6 +118,19 @@ export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>
         )}
       </button>
     );
+
+    if (collapsed) {
+      const tooltipContent = tooltip || children;
+      if (tooltipContent) {
+        return (
+          <Tooltip content={tooltipContent} position="right" delay={100}>
+            {buttonElement}
+          </Tooltip>
+        );
+      }
+    }
+
+    return buttonElement;
   }
 );
 

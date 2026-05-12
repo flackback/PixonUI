@@ -124,6 +124,7 @@ export { useDrag } from './hooks/useDrag';
 export { cn } from './utils/cn';
 export * from './utils/format';
 export * from './utils/string';
+export * from './utils/file';
 
 // New components
 export * from './components/navigation/Dock';

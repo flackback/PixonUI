@@ -37,6 +37,8 @@ export interface AIPromptInputProps
   onAttach?: () => void;
   /** Callback fired when files are selected via the built-in file picker */
   onFilesSelected?: (files: FileList) => void;
+  /** Callback fired when files are pasted from the clipboard */
+  onPasteFiles?: (files: FileList) => void;
   /** Callback fired when the stop button is clicked */
   onStop?: () => void;
   /** Callback fired when the microphone button is clicked */
@@ -67,6 +69,7 @@ export const AIPromptInput = React.forwardRef<HTMLTextAreaElement, AIPromptInput
     isGenerating, 
     onAttach, 
     onFilesSelected,
+    onPasteFiles,
     onStop,
     onMic,
     maxLength,
@@ -146,6 +149,14 @@ export const AIPromptInput = React.forwardRef<HTMLTextAreaElement, AIPromptInput
       }
     };
 
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (onPasteFiles && e.clipboardData.files && e.clipboardData.files.length > 0) {
+        e.preventDefault();
+        onPasteFiles(e.clipboardData.files);
+      }
+      props.onPaste?.(e);
+    };
+
     return (
       <div className={cn(aiPromptInputVariants({ variant, className }))}>
         {/* Hidden File Input */}
@@ -193,6 +204,7 @@ export const AIPromptInput = React.forwardRef<HTMLTextAreaElement, AIPromptInput
           value={value}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder={placeholder}
           rows={1}
           className={cn(
