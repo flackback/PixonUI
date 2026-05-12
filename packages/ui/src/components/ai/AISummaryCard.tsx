@@ -12,14 +12,14 @@ export function AISummaryCard({ summary, onRegenerate, isLoading, className, ...
   return (
     <div 
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 group",
+        "relative overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50/50 dark:bg-white/[0.03] backdrop-blur-xl p-5 group",
         className
       )} 
       {...props}
     >
       {/* Glow Effect */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-purple-500/30 transition-all duration-700" />
-      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-blue-500/30 transition-all duration-700" />
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-purple-500/20 dark:group-hover:bg-purple-500/30 transition-all duration-700" />
+      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/10 dark:bg-blue-500/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-blue-500/20 dark:group-hover:bg-blue-500/30 transition-all duration-700" />
 
       <div className="relative space-y-4">
         <div className="flex items-center justify-between">
@@ -27,14 +27,14 @@ export function AISummaryCard({ summary, onRegenerate, isLoading, className, ...
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg shadow-purple-500/20">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
-            <h3 className="text-sm font-bold text-white tracking-tight">Resumo Inteligente</h3>
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Resumo Inteligente</h3>
           </div>
           
           {onRegenerate && (
             <button 
               onClick={onRegenerate}
               disabled={isLoading}
-              className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-400 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95 disabled:opacity-50"
             >
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </button>
@@ -42,12 +42,12 @@ export function AISummaryCard({ summary, onRegenerate, isLoading, className, ...
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm text-white/70 leading-relaxed font-medium">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
             {summary}
           </p>
           
           <div className="flex flex-wrap gap-2 pt-2">
-             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 text-[10px] font-bold text-zinc-500 dark:text-white/40 uppercase tracking-widest">
                <ListChecks size={12} />
                Key Points Extracted
              </div>
@@ -55,7 +55,7 @@ export function AISummaryCard({ summary, onRegenerate, isLoading, className, ...
         </div>
 
         <div className="pt-2">
-          <button className="flex items-center gap-2 text-[11px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider group/btn">
+          <button className="flex items-center gap-2 text-[11px] font-bold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors uppercase tracking-wider group/btn">
             Ver detalhes da análise
             <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
           </button>

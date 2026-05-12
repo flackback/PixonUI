@@ -128,7 +128,7 @@ export default function App() {
         </Sidebar>
 
         <main className="flex-1 overflow-hidden relative transition-colors duration-200 bg-gray-50 dark:bg-zinc-950">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-overlay opacity-5 dark:opacity-20"></div>
+          <div className="absolute inset-0 bg-[url(&quot;data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E&quot;)] pointer-events-none mix-blend-overlay opacity-5 dark:opacity-20"></div>
           <ScrollArea className="h-full w-full">
             <div className="p-10 min-h-full">
               {activeComponent && (

@@ -25,6 +25,7 @@ export function useVoiceRecorder(): VoiceRecorderHook {
   const timerInterval = useRef<number | null>(null);
   const chunks = useRef<Blob[]>([]);
   const isPausedRef = useRef(false);
+  const isCancelledRef = useRef(false);
 
   const startRecording = useCallback(async () => {
     try {
@@ -46,6 +47,7 @@ export function useVoiceRecorder(): VoiceRecorderHook {
         audioBitsPerSecond: 24000 // 24 kbps within 16-32 range
       });
       chunks.current = [];
+      isCancelledRef.current = false;
 
       mediaRecorder.current.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -54,6 +56,12 @@ export function useVoiceRecorder(): VoiceRecorderHook {
       };
 
       mediaRecorder.current.onstop = () => {
+        if (isCancelledRef.current) {
+          // Clean up stream tracks
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
         const blob = new Blob(chunks.current, { type: mimeType });
         const url = URL.createObjectURL(blob);
         setAudioBlob(blob);
@@ -110,6 +118,7 @@ export function useVoiceRecorder(): VoiceRecorderHook {
 
   const cancelRecording = useCallback(() => {
     if (mediaRecorder.current && isRecording) {
+      isCancelledRef.current = true;
       mediaRecorder.current.stop();
       setIsRecording(false);
       setIsPaused(false);

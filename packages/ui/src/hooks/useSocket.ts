@@ -15,6 +15,7 @@ interface UseSocketOptions {
  */
 export function useSocket({ url, token, rooms = [], onConnect, onDisconnect, onError }: UseSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
+  const listenersRef = useRef<Map<string, Set<(...args: any[]) => void>>>(new Map());
 
   useEffect(() => {
     const socket = io(url, {
@@ -25,6 +26,13 @@ export function useSocket({ url, token, rooms = [], onConnect, onDisconnect, onE
     });
 
     socketRef.current = socket;
+
+    // Re-bind all active listeners to the newly created socket instance
+    listenersRef.current.forEach((callbacks, event) => {
+      callbacks.forEach(callback => {
+        socket.on(event, callback);
+      });
+    });
 
     socket.on('connect', () => {
       console.log('Socket connected:', socket.id);
@@ -56,8 +64,20 @@ export function useSocket({ url, token, rooms = [], onConnect, onDisconnect, onE
   }, []);
 
   const on = useCallback((event: string, callback: (...args: any[]) => void) => {
+    if (!listenersRef.current.has(event)) {
+      listenersRef.current.set(event, new Set());
+    }
+    listenersRef.current.get(event)!.add(callback);
+
     socketRef.current?.on(event, callback);
     return () => {
+      const callbacks = listenersRef.current.get(event);
+      if (callbacks) {
+        callbacks.delete(callback);
+        if (callbacks.size === 0) {
+          listenersRef.current.delete(event);
+        }
+      }
       socketRef.current?.off(event, callback);
     };
   }, []);

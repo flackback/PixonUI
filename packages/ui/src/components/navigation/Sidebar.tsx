@@ -96,7 +96,7 @@ export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>
       <button
         ref={ref}
         className={cn(
-          "flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition-all duration-300",
+          "flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition-all duration-200 hover:scale-[1.015] active:scale-[0.97]",
           "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/[0.03] dark:hover:text-white",
           collapsed && "justify-center px-2",
           active 
