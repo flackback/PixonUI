@@ -554,7 +554,7 @@ export function KanbanView() {
       toast({
         title: 'Lead Descartado 🗑️',
         description: 'O lead foi excluído e arquivado com sucesso.',
-        variant: 'destructive'
+        variant: 'error'
       });
     } else if (zoneId === 'win') {
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, columnId: 'done', progress: 100 } : t));
