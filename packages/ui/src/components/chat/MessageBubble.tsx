@@ -628,6 +628,9 @@ export const MessageBubble = React.memo(
       prev.message.id === next.message.id &&
       prev.message.content === next.message.content &&
       prev.message.status === next.message.status &&
+      prev.message.isTranscribing === next.message.isTranscribing &&
+      prev.message.transcription === next.message.transcription &&
+      prev.message.replyTo?.id === next.message.replyTo?.id &&
       areReactionsEqual(prev.message.reactions, next.message.reactions)
     );
   }

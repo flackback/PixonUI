@@ -54,7 +54,6 @@ export const KanbanCard = React.memo(({
 }: KanbanCardProps) => {
   if (renderCard) return <>{renderCard(task)}</>;
 
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -71,10 +70,10 @@ export const KanbanCard = React.memo(({
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current || !spotlight) return;
     const rect = cardRef.current.getBoundingClientRect();
-    setCoords({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    cardRef.current.style.setProperty('--spotlight-x', `${x}px`);
+    cardRef.current.style.setProperty('--spotlight-y', `${y}px`);
   };
 
   const subtasksCount = task.subtasks?.length || 0;
@@ -135,7 +134,7 @@ export const KanbanCard = React.memo(({
           className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ease-in-out"
           style={{
             opacity: isHovered ? 1 : 0,
-            background: `radial-gradient(${spotlightSize}px circle at ${coords.x}px ${coords.y}px, ${
+            background: `radial-gradient(${spotlightSize}px circle at var(--spotlight-x, 0px) var(--spotlight-y, 0px), ${
               spotlightColor || (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)')
             }, transparent 80%)`,
           }}
