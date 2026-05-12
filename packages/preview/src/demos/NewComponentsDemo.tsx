@@ -25,7 +25,18 @@ import {
   BorderBeam,
   BackgroundGlow,
   Motion,
-  MotionGroup
+  MotionGroup,
+  Select,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut
 } from '@pixonui/react';
 import { 
   Check, 
@@ -49,13 +60,29 @@ import {
   Star,
   Rocket,
   Code2,
-  Wand2
+  Wand2,
+  Settings,
+  LogOut,
+  Command
 } from 'lucide-react';
 
 export function NewComponentsDemo() {
   const [inputText, setInputText] = useState('');
   const [clearableText, setClearableText] = useState('PixonUI 2026');
   
+  // New Select size and variant states
+  const [sizeVal, setSizeVal] = useState<'sm' | 'md' | 'lg'>('md');
+  const [variantVal, setVariantVal] = useState<'default' | 'ghost' | 'glass' | 'cyber'>('default');
+  const [groupedSelection, setGroupedSelection] = useState('react');
+
+  // Dropdown Checkbox states
+  const [showGrid, setShowGrid] = useState(true);
+  const [showActivity, setShowActivity] = useState(false);
+  const [showStatus, setShowStatus] = useState(true);
+
+  // Dropdown Radio state
+  const [themeSelection, setThemeSelection] = useState('system');
+
   // Advanced Slider States
   const [sliderVal, setSliderVal] = useState(45);
   const [customSliderVal, setCustomSliderVal] = useState(70);
@@ -73,6 +100,17 @@ export function NewComponentsDemo() {
 
   // Animation Trigger State
   const [revealKey, setRevealKey] = useState(0);
+
+  const groupedFrameworkOptions = [
+    { label: 'React', value: 'react', group: 'Frontend Frameworks' },
+    { label: 'Vue.js', value: 'vue', group: 'Frontend Frameworks' },
+    { label: 'Angular', value: 'angular', group: 'Frontend Frameworks' },
+    { label: 'Svelte', value: 'svelte', group: 'Frontend Frameworks' },
+    { label: 'Express.js', value: 'express', group: 'Backend Technologies' },
+    { label: 'FastAPI', value: 'fastapi', group: 'Backend Technologies' },
+    { label: 'NestJS', value: 'nestjs', group: 'Backend Technologies' },
+    { label: 'Ruby on Rails', value: 'rails', group: 'Backend Technologies' },
+  ];
 
   const frameworkOptions = [
     { label: 'React', value: 'react', description: 'Biblioteca componentizada para alta performance' },
@@ -257,6 +295,202 @@ export function NewComponentsDemo() {
                 </div>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2.1. DROPDOWNS & SELECTS VARIATIONS SHOWCASE */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-purple-500" />
+            <CardTitle>Novos Estilos de Dropdowns & Selects (Multi-Variants)</CardTitle>
+          </div>
+          <CardDescription>
+            Experimente em tempo real as novas opções de personalização para dropdowns e selects: variando de tamanhos, estilos visuais de alta fidelidade, categorização de grupos e itens com caixas de marcação (Checkbox/Radio).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Real-time Customizer Grid */}
+          <div className="grid gap-8 md:grid-cols-2">
+            
+            {/* Left Column: Interactive Select Customizer */}
+            <div className="space-y-6 p-6 rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.01]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                  Customizador de Select em Tempo Real
+                </h3>
+              </div>
+
+              {/* Controls */}
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-zinc-200 dark:border-white/5">
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Escolha o Tamanho:</span>
+                  <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 text-xs font-semibold">
+                    {(['sm', 'md', 'lg'] as const).map((sz) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => setSizeVal(sz)}
+                        className={cn(
+                          "flex-1 py-1 rounded-md transition-all uppercase",
+                          sizeVal === sz 
+                            ? "bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm" 
+                            : "text-zinc-400 hover:text-zinc-500"
+                        )}
+                      >
+                        {sz}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Escolha o Estilo:</span>
+                  <Select
+                    options={[
+                      { label: 'Padrão (Default)', value: 'default' },
+                      { label: 'Ghostly Flat', value: 'ghost' },
+                      { label: 'Glassmorphic Glass', value: 'glass' },
+                      { label: 'Cyber Neon', value: 'cyber' },
+                    ]}
+                    value={variantVal}
+                    onChange={(val) => setVariantVal(val as any)}
+                    size="sm"
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Live Previews */}
+              <div className="space-y-4">
+                <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">Live Select Preview:</span>
+                <Select
+                  label="Select Simples com Tamanho e Estilo Dinâmicos"
+                  options={groupedFrameworkOptions}
+                  value={groupedSelection}
+                  onChange={setGroupedSelection}
+                  size={sizeVal}
+                  variant={variantVal}
+                />
+
+                <AdvancedSelect
+                  label="Advanced Select com Multi-Tags e Filtro Integrado"
+                  options={groupedFrameworkOptions}
+                  value={groupedSelection}
+                  onChange={setGroupedSelection}
+                  size={sizeVal}
+                  variant={variantVal}
+                  searchable={true}
+                  clearable={true}
+                />
+              </div>
+            </div>
+
+            {/* Right Column: Premium Dropdown Menu with Checkbox & Radio items */}
+            <div className="space-y-6 p-6 rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.01]">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                Menu de Ações com Checkbox &amp; Radio
+              </h3>
+
+              <div className="space-y-4">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  O componente de Overlay `DropdownMenu` de elite agora possui controle completo para itens booleanos (Checkbox) e de seleção mutuamente exclusiva (Radio Groups).
+                </p>
+
+                <div className="flex gap-4">
+                  {/* Dropdown 1: Actions & Shortcuts */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="px-4 py-2.5 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/10">
+                      Menu de Atalhos
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuLabel>Configurações Rápidas</DropdownMenuLabel>
+                      <DropdownMenuItem>
+                        <span>Nova Janela</span>
+                        <DropdownMenuShortcut>⌘N</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <span>Salvar Projeto</span>
+                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled>
+                        <span>Exportar PDF</span>
+                        <DropdownMenuShortcut>⌥⌘E</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600">
+                        <span>Excluir Tudo</span>
+                        <DropdownMenuShortcut>⇧⌘⌫</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Dropdown 2: Checkboxes */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 font-semibold text-sm hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors">
+                      Exibição (Checkboxes)
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuLabel>Alternar Elementos</DropdownMenuLabel>
+                      <DropdownMenuCheckboxItem checked={showGrid} onCheckedChange={setShowGrid}>
+                        Mostrar Grid Bento
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem checked={showActivity} onCheckedChange={setShowActivity}>
+                        Status Pulsante Live
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem checked={showStatus} onCheckedChange={setShowStatus}>
+                        Mostrar Tags de Time
+                      </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Dropdown 3: Radios */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="px-4 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-white font-semibold text-sm hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors">
+                      Tema (Radio Group)
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Selecione o Tema</DropdownMenuLabel>
+                      <DropdownMenuRadioGroup value={themeSelection} onValueChange={setThemeSelection}>
+                        <DropdownMenuRadioItem value="light">Claro (Light)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="dark">Escuro (Dark)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="system">Sistema (System)</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* Display Current Dropdown States in modern badge rows */}
+                <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-white/5">
+                  <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">Valores Atuais dos Dropdowns:</span>
+                  <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                    <span className={cn(
+                      "px-2.5 py-1 rounded-lg border",
+                      showGrid ? "bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-300" : "bg-zinc-100 border-zinc-200 text-zinc-400 dark:bg-zinc-900 dark:border-zinc-800"
+                    )}>
+                      Grid: {showGrid ? 'Visível' : 'Oculto'}
+                    </span>
+                    <span className={cn(
+                      "px-2.5 py-1 rounded-lg border",
+                      showActivity ? "bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-300" : "bg-zinc-100 border-zinc-200 text-zinc-400 dark:bg-zinc-900 dark:border-zinc-800"
+                    )}>
+                      Status Live: {showActivity ? 'Ativo' : 'Inativo'}
+                    </span>
+                    <span className={cn(
+                      "px-2.5 py-1 rounded-lg border",
+                      showStatus ? "bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-300" : "bg-zinc-100 border-zinc-200 text-zinc-400 dark:bg-zinc-900 dark:border-zinc-800"
+                    )}>
+                      Tags Time: {showStatus ? 'Mostrar' : 'Ocultar'}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg border bg-purple-50 border-purple-100 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-300 capitalize">
+                      Tema: {themeSelection}
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         </CardContent>
       </Card>

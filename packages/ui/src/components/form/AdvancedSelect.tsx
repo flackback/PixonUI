@@ -10,6 +10,7 @@ export interface AdvancedSelectOption {
   description?: string;
   icon?: React.ReactNode;
   avatar?: string;
+  group?: string;
 }
 
 export interface AdvancedSelectProps {
@@ -29,6 +30,8 @@ export interface AdvancedSelectProps {
   searchable?: boolean;
   /** Let the user clear current selection with one click */
   clearable?: boolean;
+  variant?: 'default' | 'ghost' | 'glass' | 'cyber';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 /**
@@ -50,7 +53,9 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
     className,
     multiple = false,
     searchable = true,
-    clearable = true
+    clearable = true,
+    variant = 'default',
+    size = 'md'
   }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [internalValue, setInternalValue] = useState<string | string[]>(
@@ -78,7 +83,8 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
       return options.filter(opt => 
         opt.label.toLowerCase().includes(lower) || 
         opt.description?.toLowerCase().includes(lower) ||
-        opt.value.toLowerCase().includes(lower)
+        opt.value.toLowerCase().includes(lower) ||
+        opt.group?.toLowerCase().includes(lower)
       );
     }, [options, searchQuery]);
 
@@ -199,6 +205,43 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
       }
     };
 
+    const sizeClasses = {
+      sm: 'min-h-[2.25rem] px-3 py-1.5 rounded-xl text-xs gap-1.5',
+      md: 'min-h-[3rem] px-4 py-2 text-sm rounded-2xl gap-2',
+      lg: 'min-h-[3.5rem] px-5 py-3 text-base rounded-3.5xl gap-2.5'
+    };
+
+    const variantClasses = {
+      default: cn(
+        'bg-zinc-50 dark:bg-white/[0.04]',
+        'border border-zinc-200 dark:border-white/[0.08]',
+        'text-zinc-900 dark:text-white',
+        'hover:bg-zinc-100 dark:hover:bg-white/[0.06]',
+        isOpen && 'border-purple-500/50 dark:border-purple-500/50 ring-2 ring-purple-500/20'
+      ),
+      ghost: cn(
+        'bg-transparent hover:bg-zinc-100 dark:hover:bg-white/[0.05]',
+        'border border-transparent',
+        'text-zinc-900 dark:text-white',
+        isOpen && 'bg-zinc-100 dark:bg-white/[0.05]'
+      ),
+      glass: cn(
+        'bg-white/40 dark:bg-zinc-900/30 backdrop-blur-md',
+        'border border-zinc-200/50 dark:border-white/5',
+        'text-zinc-900 dark:text-white',
+        'shadow-[0_4px_30px_rgba(0,0,0,0.02)]',
+        'hover:bg-white/60 dark:hover:bg-zinc-900/40',
+        isOpen && 'border-purple-500/30 dark:border-purple-500/20 ring-2 ring-purple-500/10'
+      ),
+      cyber: cn(
+        'bg-zinc-950 border',
+        'border-purple-500/30 dark:border-purple-500/20',
+        'text-purple-500 dark:text-purple-400',
+        'hover:border-purple-500 hover:shadow-[0_0_15px_rgba(168,85,247,0.15)]',
+        isOpen && 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.20)] ring-2 ring-purple-500/20'
+      )
+    };
+
     return (
       <div 
         ref={containerRef} 
@@ -224,13 +267,10 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
           tabIndex={disabled ? -1 : 0}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           className={cn(
-            'min-h-[3rem] w-full rounded-2xl bg-zinc-50 dark:bg-white/[0.04] px-4 py-2.5',
-            'border border-zinc-200 dark:border-white/[0.08]',
-            'text-zinc-900 dark:text-white flex items-center justify-between gap-2',
-            'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
-            'hover:bg-zinc-100 dark:hover:bg-white/[0.06] cursor-pointer transition-all duration-200',
-            disabled && 'cursor-not-allowed opacity-50 hover:bg-zinc-50 dark:hover:bg-white/[0.04]',
-            isOpen && 'border-purple-500/50 dark:border-purple-500/50 ring-2 ring-purple-500/20',
+            'w-full flex items-center justify-between relative transition-all duration-200 cursor-pointer focus:outline-none',
+            sizeClasses[size],
+            variantClasses[variant],
+            disabled && 'cursor-not-allowed opacity-50 hover:bg-transparent hover:shadow-none',
             error && 'border-rose-400/30 focus:ring-rose-400/20'
           )}
         >
@@ -299,7 +339,7 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
         {/* Floating Dropdown Listbox */}
         {isOpen && (
           <div className={cn(
-            "absolute top-full left-0 z-[120] mt-2 w-full overflow-hidden rounded-2xl",
+            "absolute top-full left-0 z-[120] mt-1.5 w-full overflow-hidden rounded-2xl",
             "border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 shadow-xl",
             "animate-in fade-in slide-in-from-top-1 duration-150 p-1.5"
           )}>
@@ -333,62 +373,69 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
                 </div>
               ) : (
                 filteredOptions.map((option, index) => {
+                  const showGroupHeader = option.group && (index === 0 || filteredOptions[index - 1]?.group !== option.group);
                   const isSelected = currentValues.includes(option.value);
                   const isActive = activeIndex === index;
 
                   return (
-                    <li
-                      key={option.value}
-                      id={`${id}-option-${index}`}
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => handleSelectOption(option.value)}
-                      onMouseEnter={() => setActiveIndex(index)}
-                      className={cn(
-                        'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3',
-                        isSelected 
-                          ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
-                          : 'text-zinc-700 dark:text-zinc-300',
-                        isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
+                    <React.Fragment key={option.value}>
+                      {showGroupHeader && (
+                        <li className="px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mt-1 mb-0.5 select-none">
+                          {option.group}
+                        </li>
                       )}
-                    >
-                      {/* Avatar/Thumbnail */}
-                      {option.avatar && (
-                        <img 
-                          src={option.avatar} 
-                          alt={option.label} 
-                          className="h-7 w-7 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-white/10" 
-                        />
-                      )}
-
-                      {/* Icon */}
-                      {option.icon && (
-                        <div className={cn(
-                          "flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/[0.04]",
-                          isSelected && "text-purple-500 bg-purple-100/50 dark:bg-purple-500/20"
-                        )}>
-                          {option.icon}
-                        </div>
-                      )}
-
-                      {/* Content block */}
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        <span className="text-sm truncate">{option.label}</span>
-                        {option.description && (
-                          <span className={cn(
-                            "text-[10px] truncate leading-tight mt-0.5",
-                            isSelected ? "text-purple-400/80" : "text-zinc-400 dark:text-zinc-500"
-                          )}>
-                            {option.description}
-                          </span>
+                      <li
+                        id={`${id}-option-${index}`}
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => handleSelectOption(option.value)}
+                        onMouseEnter={() => setActiveIndex(index)}
+                        className={cn(
+                          'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3',
+                          isSelected 
+                            ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
+                            : 'text-zinc-700 dark:text-zinc-300',
+                          isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
                         )}
-                      </div>
+                      >
+                        {/* Avatar/Thumbnail */}
+                        {option.avatar && (
+                          <img 
+                            src={option.avatar} 
+                            alt={option.label} 
+                            className="h-7 w-7 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-white/10" 
+                          />
+                        )}
 
-                      {/* Check icon status indicator */}
-                      {isSelected && (
-                        <Check className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
-                      )}
-                    </li>
+                        {/* Icon */}
+                        {option.icon && (
+                          <div className={cn(
+                            "flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/[0.04]",
+                            isSelected && "text-purple-500 bg-purple-100/50 dark:bg-purple-500/20"
+                          )}>
+                            {option.icon}
+                          </div>
+                        )}
+
+                        {/* Content block */}
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <span className="text-sm truncate">{option.label}</span>
+                          {option.description && (
+                            <span className={cn(
+                              "text-[10px] truncate leading-tight mt-0.5",
+                              isSelected ? "text-purple-400/80" : "text-zinc-400 dark:text-zinc-500"
+                            )}>
+                              {option.description}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Check icon status indicator */}
+                        {isSelected && (
+                          <Check className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                        )}
+                      </li>
+                    </React.Fragment>
                   );
                 })
               )}

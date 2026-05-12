@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '../../utils/cn';import { useFloating } from '../../hooks/useFloating';
+import { cn } from '../../utils/cn';
+import { useFloating } from '../../hooks/useFloating';
+
 interface DropdownMenuContextValue {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -46,7 +48,7 @@ export function DropdownMenuTrigger({ className, children, ...props }: DropdownM
       aria-haspopup="menu"
       aria-expanded={context.isOpen ? "true" : "false"}
       onClick={handleClick}
-      className={cn("inline-flex items-center justify-center", className)}
+      className={cn("inline-flex items-center justify-center focus:outline-none", className)}
       {...props}
     >
       {children}
@@ -92,7 +94,7 @@ export function DropdownMenuContent({ className, children, align = 'start', side
         
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
-          const items = contentRef.current?.querySelectorAll('[role="menuitem"]') as NodeListOf<HTMLElement>;
+          const items = contentRef.current?.querySelectorAll('[role^="menuitem"]') as NodeListOf<HTMLElement>;
           if (!items.length) return;
           
           const currentIndex = Array.from(items).indexOf(document.activeElement as HTMLElement);
@@ -154,7 +156,7 @@ export function DropdownMenuContent({ className, children, align = 'start', side
         transformOrigin: getTransformOrigin(),
       }}
       className={cn(
-        "fixed z-[110] min-w-[8rem] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur-xl p-1 shadow-md transition duration-100",
+        "fixed z-[130] min-w-[12rem] overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl p-1.5 shadow-xl transition duration-150",
         isPositioned ? "animate-in fade-in zoom-in-95 opacity-100" : "opacity-0",
         className
       )}
@@ -184,11 +186,11 @@ export function DropdownMenuItem({ className, children, ...props }: DropdownMenu
       role="menuitem"
       onClick={handleClick}
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center rounded-2xl px-3 py-2 text-sm outline-none transition-colors",
-        "text-gray-700 dark:text-white/80",
-        "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/[0.06] dark:hover:text-white",
-        "focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-white/[0.06] dark:focus:text-white",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex w-full cursor-pointer select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-all duration-150",
+        "text-zinc-700 dark:text-zinc-300",
+        "hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-white/[0.04] dark:hover:text-white",
+        "focus:bg-zinc-50 focus:text-zinc-900 dark:focus:bg-white/[0.04] dark:focus:text-white",
+        "disabled:pointer-events-none disabled:opacity-40",
         className
       )}
       {...props}
@@ -198,9 +200,124 @@ export function DropdownMenuItem({ className, children, ...props }: DropdownMenu
   );
 }
 
+export interface DropdownMenuCheckboxItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  children: React.ReactNode;
+}
+
+export function DropdownMenuCheckboxItem({ className, checked, onCheckedChange, children, ...props }: DropdownMenuCheckboxItemProps) {
+  const context = useContext(DropdownMenuContext);
+  
+  const handleClick = (e: React.MouseEvent) => {
+    onCheckedChange?.(!checked);
+    context?.setIsOpen(false);
+    props.onClick?.(e as any);
+  };
+
+  return (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={checked}
+      onClick={handleClick}
+      className={cn(
+        "relative flex w-full cursor-pointer select-none items-center rounded-xl pl-9 pr-3 py-2 text-sm outline-none transition-all duration-150",
+        "text-zinc-700 dark:text-zinc-300",
+        "hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-white/[0.04] dark:hover:text-white",
+        "focus:bg-zinc-50 focus:text-zinc-900 dark:focus:bg-white/[0.04] dark:focus:text-white",
+        className
+      )}
+      {...props}
+    >
+      <span className="absolute left-3 flex h-4 w-4 items-center justify-center shrink-0">
+        {checked && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-purple-600 dark:text-purple-400"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </span>
+      {children}
+    </button>
+  );
+}
+
+interface DropdownMenuRadioGroupContextValue {
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+const DropdownMenuRadioGroupContext = createContext<DropdownMenuRadioGroupContextValue | undefined>(undefined);
+
+export interface DropdownMenuRadioGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+  value?: string;
+  onValueChange?: (value: string) => void;
+  children: React.ReactNode;
+}
+
+export function DropdownMenuRadioGroup({ value, onValueChange, children, ...props }: DropdownMenuRadioGroupProps) {
+  return (
+    <DropdownMenuRadioGroupContext.Provider value={{ value, onValueChange }}>
+      <div {...props}>{children}</div>
+    </DropdownMenuRadioGroupContext.Provider>
+  );
+}
+
+export interface DropdownMenuRadioItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  value: string;
+  children: React.ReactNode;
+}
+
+export function DropdownMenuRadioItem({ className, value, children, ...props }: DropdownMenuRadioItemProps) {
+  const context = useContext(DropdownMenuContext);
+  const groupContext = useContext(DropdownMenuRadioGroupContext);
+  const isChecked = groupContext?.value === value;
+
+  const handleClick = (e: React.MouseEvent) => {
+    groupContext?.onValueChange?.(value);
+    context?.setIsOpen(false);
+    props.onClick?.(e as any);
+  };
+
+  return (
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={isChecked}
+      onClick={handleClick}
+      className={cn(
+        "relative flex w-full cursor-pointer select-none items-center rounded-xl pl-9 pr-3 py-2 text-sm outline-none transition-all duration-150",
+        "text-zinc-700 dark:text-zinc-300",
+        "hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-white/[0.04] dark:hover:text-white",
+        "focus:bg-zinc-50 focus:text-zinc-900 dark:focus:bg-white/[0.04] dark:focus:text-white",
+        className
+      )}
+      {...props}
+    >
+      <span className="absolute left-3.5 flex h-2 w-2 items-center justify-center shrink-0">
+        {isChecked && (
+          <span className="h-2 w-2 rounded-full bg-purple-600 dark:bg-purple-400 animate-in zoom-in duration-100" />
+        )}
+      </span>
+      {children}
+    </button>
+  );
+}
+
 export function DropdownMenuLabel({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("px-2 py-1.5 text-sm font-semibold text-gray-900 dark:text-white", className)} {...props}>
+    <div className={cn("px-3 py-1.5 text-xs font-semibold tracking-wider uppercase text-zinc-400 dark:text-zinc-500", className)} {...props}>
       {children}
     </div>
   );
@@ -208,6 +325,20 @@ export function DropdownMenuLabel({ className, children, ...props }: React.HTMLA
 
 export function DropdownMenuSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("-mx-1 my-1 h-px bg-gray-200 dark:bg-white/[0.03]", className)} {...props} />
+    <div className={cn("-mx-1.5 my-1 h-px bg-zinc-100 dark:bg-white/[0.03]", className)} {...props} />
+  );
+}
+
+export function DropdownMenuShortcut({ className, children, ...props }: React.HTMLAttributes<HTMLSpanElement>) {
+  return (
+    <span
+      className={cn(
+        "ml-auto text-[10px] tracking-widest opacity-50 font-mono font-semibold",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </span>
   );
 }

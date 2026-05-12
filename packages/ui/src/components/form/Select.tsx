@@ -5,6 +5,7 @@ import { Label } from './Label';
 export interface SelectOption {
   label: string;
   value: string;
+  group?: string;
 }
 
 export interface SelectProps {
@@ -18,10 +19,28 @@ export interface SelectProps {
   error?: string;
   disabled?: boolean;
   className?: string;
+  variant?: 'default' | 'ghost' | 'glass' | 'cyber';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
-  ({ label, name, options, value, defaultValue, onChange, placeholder = 'Select an option', error, disabled, className }, ref) => {
+  (
+    { 
+      label, 
+      name, 
+      options, 
+      value, 
+      defaultValue, 
+      onChange, 
+      placeholder = 'Select an option', 
+      error, 
+      disabled, 
+      className,
+      variant = 'default',
+      size = 'md'
+    }, 
+    ref
+  ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [internalValue, setInternalValue] = useState(defaultValue);
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -66,7 +85,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        if (isOpen && activeIndex !== -1) {
+        if (isOpen && activeIndex !== -1 && options[activeIndex]) {
           handleSelect(options[activeIndex]!.value);
         } else {
           setIsOpen(true);
@@ -96,10 +115,47 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       }
     };
 
+    const sizeClasses = {
+      sm: 'px-3.5 py-2 text-xs rounded-xl min-h-[2.25rem]',
+      md: 'px-4 py-3 text-sm rounded-2xl min-h-[3rem]',
+      lg: 'px-5 py-3.5 text-base rounded-3.5xl min-h-[3.5rem]'
+    };
+
+    const variantClasses = {
+      default: cn(
+        'bg-gray-50 dark:bg-white/[0.04]',
+        'border border-gray-200 dark:border-white/[0.08]',
+        'text-gray-900 dark:text-white',
+        'hover:bg-gray-100 dark:hover:bg-white/[0.06]',
+        isOpen && 'border-gray-300 dark:border-white/20 ring-2 ring-purple-400/20'
+      ),
+      ghost: cn(
+        'bg-transparent hover:bg-gray-100 dark:hover:bg-white/[0.05]',
+        'border border-transparent',
+        'text-gray-900 dark:text-white',
+        isOpen && 'bg-gray-100 dark:bg-white/[0.05]'
+      ),
+      glass: cn(
+        'bg-white/40 dark:bg-zinc-900/30 backdrop-blur-md',
+        'border border-zinc-200/50 dark:border-white/5',
+        'text-gray-900 dark:text-white',
+        'shadow-[0_4px_30px_rgba(0,0,0,0.02)]',
+        'hover:bg-white/60 dark:hover:bg-zinc-900/40',
+        isOpen && 'border-purple-500/30 dark:border-purple-500/20 ring-2 ring-purple-500/10'
+      ),
+      cyber: cn(
+        'bg-zinc-950 border',
+        'border-purple-500/30 dark:border-purple-500/20',
+        'text-purple-500 dark:text-purple-400',
+        'hover:border-purple-500 hover:shadow-[0_0_15px_rgba(168,85,247,0.15)]',
+        isOpen && 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.20)] ring-2 ring-purple-500/20'
+      )
+    };
+
     return (
       <div 
         ref={containerRef} 
-        className={cn("flex flex-col gap-1.5 relative", className)}
+        className={cn("flex flex-col gap-1.5 relative w-full", className)}
       >
         {label && (
           <Label 
@@ -122,17 +178,14 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           onClick={() => !disabled && setIsOpen(!isOpen)}
           onKeyDown={handleKeyDown}
           className={cn(
-            'w-full appearance-none rounded-2xl bg-gray-50 dark:bg-white/[0.04] px-4 py-3',
-            'border border-gray-200 dark:border-white/[0.10]',
-            'text-gray-900 dark:text-white flex items-center',
-            'focus:outline-none focus:ring-2 focus:ring-purple-400/30',
-            'hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer',
-            disabled && 'cursor-not-allowed opacity-50 hover:bg-gray-50 dark:hover:bg-white/[0.04]',
-            isOpen && 'border-gray-300 dark:border-white/20 ring-2 ring-purple-400/20',
+            'w-full appearance-none flex items-center justify-between gap-2 relative transition-all duration-200 cursor-pointer focus:outline-none',
+            sizeClasses[size],
+            variantClasses[variant],
+            disabled && 'cursor-not-allowed opacity-50 hover:bg-transparent hover:shadow-none',
             error && 'border-rose-400/25 focus:ring-rose-300/25'
           )}
         >
-          <span className={cn("block truncate", !selectedOption && "text-gray-400 dark:text-white/20")}>
+          <span className={cn("block truncate pr-6", !selectedOption && "text-gray-400 dark:text-white/20")}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <svg
@@ -155,56 +208,68 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         </div>
 
         {isOpen && (
-          <div className="absolute top-full left-0 z-[110] mt-1 w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute top-full left-0 z-[110] mt-1.5 w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
             <ul
               id={`${id}-listbox`}
               role="listbox"
               aria-activedescendant={activeIndex !== -1 ? `${id}-option-${activeIndex}` : undefined}
-              className="max-h-60 overflow-auto p-1 flex flex-col gap-2"
+              className="max-h-60 overflow-auto flex flex-col gap-0.5"
             >
-              {options.map((option, index) => (
-                <li
-                  key={option.value}
-                  id={`${id}-option-${index}`}
-                  role="option"
-                  aria-selected={currentValue === option.value}
-                  onClick={() => handleSelect(option.value)}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  className={cn(
-                    'w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors cursor-pointer',
-                    'hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white',
-                    (currentValue === option.value || activeIndex === index)
-                      ? 'bg-gray-100 dark:bg-white/[0.06] text-gray-900 dark:text-white/90' 
-                      : 'text-gray-700 dark:text-white/80'
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="flex-1 truncate">{option.label}</span>
-                    {currentValue === option.value && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-gray-900 dark:text-white"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
+              {options.map((option, index) => {
+                const showGroupHeader = option.group && (index === 0 || options[index - 1]?.group !== option.group);
+                const isSelected = currentValue === option.value;
+                const isActive = activeIndex === index;
+
+                return (
+                  <React.Fragment key={option.value}>
+                    {showGroupHeader && (
+                      <li className="px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mt-1 mb-0.5 select-none">
+                        {option.group}
+                      </li>
                     )}
-                  </div>
-                </li>
-              ))}
+                    <li
+                      id={`${id}-option-${index}`}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => handleSelect(option.value)}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      className={cn(
+                        'w-full rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 cursor-pointer',
+                        isSelected 
+                          ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
+                          : 'text-zinc-700 dark:text-zinc-300',
+                        isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex-1 truncate">{option.label}</span>
+                        {isSelected && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-purple-600 dark:text-purple-400 shrink-0"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                    </li>
+                  </React.Fragment>
+                );
+              })}
             </ul>
           </div>
         )}
 
         {error && (
-          <p className="text-xs text-rose-400 animate-in slide-in-from-top-1 fade-in duration-200">
+          <p className="text-xs text-rose-500 animate-in slide-in-from-top-0.5 fade-in duration-150">
             {error}
           </p>
         )}
