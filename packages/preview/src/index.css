@@ -31,3 +31,12 @@ body.is-dragging-task,
 body.is-dragging-task * {
   cursor: grabbing !important;
 }
+
+/* Dragged card visual snapshot style (tilted/rotated and scaled down like Bitrix24) */
+.is-being-dragged-snapshot {
+  transform: rotate(3.5deg) scale(0.92) !important;
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.45) !important;
+  border-color: rgba(6, 182, 212, 0.6) !important;
+  opacity: 0.95 !important;
+  transition: none !important;
+}

@@ -9,7 +9,7 @@ import {
   Badge,
   Button
 } from '@pixonui/react';
-import type { KanbanColumnDef, KanbanTask, KanbanUser, Subtask } from '@pixonui/react';
+import type { KanbanColumnDef, KanbanTask, KanbanUser, Subtask, KanbanDropZoneDef } from '@pixonui/react';
 import { 
   Brain, 
   ShieldAlert, 
@@ -527,6 +527,52 @@ export function KanbanView() {
     channelRef.current?.postMessage({ type: 'TASK_MOVE', taskId, toColumnId });
   };
 
+  const dropZones: KanbanDropZoneDef[] = [
+    {
+      id: 'delete',
+      label: 'Excluir Lead / Descartar',
+      variant: 'danger',
+      icon: <Trash2 className="h-4 w-4 shrink-0" />
+    },
+    {
+      id: 'win',
+      label: 'Lead Ganho / Converter',
+      variant: 'success',
+      icon: <Check className="h-4 w-4 shrink-0" />
+    },
+    {
+      id: 'cold',
+      label: 'Mover para Banco de Leads',
+      variant: 'info',
+      icon: <Briefcase className="h-4 w-4 shrink-0" />
+    }
+  ];
+
+  const handleDropInZone = (taskId: string, zoneId: string) => {
+    if (zoneId === 'delete') {
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+      toast({
+        title: 'Lead Descartado 🗑️',
+        description: 'O lead foi excluído e arquivado com sucesso.',
+        variant: 'destructive'
+      });
+    } else if (zoneId === 'win') {
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, columnId: 'done', progress: 100 } : t));
+      toast({
+        title: 'Lead Ganho! 🎉',
+        description: 'Parabéns! O lead foi convertido com sucesso para Ganho!',
+        variant: 'success'
+      });
+    } else if (zoneId === 'cold') {
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, columnId: 'todo', priority: 'low' } : t));
+      toast({
+        title: 'Movido para Banco de Leads ❄️',
+        description: 'O lead foi colocado em banho maria no Banco de Leads.',
+        variant: 'info'
+      });
+    }
+  };
+
   const saveTaskUpdates = (updatedTask: KanbanTask) => {
     const updatedTasks = tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, updatedAt: new Date() } : t);
     setTasks(updatedTasks);
@@ -937,6 +983,8 @@ export function KanbanView() {
           sortOrder={sortOrder}
           isLoading={isLoading}
           maxVisibleCards={maxVisibleCards}
+          dropZones={dropZones}
+          onDropInZone={handleDropInZone}
         />
       </div>
 

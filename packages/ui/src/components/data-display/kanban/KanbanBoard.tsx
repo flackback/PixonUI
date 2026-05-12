@@ -40,11 +40,14 @@ export function KanbanBoard({
   rtl,
   locale = 'en',
   translations,
+  dropZones,
+  onDropInZone,
   ...props
 }: KanbanProps) {
   const [internalView, setInternalView] = useState<'board' | 'list' | 'calendar' | 'timeline' | 'table'>(propView || 'board');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [collapsedSwimlanes, setCollapsedSwimlanes] = useState<string[]>([]);
+  const [dragOverZoneId, setDragOverZoneId] = useState<string | null>(null);
 
   const {
     boardRef,
@@ -109,6 +112,9 @@ export function KanbanBoard({
     columns, 
     tasks, 
     selectedTaskIds: [], 
+    onTaskDragEnd: () => {
+      setDragOverZoneId(null);
+    },
     onTaskMove: (taskId, toColumnId, toTaskId, position) => {
       const newTasks = [...tasks];
       const taskIndex = newTasks.findIndex(t => t.id === taskId);
@@ -310,7 +316,7 @@ export function KanbanBoard({
   const isRtl = rtl ?? (typeof document !== 'undefined' ? document.documentElement.dir === 'rtl' : false);
  
   return (
-    <div className={cn("flex flex-col gap-4 h-full", className)} dir={isRtl ? "rtl" : "ltr"}>
+    <div className={cn("flex flex-col gap-4 h-full relative overflow-hidden", className)} dir={isRtl ? "rtl" : "ltr"}>
       <style dangerouslySetInnerHTML={{ __html: `
         body.is-dragging-task,
         body.is-dragging-task * {
@@ -372,6 +378,79 @@ export function KanbanBoard({
             setSelectedTaskId(null);
           }}
         />
+      )}
+
+      {/* Bitrix24-style Bottom Action Drop Zones */}
+      {draggedTaskId && dropZones && dropZones.length > 0 && (
+        <div 
+          className="absolute bottom-4 left-4 right-4 z-40 flex h-20 items-stretch justify-around gap-4 px-4 py-2.5 bg-white/20 dark:bg-black/40 backdrop-blur-3xl border border-zinc-200/40 dark:border-white/5 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-6 duration-300 ease-out"
+        >
+          {dropZones.map((zone) => {
+            const isOver = dragOverZoneId === zone.id;
+            
+            // Map variants or custom colors to premium, hyper-fluid interactive styles
+            let variantClasses = "";
+            if (zone.variant === 'danger') {
+              variantClasses = isOver
+                ? "bg-gradient-to-r from-red-500 to-rose-600 text-white border-red-400 shadow-[0_10px_25px_rgba(239,68,68,0.3)]"
+                : "bg-red-500/10 dark:bg-rose-500/5 text-red-600 dark:text-rose-400 border-red-500/10 dark:border-rose-500/5 hover:bg-red-500/20";
+            } else if (zone.variant === 'success') {
+              variantClasses = isOver
+                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-emerald-400 shadow-[0_10px_25px_rgba(16,185,129,0.3)]"
+                : "bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/10 dark:border-emerald-500/5 hover:bg-emerald-500/20";
+            } else if (zone.variant === 'info' || zone.variant === 'primary') {
+              variantClasses = isOver
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400 shadow-[0_10px_25px_rgba(6,182,212,0.3)]"
+                : "bg-cyan-500/10 dark:bg-cyan-500/5 text-cyan-600 dark:text-cyan-400 border-cyan-500/10 dark:border-cyan-500/5 hover:bg-cyan-500/20";
+            } else if (zone.variant === 'warning') {
+              variantClasses = isOver
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white border-amber-400 shadow-[0_10px_25px_rgba(245,158,11,0.3)]"
+                : "bg-amber-500/10 dark:bg-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/10 dark:border-amber-500/5 hover:bg-amber-500/20";
+            } else {
+              if (zone.color) {
+                variantClasses = isOver
+                  ? `${zone.color} text-white shadow-[0_10px_25px_rgba(0,0,0,0.2)] border-white/20`
+                  : `${zone.color}/10 text-zinc-700 dark:text-zinc-300 border-zinc-500/10 hover:bg-zinc-500/15`;
+              } else {
+                variantClasses = isOver
+                  ? "bg-gradient-to-r from-zinc-500 to-zinc-600 text-white border-zinc-400 shadow-md"
+                  : "bg-zinc-500/10 dark:bg-zinc-500/5 text-zinc-700 dark:text-zinc-400 border-zinc-500/10 hover:bg-zinc-500/20";
+              }
+            }
+
+            return (
+              <div
+                key={zone.id}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverZoneId(zone.id);
+                }}
+                onDragLeave={() => setDragOverZoneId(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggedTaskId) {
+                    onDropInZone?.(draggedTaskId, zone.id);
+                  }
+                  setDragOverZoneId(null);
+                }}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl border text-sm font-semibold transition-all duration-300 ease-out",
+                  "cursor-pointer select-none border-zinc-200/50 dark:border-white/5",
+                  variantClasses,
+                  isOver ? "scale-[1.03] -translate-y-1.5" : ""
+                )}
+              >
+                <div className={cn(
+                  "flex items-center gap-2 transition-transform duration-300",
+                  isOver ? "scale-110" : "scale-100"
+                )}>
+                  {zone.icon && <span className="text-base shrink-0">{zone.icon}</span>}
+                  <span className="text-xs tracking-wide">{zone.label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

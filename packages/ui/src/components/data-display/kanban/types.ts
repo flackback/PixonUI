@@ -71,9 +71,19 @@ export interface KanbanColumnDef {
 
 export type DropPosition = 'top' | 'bottom' | 'left' | 'right';
 
+export interface KanbanDropZoneDef {
+  id: string;
+  label: string;
+  variant?: 'danger' | 'success' | 'info' | 'primary' | 'warning' | 'neutral';
+  color?: string; // Optional custom fallback background color class
+  icon?: ReactNode;
+}
+
 export interface KanbanProps {
   columns: KanbanColumnDef[];
   tasks: KanbanTask[];
+  dropZones?: KanbanDropZoneDef[];
+  onDropInZone?: (taskId: string, zoneId: string) => void;
   onTaskMove?: (taskId: string, toColumnId: string, toTaskId?: string, position?: 'top' | 'bottom') => void;
   onColumnMove?: (columnId: string, toColumnId: string, position?: 'left' | 'right') => void;
   onTaskClick?: (task: KanbanTask) => void;
