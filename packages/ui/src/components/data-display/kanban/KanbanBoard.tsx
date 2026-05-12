@@ -102,7 +102,9 @@ export function KanbanBoard({
     handleDrop,
     handleDragEnd,
     draggedTaskId,
-    dragOverColumnId
+    dragOverColumnId,
+    dragOverTaskId,
+    dropPosition
   } = useKanbanDragAndDrop({ 
     columns, 
     tasks, 
@@ -253,6 +255,8 @@ export function KanbanBoard({
                           onTaskSelectionChange={onTaskSelectionChange}
                           activeTimerTaskId={activeTimerTaskId}
                           maxVisibleCards={maxVisibleCards}
+                          dragOverTaskId={dragOverTaskId}
+                          dropPosition={dropPosition}
                         />
                       </React.Fragment>
                     ))}
@@ -262,7 +266,7 @@ export function KanbanBoard({
             </div>
           );
         }
-
+ 
         return (
           <div 
             ref={boardRef}
@@ -294,6 +298,8 @@ export function KanbanBoard({
                   onTaskSelectionChange={onTaskSelectionChange}
                   activeTimerTaskId={activeTimerTaskId}
                   maxVisibleCards={maxVisibleCards}
+                  dragOverTaskId={dragOverTaskId}
+                  dropPosition={dropPosition}
                 />
               </React.Fragment>
             ))}
@@ -302,13 +308,34 @@ export function KanbanBoard({
     }
   };
   const isRtl = rtl ?? (typeof document !== 'undefined' ? document.documentElement.dir === 'rtl' : false);
-
+ 
   return (
     <div className={cn("flex flex-col gap-4 h-full", className)} dir={isRtl ? "rtl" : "ltr"}>
       <style dangerouslySetInnerHTML={{ __html: `
         body.is-dragging-task,
         body.is-dragging-task * {
           cursor: grabbing !important;
+        }
+        .is-being-dragged-snapshot {
+          background-color: rgba(255, 255, 255, 0.96) !important;
+          border-color: rgba(6, 182, 212, 0.5) !important;
+          box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.15), 0 0 20px rgba(6, 182, 212, 0.25) !important;
+          transform: scale(1.02) rotate(-1.5deg);
+          opacity: 0.98 !important;
+          backdrop-filter: blur(24px) !important;
+          -webkit-backdrop-filter: blur(24px) !important;
+          border-style: solid !important;
+          border-width: 1.5px !important;
+          border-radius: 1rem !important;
+        }
+        .is-being-dragged-snapshot * {
+          opacity: 1 !important;
+          visibility: visible !important;
+        }
+        .dark .is-being-dragged-snapshot {
+          background-color: rgba(18, 18, 20, 0.94) !important;
+          border-color: rgba(6, 182, 212, 0.6) !important;
+          box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(6, 182, 212, 0.45) !important;
         }
       ` }} />
       <KanbanHeader 

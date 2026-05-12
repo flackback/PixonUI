@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Lock, Trash2, GripVertical, MessageSquare, Paperclip, Clock, Play, Pause, CheckSquare } from 'lucide-react';
 import { Surface } from '../../../primitives/Surface';
 import { Badge } from '../../../primitives/Badge';
@@ -25,6 +25,9 @@ interface KanbanCardProps {
   onDrop?: (e: React.DragEvent) => void;
   renderCard?: (task: KanbanTask) => React.ReactNode;
   isDragged?: boolean;
+  spotlight?: boolean;
+  spotlightColor?: string;
+  spotlightSize?: number;
 }
 
 export const KanbanCard = React.memo(({
@@ -44,9 +47,35 @@ export const KanbanCard = React.memo(({
   onDragOver,
   onDrop,
   renderCard,
-  isDragged
+  isDragged,
+  spotlight = true,
+  spotlightColor,
+  spotlightSize = 400
 }: KanbanCardProps) => {
   if (renderCard) return <>{renderCard(task)}</>;
+
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current || !spotlight) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
 
   const subtasksCount = task.subtasks?.length || 0;
   const completedSubtasksCount = task.subtasks?.filter(s => s.completed).length || 0;
@@ -64,23 +93,55 @@ export const KanbanCard = React.memo(({
 
   const hasSpinningBorder = task.effect === 'spinning-border' && !isDragged;
 
+  const handleCardDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    const cardEl = e.currentTarget;
+    cardEl.classList.add('is-being-dragged-snapshot');
+    onDragStart?.(e);
+    // Use a slightly longer timeout instead of requestAnimationFrame so Windows/Chrome
+    // has ample time to capture the styled element asynchronously.
+    setTimeout(() => {
+      cardEl.classList.remove('is-being-dragged-snapshot');
+    }, 120);
+  };
+
   const cardContent = (
     <Surface 
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => onTaskClick?.(e, task)}
       draggable={draggable}
-      onDragStart={onDragStart}
+      onDragStart={handleCardDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={cn(
-        "p-6 border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm hover:bg-gray-100/50 dark:hover:bg-white/[0.06] transition-all duration-200 rounded-2xl group cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300 dark:hover:border-white/20 h-full w-full",
-        task.blockedBy && task.blockedBy.length > 0 && "border-red-500/30 bg-red-500/[0.02]",
-        isSelected && "ring-2 ring-cyan-500/50 bg-cyan-500/[0.02]",
-        isDragged && "bg-white/40 dark:bg-black/40 backdrop-blur-md border-dashed border-cyan-500/40 dark:border-cyan-500/30 scale-[0.98] shadow-lg shadow-cyan-500/5 select-none pointer-events-none",
-        hasSpinningBorder && "border-transparent dark:border-transparent bg-white/90 dark:bg-[#0f172a]/95",
+        "relative overflow-hidden p-6 rounded-2xl transition-all duration-300 h-full w-full group",
+        isDragged ? (
+          "opacity-45 bg-white/20 dark:bg-white/[0.01] backdrop-blur-md border border-dashed border-cyan-500/50 shadow-sm pointer-events-none select-none z-0"
+        ) : (
+          cn(
+            "border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.02] backdrop-blur-xl shadow-sm hover:shadow-lg hover:border-cyan-500/30 dark:hover:border-cyan-500/30 cursor-grab active:cursor-grabbing",
+            task.blockedBy && task.blockedBy.length > 0 ? "border-red-500/30 bg-red-500/[0.02] hover:border-red-500/50" : "hover:bg-white/80 dark:hover:bg-white/[0.05]",
+            isSelected && "ring-2 ring-cyan-500/50 bg-cyan-500/[0.02]",
+            hasSpinningBorder && "border-transparent dark:border-transparent bg-white/95 dark:bg-[#0f172a]/95"
+          )
+        ),
         cardClassName
       )}
     >
-      <div className={cn("flex flex-col gap-3 transition-all duration-300", isDragged && "opacity-10 blur-[4px] select-none pointer-events-none")}>
+      {spotlight && !isDragged && (
+        <div
+          className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ease-in-out"
+          style={{
+            opacity: isHovered ? 1 : 0,
+            background: `radial-gradient(${spotlightSize}px circle at ${coords.x}px ${coords.y}px, ${
+              spotlightColor || (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)')
+            }, transparent 80%)`,
+          }}
+        />
+      )}
+      <div className={cn("relative z-10 flex flex-col gap-3 transition-all duration-300", isDragged && "opacity-0 select-none pointer-events-none")}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {selectable && (

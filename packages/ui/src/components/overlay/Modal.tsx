@@ -10,6 +10,9 @@ export interface ModalProps {
   children: React.ReactNode;
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  spotlight?: boolean;
+  spotlightColor?: string;
+  spotlightSize?: number;
 }
 
 const sizeClasses = {
@@ -20,14 +23,40 @@ const sizeClasses = {
   full: 'max-w-full m-4',
 };
 
-export function Modal({ isOpen, onClose, children, className, size = 'md' }: ModalProps) {
+export function Modal({ 
+  isOpen, 
+  onClose, 
+  children, 
+  className, 
+  size = 'md',
+  spotlight = true,
+  spotlightColor,
+  spotlightSize = 600,
+}: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [mounted, setMounted] = React.useState(false);
+  const [coords, setCoords] = React.useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [isDark, setIsDark] = React.useState(false);
 
   useEffect(() => {
     setMounted(true);
+    if (typeof document !== 'undefined') {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    }
   }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!spotlight) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const activeColor = spotlightColor || (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)');
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -78,16 +107,29 @@ export function Modal({ isOpen, onClose, children, className, size = 'md' }: Mod
       )}
     >
       <div
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => spotlight && setIsHovered(true)}
+        onMouseLeave={() => spotlight && setIsHovered(false)}
         className={cn(
           "relative w-full scale-100 flex flex-col max-h-[90vh] border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]/95 p-6 shadow-2xl backdrop-blur-xl transition-all sm:rounded-2xl",
           sizeClasses[size],
           "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
         )}
       >
+        {spotlight && (
+          <div
+            data-testid="modal-spotlight"
+            className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 rounded-[inherit]"
+            style={{
+              opacity: isHovered ? 1 : 0,
+              background: `radial-gradient(${spotlightSize}px circle at ${coords.x}px ${coords.y}px, ${activeColor}, transparent 40%)`,
+            }}
+          />
+        )}
         {children}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/20 disabled:pointer-events-none"
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-white/20 disabled:pointer-events-none z-10"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-900 dark:text-white">
             <line x1="18" y1="6" x2="6" y2="18" />

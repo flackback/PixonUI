@@ -10,6 +10,9 @@ export interface DrawerProps {
   position?: 'left' | 'right' | 'bottom';
   children: React.ReactNode;
   className?: string;
+  spotlight?: boolean;
+  spotlightColor?: string;
+  spotlightSize?: number;
 }
 
 export function Drawer({ 
@@ -17,11 +20,35 @@ export function Drawer({
   onClose, 
   position = 'right', 
   children, 
-  className 
+  className,
+  spotlight = true,
+  spotlightColor,
+  spotlightSize = 600,
 }: DrawerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    }
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!spotlight) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const activeColor = spotlightColor || (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)');
 
   useEffect(() => {
     if (isOpen) {
@@ -89,6 +116,9 @@ export function Drawer({
       aria-modal="true"
     >
       <div
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => spotlight && setIsHovered(true)}
+        onMouseLeave={() => spotlight && setIsHovered(false)}
         className={cn(
           "absolute bg-white dark:bg-[#0A0A0A] border-gray-200 dark:border-white/10 p-6 shadow-2xl transition-transform duration-300 ease-in-out",
           positionClasses[position],
@@ -96,6 +126,16 @@ export function Drawer({
           className
         )}
       >
+        {spotlight && (
+          <div
+            data-testid="drawer-spotlight"
+            className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 rounded-[inherit]"
+            style={{
+              opacity: isHovered ? 1 : 0,
+              background: `radial-gradient(${spotlightSize}px circle at ${coords.x}px ${coords.y}px, ${activeColor}, transparent 40%)`,
+            }}
+          />
+        )}
         {children}
       </div>
     </div>,

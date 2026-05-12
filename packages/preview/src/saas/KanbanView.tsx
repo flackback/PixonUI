@@ -203,6 +203,18 @@ export function KanbanView() {
   // Tab management inside drawer to eliminate double overlay modal issues
   const [activeTab, setActiveTab] = useState<'details' | 'chat' | 'crm' | 'erp'>('details');
 
+  // Spotlight effect for lead/task drawer
+  const [drawerCoords, setDrawerCoords] = useState({ x: 0, y: 0 });
+  const [drawerHovered, setDrawerHovered] = useState(false);
+
+  const handleDrawerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDrawerCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
   // Inline editing states
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
@@ -950,17 +962,30 @@ export function KanbanView() {
             />
 
             {/* Drawer Box */}
-            <div className="fixed right-0 top-0 bottom-0 w-full md:w-[860px] bg-white dark:bg-zinc-950/95 border-l border-zinc-200 dark:border-white/10 z-50 shadow-2xl backdrop-blur-3xl flex flex-col animate-in slide-in-from-right duration-300 overflow-hidden text-zinc-900 dark:text-white">
+            <div 
+              onMouseMove={handleDrawerMouseMove}
+              onMouseEnter={() => setDrawerHovered(true)}
+              onMouseLeave={() => setDrawerHovered(false)}
+              className="fixed right-0 top-0 bottom-0 w-full md:w-[860px] bg-white/80 dark:bg-[#070709]/75 border-l border-zinc-200 dark:border-white/10 z-50 shadow-2xl backdrop-blur-3xl flex flex-col animate-in slide-in-from-right duration-300 overflow-hidden text-zinc-900 dark:text-white"
+            >
+              {/* Spotlight Glow Effect */}
+              <div
+                className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ease-in-out"
+                style={{
+                  opacity: drawerHovered ? 1 : 0,
+                  background: `radial-gradient(800px circle at ${drawerCoords.x}px ${drawerCoords.y}px, rgba(147, 51, 234, 0.05) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 80%)`,
+                }}
+              />
               
               {/* Top Dynamic Tab Header - Inspired by modern CRM workspace tabs */}
-              <div className="flex items-center justify-between px-6 py-4 bg-zinc-50 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-white/10 shrink-0">
+              <div className="relative z-10 flex items-center justify-between px-6 py-4 bg-zinc-50/40 dark:bg-zinc-900/30 border-b border-zinc-200 dark:border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="h-2.5 w-2.5 rounded-full bg-purple-500 animate-pulse" />
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Card #{selectedTask.id}</span>
                 </div>
 
                 {/* Seamless Tab Switches to eliminate modal overlay issues */}
-                <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-black/40 p-1 rounded-xl border border-zinc-200 dark:border-white/5">
+                <div className="flex items-center gap-1.5 bg-zinc-100/50 dark:bg-black/40 p-1 rounded-xl border border-zinc-200 dark:border-white/5">
                   <button 
                     onClick={() => setActiveTab('details')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -1012,7 +1037,7 @@ export function KanbanView() {
               </div>
 
               {/* MAIN CONTENT PORTAL (BASED ON ACTIVE TAB) */}
-              <div className="flex-1 min-h-0 overflow-hidden flex flex-col md:flex-row">
+              <div className="relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col md:flex-row">
 
                 {/* TAB 1: DETAILS (Macro, comments, subtasks) */}
                 {activeTab === 'details' && (

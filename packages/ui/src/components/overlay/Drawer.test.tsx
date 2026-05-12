@@ -62,4 +62,26 @@ describe('Drawer', () => {
 
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('renders spotlight effect by default', () => {
+    render(
+      <Drawer isOpen={true} onClose={() => {}}>
+        <div>Content</div>
+      </Drawer>
+    );
+
+    const spotlightEl = screen.getByTestId('drawer-spotlight');
+    expect(spotlightEl).toBeInTheDocument();
+  });
+
+  it('does not render spotlight when spotlight is false', () => {
+    render(
+      <Drawer isOpen={true} onClose={() => {}} spotlight={false}>
+        <div>Content</div>
+      </Drawer>
+    );
+
+    const spotlightEl = screen.queryByTestId('drawer-spotlight');
+    expect(spotlightEl).not.toBeInTheDocument();
+  });
 });

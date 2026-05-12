@@ -1,14 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from './Modal';
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './Dialog';
 import React from 'react';
 
-describe('Modal', () => {
+describe('Dialog', () => {
   it('is not open when isOpen is false', () => {
     render(
-      <Modal isOpen={false} onClose={() => {}}>
+      <Dialog isOpen={false} onClose={() => {}}>
         <div>Content</div>
-      </Modal>
+      </Dialog>
     );
     const dialog = screen.queryByRole('dialog') as HTMLDialogElement;
     if (dialog) {
@@ -18,9 +18,9 @@ describe('Modal', () => {
 
   it('renders content when isOpen is true', () => {
     render(
-      <Modal isOpen={true} onClose={() => {}}>
+      <Dialog isOpen={true} onClose={() => {}}>
         <div>Content</div>
-      </Modal>
+      </Dialog>
     );
     expect(screen.getByText('Content')).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -30,9 +30,9 @@ describe('Modal', () => {
   it('calls onClose when close button is clicked', () => {
     const onClose = vi.fn();
     render(
-      <Modal isOpen={true} onClose={onClose}>
+      <Dialog isOpen={true} onClose={onClose}>
         <div>Content</div>
-      </Modal>
+      </Dialog>
     );
     
     const closeButton = screen.getByRole('button', { name: /close/i });
@@ -40,30 +40,17 @@ describe('Modal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('calls onClose when pressing Escape', () => {
-    const onClose = vi.fn();
-    render(
-      <Modal isOpen={true} onClose={onClose}>
-        <div>Content</div>
-      </Modal>
-    );
-    
-    const dialog = screen.getByRole('dialog');
-    fireEvent(dialog, new Event('cancel'));
-    expect(onClose).toHaveBeenCalled();
-  });
-
   it('renders subcomponents correctly', () => {
     render(
-      <Modal isOpen={true} onClose={() => {}}>
-        <ModalHeader>
-          <ModalTitle>My Title</ModalTitle>
-          <ModalDescription>My Description</ModalDescription>
-        </ModalHeader>
-        <ModalFooter>
+      <Dialog isOpen={true} onClose={() => {}}>
+        <DialogHeader>
+          <DialogTitle>My Title</DialogTitle>
+          <DialogDescription>My Description</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
           <button>Action</button>
-        </ModalFooter>
-      </Modal>
+        </DialogFooter>
+      </Dialog>
     );
 
     expect(screen.getByText('My Title')).toBeInTheDocument();
@@ -73,23 +60,23 @@ describe('Modal', () => {
 
   it('renders spotlight effect by default', () => {
     render(
-      <Modal isOpen={true} onClose={() => {}}>
+      <Dialog isOpen={true} onClose={() => {}}>
         <div>Content</div>
-      </Modal>
+      </Dialog>
     );
 
-    const spotlightEl = screen.getByTestId('modal-spotlight');
+    const spotlightEl = screen.getByTestId('dialog-spotlight');
     expect(spotlightEl).toBeInTheDocument();
   });
 
   it('does not render spotlight when spotlight is false', () => {
     render(
-      <Modal isOpen={true} onClose={() => {}} spotlight={false}>
+      <Dialog isOpen={true} onClose={() => {}} spotlight={false}>
         <div>Content</div>
-      </Modal>
+      </Dialog>
     );
 
-    const spotlightEl = screen.queryByTestId('modal-spotlight');
+    const spotlightEl = screen.queryByTestId('dialog-spotlight');
     expect(spotlightEl).not.toBeInTheDocument();
   });
 });

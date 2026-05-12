@@ -4,7 +4,7 @@ import { Plus, MoreVertical, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '../../button/Button';
 import { ColumnLimit } from './components/ColumnLimit';
 import { KanbanCard } from './KanbanCard';
-import type { KanbanColumnDef, KanbanTask } from './types';
+import type { KanbanColumnDef, KanbanTask, DropPosition } from './types';
 
 // ─── KANBAN CARD SKELETON ───
 export function KanbanCardSkeleton() {
@@ -89,6 +89,8 @@ interface KanbanColumnProps {
   onTaskSelectionChange?: (selectedIds: string[]) => void;
   activeTimerTaskId?: string | null;
   maxVisibleCards?: number;
+  dragOverTaskId?: string | null;
+  dropPosition?: DropPosition | null;
 }
 
 export function KanbanColumn({ 
@@ -110,16 +112,26 @@ export function KanbanColumn({
   selectedTaskIds,
   onTaskSelectionChange,
   activeTimerTaskId,
-  maxVisibleCards
+  maxVisibleCards,
+  dragOverTaskId,
+  dropPosition
 }: KanbanColumnProps) {
   const isOverLimit = !isCollapsed && column.limit && tasks.length > column.limit;
+
+  const renderDropIndicator = () => (
+    <div className="relative w-full py-1 animate-in fade-in slide-in-from-top-1 duration-200">
+      <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-cyan-500/80 via-cyan-400 to-transparent shadow-[0_0_8px_rgba(6,182,212,0.8)] rounded-full flex items-center">
+        <span className="absolute -left-1 h-2 w-2 rounded-full bg-cyan-400 border border-white dark:border-zinc-950 shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
+      </div>
+    </div>
+  );
 
   return (
     <div 
       className={cn(
-        "flex flex-col h-full transition-all duration-300 rounded-3xl border border-transparent p-2",
+        "flex flex-col h-full transition-all duration-300 ease-out rounded-3xl border border-transparent p-2",
         isCollapsed ? "w-12" : "w-80",
-        isDragOver && !isCollapsed && "bg-cyan-500/[0.02] border-cyan-500/20 shadow-lg scale-[1.01] backdrop-blur-md",
+        isDragOver && !isCollapsed && "bg-cyan-500/[0.04] border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.15)] scale-[1.01] backdrop-blur-xl transform-gpu ring-2 ring-cyan-500/20",
         isOverLimit && "border-rose-500/30 bg-rose-500/[0.01] shadow-[0_0_20px_rgba(244,63,94,0.05)]",
         className
       )}
@@ -207,21 +219,27 @@ export function KanbanColumn({
           maxHeight: maxVisibleCards ? `${maxVisibleCards * 195}px` : undefined
         }}
       >
-        {children || tasks.map(task => (
-          <KanbanCard 
-            key={task.id} 
-            task={task} 
-            onTaskClick={(_, t) => onTaskClick?.(t)}
-            onDragStart={(e) => onDragStart?.(e, task.id, 'task')}
-            onDragOver={(e) => onDragOver?.(e, task.id)}
-            onDrop={(e) => onDrop?.(e, task.id)}
-            isDragged={draggedTaskId === task.id}
-            selectable={selectable}
-            isSelected={selectedTaskIds?.includes(task.id)}
-            onTaskSelectionChange={onTaskSelectionChange}
-            activeTimerTaskId={activeTimerTaskId}
-          />
-        ))}
+        {children || tasks.map(task => {
+          const isCurrentDragOver = dragOverTaskId === task.id;
+          return (
+            <React.Fragment key={task.id}>
+              {isCurrentDragOver && dropPosition === 'top' && renderDropIndicator()}
+              <KanbanCard 
+                task={task} 
+                onTaskClick={(_, t) => onTaskClick?.(t)}
+                onDragStart={(e) => onDragStart?.(e, task.id, 'task')}
+                onDragOver={(e) => onDragOver?.(e, task.id)}
+                onDrop={(e) => onDrop?.(e, task.id)}
+                isDragged={draggedTaskId === task.id}
+                selectable={selectable}
+                isSelected={selectedTaskIds?.includes(task.id)}
+                onTaskSelectionChange={onTaskSelectionChange}
+                activeTimerTaskId={activeTimerTaskId}
+              />
+              {isCurrentDragOver && dropPosition === 'bottom' && renderDropIndicator()}
+            </React.Fragment>
+          );
+        })}
       </div>
 
       {/* Collapsed Label */}
