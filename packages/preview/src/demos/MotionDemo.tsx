@@ -25,6 +25,200 @@ export function MotionDemo() {
   const [activeTab, setActiveTab] = React.useState('Home');
   const [gridKey, setGridKey] = React.useState(0);
 
+  // ── Julian Garnier (Anime.js) Style Tribute States & Refs ────────────
+  const [tributeWord, setTributeWord] = React.useState('pixonui');
+  const [staggerValue, setStaggerValue] = React.useState(60);
+  const lettersRef = React.useRef<(HTMLSpanElement | null)[]>([]);
+  const svgShapesRef = React.useRef<(SVGRectElement | null)[]>([]);
+  const logoPathsRef = React.useRef<(SVGPathElement | null)[]>([]);
+  const classicLettersRef = React.useRef<(SVGGElement | null)[]>([]);
+  const classicLinesRef = React.useRef<(SVGPathElement | null)[]>([]);
+  const classicDotRef = React.useRef<SVGGElement>(null);
+
+  const playWordBounce = () => {
+    const activeLetters = lettersRef.current.slice(0, tributeWord.length).filter(Boolean);
+    if (!activeLetters.length) return;
+
+    // Reset letters instantly
+    timeline()
+      .add(activeLetters, { y: 0, scaleY: 1, scaleX: 1, rotate: 0 }, { duration: 100 })
+      .play()
+      .finished.then(() => {
+        timeline()
+          .add(
+            activeLetters,
+            [
+              { y: 0, scaleX: 1, scaleY: 1, rotate: 0, offset: 0 },
+              { y: 0, scaleX: 1.35, scaleY: 0.55, rotate: 0, offset: 0.15 },    // Crouch/Anticipation (gets flat on floor)
+              { y: -20, scaleX: 0.75, scaleY: 1.35, rotate: -3, offset: 0.3 },  // Launch (vertical stretch)
+              { y: -52, scaleX: 1, scaleY: 1, rotate: 0, offset: 0.48 },         // Apex/Peak (slows down & relaxes size)
+              { y: -16, scaleX: 0.82, scaleY: 1.25, rotate: 1, offset: 0.65 },   // Fall (vertical stretch)
+              { y: 0, scaleX: 1.48, scaleY: 0.5, rotate: 0, offset: 0.76 },     // Impact/Splat (max squash on impact)
+              { y: -10, scaleX: 0.9, scaleY: 1.1, rotate: -1, offset: 0.88 },    // Elastic rebound
+              { y: 0, scaleX: 1, scaleY: 1, rotate: 0, offset: 1.0 }             // Ground stabilization settle
+            ],
+            {
+              stagger: staggerValue,
+              duration: 1150,
+              easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+            }
+          )
+          .play();
+      });
+  };
+
+  const playSVGCascade = () => {
+    const activeShapes = svgShapesRef.current.filter(Boolean);
+    if (!activeShapes.length) return;
+
+    // Reset shapes instantly
+    timeline()
+      .add(activeShapes, { scale: 1, rotate: 0, opacity: 0.35 }, { duration: 100 })
+      .play()
+      .finished.then(() => {
+        timeline()
+          .add(
+            activeShapes,
+            [
+              { scale: 1, rotate: 0, opacity: 0.35 },
+              { scale: 1.35, rotate: 45, opacity: 1 },  // Concentric expansion & twist
+              { scale: 0.8, rotate: 90, opacity: 0.7 },   // Shrink twist
+              { scale: 1, rotate: 180, opacity: 0.35 }   // Half-rotation settle
+            ],
+            {
+              stagger: 90,
+              duration: 1200,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+            }
+          )
+          .play();
+      });
+  };
+
+  const playLogoIntro = () => {
+    const activePaths = logoPathsRef.current.filter(Boolean);
+    if (!activePaths.length) return;
+
+    // Instantly reset: hide outlines, hide fills, rotate & scale down
+    timeline()
+      .add(
+        activePaths,
+        {
+          strokeDashoffset: 120,
+          fillOpacity: 0,
+          scale: 0.3,
+          rotate: -45
+        },
+        { duration: 100 }
+      )
+      .play()
+      .finished.then(() => {
+        // Step 1: Draw geometric paths in cascade (stagger)
+        timeline()
+          .add(
+            activePaths,
+            { strokeDashoffset: 0, scale: 1, rotate: 0 },
+            {
+              stagger: 65,
+              duration: 950,
+              easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+            }
+          )
+          .play()
+          .finished.then(() => {
+            // Step 2: Pop fills and micro-shiver like the real kinetic Anime.js logo intro!
+            timeline()
+              .add(
+                activePaths,
+                { fillOpacity: 1, scale: [1, 1.22, 0.94, 1] },
+                {
+                  stagger: 45,
+                  duration: 650,
+                  easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                }
+              )
+              .play();
+          });
+      });
+  };
+
+  const playClassicLogoAnimation = () => {
+    const activeLines = classicLinesRef.current.filter(Boolean);
+    const activeLetters = classicLettersRef.current.filter(Boolean);
+    const dot = classicDotRef.current;
+
+    // Reset lines & hide dot
+    activeLines.forEach((line) => {
+      if (line) {
+        try {
+          const length = line.getTotalLength() || 1200;
+          line.style.strokeDasharray = `${length}`;
+          line.style.strokeDashoffset = `${length}`;
+        } catch (e) {
+          line.style.strokeDasharray = '1200';
+          line.style.strokeDashoffset = '1200';
+        }
+      }
+    });
+
+    if (dot) {
+      dot.style.opacity = '0';
+      dot.style.transform = 'translateY(50px) scale(0.1)';
+    }
+
+    // Step 1: Draw classic stroke paths in staggered sequence (drawing effect!)
+    timeline()
+      .add(
+        activeLines,
+        { strokeDashoffset: 0 },
+        {
+          stagger: 90,
+          duration: 1100,
+          easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+        }
+      )
+      .play()
+      .finished.then(() => {
+        // Step 2: Extreme Squash & Stretch kinetic jump!
+        timeline()
+          .add(
+            activeLetters,
+            [
+              { transform: 'translateY(24px) scaleX(1.4) scaleY(0.55)' }, // crouch
+              { transform: 'translateY(-48px) scaleX(0.72) scaleY(1.35)' }, // stretch launch
+              { transform: 'translateY(8px) scaleX(1.18) scaleY(0.82)' }, // landing splash
+              { transform: 'translateY(0) scaleX(1) scaleY(1)' } // settle
+            ],
+            {
+              stagger: 60,
+              duration: 850,
+              easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+            }
+          )
+          .play()
+          .finished.then(() => {
+            // Step 3: Shoot up the bouncy red dot of the "i" and settle on top of it!
+            if (dot) {
+              timeline()
+                .add(
+                  dot,
+                  [
+                    { opacity: 1, transform: 'translateY(50px) scale(0.2)' },
+                    { transform: 'translateY(-30px) scale(1.4)' }, // apex jump
+                    { transform: 'translateY(12px) scale(0.8)' },  // land squash
+                    { transform: 'translateY(0px) scale(1)' }      // settle
+                  ],
+                  {
+                    duration: 650,
+                    easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  }
+                )
+                .play();
+            }
+          });
+      });
+  };
+
   const { ref: springRef, pulse, shake, animate } = usePixonAnimate<HTMLDivElement>();
 
   // Refs for the Ultimate Timeline Demo
@@ -55,9 +249,14 @@ export function MotionDemo() {
     // Run initial sequence after a tiny delay to allow mount rendering
     const timer = setTimeout(() => {
       triggerSequence();
+      // Auto-play the Julian Garnier tributes on mount for a WOW factor!
+      setTimeout(() => {
+        playWordBounce();
+        playSVGCascade();
+      }, 600);
     }, 450);
     return () => clearTimeout(timer);
-  }, []);
+  }, [tributeWord]);
 
   const triggerCustomSpring = () => {
     animate(
@@ -266,6 +465,297 @@ export function MotionDemo() {
           </Surface>
         </div>
 
+      </div>
+
+      {/* 6. Julian Garnier / Anime.js Tribute: Cinematic Staggers & SVGs */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">
+            Cinematic Timelines & SVG Staggers
+          </h3>
+          <span className="text-xs bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20 px-2.5 py-0.5 rounded-full font-mono font-bold">
+            Anime.js Tribute
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Letter Bounce & Squash-Stretch Playground */}
+          <Surface className="p-8 flex flex-col justify-between min-h-[380px] bg-glass relative overflow-hidden">
+            <div className="absolute top-4 right-4 text-slate-400/30 dark:text-white/20 text-xs font-mono">
+              [Squash & Stretch]
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <h4 className="text-md font-semibold text-slate-800 dark:text-white/80">Interactive Letter Squash-Stretch</h4>
+              <p className="text-xs text-slate-500 dark:text-white/50 leading-relaxed">
+                Experience physics-driven character cascades. Change the word, adjust the staggering speed, and watch Pixon compile custom WAAPI keyframes with bottom anchor pinning!
+              </p>
+            </div>
+            
+            {/* The Animated Word Display */}
+            <div className="flex-1 flex items-center justify-center py-6">
+              <div className="flex text-5xl sm:text-6xl font-black tracking-wider text-slate-800 dark:text-white select-none font-sans">
+                {tributeWord.split('').map((char, index) => (
+                  <span
+                    key={`${tributeWord}-${index}`}
+                    ref={(el) => {
+                      lettersRef.current[index] = el;
+                    }}
+                    style={{
+                      display: 'inline-block',
+                      transformOrigin: 'bottom center',
+                      willChange: 'transform',
+                    }}
+                  >
+                    {char === ' ' ? '\u00A0' : char}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            {/* Controls */}
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                {/* Word preset selectors */}
+                <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-black/40 rounded-xl border border-slate-200 dark:border-white/5 w-full sm:w-auto overflow-x-auto">
+                  {['pixonui', 'animejs', 'elastic', 'bounce'].map((word) => (
+                    <button
+                      key={word}
+                      onClick={() => setTributeWord(word)}
+                      className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                        tributeWord === word 
+                          ? 'bg-purple-600 text-white shadow-md' 
+                          : 'text-slate-600 dark:text-white/60 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      {word}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Stagger speed slider */}
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <span className="text-[10px] font-mono text-slate-400 dark:text-white/40">Stagger:</span>
+                  <input 
+                    type="range" 
+                    min="20" 
+                    max="150" 
+                    value={staggerValue} 
+                    onChange={(e) => setStaggerValue(Number(e.target.value))}
+                    className="w-24 h-1 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500" 
+                  />
+                  <span className="text-[10px] font-mono text-purple-600 dark:text-purple-300 w-8">{staggerValue}ms</span>
+                </div>
+              </div>
+              
+              <Button size="lg" variant="primary" className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-lg shadow-purple-500/10" onClick={playWordBounce}>
+                ⚡ Play Text Stagger Wave
+              </Button>
+            </div>
+          </Surface>
+
+          {/* SVG Concentric Morph & Twist */}
+          <Surface className="p-8 flex flex-col justify-between min-h-[380px] bg-glass relative overflow-hidden">
+            <div className="absolute top-4 right-4 text-slate-400/30 dark:text-white/20 text-xs font-mono">
+              [Concentric SVG Paths]
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <h4 className="text-md font-semibold text-slate-800 dark:text-white/80">SVG Hypnotic Concentric Morph</h4>
+              <p className="text-xs text-slate-500 dark:text-white/50 leading-relaxed">
+                Click to morph concentric SVG squares. The timeline targets multiple overlapping SVG nodes and cascades scale, rotation, opacity, and custom border/stroke styles.
+              </p>
+            </div>
+
+            {/* The SVG Artwork Container */}
+            <div className="flex-1 flex items-center justify-center py-4">
+              <svg width="180" height="180" viewBox="0 0 180 180" className="overflow-visible">
+                {Array.from({ length: 6 }).map((_, i) => {
+                  const size = 160 - i * 26; // concentric sizing
+                  const offset = (180 - size) / 2;
+                  const borderColors = [
+                    'rgba(168, 85, 247, 0.4)', // purple
+                    'rgba(6, 182, 212, 0.4)',  // cyan
+                    'rgba(245, 158, 11, 0.4)', // amber
+                    'rgba(16, 185, 129, 0.4)', // emerald
+                    'rgba(239, 68, 68, 0.4)',   // red
+                    'rgba(236, 72, 153, 0.4)'   // pink
+                  ];
+                  return (
+                    <rect
+                      key={i}
+                      ref={(el) => {
+                        svgShapesRef.current[i] = el;
+                      }}
+                      x={offset}
+                      y={offset}
+                      width={size}
+                      height={size}
+                      rx={8 + i * 2}
+                      fill="none"
+                      stroke={borderColors[i % borderColors.length]}
+                      strokeWidth={1.5 + i * 0.5}
+                      style={{
+                        transformOrigin: 'center',
+                        opacity: 0.35,
+                        willChange: 'transform, opacity'
+                      }}
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+
+            <Button size="lg" variant="outline" className="w-full border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-white/80" onClick={playSVGCascade}>
+              🌀 Trigger SVG Morph Twist
+            </Button>
+          </Surface>
+
+          {/* Card 3: Anime.js Classic Logo Tribute (Spans both columns) */}
+          <Surface className="md:col-span-2 p-8 flex flex-col lg:flex-row gap-8 items-center justify-between min-h-[320px] bg-glass relative overflow-hidden">
+            <div className="absolute top-4 right-4 text-slate-400/30 dark:text-white/20 text-xs font-mono">
+              [Classic Logo Tribute]
+            </div>
+
+            <div className="space-y-4 max-w-md">
+              <h4 className="text-md font-semibold text-slate-800 dark:text-white/80">Anime.js Classic Logo Tribute</h4>
+              <p className="text-xs text-slate-500 dark:text-white/50 leading-relaxed">
+                Experience a mathematically faithful, high-fidelity replica of Julian Garnier's legendary vector logo animation! Using PixonUI's timeline orchestrator, we dynamically analyze the exact geometry lengths of each custom path, staggering their outline drawing before triggering a synchronized, elastic Disney squash-stretch bounce with its signature bouncing red dot!
+              </p>
+              <Button 
+                size="lg" 
+                variant="primary" 
+                className="w-full sm:w-auto bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white shadow-lg shadow-red-500/15 font-semibold"
+                onClick={playClassicLogoAnimation}
+              >
+                🎬 Play Classic Logo Intro
+              </Button>
+            </div>
+
+            {/* Logo Canvas */}
+            <div className="flex-1 w-full flex items-center justify-center bg-slate-50 dark:bg-black/30 rounded-2xl border border-slate-100 dark:border-white/5 p-8 min-h-[220px] shadow-inner overflow-hidden">
+              <svg viewBox="0 0 1000 240" width="1000" height="240" className="w-full h-auto max-w-[580px] overflow-visible">
+                {/* Letter A */}
+                <g 
+                  ref={(el) => {
+                    classicLettersRef.current[0] = el;
+                  }} 
+                  transform="translate(0, 0)" 
+                  style={{ transformOrigin: '100px 240px', willChange: 'transform' }}
+                >
+                  <path 
+                    ref={(el) => {
+                      classicLinesRef.current[0] = el;
+                    }}
+                    d="M30 20h130c9.996 0 10 40 10 60v140H41c-11.004 0-11-40-11-60s-.004-60 10-60h110"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-slate-800 dark:text-white"
+                    strokeWidth={40}
+                    strokeLinecap="square"
+                    style={{ fill: 'none', willChange: 'stroke-dashoffset' }}
+                  />
+                </g>
+
+                {/* Letter N */}
+                <g 
+                  ref={(el) => {
+                    classicLettersRef.current[1] = el;
+                  }} 
+                  transform="translate(200, 0)" 
+                  style={{ transformOrigin: '100px 240px', willChange: 'transform' }}
+                >
+                  <path 
+                    ref={(el) => {
+                      classicLinesRef.current[1] = el;
+                    }}
+                    d="M170 220V60c0-31.046-8.656-40-19.333-40H49.333C38.656 20 30 28.954 30 60v160"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-slate-800 dark:text-white"
+                    strokeWidth={40}
+                    strokeLinecap="square"
+                    style={{ fill: 'none', willChange: 'stroke-dashoffset' }}
+                  />
+                </g>
+
+                {/* Letter I */}
+                <g 
+                  ref={(el) => {
+                    classicLettersRef.current[2] = el;
+                  }} 
+                  transform="translate(400, 0)" 
+                  style={{ transformOrigin: '30px 240px', willChange: 'transform' }}
+                >
+                  <path 
+                    ref={(el) => {
+                      classicLinesRef.current[2] = el;
+                    }}
+                    d="M30 100v120"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-slate-800 dark:text-white"
+                    strokeWidth={40}
+                    strokeLinecap="square"
+                    style={{ fill: 'none', willChange: 'stroke-dashoffset' }}
+                  />
+                </g>
+
+                {/* Letter M */}
+                <g 
+                  ref={(el) => {
+                    classicLettersRef.current[3] = el;
+                  }} 
+                  transform="translate(460, 0)" 
+                  style={{ transformOrigin: '170px 240px', willChange: 'transform' }}
+                >
+                  <path 
+                    ref={(el) => {
+                      classicLinesRef.current[3] = el;
+                    }}
+                    d="M310,220 L310,60 C310,28.954305 301.344172,20 290.666667,20 C241.555556,20 254.832031,110 170,110 C85.1679688,110 98.4444444,20 49.3333333,20 C38.6558282,20 30,28.954305 30,60 L30,220"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-slate-800 dark:text-white"
+                    strokeWidth={40}
+                    strokeLinecap="square"
+                    style={{ fill: 'none', willChange: 'stroke-dashoffset' }}
+                  />
+                </g>
+
+                {/* Letter E */}
+                <g 
+                  ref={(el) => {
+                    classicLettersRef.current[4] = el;
+                  }} 
+                  transform="translate(800, 0)" 
+                  style={{ transformOrigin: '100px 240px', willChange: 'transform' }}
+                >
+                  <path 
+                    ref={(el) => {
+                      classicLinesRef.current[4] = el;
+                    }}
+                    d="M50 140h110c10 0 10-40 10-60s0-60-10-60H40c-10 0-10 40-10 60v80c0 20 0 60 10 60h130"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-slate-800 dark:text-white"
+                    strokeWidth={40}
+                    strokeLinecap="square"
+                    style={{ fill: 'none', willChange: 'stroke-dashoffset' }}
+                  />
+                </g>
+
+                {/* Bouncing Red Dot */}
+                <g 
+                  ref={classicDotRef} 
+                  style={{ opacity: 0, transformOrigin: '430px 50px', willChange: 'transform, opacity' }}
+                >
+                  <circle cx="430" cy="50" r="28" className="fill-red-500" />
+                </g>
+              </svg>
+            </div>
+          </Surface>
+        </div>
       </div>
 
       {/* Mask Reveal */}

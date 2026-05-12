@@ -177,11 +177,11 @@ export function calculateStagger(
 
 export type AnimatableTarget =
   | string
-  | HTMLElement
-  | HTMLElement[]
-  | NodeListOf<HTMLElement>
-  | RefObject<HTMLElement | null>
-  | Array<HTMLElement | RefObject<HTMLElement | null> | null>;
+  | Element
+  | Element[]
+  | NodeListOf<Element>
+  | RefObject<Element | null>
+  | Array<Element | RefObject<Element | null> | null>;
 
 export interface TimelineTrack {
   target: AnimatableTarget;
@@ -344,21 +344,21 @@ export class PixonTimeline {
   /**
    * Evaluates targets (resolving strings as query selectors, handling arrays and refs)
    */
-  private resolveTargets(target: AnimatableTarget): HTMLElement[] {
+  private resolveTargets(target: AnimatableTarget): Element[] {
     if (!target) return [];
     if (typeof target === 'string') {
-      return Array.from(document.querySelectorAll(target)) as HTMLElement[];
+      return Array.from(document.querySelectorAll(target)) as Element[];
     }
-    if (target instanceof HTMLElement) {
+    if (target instanceof Element) {
       return [target];
     }
     if (target instanceof NodeList) {
-      return Array.from(target) as HTMLElement[];
+      return Array.from(target) as Element[];
     }
     if (Array.isArray(target)) {
       return (target as any[]).flatMap((t) => {
         if (!t) return [];
-        if (t instanceof HTMLElement) return [t];
+        if (t instanceof Element) return [t];
         if (typeof t === 'object' && 'current' in t) {
           return t.current ? [t.current] : [];
         }
