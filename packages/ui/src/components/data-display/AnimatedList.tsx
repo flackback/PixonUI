@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useId } from 'react';
 import { cn } from '../../utils/cn';
+import { generateSpringTrajectory, calculateStagger } from '../../utils/motion';
+import type { SpringConfig } from '../../utils/motion';
 
 export interface AnimatedListProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -13,6 +15,14 @@ export interface AnimatedListProps extends React.HTMLAttributes<HTMLDivElement> 
   viewport?: boolean;
   /** Only animate once @default true */
   once?: boolean;
+  /** Easing model: standard bezier curves or pre-compiled physical springs @default 'bezier' */
+  easing?: 'bezier' | 'spring';
+  /** Custom physical spring coefficients or true for elastic bouncy preset */
+  spring?: boolean | SpringConfig;
+  /** Columns count when displayed as a grid (enables premium Euclidean Radial/Diagonal waves) */
+  columns?: number;
+  /** Starting anchor point for grid staggering calculations @default 'first' */
+  from?: 'first' | 'last' | 'center' | number;
 }
 
 const ANIMATION_STYLES = {
@@ -25,14 +35,14 @@ const ANIMATION_STYLES = {
 
 /**
  * Automatically animates children into view with staggered timing.
- * New items added dynamically also animate in. Perfect for notification
- * feeds, activity logs, and dynamic lists.
+ * New items added dynamically also animate in. Supports cinema-grade physical spring
+ * keyframes and 2D Euclidean grid waves, running off-thread on the GPU compositor.
  *
  * @example
  * ```tsx
- * <AnimatedList stagger={80} animation="fade-up">
- *   {notifications.map(n => (
- *     <NotificationCard key={n.id} {...n} />
+ * <AnimatedList stagger={80} easing="spring" spring columns={3} from="center">
+ *   {cards.map(c => (
+ *     <GridCard key={c.id} {...c} />
  *   ))}
  * </AnimatedList>
  * ```
@@ -44,6 +54,10 @@ export function AnimatedList({
   animation = 'fade-up',
   viewport = true,
   once = true,
+  easing = 'bezier',
+  spring = false,
+  columns,
+  from = 'first',
   className,
   ...props
 }: AnimatedListProps) {
@@ -78,7 +92,20 @@ export function AnimatedList({
     return () => observer.disconnect();
   }, [viewport, once]);
 
-  // Stagger reveal via direct DOM manipulation
+  // Spring physical trajectory pre-compilation
+  const springConfig = useMemo<SpringConfig | null>(() => {
+    if (easing !== 'spring' && !spring) return null;
+    if (typeof spring === 'object') return spring;
+    return { stiffness: 180, damping: 14, mass: 1 }; // Bouncy high-fidelity default preset
+  }, [easing, spring]);
+
+  const { progress, springDuration } = useMemo(() => {
+    if (!springConfig) return { progress: null, springDuration: duration };
+    const res = generateSpringTrajectory(0, 1, springConfig);
+    return { progress: res.progress, springDuration: res.duration };
+  }, [springConfig, duration]);
+
+  // Stagger reveal via direct DOM manipulation using custom 2D stagger delays if columns are provided
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -97,22 +124,26 @@ export function AnimatedList({
     const timeoutIds: ReturnType<typeof setTimeout>[] = [];
 
     items.forEach((item, index) => {
+      const delay = columns
+        ? calculateStagger(index, items.length, { delay: stagger, grid: [columns, Math.ceil(items.length / columns)], from })
+        : index * stagger;
+
       const timeoutId = setTimeout(() => {
         item.classList.add('visible');
-      }, index * stagger);
+      }, delay);
       timeoutIds.push(timeoutId);
     });
 
     return () => {
       timeoutIds.forEach(clearTimeout);
     };
-  }, [isInView, childArray.map((c, i) => (React.isValidElement(c) ? c.key : null) || i).join(','), stagger, scopeClass, once]);
+  }, [isInView, childArray.map((c, i) => (React.isValidElement(c) ? c.key : null) || i).join(','), stagger, scopeClass, once, columns, from]);
 
-  const anim = ANIMATION_STYLES[animation];
-
-  return (
-    <>
-      <style>{`
+  // Dynamic CSS injector for standard transitions vs physical keyframe spring-paths
+  const dynamicStyles = useMemo(() => {
+    if (!progress || !springConfig) {
+      const anim = ANIMATION_STYLES[animation];
+      return `
         .${scopeClass}-item {
           opacity: 0;
           transform: ${anim.from};
@@ -126,7 +157,77 @@ export function AnimatedList({
           transform: ${anim.to};
           ${anim.filterTo ? `filter: ${anim.filterTo};` : ''}
         }
-      `}</style>
+      `;
+    }
+
+    // Direct-compile discrete steps from analytical oscillator solver
+    let keyframesStr = `@keyframes px-alist-spring-${scopeClass} {\n`;
+    const steps = progress.length;
+
+    progress.forEach((p, idx) => {
+      const percentage = ((idx / (steps - 1)) * 100).toFixed(2);
+      const opacity = Math.min(1, Math.max(0, p));
+
+      let transformStr = '';
+      let filterStr = '';
+
+      switch (animation) {
+        case 'fade-up': {
+          const y = 16 * (1 - p);
+          const s = 0.97 + (1 - 0.97) * p;
+          transformStr = `translate3d(0, ${y}px, 0) scale(${s})`;
+          break;
+        }
+        case 'fade-left': {
+          const x = -24 * (1 - p);
+          transformStr = `translate3d(${x}px, 0, 0)`;
+          break;
+        }
+        case 'fade-right': {
+          const x = 24 * (1 - p);
+          transformStr = `translate3d(${x}px, 0, 0)`;
+          break;
+        }
+        case 'scale': {
+          const s = 0.8 + 0.2 * p;
+          transformStr = `scale(${s})`;
+          break;
+        }
+        case 'blur': {
+          const y = 8 * (1 - p);
+          const s = 0.98 + 0.02 * p;
+          const blur = 4 * (1 - p);
+          transformStr = `translate3d(0, ${y}px, 0) scale(${s})`;
+          filterStr = `filter: blur(${Math.max(0, blur)}px);`;
+          break;
+        }
+        default:
+          break;
+      }
+
+      keyframesStr += `  ${percentage}% {
+        opacity: ${opacity};
+        transform: ${transformStr};
+        ${filterStr ? `${filterStr}\n` : ''}
+      }\n`;
+    });
+
+    keyframesStr += '}\n';
+
+    return `
+      ${keyframesStr}
+      .${scopeClass}-item {
+        opacity: 0;
+      }
+      .${scopeClass}-item.visible {
+        animation: px-alist-spring-${scopeClass} ${springDuration}ms linear both;
+      }
+    `;
+  }, [progress, springConfig, animation, duration, scopeClass, springDuration]);
+
+  return (
+    <>
+      <style>{dynamicStyles}</style>
       <div
         ref={containerRef}
         className={cn('flex flex-col', className)}
