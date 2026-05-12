@@ -60,6 +60,7 @@ import { PageLoaderDemo } from './demos/PageLoaderDemo';
 import { KanbanDemo } from './demos/KanbanDemo';
 import { NewComponentsDemo } from './demos/NewComponentsDemo';
 import { TenNewComponentsDemo } from './demos/TenNewComponentsDemo';
+import { MotionPhysicsDemo } from './demos/MotionPhysicsDemo';
 import { HooksDemo } from './demos/HooksDemo';
 import { BackgroundDemo } from './demos/BackgroundDemo';
 import { HeroDemo } from './demos/HeroDemo';
@@ -1354,6 +1355,21 @@ ${ScrollSpySource}
 // useScrollSpy.ts
 ${useScrollSpySource}`,
     demo: <NextGenDemo />
+  },
+  {
+    id: 'motion-physics',
+    title: 'Spring & Audio Studio',
+    category: 'Templates',
+    description: 'Um laboratório interativo combinando física de molas clássica (usePixonAnimate), estiramento elástico de curvas Bezier e oscilogramas de áudio em tempo real.',
+    code: `import { usePixonAnimate, useAudioVisualizer } from '@pixonui/react';
+
+// 1. Spring physics hook
+const { ref, animate } = usePixonAnimate();
+animate([ { scale: 1 }, { scale: 1.2 } ], { spring: { stiffness: 200, damping: 15 } });
+
+// 2. Real-time microphone audio spectrogams
+const { amplitudes } = useAudioVisualizer({ active: true });`,
+    demo: <MotionPhysicsDemo />
   }
 ];
 
