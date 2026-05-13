@@ -68,7 +68,7 @@ export function FormDemo() {
       role: '',
       notifications: false
     },
-    onSubmit: async (values) => {
+    onSubmit: async (values: any) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
       toast({
@@ -304,9 +304,9 @@ export function FormDemo() {
                   <Select 
                     value={nativeForm.values.role} 
                     onChange={(val) => {
-                      nativeForm.setValues(prev => ({ ...prev, role: val }));
+                      nativeForm.setValues((prev: any) => ({ ...prev, role: val }));
                       if (nativeForm.errors.role) {
-                        nativeForm.setErrors(prev => ({ ...prev, role: '' }));
+                        nativeForm.setErrors((prev: any) => ({ ...prev, role: '' }));
                       }
                     }}
                     options={[
@@ -330,7 +330,7 @@ export function FormDemo() {
                 <FormControl>
                   <Switch
                     checked={nativeForm.values.notifications}
-                    onChange={(e: any) => nativeForm.setValues(prev => ({ ...prev, notifications: e.target.checked }))}
+                    onChange={(e: any) => nativeForm.setValues((prev: any) => ({ ...prev, notifications: e.target.checked }))}
                   />
                 </FormControl>
               </FormItem>

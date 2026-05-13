@@ -54,7 +54,8 @@ import {
   Compass, 
   Terminal,
   Cpu,
-  Activity
+  Activity,
+  ChevronDown
 } from 'lucide-react';
 
 export default function App() {
@@ -62,6 +63,7 @@ export default function App() {
   const [activeId, setActiveId] = useState('button');
   const [saasTab, setSaasTab] = useState('dashboard');
   const [commandOpen, setCommandOpen] = useState(false);
+  const [aiExpanded, setAiExpanded] = useState(false);
   
   const { toast } = useToast();
 
@@ -82,7 +84,7 @@ export default function App() {
 
   const categories = useMemo(() => {
     const groups: Record<string, ComponentItem[]> = {};
-    const order = ['Inputs', 'Data Display', 'Feedback', 'Navigation', 'Overlay', 'Layout', 'Forms', 'Templates'];
+    const order = ['Inputs', 'Data Display', 'Feedback', 'Navigation', 'Overlay', 'Layout', 'Forms', 'AI Elements', 'Templates'];
     
     registry.forEach(item => {
       if (!groups[item.category]) groups[item.category] = [];
@@ -200,19 +202,56 @@ export default function App() {
           
           <ScrollArea className="flex-1">
             <SidebarContent>
-              {categories.map(([category, items]) => (
-                <SidebarGroup key={category} label={category}>
-                  {items.map(item => (
-                    <SidebarItem 
-                      key={item.id} 
-                      active={activeId === item.id}
-                      onClick={() => setActiveId(item.id)}
-                    >
-                      {item.title}
-                    </SidebarItem>
-                  ))}
-                </SidebarGroup>
-              ))}
+              {categories.map(([category, items]) => {
+                if (category === 'AI Elements') {
+                  return (
+                    <div key={category} className="flex flex-col mb-4">
+                      {/* Collapsible Heading Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setAiExpanded(!aiExpanded)}
+                        className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Cpu className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
+                          <span>{category}</span>
+                        </div>
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-250 ${!aiExpanded ? '-rotate-90' : ''}`} />
+                      </button>
+                      
+                      {/* Collapsible Items list */}
+                      {aiExpanded && (
+                        <div className="flex flex-col gap-0.5 mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                          {items.map(item => (
+                            <SidebarItem 
+                              key={item.id} 
+                              active={activeId === item.id}
+                              onClick={() => setActiveId(item.id)}
+                              className="pl-8"
+                            >
+                              {item.title}
+                            </SidebarItem>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <SidebarGroup key={category} label={category}>
+                    {items.map(item => (
+                      <SidebarItem 
+                        key={item.id} 
+                        active={activeId === item.id}
+                        onClick={() => setActiveId(item.id)}
+                      >
+                        {item.title}
+                      </SidebarItem>
+                    ))}
+                  </SidebarGroup>
+                );
+              })}
             </SidebarContent>
           </ScrollArea>
           

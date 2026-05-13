@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Button,
   GlowButton,
@@ -53,6 +53,17 @@ import { ChatMegaDemo } from './demos/ChatMegaDemo';
 import StructureDemoSource from './demos/StructureDemo.tsx?raw';
 import { DatePickersDemo } from './demos/DatePickersDemo';
 import { SelectionControlsDemo } from './demos/SelectionControlsDemo';
+import { 
+  AIMicSelector, 
+  AIFileTree, 
+  AITerminal, 
+  AIArtifact, 
+  AIVoicePersona, 
+  AIToolCall, 
+  AITaskProgress, 
+  AIReasoningCollapse, 
+  AICostContext 
+} from '@pixonui/react';
 import { LoadingDemo } from './demos/LoadingDemo';
 import { CardsDemo } from './demos/CardsDemo';
 import { OverlaysPageDemo } from './demos/OverlaysPageDemo';
@@ -118,12 +129,57 @@ import { MotionMasterDemo } from './demos/MotionMasterDemo';
 export type ComponentItem = {
   id: string;
   title: string;
-  category: 'Inputs' | 'Data Display' | 'Feedback' | 'Navigation' | 'Overlay' | 'Layout' | 'Forms' | 'Templates';
+  category: 'Inputs' | 'Data Display' | 'Feedback' | 'Navigation' | 'Overlay' | 'Layout' | 'Forms' | 'AI Elements' | 'Templates';
   description: string;
   code: string;
   componentSource?: string;
   demo: React.ReactNode;
 };
+
+// --- AI Voice Studio Demo ---
+function VoiceStudioDemo() {
+  const [voiceState, setVoiceState] = useState<'idle' | 'listening' | 'speaking' | 'thinking'>('listening');
+
+  return (
+    <div className="flex flex-col items-center justify-center p-8 rounded-3xl border border-gray-200 bg-white/50 dark:border-white/5 dark:bg-zinc-950/20 backdrop-blur-md max-w-lg mx-auto gap-8 relative overflow-hidden">
+      {/* Decorative background flare */}
+      <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full bg-cyan-500/10 blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl pointer-events-none" />
+
+      {/* Mic Input Source Select drop-down */}
+      <div className="w-full max-w-[260px] flex flex-col gap-1.5 items-center select-none shrink-0 z-10">
+        <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 mb-0.5">Microphone Input source</span>
+        <AIMicSelector />
+      </div>
+
+      {/* Voice sphere visualizer */}
+      <div className="flex items-center justify-center h-48 w-48 shrink-0 relative z-10">
+        <AIVoicePersona state={voiceState} />
+      </div>
+
+      {/* Voice state selectors */}
+      <div className="flex flex-col items-center gap-2 select-none w-full relative z-10">
+        <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Toggle Conversational State</span>
+        <div className="flex flex-wrap justify-center bg-gray-100 dark:bg-zinc-900 rounded-2xl p-1 gap-1">
+          {(['idle', 'listening', 'speaking', 'thinking'] as const).map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() => setVoiceState(st)}
+              className="px-3.5 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all shadow-sm border border-transparent hover:border-gray-200 dark:hover:border-zinc-800"
+              style={{
+                backgroundColor: voiceState === st ? '#fff' : 'transparent',
+                color: voiceState === st ? '#06b6d4' : '#9ca3af'
+              }}
+            >
+              {st}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // --- Registry ---
 
@@ -876,13 +932,113 @@ const { toast } = useToast();
     demo: <FormDemo />
   },
   {
-    id: 'ai',
-    title: 'AI Components',
-    category: 'Feedback',
-    description: 'Components for building AI interfaces.',
-    code: `import { AIPromptInput, AIResponse } from '@pixonui/react';
-// See AIDemo.tsx`,
+    id: 'ai-chat',
+    title: 'AI Thread & Message',
+    category: 'AI Elements',
+    description: 'Fully responsive conversation feeds with file attachments, message version branching and smart auto-scrolling.',
+    code: `import { AIThread, AIMessage, AIAttachment, AIPromptInput } from '@pixonui/react';
+// See AIDemo.tsx for complete conversational simulation`,
     demo: <AIDemo />
+  },
+  {
+    id: 'ai-telemetry',
+    title: 'AI Tooling & Telemetry',
+    category: 'AI Elements',
+    description: 'Track real-time token speeds, tool calls, background steps progression and deep chain-of-thought reasonings.',
+    code: `import { AICostContext, AIToolCall, AITaskProgress, AIReasoningCollapse } from '@pixonui/react';
+
+// Example:
+<AICostContext inputTokens={1250} outputTokens={480} modelName="Claude 3.5 Sonnet" />
+<AITaskProgress tasks={[{ id: "t-1", title: 'Analyzing PDF content', status: 'completed' }]} />
+<AIToolCall name="fetch_weather" status="completed" />`,
+    demo: (
+      <div className="space-y-6 max-w-2xl mx-auto p-6 rounded-3xl border border-gray-200 bg-white/50 dark:border-white/5 dark:bg-zinc-950/20 backdrop-blur-md">
+        <div className="pb-3 border-b border-gray-100 dark:border-white/5 mb-4 select-none">
+          <AICostContext inputTokens={1250} outputTokens={480} modelName="Claude 3.5 Sonnet" />
+        </div>
+
+        {/* Live Step progress bar */}
+        <div className="space-y-2">
+          <h3 className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Step Execution States</h3>
+          <AITaskProgress
+            tasks={[
+              { id: 't-1', title: 'Reading vector database embeddings', status: 'completed' },
+              { id: 't-2', title: 'Extracting semantic contextual nodes', status: 'completed' },
+              { id: 't-3', title: 'Writing consolidated final response', status: 'running', progress: 45 },
+              { id: 't-4', title: 'Validating JSON format schema', status: 'pending' }
+            ]}
+          />
+        </div>
+
+        {/* Live Tool Call widget */}
+        <div className="space-y-2">
+          <h3 className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Function Calls</h3>
+          <AIToolCall
+            name="retrieve_client_invoice"
+            status="completed"
+            args={{ invoice_id: "INV-2026-904" }}
+            result={{ status: "paid", amount: "$1,450.00", due_date: "2026-06-01" }}
+            defaultOpen={true}
+          />
+        </div>
+
+        {/* Chain-of-thought collapse */}
+        <div className="space-y-2">
+          <h3 className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Model Thinking Trace</h3>
+          <AIReasoningCollapse 
+            duration={1.2}
+            defaultOpen={true}
+          >
+            The user wants to retrieve transaction INV-2026-904. I need to:
+            1. Call "retrieve_client_invoice" with invoice_id: "INV-2026-904".
+            2. Extract billing values ($1,450.00), invoice payment state ("paid"), and expiration schedule.
+            3. Formulate a friendly, glassmorphic summary showing the transaction timeline.
+          </AIReasoningCollapse>
+        </div>
+      </div>
+    )
+  },
+  {
+    id: 'ai-sandbox',
+    title: 'AI Code Sandbox & Artifact',
+    category: 'AI Elements',
+    description: 'Claude-like sandbox containing collapsible file explorers, terminal logging outputs and live preview mock frames.',
+    code: `import { AIArtifact, AIFileTree, AITerminal } from '@pixonui/react';
+
+// Example:
+<AIArtifact title="SaaS Layout" files={files} defaultFileId="index" />`,
+    demo: (
+      <div className="p-2 max-w-4xl mx-auto">
+        <AIArtifact
+          title="Bento Grid Analytics View compilation"
+          files={[
+            {
+              id: 'f-src',
+              name: 'src',
+              type: 'folder',
+              children: [
+                { id: 'file-index', name: 'App.tsx', type: 'file', language: 'tsx' },
+                { id: 'file-css', name: 'index.css', type: 'file', language: 'css' }
+              ]
+            },
+            { id: 'file-package', name: 'package.json', type: 'file', language: 'json' }
+          ]}
+          defaultFileId="file-index"
+        />
+      </div>
+    )
+  },
+  {
+    id: 'ai-voice',
+    title: 'AI Voice Studio',
+    category: 'AI Elements',
+    description: 'Immersive sound visualizers, mic source pickers with reactive gain bars and glowing dynamic conversational spheres.',
+    code: `import { AIVoicePersona, AIMicSelector } from '@pixonui/react';
+
+// Example:
+<AIVoicePersona state="listening" size="md" />
+<AIMicSelector onSelect={handleDeviceChoose} />`,
+    demo: <VoiceStudioDemo />
   },
   {
     id: 'extras',
