@@ -30,6 +30,8 @@ const SIMULATED_EVENTS = [
 ];
 
 export function useSimulator() {
+  // Disabled the background toast simulation to prevent intrusive popups.
+  /*
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,4 +60,5 @@ export function useSimulator() {
 
     return () => clearInterval(interval);
   }, [toast]);
+  */
 }

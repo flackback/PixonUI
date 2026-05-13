@@ -43,6 +43,10 @@ import { DropdownSearchDemo, DropdownSimpleDemo } from './demos/DropdownDemos';
 import { ToastDemo } from './demos/FeedbackDemos';
 import { FormDemo } from './demos/FormDemo';
 import { AIDemo } from './demos/AIDemo';
+import { AgenticSecureDemo } from './demos/AgenticSecureDemo';
+import AIConfirmationSource from '../../ui/src/components/ai/AIConfirmation.tsx?raw';
+import AICheckpointSource from '../../ui/src/components/ai/AICheckpoint.tsx?raw';
+import AISchemaDisplaySource from '../../ui/src/components/ai/AISchemaDisplay.tsx?raw';
 import { ChartDemo } from './demos/ChartDemo';
 import { ExtrasDemo } from './demos/ExtrasDemo';
 import { TableDemo } from './demos/TableDemo';
@@ -1039,6 +1043,45 @@ const { toast } = useToast();
 <AIVoicePersona state="listening" size="md" />
 <AIMicSelector onSelect={handleDeviceChoose} />`,
     demo: <VoiceStudioDemo />
+  },
+  {
+    id: 'ai-agentic-secure',
+    title: 'Agentic Trust & Validation',
+    category: 'AI Elements',
+    description: 'Safeguard agent workflows with risk-aware execution confirmation gates, recursive JSON schema type-renderers, and timeline timewarp snapshots.',
+    code: `import { AIConfirmation, AICheckpoint, AISchemaDisplay } from '@pixonui/react';
+
+// 1. AI Safety Confirmation Gate
+<AIConfirmation 
+  toolName="delete_database" 
+  riskLevel="critical" 
+  args={parameters}
+  onApprove={handleApprove}
+  onReject={handleReject}
+/>
+
+// 2. Structural Schema Type Inspector
+<AISchemaDisplay 
+  title="create_user: Parameters" 
+  fields={fieldsList} 
+/>
+
+// 3. Chronological Time-travel Branching
+<AICheckpoint 
+  title="Milestone Commit" 
+  status="saved"
+  onRestore={handleRestore}
+  onFork={handleFork}
+/>`,
+    componentSource: `// AIConfirmation.tsx
+${AIConfirmationSource}
+
+// AICheckpoint.tsx
+${AICheckpointSource}
+
+// AISchemaDisplay.tsx
+${AISchemaDisplaySource}`,
+    demo: <AgenticSecureDemo />
   },
   {
     id: 'extras',
