@@ -57,3 +57,4 @@ export * from './useFocusTrap';
 export * from './useChatDrafts';
 export * from './useVoiceToText';
 export * from './useVirtualScrollRestoration';
+export * from './usePixonScroll';

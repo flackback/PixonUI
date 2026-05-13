@@ -110,6 +110,11 @@ import WaveformVisualizerSource from '../../ui/src/components/chat/WaveformVisua
 import ScrollSpySource from '../../ui/src/components/navigation/ScrollSpy.tsx?raw';
 import useScrollSpySource from '../../ui/src/hooks/useScrollSpy.ts?raw';
 
+// Video Player Raw Sources
+import VideoPlayerSource from '../../ui/src/components/data-display/VideoPlayer.tsx?raw';
+import usePixonVideoPlayerSource from '../../ui/src/hooks/usePixonVideoPlayer.ts?raw';
+import { MotionMasterDemo } from './demos/MotionMasterDemo';
+
 export type ComponentItem = {
   id: string;
   title: string;
@@ -1370,6 +1375,38 @@ animate([ { scale: 1 }, { scale: 1.2 } ], { spring: { stiffness: 200, damping: 1
 // 2. Real-time microphone audio spectrogams
 const { amplitudes } = useAudioVisualizer({ active: true });`,
     demo: <MotionPhysicsDemo />
+  },
+  {
+    id: 'video-player',
+    title: 'Video Player',
+    category: 'Data Display',
+    description: 'Um reprodutor de vídeo de alto desempenho acelerado por GPU com efeitos de Cinema Ambient Glow off-thread, Picture-in-Picture flutuante e atalhos de teclado integrados.',
+    code: `import { VideoPlayer } from '@pixonui/react';
+
+<VideoPlayer
+  src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+  poster="https://images.unsplash.com/photo-1536440136628-849c177e76a1"
+  title="Sintel Cinematic Preview"
+  accentColor="bg-orange-500"
+  enableAmbientGlow={true}
+/>`,
+    componentSource: `// VideoPlayer.tsx
+${VideoPlayerSource}
+
+// usePixonVideoPlayer.ts
+${usePixonVideoPlayerSource}`,
+    demo: <VideoPlayerDemo />
+  },
+  {
+    id: 'motion-master',
+    title: 'Motion Master Demo',
+    category: 'Data Display',
+    description: 'A demonstração definitiva de animações do PixonUI: Staggering (Cascata), Shared Layout (FLIP), Scroll-Linked Parallax e Physical Drag com WAAPI acelerado via GPU.',
+    code: `import { PixonMotion, AnimatePresence, LayoutGroup } from '@pixonui/react';
+
+// O poder unificado do PixonMotion.`,
+    componentSource: `// Acesse @pixonui/react para ver as implementações do PixonMotion`,
+    demo: <MotionMasterDemo />
   }
 ];
 

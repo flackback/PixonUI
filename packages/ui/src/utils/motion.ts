@@ -100,6 +100,69 @@ export function interpolateValue(from: number, to: number, p: number): number {
   return from + (to - from) * p;
 }
 
+export type ParsedTransform = Record<string, number | string>;
+
+/**
+ * Parses a complex transform string into an object of numeric values and units.
+ * Example: "translateX(10px) scale(1.5)" -> { translateX: 10, scale: 1.5 }
+ */
+export function parseComplexTransform(transformStr: string): ParsedTransform {
+  if (!transformStr) return {};
+  const result: ParsedTransform = {};
+  
+  // Extract all transform functions and their values
+  const regex = /(\w+)\(([^)]+)\)/g;
+  let match;
+  while ((match = regex.exec(transformStr)) !== null) {
+    const prop = match[1];
+    const val = match[2];
+    if (prop && val) {
+      // Very basic extraction, assuming px, deg or unitless
+      const numVal = parseFloat(val);
+      if (!isNaN(numVal)) {
+        result[prop] = numVal;
+        
+        // Save the unit if needed, though we default to standard units
+        if (val.includes('px')) result[`${prop}_unit`] = 'px';
+        if (val.includes('deg')) result[`${prop}_unit`] = 'deg';
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Builds a complex transform string from parsed numeric values.
+ */
+export function buildComplexTransform(
+  startParsed: ParsedTransform,
+  endParsed: ParsedTransform,
+  p: number
+): string {
+  const transforms: string[] = [];
+  
+  // Get all unique properties across start and end
+  const keys = new Set([...Object.keys(startParsed), ...Object.keys(endParsed)]);
+  
+  keys.forEach(key => {
+    if (key.endsWith('_unit')) return; // Skip unit metadata
+    
+    // Default start values if missing (scale defaults to 1, others to 0)
+    const defaultVal = key.startsWith('scale') ? 1 : 0;
+    
+    const startVal = typeof startParsed[key] === 'number' ? (startParsed[key] as number) : defaultVal;
+    const endVal = typeof endParsed[key] === 'number' ? (endParsed[key] as number) : defaultVal;
+    
+    const interpolated = interpolateValue(startVal, endVal, p);
+    const unit = endParsed[`${key}_unit`] || startParsed[`${key}_unit`] || (key.includes('rotate') || key.includes('skew') ? 'deg' : (key.includes('translate') ? 'px' : ''));
+    
+    transforms.push(`${key}(${interpolated}${unit})`);
+  });
+  
+  return transforms.join(' ');
+}
+
+
 // ============================================================================
 // 2. High-Fidelity 2D Grid & Distance Staggering
 // ============================================================================
@@ -487,25 +550,8 @@ export class PixonTimeline {
             }
           });
 
-          const parseTranslateX = (val: any): number => {
-            if (typeof val === 'number') return val;
-            const match = String(val).match(/translate3d\(([-\d.]+)px/);
-            return match && match[1] ? parseFloat(match[1]) : 0;
-          };
-
-          const parseScale = (val: any): number => {
-            if (typeof val === 'number') return val;
-            const match = String(val).match(/scale\(([-\d.]+)\)/);
-            return match && match[1] ? parseFloat(match[1]) : 1;
-          };
-
-          const hasTranslate = first.transform && String(first.transform).includes('translate3d');
-          const hasScale = first.transform && String(first.transform).includes('scale');
-
-          const txStart = hasTranslate ? parseTranslateX(first.transform) : 0;
-          const txEnd = hasTranslate ? parseTranslateX(last.transform) : 0;
-          const scStart = hasScale ? parseScale(first.transform) : 1;
-          const scEnd = hasScale ? parseScale(last.transform) : 1;
+          const startParsed = parseComplexTransform(first.transform as string || '');
+          const endParsed = parseComplexTransform(last.transform as string || '');
 
           progress.forEach((p) => {
             const key: Keyframe = {};
@@ -513,15 +559,9 @@ export class PixonTimeline {
               key[prop] = interpolateValue(first[prop] as number, last[prop] as number, p);
             });
 
-            const transforms: string[] = [];
-            if (hasTranslate) {
-              transforms.push(`translate3d(${interpolateValue(txStart, txEnd, p)}px, 0, 0)`);
-            }
-            if (hasScale) {
-              transforms.push(`scale(${interpolateValue(scStart, scEnd, p)})`);
-            }
-            if (transforms.length) {
-              key.transform = transforms.join(' ');
+            const complexTransform = buildComplexTransform(startParsed, endParsed, p);
+            if (complexTransform) {
+              key.transform = complexTransform;
             }
 
             otherProps.forEach((prop) => {

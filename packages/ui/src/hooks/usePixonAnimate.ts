@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
-import { generateSpringTrajectory, parseStyleShortcuts, SpringConfig } from '../utils/motion';
+import { generateSpringTrajectory, parseStyleShortcuts, parseComplexTransform, buildComplexTransform, SpringConfig } from '../utils/motion';
 
 export interface PixonAnimateOptions extends KeyframeAnimationOptions {
   /** If provided, compiles a custom physical spring instead of standard easing */
@@ -90,26 +90,8 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
         }
       });
 
-      // Special handling of translation and scale strings if defined
-      const parseTranslateX = (v: any) => {
-        if (typeof v === 'number') return v;
-        const match = String(v).match(/translate3d\(([-\d.]+)px/);
-        return match && match[1] ? parseFloat(match[1]) : 0;
-      };
-
-      const parseScale = (v: any) => {
-        if (typeof v === 'number') return v;
-        const match = String(v).match(/scale\(([-\d.]+)\)/);
-        return match && match[1] ? parseFloat(match[1]) : 1;
-      };
-
-      const hasTranslate = first.transform && String(first.transform).includes('translate3d');
-      const hasScale = first.transform && String(first.transform).includes('scale');
-
-      const txStart = hasTranslate ? parseTranslateX(first.transform) : 0;
-      const txEnd = hasTranslate ? parseTranslateX(last.transform) : 0;
-      const scStart = hasScale ? parseScale(first.transform) : 1;
-      const scEnd = hasScale ? parseScale(last.transform) : 1;
+      const startParsed = parseComplexTransform(first.transform as string || '');
+      const endParsed = parseComplexTransform(last.transform as string || '');
 
       progress.forEach((p) => {
         const key: Keyframe = {};
@@ -119,15 +101,9 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
           key[prop] = startVal + (endVal - startVal) * p;
         });
 
-        const transforms: string[] = [];
-        if (hasTranslate) {
-          transforms.push(`translate3d(${txStart + (txEnd - txStart) * p}px, 0, 0)`);
-        }
-        if (hasScale) {
-          transforms.push(`scale(${scStart + (scEnd - scStart) * p})`);
-        }
-        if (transforms.length) {
-          key.transform = transforms.join(' ');
+        const complexTransform = buildComplexTransform(startParsed, endParsed, p);
+        if (complexTransform) {
+          key.transform = complexTransform;
         }
 
         springKeys.push(key);
