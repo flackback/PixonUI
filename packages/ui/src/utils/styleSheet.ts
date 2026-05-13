@@ -1,14 +1,7 @@
 let pixonSheet: CSSStyleSheet | null = null;
 let pixonStyleElement: HTMLStyleElement | null = null;
 
-// Map of scopeId -> rule indices (or rule objects) to manage cleanup
-// However, since `insertRule` returns an index that shifts when rules are deleted,
-// it's safer to use custom identifiers or tracking.
-// Actually, `insertScopedRules` can just insert rules into the DOM using textNode appending 
-// if not using adoptedStyleSheets, OR we just use a generic style tag and append strings.
-// But the prompt asks for CSSStyleSheet with fallback.
 
-// Let's implement a robust insertScopedRules
 const ruleRegistry = new Map<string, Set<string>>();
 
 export function getPixonSheet(): CSSStyleSheet | null {

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-13
+
+### Optimized
+- **Motion Engine Performance**:
+  - **Viewport-Aware Life-cycle**: Infinite animations now automatically pause/resume based on element visibility using `IntersectionObserver`, significantly reducing idle CPU/GPU usage.
+  - **Dynamic GPU Memory Management**: Automatic `will-change: auto` toggling when elements are off-screen to release GPU layers.
+  - **High-Precision Spring Caching**: Implemented LRU (Least Recently Used) cache for spring trajectories with a 100-entry limit and high-precision keys (including `restSpeed`/`restDelta`).
+  - **SSR Hydration Safety**: Hardened `styleSheet` utility to support existing server-injected styles, preventing hydration mismatches and duplicate style tags.
+  - **Lightweight View Transitions**: Refactored `viewTransition` fallback to use a lightweight overlay instead of full-DOM cloning, improving navigation speed on legacy browsers.
+
+### Fixed
+- Improved cleanup in `createTimeline` to prevent memory leaks in rapid unmount scenarios.
+- Fixed hydration warnings in `Motion` components during Server-Side Rendering.
+
+## [0.5.34] - 2026-01-12
+
+### Added
+- Release build and npm publication for `@pixonui/react@0.5.34`.
+
+### Changed
+- Improved audio playback: waveform seeking, variable playback speed, and download support in `WaveformAudio`.
+- Strict instance isolation: socket events now include `instanceId` and frontend filtering was tightened to avoid cross-instance bleeding.
+
+### Fixed
+- Reaction picker now closes after selection and reactions map correctly in message rendering.
+- Hidden Gupshup-only session window for Baileys provider to avoid irrelevant UI for web-emulated sessions.
+
 ## [0.4.0] - 2025-12-21
 
 ### Added
@@ -100,31 +127,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript arithmetic errors in RadarChart.
 - Accessibility roles in Combobox and Kanban.
 - Type safety in Slot utility.
-
-## [0.6.0] - 2026-05-13
-
-### Optimized
-- **Motion Engine Performance**:
-  - **Viewport-Aware Life-cycle**: Infinite animations now automatically pause/resume based on element visibility using `IntersectionObserver`, significantly reducing idle CPU/GPU usage.
-  - **Dynamic GPU Memory Management**: Automatic `will-change: auto` toggling when elements are off-screen to release GPU layers.
-  - **High-Precision Spring Caching**: Implemented LRU (Least Recently Used) cache for spring trajectories with a 100-entry limit and high-precision keys (including `restSpeed`/`restDelta`).
-  - **SSR Hydration Safety**: Hardened `styleSheet` utility to support existing server-injected styles, preventing hydration mismatches and duplicate style tags.
-  - **Lightweight View Transitions**: Refactored `viewTransition` fallback to use a lightweight overlay instead of full-DOM cloning, improving navigation speed on legacy browsers.
-
-### Fixed
-- Improved cleanup in `createTimeline` to prevent memory leaks in rapid unmount scenarios.
-- Fixed hydration warnings in `Motion` components during Server-Side Rendering.
-
-## [0.5.34] - 2026-01-12
-
-### Added
-- Release build and npm publication for `@pixonui/react@0.5.34`.
-
-### Changed
-- Improved audio playback: waveform seeking, variable playback speed, and download support in `WaveformAudio`.
-- Strict instance isolation: socket events now include `instanceId` and frontend filtering was tightened to avoid cross-instance bleeding.
-
-### Fixed
-- Reaction picker now closes after selection and reactions map correctly in message rendering.
-- Hidden Gupshup-only session window for Baileys provider to avoid irrelevant UI for web-emulated sessions.
-

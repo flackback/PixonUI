@@ -436,6 +436,7 @@ export function Motion({
   const rawId = useId();
   const scopeClass = useMemo(() => `px-motion-${rawId.replace(/:/g, '')}`, [rawId]);
   const kfName = `pxKf_${rawId.replace(/:/g, '')}`;
+  const isInfinite = loop || iterations === 'infinite' || transition?.repeat === 'infinite' || transition?.repeat === Infinity;
 
   // ── Viewport / visibility ─────────────────────────────────────────────
   const { ref, isInView, hasAnimated } = useInView({
@@ -470,24 +471,6 @@ export function Motion({
   if (whileHover) {
     shouldShow = isHovered;
   }
-
-  // ── Viewport-aware pause/play and will-change ─────────────────────────
-  useEffect(() => {
-    const el = ref.current;
-    const anim = animationRef.current;
-    if (!el || !anim) return;
-
-    const isInfinite = transition.repeat === 'infinite' || (transition as any).loop;
-    if (!isInfinite) return;
-
-    if (isInView) {
-      el.style.willChange = 'transform, opacity, filter';
-      if (anim.playState === 'paused') anim.play();
-    } else {
-      el.style.willChange = 'auto';
-      if (anim.playState === 'running') anim.pause();
-    }
-  }, [isInView, transition.repeat]);
 
   // Track exit for onExitStart
   const prevShow = useRef(shouldShow);
@@ -744,9 +727,7 @@ export function Motion({
     };
   }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete]);
 
-  // Handle infinite loop viewport optimization
-  const isInfinite = loop || iterations === 'infinite' || transition?.repeat === 'infinite' || transition?.repeat === Infinity;
-  
+  // Unified Viewport Optimization (Pause/Play for Infinite Loops)
   useEffect(() => {
     const anim = animationRef.current;
     if (!anim || !isInfinite) return;
@@ -759,11 +740,14 @@ export function Motion({
   }, [isInView, isInfinite]);
 
   // Track standard CSS transitions/animations state for willChange optimization
+  // Includes a safety timeout fallback to ensure willChange is released even if onTransitionEnd fails
   useEffect(() => {
-    if (!waapiFrames && !shouldSkipAnimation && shouldShow) {
+    if (!waapiFrames && !shouldSkipAnimation && shouldShow && isAnimating === false) {
       setIsAnimating(true);
+      const timer = setTimeout(() => setIsAnimating(false), resolvedDuration + (delay || 0) + 50);
+      return () => clearTimeout(timer);
     }
-  }, [shouldShow, waapiFrames, shouldSkipAnimation]);
+  }, [shouldShow, waapiFrames, shouldSkipAnimation, resolvedDuration, delay, isAnimating]);
 
   useLayoutEffect(() => {
     if (!layoutId) return;
