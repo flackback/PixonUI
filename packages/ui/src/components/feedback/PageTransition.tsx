@@ -1,74 +1,57 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { PixonSSRAnimate } from '../effects/SSRAnimate';
 import { cn } from '../../utils/cn';
 
 export interface PageTransitionProps extends React.HTMLAttributes<HTMLDivElement> {
   preset?: 'fade' | 'slide-up' | 'scale' | 'blur' | 'none';
   duration?: number;
-  useViewTransition?: boolean;
+  as?: keyof React.JSX.IntrinsicElements;
 }
 
 export function PageTransition({
   preset = 'fade',
   duration = 300,
-  useViewTransition = false,
+  as = 'div',
   className,
   children,
   ...props
 }: PageTransitionProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (useViewTransition && (document as any).startViewTransition) {
-      (document as any).startViewTransition(() => {
-        setIsVisible(true);
-      });
-    } else {
-      const timer = requestAnimationFrame(() => {
-        setIsVisible(true);
-      });
-      return () => cancelAnimationFrame(timer);
-    }
-  }, [useViewTransition]);
-
   const presets = {
     fade: {
-      initial: 'opacity-0',
-      animate: 'opacity-100',
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
     },
     'slide-up': {
-      initial: 'opacity-0 translate-y-8',
-      animate: 'opacity-100 translate-y-0',
+      initial: { opacity: 0, y: 24 },
+      animate: { opacity: 1, y: 0 },
     },
     scale: {
-      initial: 'opacity-0 scale-95',
-      animate: 'opacity-100 scale-100',
+      initial: { opacity: 0, scale: 0.96 },
+      animate: { opacity: 1, scale: 1 },
     },
     blur: {
-      initial: 'opacity-0 blur-sm',
-      animate: 'opacity-100 blur-0',
+      initial: { opacity: 0, scale: 0.98 },
+      animate: { opacity: 1, scale: 1 },
     },
     none: {
-      initial: '',
-      animate: '',
+      initial: {},
+      animate: {},
     }
   };
 
   const currentPreset = presets[preset];
 
   return (
-    <div
-      className={cn(
-        'transition-all ease-out',
-        isVisible ? currentPreset.animate : currentPreset.initial,
-        className
-      )}
-      style={{ 
-        transitionDuration: `${duration}ms`,
-        viewTransitionName: useViewTransition ? 'page-content' : undefined
-      } as any}
+    <PixonSSRAnimate
+      initial={currentPreset.initial}
+      animate={currentPreset.animate}
+      transition={{ duration, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+      className={cn('will-change-transform opacity-0', className)}
+      as={as}
       {...props}
     >
       {children}
-    </div>
+    </PixonSSRAnimate>
   );
 }
+export default PageTransition;

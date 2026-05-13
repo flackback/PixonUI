@@ -123,6 +123,7 @@ export { PixonMotion, type AnimateProps } from './components/effects/Animate';
 export * from './components/effects/AnimatePresence';
 export * from './components/effects/LayoutGroup';
 export * from './components/effects/VariantContext';
+export { PixonSSRAnimate, type SSRAnimateProps } from './components/effects/SSRAnimate';
 export { usePresence } from './hooks/usePresence';
 export { useDrag } from './hooks/useDrag';
 export { usePixonScroll, usePixonTransform } from './hooks/usePixonScroll';
