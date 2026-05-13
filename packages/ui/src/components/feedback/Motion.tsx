@@ -4,6 +4,7 @@ import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { generateSpringTrajectory, SpringConfig } from '../../utils/motion';
+import { generateSpringKeyframes } from '../../utils/spring';
 
 
 // ---------------------------------------------------------------------------
@@ -82,6 +83,19 @@ export interface MotionProps extends React.HTMLAttributes<HTMLDivElement> {
   from?: MotionStyle;
   /** Target state (element fully visible) */
   to?: MotionStyle;
+  /** Target state (alias for to) */
+  animate?: MotionStyle;
+  /** Transition configuration */
+  transition?: {
+    type?: 'spring' | 'tween';
+    stiffness?: number;
+    damping?: number;
+    mass?: number;
+    velocity?: number;
+    duration?: number;
+    delay?: number;
+    easing?: MotionEasing;
+  };
   /** State applied on `:hover` via pure CSS */
   hover?: MotionStyle;
   /** State applied on `:active` (mouse-down / tap) via pure CSS */
@@ -363,6 +377,8 @@ export function Motion({
   // Custom
   from: fromProp,
   to: toProp,
+  animate,
+  transition,
   hover,
   tap,
   focus,
@@ -405,13 +421,13 @@ export function Motion({
   const shouldSkipAnimation = respectReducedMotion && prefersReduced;
 
   // ── Resolve from/to from preset or custom props ───────────────────────
-  const isCustom = !!(fromProp || toProp || keyframes);
+  const isCustom = !!(fromProp || toProp || animate || keyframes);
   const presetDef = preset ? PRESET_DEFINITIONS[preset] : PRESET_DEFINITIONS.spring;
   const from: MotionStyle = isCustom
     ? { opacity: 0, ...fromProp }
     : presetDef.from;
   const to: MotionStyle = isCustom
-    ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, blur: 0, ...toProp }
+    ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, blur: 0, ...toProp, ...animate }
     : presetDef.to;
 
   // ── Scoped class for injected CSS ─────────────────────────────────────
@@ -468,13 +484,29 @@ export function Motion({
   }
 
   // ── Resolved spring physical keyframes compiler ──────────────────────
-  const isSpringEasing = easing === 'spring' || !!spring;
+  const isSpringEasing = easing === 'spring' || !!spring || transition?.type === 'spring';
 
-  const { springKeyframes, springDuration } = useMemo(() => {
-    if (!isSpringEasing) return { springKeyframes: null, springDuration: duration };
+  const { springKeyframes, springDuration, waapiFrames } = useMemo(() => {
+    if (!isSpringEasing) return { springKeyframes: null, springDuration: duration, waapiFrames: null };
 
     // Solves spring trajectory
-    const { progress, duration: sDuration } = generateSpringTrajectory(0, 1, spring);
+    let progress: number[] = [];
+    let sDuration = duration;
+
+    if (transition?.type === 'spring') {
+      const solver = generateSpringKeyframes({
+        stiffness: transition.stiffness,
+        damping: transition.damping,
+        mass: transition.mass,
+        velocity: transition.velocity,
+      });
+      progress = solver.keyframes;
+      sDuration = solver.duration;
+    } else {
+      const traj = generateSpringTrajectory(0, 1, spring);
+      progress = traj.progress;
+      sDuration = traj.duration;
+    }
 
     const steps = progress.length;
     const springKeys: MotionStyle[] = [];
@@ -535,8 +567,21 @@ export function Motion({
       springKeys.push(keyframe);
     }
 
-    return { springKeyframes: springKeys, springDuration: sDuration };
-  }, [isSpringEasing, from, to, spring, duration]);
+    // Build standard WAAPI array
+    const wFrames: Keyframe[] = springKeys.map((kf) => {
+      const transform = buildTransform(kf);
+      const filter = buildFilter(kf);
+      return {
+        opacity: kf.opacity,
+        transform: transform === 'translate3d(0px, 0px, 0)' ? 'none' : transform,
+        filter: filter === 'none' ? undefined : filter,
+        backgroundColor: kf.backgroundColor,
+        color: kf.color,
+      } as Keyframe;
+    });
+
+    return { springKeyframes: springKeys, springDuration: sDuration, waapiFrames: wFrames };
+  }, [isSpringEasing, from, to, spring, duration, transition]);
 
   // Override keyframe parameters if spring is enabled
   const resolvedKeyframes = isSpringEasing ? springKeyframes : keyframes;
@@ -624,6 +669,29 @@ export function Motion({
     layoutRef.current = currentRect;
   });
 
+  // Apply WAAPI for Spring Transition
+  useEffect(() => {
+    if (!shouldShow || !waapiFrames || !ref.current || shouldSkipAnimation) return;
+    
+    // Fallback if browser doesn't support animate
+    if (!ref.current.animate) return;
+    
+    const animation = ref.current.animate(waapiFrames, {
+      duration: springDuration,
+      easing: 'linear', // easing is baked into keyframes
+      fill: fillMode,
+      delay: delay || transition?.delay || 0,
+    });
+    
+    animation.onfinish = () => {
+      if (onComplete) onComplete();
+    };
+
+    return () => {
+      animation.cancel();
+    };
+  }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete]);
+
   useLayoutEffect(() => {
     if (!layoutId) return;
     return () => {
@@ -668,7 +736,15 @@ export function Motion({
     ...style,
   };
 
-  if (isKeyframeMode) {
+  if (waapiFrames && shouldShow) {
+    // If using WAAPI, we set the final inline style to `to` to hold it
+    // because WAAPI will handle the transition, but we want it sticky after.
+    Object.assign(inlineStyles, {
+      opacity: activeStyle.opacity ?? 1,
+      transform,
+      filter: filter !== 'none' ? filter : undefined,
+    });
+  } else if (isKeyframeMode && !waapiFrames) {
     // Keyframe mode: all animations are via @keyframes
     if (shouldShow) {
       const iterCount = iterations !== undefined
@@ -766,12 +842,12 @@ export function Motion({
       `);
     }
 
-    if (isKeyframeMode && resolvedKeyframes) {
+    if (isKeyframeMode && resolvedKeyframes && !waapiFrames) {
       blocks.push(buildKeyframesCSS(kfName, resolvedKeyframes));
     }
 
     return blocks.join('\n');
-  }, [scopeClass, hover, tap, focus, isKeyframeMode, resolvedKeyframes, kfName, resolvedDuration, easingCSS, transitionProps]);
+  }, [scopeClass, hover, tap, focus, isKeyframeMode, resolvedKeyframes, waapiFrames, kfName, resolvedDuration, easingCSS, transitionProps]);
 
   return (
     <>

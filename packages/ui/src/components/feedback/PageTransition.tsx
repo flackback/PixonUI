@@ -47,7 +47,7 @@ export function PageTransition({
       animate={currentPreset.animate}
       transition={{ duration, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
       className={cn('will-change-transform opacity-0', className)}
-      as={as}
+      as={as as any}
       {...props}
     >
       {children}

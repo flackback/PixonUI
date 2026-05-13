@@ -1,0 +1,565 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SSRAnimate Presets > snapshot of presets 1`] = `
+{
+  "blurInScale": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "blur": 10,
+      "opacity": 0,
+      "scale": 0.9,
+    },
+  },
+  "blurInUp": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+      "y": 0,
+    },
+    "initial": {
+      "blur": 10,
+      "opacity": 0,
+      "y": 20,
+    },
+  },
+  "blurReveal": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+    },
+    "initial": {
+      "blur": 10,
+      "opacity": 0,
+    },
+  },
+  "elasticIn": {
+    "animate": {
+      "opacity": 1,
+      "rotate": 0,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotate": -15,
+      "scale": 0.3,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+    },
+  },
+  "fadeIn": {
+    "animate": {
+      "opacity": 1,
+    },
+    "initial": {
+      "opacity": 0,
+    },
+  },
+  "fadeInDown": {
+    "animate": {
+      "opacity": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "y": -20,
+    },
+  },
+  "fadeInLeft": {
+    "animate": {
+      "opacity": 1,
+      "x": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "x": -20,
+    },
+  },
+  "fadeInRight": {
+    "animate": {
+      "opacity": 1,
+      "x": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "x": 20,
+    },
+  },
+  "fadeInUp": {
+    "animate": {
+      "opacity": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "y": 20,
+    },
+  },
+  "flipInX": {
+    "animate": {
+      "opacity": 1,
+      "rotateX": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotateX": 90,
+    },
+  },
+  "flipInY": {
+    "animate": {
+      "opacity": 1,
+      "rotateY": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotateY": 90,
+    },
+  },
+  "glitchIn": {
+    "animate": {
+      "opacity": 1,
+      "skewX": 0,
+      "x": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "skewX": 20,
+      "x": -10,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    },
+  },
+  "magneticIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.8,
+      "y": -30,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    },
+  },
+  "popIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.8,
+      "y": 10,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+    },
+  },
+  "rotateIn": {
+    "animate": {
+      "opacity": 1,
+      "rotate": 0,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotate": -180,
+      "scale": 0.5,
+    },
+  },
+  "scaleIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.9,
+    },
+  },
+  "scaleInBounce": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.5,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    },
+  },
+  "slideInDown": {
+    "animate": {
+      "opacity": 1,
+      "y": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "y": "-100%",
+    },
+  },
+  "slideInLeft": {
+    "animate": {
+      "opacity": 1,
+      "x": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "x": "-100%",
+    },
+  },
+  "slideInRight": {
+    "animate": {
+      "opacity": 1,
+      "x": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "x": "100%",
+    },
+  },
+  "slideInUp": {
+    "animate": {
+      "opacity": 1,
+      "y": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "y": "100%",
+    },
+  },
+  "tiltIn": {
+    "animate": {
+      "opacity": 1,
+      "rotate": 0,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotate": -5,
+      "y": 20,
+    },
+  },
+  "typewriterReveal": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+      "x": 0,
+    },
+    "initial": {
+      "blur": 2,
+      "opacity": 0,
+      "x": -10,
+    },
+    "transition": {
+      "easing": "steps(10)",
+    },
+  },
+  "zoomIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 1.2,
+    },
+    "transition": {
+      "easing": "ease-out",
+    },
+  },
+}
+`;
+
+exports[`SSRAnimate Presets snapshot of presets 1`] = `
+{
+  "blurInScale": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "blur": 10,
+      "opacity": 0,
+      "scale": 0.9,
+    },
+  },
+  "blurInUp": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+      "y": 0,
+    },
+    "initial": {
+      "blur": 10,
+      "opacity": 0,
+      "y": 20,
+    },
+  },
+  "blurReveal": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+    },
+    "initial": {
+      "blur": 10,
+      "opacity": 0,
+    },
+  },
+  "elasticIn": {
+    "animate": {
+      "opacity": 1,
+      "rotate": 0,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotate": -15,
+      "scale": 0.3,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+    },
+  },
+  "fadeIn": {
+    "animate": {
+      "opacity": 1,
+    },
+    "initial": {
+      "opacity": 0,
+    },
+  },
+  "fadeInDown": {
+    "animate": {
+      "opacity": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "y": -20,
+    },
+  },
+  "fadeInLeft": {
+    "animate": {
+      "opacity": 1,
+      "x": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "x": -20,
+    },
+  },
+  "fadeInRight": {
+    "animate": {
+      "opacity": 1,
+      "x": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "x": 20,
+    },
+  },
+  "fadeInUp": {
+    "animate": {
+      "opacity": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "y": 20,
+    },
+  },
+  "flipInX": {
+    "animate": {
+      "opacity": 1,
+      "rotateX": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotateX": 90,
+    },
+  },
+  "flipInY": {
+    "animate": {
+      "opacity": 1,
+      "rotateY": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotateY": 90,
+    },
+  },
+  "glitchIn": {
+    "animate": {
+      "opacity": 1,
+      "skewX": 0,
+      "x": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "skewX": 20,
+      "x": -10,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    },
+  },
+  "magneticIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.8,
+      "y": -30,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    },
+  },
+  "popIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.8,
+      "y": 10,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+    },
+  },
+  "rotateIn": {
+    "animate": {
+      "opacity": 1,
+      "rotate": 0,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotate": -180,
+      "scale": 0.5,
+    },
+  },
+  "scaleIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.9,
+    },
+  },
+  "scaleInBounce": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 0.5,
+    },
+    "transition": {
+      "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    },
+  },
+  "slideInDown": {
+    "animate": {
+      "opacity": 1,
+      "y": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "y": "-100%",
+    },
+  },
+  "slideInLeft": {
+    "animate": {
+      "opacity": 1,
+      "x": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "x": "-100%",
+    },
+  },
+  "slideInRight": {
+    "animate": {
+      "opacity": 1,
+      "x": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "x": "100%",
+    },
+  },
+  "slideInUp": {
+    "animate": {
+      "opacity": 1,
+      "y": "0%",
+    },
+    "initial": {
+      "opacity": 1,
+      "y": "100%",
+    },
+  },
+  "tiltIn": {
+    "animate": {
+      "opacity": 1,
+      "rotate": 0,
+      "y": 0,
+    },
+    "initial": {
+      "opacity": 0,
+      "rotate": -5,
+      "y": 20,
+    },
+  },
+  "typewriterReveal": {
+    "animate": {
+      "blur": 0,
+      "opacity": 1,
+      "x": 0,
+    },
+    "initial": {
+      "blur": 2,
+      "opacity": 0,
+      "x": -10,
+    },
+    "transition": {
+      "easing": "steps(10)",
+    },
+  },
+  "zoomIn": {
+    "animate": {
+      "opacity": 1,
+      "scale": 1,
+    },
+    "initial": {
+      "opacity": 0,
+      "scale": 1.2,
+    },
+    "transition": {
+      "easing": "ease-out",
+    },
+  },
+}
+`;

@@ -170,3 +170,10 @@ export * from './components/chat/WaveformVisualizer';
 export * from './utils/motion';
 export * from './components/data-display/VideoPlayer';
 export * from './hooks/usePixonVideoPlayer';
+
+// Animation V2
+export * from './components/effects/SSRStagger';
+export * from './components/effects/ScrollScene';
+export * from './components/interactions/Drag';
+export * from './components/interactions/Reorder';
+export * from './utils/spring';

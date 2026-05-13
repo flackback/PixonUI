@@ -1,8 +1,10 @@
 import React from 'react';
+import { SSR_ANIMATE_PRESETS } from './SSRAnimate.presets';
 
 type SafeHTMLTags = 'div' | 'section' | 'article' | 'span' | 'li' | 'ul' | 'main' | 'header' | 'footer' | 'nav';
 
 export interface SSRAnimateProps extends React.HTMLAttributes<HTMLElement> {
+  preset?: keyof typeof SSR_ANIMATE_PRESETS;
   initial?: {
     opacity?: number;
     x?: number | string;
@@ -56,6 +58,7 @@ function formatUnit(val: number | string | undefined, defaultUnit = 'px'): strin
  * 100% immune to hydration mismatches and completely SEO friendly.
  */
 export function PixonSSRAnimate({
+  preset,
   initial,
   animate = {},
   transition = {},
@@ -66,16 +69,22 @@ export function PixonSSRAnimate({
   children,
   ...props
 }: SSRAnimateProps) {
+  const presetConfig = preset ? SSR_ANIMATE_PRESETS[preset] : undefined;
+  
+  const mergedInitial = { ...presetConfig?.initial, ...initial };
+  const mergedAnimate = { ...presetConfig?.animate, ...animate };
+  const mergedTransition = { ...presetConfig?.transition, ...transition };
+
   // Smart default logic for opacity:
   // If `animate` provides opacity and `initial` does not exist OR does not provide opacity, infer intent as 0.
   // Otherwise, fallback to 1.
-  const inferredInitialOpacity = initial?.opacity ?? (animate.opacity !== undefined ? 0 : 1);
-  const safeInitial = initial ?? {};
+  const inferredInitialOpacity = mergedInitial?.opacity ?? (mergedAnimate.opacity !== undefined ? 0 : 1);
+  const safeInitial = mergedInitial ?? {};
 
   const initX = safeInitial.x ?? safeInitial.translateX ?? 0;
   const initY = safeInitial.y ?? safeInitial.translateY ?? 0;
-  const animX = animate.x ?? animate.translateX ?? 0;
-  const animY = animate.y ?? animate.translateY ?? 0;
+  const animX = mergedAnimate.x ?? mergedAnimate.translateX ?? 0;
+  const animY = mergedAnimate.y ?? mergedAnimate.translateY ?? 0;
 
   const ssrStyles = {
     ...style,
@@ -90,23 +99,23 @@ export function PixonSSRAnimate({
     '--pixon-init-skewY': formatUnit(safeInitial.skewY ?? 0, 'deg'),
     '--pixon-init-blur': formatUnit(safeInitial.blur ?? 0, 'px'),
 
-    '--pixon-anim-opacity': animate.opacity ?? 1,
+    '--pixon-anim-opacity': mergedAnimate.opacity ?? 1,
     '--pixon-anim-x': formatUnit(animX),
     '--pixon-anim-y': formatUnit(animY),
-    '--pixon-anim-scale': animate.scale ?? 1,
-    '--pixon-anim-rotate': formatUnit(animate.rotate ?? 0, 'deg'),
-    '--pixon-anim-rotateX': formatUnit(animate.rotateX ?? 0, 'deg'),
-    '--pixon-anim-rotateY': formatUnit(animate.rotateY ?? 0, 'deg'),
-    '--pixon-anim-skewX': formatUnit(animate.skewX ?? 0, 'deg'),
-    '--pixon-anim-skewY': formatUnit(animate.skewY ?? 0, 'deg'),
-    '--pixon-anim-blur': formatUnit(animate.blur ?? 0, 'px'),
+    '--pixon-anim-scale': mergedAnimate.scale ?? 1,
+    '--pixon-anim-rotate': formatUnit(mergedAnimate.rotate ?? 0, 'deg'),
+    '--pixon-anim-rotateX': formatUnit(mergedAnimate.rotateX ?? 0, 'deg'),
+    '--pixon-anim-rotateY': formatUnit(mergedAnimate.rotateY ?? 0, 'deg'),
+    '--pixon-anim-skewX': formatUnit(mergedAnimate.skewX ?? 0, 'deg'),
+    '--pixon-anim-skewY': formatUnit(mergedAnimate.skewY ?? 0, 'deg'),
+    '--pixon-anim-blur': formatUnit(mergedAnimate.blur ?? 0, 'px'),
 
-    '--pixon-dur': `${transition.duration ?? 400}ms`,
-    '--pixon-delay': `${transition.delay ?? 0}ms`,
-    '--pixon-ease': transition.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)',
-    '--pixon-iterations': transition.iterations ?? 1,
-    '--pixon-direction': transition.direction ?? 'normal',
-    '--pixon-playstate': transition.playState ?? 'running',
+    '--pixon-dur': `${mergedTransition.duration ?? 400}ms`,
+    '--pixon-delay': `${mergedTransition.delay ?? 0}ms`,
+    '--pixon-ease': mergedTransition.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)',
+    '--pixon-iterations': mergedTransition.iterations ?? 1,
+    '--pixon-direction': mergedTransition.direction ?? 'normal',
+    '--pixon-playstate': mergedTransition.playState ?? 'running',
   } as React.CSSProperties;
 
   const combinedClassName = `pixon-ssr-animate${trigger === 'view' ? ' pixon-ssr-view-trigger' : ''}${className ? ` ${className}` : ''}`;
