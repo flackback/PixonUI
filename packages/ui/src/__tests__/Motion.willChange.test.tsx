@@ -9,11 +9,11 @@ describe('Motion willChange behavior', () => {
 
   beforeEach(() => {
     // Standard mock that does nothing
-    window.IntersectionObserver = vi.fn().mockImplementation(() => ({
-      observe: vi.fn(),
-      unobserve: vi.fn(),
-      disconnect: vi.fn(),
-    })) as any;
+    window.IntersectionObserver = vi.fn().mockImplementation(function() {
+      this.observe = vi.fn();
+      this.unobserve = vi.fn();
+      this.disconnect = vi.fn();
+    }) as any;
   });
 
   afterEach(() => {
@@ -42,6 +42,10 @@ describe('Motion willChange behavior', () => {
     const el = screen.getByTestId('motion');
     expect(el.style.willChange).toBe('transform, opacity, filter');
 
+    await waitFor(() => {
+      expect(mockAnimate).toHaveBeenCalled();
+    });
+
     const animationInstance = mockAnimate.mock.results[0].value;
     await act(async () => {
       if (animationInstance.onfinish) {
@@ -56,10 +60,14 @@ describe('Motion willChange behavior', () => {
 
   it('pauses infinite loops when off-screen', async () => {
     let observers: any[] = [];
-    window.IntersectionObserver = vi.fn().mockImplementation((cb) => {
-      const obs = { cb, observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
-      observers.push(obs);
-      return obs;
+    
+    // Proper constructor mock for IntersectionObserver
+    window.IntersectionObserver = vi.fn().mockImplementation(function(cb) {
+      this.observe = vi.fn();
+      this.unobserve = vi.fn();
+      this.disconnect = vi.fn();
+      this.cb = cb;
+      observers.push(this);
     }) as any;
 
     const mockPause = vi.fn();

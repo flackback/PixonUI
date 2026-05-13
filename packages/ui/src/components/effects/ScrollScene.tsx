@@ -39,7 +39,7 @@ export function ScrollScene({
   ...props
 }: ScrollSceneProps) {
   const rawId = useId();
-  const id = rawId.replace(/:/g, '');
+  const id = (typeof rawId === 'string' ? rawId : '').split(':').join('');
   const animName = `scroll-scene-${id}`;
 
   const initX = from.x ?? from.translateX ?? 0;

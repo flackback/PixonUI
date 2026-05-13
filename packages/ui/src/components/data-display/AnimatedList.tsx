@@ -64,7 +64,7 @@ export function AnimatedList({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(!viewport);
   const rawId = useId();
-  const scopeClass = `px-alist-${rawId.replace(/:/g, '')}`;
+  const scopeClass = `px-alist-${(typeof rawId === 'string' ? rawId : '').split(':').join('')}`;
 
   const childArray = useMemo(
     () => React.Children.toArray(children),

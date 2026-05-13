@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-05-13
+
+### Hardened
+- **Motion Engine Stability**:
+  - Resolved critical SSR hydration crashes caused by unsafe `useId()` stringification. Standardized defensive split-join sequence for safe CSS scoping.
+  - Eliminated "infinite re-render" risk by memoizing initial and target animation styles (`from`/`to`).
+  - Hardened off-thread WAAPI execution by importing missing `parseStyleShortcuts` utility.
+  - Consistently stabilized `will-change` lifecycle with a deterministic cleanup fallback.
+- **Library-wide Reliability**:
+  - Applied hydration safety fixes to `Motion`, `AnimatedList`, `Progress`, and `ScrollScene`.
+  - Fixed TypeScript build errors in `Motion.tsx` by aligning `Keyframe` (WAAPI) and `MotionStyle` types.
+
 ## [0.6.0] - 2026-05-13
 
 ### Optimized

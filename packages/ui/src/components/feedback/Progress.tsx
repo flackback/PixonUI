@@ -170,7 +170,7 @@ export const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgres
     const circumference = 2 * Math.PI * radius;
     const offset = circumference * (1 - percentage);
     const rawId = useId();
-    const gradId = `prog-grad-${rawId.replace(/:/g, '')}`;
+    const gradId = `prog-grad-${(typeof rawId === 'string' ? rawId : '').split(':').join('')}`;
 
     return (
       <div

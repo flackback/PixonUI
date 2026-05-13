@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useId, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { generateSpringTrajectory, SpringConfig } from '../../utils/motion';
+import { generateSpringTrajectory, SpringConfig, parseStyleShortcuts } from '../../utils/motion';
 import { cachedSpringKeyframes } from '../../utils/springCache';
 import { insertScopedRules } from '../../utils/styleSheet';
 
@@ -338,7 +340,7 @@ function buildCSSBlock(s: MotionStyle): string {
 }
 
 /** Build keyframes CSS from an array of MotionStyle */
-function buildKeyframesCSS(name: string, steps: MotionStyle[]): string {
+function buildKeyframesCSS(name: string, steps: any[]): string {
   if (steps.length === 0) return '';
 
   const lines: string[] = [];
@@ -425,17 +427,21 @@ export function Motion({
   // ── Resolve from/to from preset or custom props ───────────────────────
   const isCustom = !!(fromProp || toProp || animate || keyframes);
   const presetDef = preset ? PRESET_DEFINITIONS[preset] : PRESET_DEFINITIONS.spring;
-  const from: MotionStyle = isCustom
-    ? { opacity: 0, ...fromProp }
-    : presetDef.from;
-  const to: MotionStyle = isCustom
-    ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, blur: 0, ...toProp, ...animate }
-    : presetDef.to;
+  const from = useMemo((): MotionStyle => {
+    return isCustom ? { opacity: 0, ...fromProp } : presetDef.from;
+  }, [isCustom, fromProp, presetDef]);
+
+  const to = useMemo((): MotionStyle => {
+    return isCustom
+      ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, blur: 0, ...toProp, ...animate }
+      : presetDef.to;
+  }, [isCustom, toProp, animate, presetDef]);
 
   // ── Scoped class for injected CSS ─────────────────────────────────────
   const rawId = useId();
-  const scopeClass = useMemo(() => `px-motion-${rawId.replace(/:/g, '')}`, [rawId]);
-  const kfName = `pxKf_${rawId.replace(/:/g, '')}`;
+  const safeId = (typeof rawId === 'string' ? rawId : '').split(':').join('');
+  const scopeClass = `px-motion-${safeId}`;
+  const kfName = `pxKf_${safeId}`;
   const isInfinite = loop || iterations === 'infinite' || transition?.repeat === 'infinite' || transition?.repeat === Infinity;
 
   // ── Viewport / visibility ─────────────────────────────────────────────
@@ -464,6 +470,7 @@ export function Motion({
     };
   }, []);
 
+  const effectiveIsInView = viewport ? isInView : true;
   const internalShow = viewport ? (once ? hasAnimated : isInView) : true;
   let shouldShow = visible !== undefined ? visible : internalShow;
 
@@ -507,101 +514,104 @@ export function Motion({
   const isSpringEasing = easing === 'spring' || !!spring || transition?.type === 'spring';
 
   const { springKeyframes, springDuration, waapiFrames } = useMemo(() => {
-    if (!isSpringEasing) return { springKeyframes: null, springDuration: duration, waapiFrames: null };
-
-    // Solves spring trajectory
-    let progress: number[] = [];
-    let sDuration = duration;
-
-    if (transition?.type === 'spring') {
-      const solver = cachedSpringKeyframes({
-        stiffness: transition.stiffness,
-        damping: transition.damping,
-        mass: transition.mass,
-        velocity: transition.velocity,
-      });
-      progress = solver.keyframes;
-      sDuration = solver.duration;
-    } else {
-      const traj = generateSpringTrajectory(0, 1, spring);
-      progress = traj.progress;
-      sDuration = traj.duration;
+    // 1. Array-based Keyframes Mode
+    if (keyframes && Array.isArray(keyframes)) {
+      return {
+        springKeyframes: null,
+        springDuration: duration,
+        waapiFrames: keyframes.map((kf) => parseStyleShortcuts(kf)) as Keyframe[],
+      };
     }
 
-    const steps = progress.length;
-    const springKeys: MotionStyle[] = [];
+    // 2. Spring Physics Mode
+    if (isSpringEasing) {
+      // Solves spring trajectory
+      let progress: number[] = [];
+      let sDuration = duration;
 
-    const parseVal = (v: any, fallback = 0): number => {
-      if (typeof v === 'number') return v;
-      if (typeof v === 'string') {
-        const parsed = parseFloat(v);
-        return isNaN(parsed) ? fallback : parsed;
+      if (transition?.type === 'spring') {
+        const solver = cachedSpringKeyframes({
+          stiffness: transition.stiffness,
+          damping: transition.damping,
+          mass: transition.mass,
+          velocity: transition.velocity,
+        });
+        progress = solver.keyframes;
+        sDuration = solver.duration;
+      } else {
+        const traj = generateSpringTrajectory(0, 1, spring);
+        progress = traj.progress;
+        sDuration = traj.duration;
       }
-      return fallback;
-    };
 
-    const getSuffix = (v: any, fallback = ''): string => {
-      if (typeof v === 'string') {
-        const match = v.match(/[a-zA-Z%]+$/);
-        return match ? match[0] : fallback;
-      }
-      return fallback;
-    };
-
-    const animKeys = new Set<keyof MotionStyle>();
-    [...Object.keys(from), ...Object.keys(to)].forEach((k) => {
-      const key = k as keyof MotionStyle;
-      if (
-        key !== 'backgroundColor' &&
-        key !== 'color' &&
-        key !== 'borderColor' &&
-        key !== 'boxShadow'
-      ) {
-        animKeys.add(key);
-      }
-    });
-
-    for (let i = 0; i < steps; i++) {
-      const p = progress[i]!;
-      const keyframe: MotionStyle = {};
-
-      animKeys.forEach((k) => {
-        const startVal = parseVal(from[k], k === 'scale' || k === 'scaleX' || k === 'scaleY' ? 1 : 0);
-        const endVal = parseVal(to[k], k === 'scale' || k === 'scaleX' || k === 'scaleY' ? 1 : 0);
-        const suffix = getSuffix(to[k] !== undefined ? to[k] : from[k], k === 'x' || k === 'y' ? 'px' : '');
-
-        const interpolated = startVal + (endVal - startVal) * p;
-        if (suffix) {
-          keyframe[k] = `${interpolated}${suffix}` as any;
-        } else {
-          keyframe[k] = interpolated as any;
+      const steps = progress.length;
+      const animKeys = new Set<keyof MotionStyle>();
+      [...Object.keys(from), ...Object.keys(to)].forEach((k) => {
+        const key = k as keyof MotionStyle;
+        if (
+          key !== 'backgroundColor' &&
+          key !== 'color' &&
+          key !== 'borderColor' &&
+          key !== 'boxShadow'
+        ) {
+          animKeys.add(key);
         }
       });
 
-      const blendStyle = p < 0.5 ? from : to;
-      if (blendStyle.backgroundColor) keyframe.backgroundColor = blendStyle.backgroundColor;
-      if (blendStyle.color) keyframe.color = blendStyle.color;
-      if (blendStyle.borderColor) keyframe.borderColor = blendStyle.borderColor;
-      if (blendStyle.boxShadow) keyframe.boxShadow = blendStyle.boxShadow;
+      const springKeys: Keyframe[] = [];
+      const parseVal = (v: any, fallback = 0): number => {
+        if (typeof v === 'number') return v;
+        if (typeof v === 'string') {
+          const parsed = parseFloat(v);
+          return isNaN(parsed) ? fallback : parsed;
+        }
+        return fallback;
+      };
 
-      springKeys.push(keyframe);
+      const getSuffix = (v: any, fallback = ''): string => {
+        if (typeof v === 'string') {
+          const match = v.match(/[a-zA-Z%]+$/);
+          return match ? match[0] : fallback;
+        }
+        return fallback;
+      };
+
+      for (let i = 0; i < steps; i++) {
+        const p = progress[i]!;
+        const keyframe: any = {};
+
+        animKeys.forEach((k) => {
+          const startVal = parseVal(from[k], k === 'scale' || k === 'scaleX' || k === 'scaleY' ? 1 : 0);
+          const endVal = parseVal(to[k], k === 'scale' || k === 'scaleX' || k === 'scaleY' ? 1 : 0);
+          const suffix = getSuffix(to[k] !== undefined ? to[k] : from[k], k === 'x' || k === 'y' ? 'px' : '');
+
+          const interpolated = startVal + (endVal - startVal) * p;
+          if (suffix) {
+            keyframe[k] = `${interpolated}${suffix}`;
+          } else {
+            keyframe[k] = interpolated;
+          }
+        });
+        springKeys.push(parseStyleShortcuts(keyframe));
+      }
+
+      return {
+        springKeyframes: springKeys,
+        springDuration: sDuration,
+        waapiFrames: springKeys,
+      };
     }
 
-    // Build standard WAAPI array
-    const wFrames: Keyframe[] = springKeys.map((kf) => {
-      const transform = buildTransform(kf);
-      const filter = buildFilter(kf);
-      return {
-        opacity: kf.opacity,
-        transform: transform === 'translate3d(0px, 0px, 0)' ? 'none' : transform,
-        filter: filter === 'none' ? undefined : filter,
-        backgroundColor: kf.backgroundColor,
-        color: kf.color,
-      } as Keyframe;
-    });
-
-    return { springKeyframes: springKeys, springDuration: sDuration, waapiFrames: wFrames };
-  }, [isSpringEasing, from, to, spring, duration, transition]);
+    // 3. Simple Tween / Transitions Mode (Standard WAAPI)
+    return {
+      springKeyframes: null,
+      springDuration: duration,
+      waapiFrames: [
+        parseStyleShortcuts({ ...from }),
+        parseStyleShortcuts({ ...to })
+      ] as Keyframe[]
+    };
+  }, [isSpringEasing, keyframes, from, to, duration, spring, transition]);
 
   // Override keyframe parameters if spring is enabled
   const resolvedKeyframes = isSpringEasing ? springKeyframes : keyframes;
@@ -612,7 +622,7 @@ export function Motion({
   // ── Native FLIP Layout & Shared Layout Registry System ───────────────
   const layoutRef = useRef<DOMRect | null>(null);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!layout && !layoutId) return;
     const el = ref.current;
     if (!el) return;
@@ -689,27 +699,29 @@ export function Motion({
     layoutRef.current = currentRect;
   });
 
-  // Apply WAAPI for Spring Transition
   useEffect(() => {
-    if (!shouldShow || !waapiFrames || !ref.current || shouldSkipAnimation) return;
-    
-    // Fallback if browser doesn't support animate
-    if (!ref.current.animate) return;
+    const needsAnimation = shouldShow || isInfinite;
+    if (!needsAnimation || !waapiFrames || !ref.current || shouldSkipAnimation) return;
     
     const currentSignal = abortRef.current.signal;
     if (currentSignal.aborted) return;
 
     setIsAnimating(true);
-    
+
     const animation = ref.current.animate(waapiFrames, {
       duration: springDuration,
-      easing: 'linear', // easing is baked into keyframes
+      easing: isSpringEasing ? 'linear' : resolveEasing(easing),
       fill: fillMode,
       delay: delay || transition?.delay || 0,
       iterations: transition?.repeat === 'infinite' ? Infinity : (transition?.repeat ?? 1),
     });
     
     animationRef.current = animation;
+
+    // Ensure we start paused if we are an infinite loop off-screen
+    if (isInfinite && !effectiveIsInView) {
+      animation.pause();
+    }
 
     animation.onfinish = () => {
       if (currentSignal.aborted) return;
@@ -725,7 +737,7 @@ export function Motion({
         setIsAnimating(false);
       }
     };
-  }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete]);
+  }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete, isInfinite, effectiveIsInView, isSpringEasing, easing]);
 
   // Unified Viewport Optimization (Pause/Play for Infinite Loops)
   useEffect(() => {
@@ -749,7 +761,8 @@ export function Motion({
     }
   }, [shouldShow, waapiFrames, shouldSkipAnimation, resolvedDuration, delay, isAnimating]);
 
-  useLayoutEffect(() => {
+
+  useIsomorphicLayoutEffect(() => {
     if (!layoutId) return;
     return () => {
       const el = ref.current;
@@ -788,7 +801,7 @@ export function Motion({
   ].join(', ');
 
   // ── Build inline styles ───────────────────────────────────────────────
-  const shouldWillChange = (isAnimating || isInfinite) && isInView;
+  const shouldWillChange = (isAnimating || isInfinite) && effectiveIsInView;
   const inlineStyles: React.CSSProperties = {
     willChange: shouldWillChange && !shouldSkipAnimation ? 'transform, opacity, filter' : 'auto',
     ...style,
@@ -814,7 +827,7 @@ export function Motion({
       });
     } else {
       // Before triggering: apply first keyframe state
-      const first = resolvedKeyframes![0] || {};
+      const first = (resolvedKeyframes as any)![0] || {};
       Object.assign(inlineStyles, {
         opacity: first.opacity ?? 0,
         transform: buildTransform(first),
@@ -832,10 +845,12 @@ export function Motion({
       transform,
       filter: filter !== 'none' ? filter : undefined,
       ...Object.fromEntries(
-        Object.entries(extras).map(([k, v]) => [
-          k.replace(/-([a-z])/g, (_, c) => c.toUpperCase()),
-          v,
-        ])
+        Object.entries(extras).map(([k, v]) => {
+          return [
+            String(k).replace(/-([a-z])/g, (_, c) => c.toUpperCase()),
+            v,
+          ];
+        })
       ),
       // Spread custom CSS properties
       ...activeCustom,
@@ -907,7 +922,7 @@ export function Motion({
     }
 
     if (isKeyframeMode && resolvedKeyframes && !waapiFrames) {
-      blocks.push(buildKeyframesCSS(kfName, resolvedKeyframes));
+      blocks.push(buildKeyframesCSS(kfName, resolvedKeyframes as any));
     }
 
     return blocks.join('\n');
