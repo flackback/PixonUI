@@ -10,11 +10,17 @@ export function usePixonScroll({ container, axis = 'y' }: UseScrollOptions = {})
   const [scrollYProgress, setScrollYProgress] = useState(0);
 
   useEffect(() => {
-    const target = container?.current || window;
-    
     let ticking = false;
 
-    const handleScroll = () => {
+    const handleScroll = (e?: Event) => {
+      // Dynamically resolve target at event time to prevent React Ref timing bugs
+      const target = container?.current || window;
+      
+      // If a container scroll event is triggered, but the target is window, ignore if container is ready
+      if (e && container?.current && e.target !== container.current && !container.current.contains(e.target as Node)) {
+        return;
+      }
+
       if (!ticking) {
         requestAnimationFrame(() => {
           const isWindow = target === window;
@@ -44,13 +50,14 @@ export function usePixonScroll({ container, axis = 'y' }: UseScrollOptions = {})
       }
     };
 
-    target.addEventListener('scroll', handleScroll, { passive: true });
+    // Use capture: true on window to intercept scroll events from any nested container dynamically
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     
     // Initial call
     handleScroll();
 
     return () => {
-      target.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll, { capture: true });
     };
   }, [container, axis]);
 

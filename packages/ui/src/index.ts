@@ -119,7 +119,7 @@ export * from './theme/ThemeToggle';
 export * from './hooks';
 export * from './components/effects/BorderBeam';
 export * from './components/effects/BackgroundGlow';
-export { PixonMotion, type AnimateProps } from './components/effects/Animate';
+export { PixonMotion, motion, useAnimationControls, type AnimateProps } from './components/effects/Animate';
 export * from './components/effects/AnimatePresence';
 export * from './components/effects/LayoutGroup';
 export * from './components/effects/VariantContext';

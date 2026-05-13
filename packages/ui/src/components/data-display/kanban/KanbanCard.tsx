@@ -6,6 +6,7 @@ import { Text } from '../../typography/Text';
 import { Checkbox } from '../../form/Checkbox';
 import { cn } from '../../../utils/cn';
 import type { KanbanTask } from './types';
+import { PixonMotion } from '../../effects/Animate';
 
 interface KanbanCardProps {
   task: KanbanTask;
@@ -104,7 +105,10 @@ export const KanbanCard = React.memo(({
   };
 
   const cardContent = (
-    <Surface 
+    <PixonMotion 
+      as={Surface as any}
+      layoutId={task.id}
+      layout="position"
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
@@ -317,7 +321,7 @@ export const KanbanCard = React.memo(({
           )}
         </div>
       </div>
-    </Surface>
+    </PixonMotion>
   );
 
   if (hasSpinningBorder) {

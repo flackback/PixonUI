@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, forwardRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, forwardRef, useState, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { usePixonAnimate } from '../../hooks/usePixonAnimate';
 import { SpringConfig } from '../../utils/motion';
 import { usePresenceContext } from './AnimatePresence';
@@ -11,7 +11,7 @@ export interface AnimateProps extends React.HTMLAttributes<HTMLDivElement> {
   custom?: any;
   variants?: Record<string, Record<string, any> | ((custom: any) => Record<string, any>)>;
   initial?: string | Record<string, any>;
-  animate?: string | Record<string, any>;
+  animate?: string | Record<string, any> | any; // Supports string, object, or AnimationControls
   exit?: string | Record<string, any>;
   whileHover?: string | Record<string, any>;
   whileTap?: string | Record<string, any>;
@@ -32,7 +32,7 @@ export interface AnimateProps extends React.HTMLAttributes<HTMLDivElement> {
     staggerChildren?: number;
     delayChildren?: number;
   };
-  as?: keyof React.JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements | React.ComponentType<any>;
 }
 
 export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
@@ -205,6 +205,24 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
       });
     };
 
+    // Imperative controller registration (duck-typing)
+    useEffect(() => {
+      if (targetAnimate && typeof (targetAnimate as any).subscribe === 'function') {
+        const unsubscribe = (targetAnimate as any).subscribe(
+          (definition: any) => {
+            const resolved = resolveVariant(definition);
+            if (resolved) {
+              triggerAnimation(resolved);
+            }
+          },
+          () => {
+            cancel();
+          }
+        );
+        return unsubscribe;
+      }
+    }, [targetAnimate, variants, custom]);
+
     useEffect(() => {
       // Main animate trigger
       if (presence && !presence.isPresent) {
@@ -224,10 +242,10 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
         return;
       }
 
-      if (resolvedAnimate && !resolvedWhileInView) {
+      if (resolvedAnimate && !resolvedWhileInView && !(targetAnimate && typeof (targetAnimate as any).subscribe === 'function')) {
         triggerAnimation(resolvedAnimate);
       }
-    }, [resolvedAnimate, resolvedExit, resolvedWhileInView, animate, presence?.isPresent]); // stringify or deeply compare in a real app if objects recreate
+    }, [resolvedAnimate, resolvedExit, resolvedWhileInView, animate, presence?.isPresent, targetAnimate]);
 
     useEffect(() => {
       if (presence && !presence.isPresent) return; // Don't trigger view updates while exiting
@@ -242,12 +260,12 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
       }
     }, [isInView, resolvedWhileInView, resolvedInitial, animate, presence?.isPresent]);
 
-    const handlePointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
+    const handlePointerEnter = (e: React.PointerEvent<any>) => {
       if (resolvedWhileHover) triggerAnimation(resolvedWhileHover);
       onPointerEnter?.(e);
     };
 
-    const handlePointerLeave = (e: React.PointerEvent<HTMLDivElement>) => {
+    const handlePointerLeave = (e: React.PointerEvent<any>) => {
       // Revert to targetAnimate or initial on leave
       if (resolvedWhileHover) {
         triggerAnimation(resolvedAnimate || resolvedInitial || {});
@@ -255,12 +273,12 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
       onPointerLeave?.(e);
     };
 
-    const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const handlePointerDown = (e: React.PointerEvent<any>) => {
       if (resolvedWhileTap) triggerAnimation(resolvedWhileTap);
       onPointerDown?.(e);
     };
 
-    const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const handlePointerUp = (e: React.PointerEvent<any>) => {
       if (resolvedWhileTap) {
         // Revert to hover state if hovering, else target animate
         triggerAnimation(resolvedWhileHover || resolvedAnimate || resolvedInitial || {});
@@ -301,3 +319,61 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
 );
 
 PixonMotion.displayName = 'PixonMotion';
+
+// Imperative Animation Controller Class (Parity with useAnimationControls)
+export class PixonAnimationControls {
+  private subscribers = new Set<(definition: any) => void>();
+  private stops = new Set<() => void>();
+
+  subscribe(callback: (definition: any) => void, stopCallback: () => void) {
+    this.subscribers.add(callback);
+    this.stops.add(stopCallback);
+    return () => {
+      this.subscribers.delete(callback);
+      this.stops.delete(stopCallback);
+    };
+  }
+
+  async start(definition: any) {
+    const promises = Array.from(this.subscribers).map((cb) => {
+      return cb(definition);
+    });
+    await Promise.all(promises);
+  }
+
+  stop() {
+    this.stops.forEach((stop) => stop());
+  }
+
+  set(definition: any) {
+    this.start(definition);
+  }
+}
+
+/**
+ * Hook to create and manage imperative animation controls (like Framer Motion's useAnimationControls)
+ */
+export function useAnimationControls() {
+  const [controls] = useState(() => new PixonAnimationControls());
+  return controls;
+}
+
+// 100% Syntax Parity Proxy: Allows <motion.div>, <motion.button>, <motion.svg>, etc.
+type MotionTags = {
+  [K in keyof React.JSX.IntrinsicElements]: ForwardRefExoticComponent<
+    AnimateProps & Omit<React.JSX.IntrinsicElements[K], keyof AnimateProps> & RefAttributes<any>
+  >;
+};
+
+export const motion = (new Proxy(
+  {},
+  {
+    get: (_target, key: string) => {
+      const Component = forwardRef<HTMLElement, AnimateProps>((props, ref) => {
+        return <PixonMotion as={key as any} ref={ref} {...props} />;
+      });
+      Component.displayName = `motion.${key}`;
+      return Component;
+    },
+  }
+) as any) as MotionTags;
