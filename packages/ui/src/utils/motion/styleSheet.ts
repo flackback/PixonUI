@@ -49,17 +49,8 @@ export function insertScopedRules(scopeId: string, css: string): () => void {
   const sheet = getPixonSheet();
   if (!sheet) return () => {};
 
-  // Prefix the CSS rules with the scope id if needed, but the caller already provides 
-  // injectedCSS which we should adjust to `[data-pixon-id="..."]:hover { ... }` in Motion.tsx
-  // So `css` here is already fully formed CSS rules separated by newlines or blocks.
-
-  // Parse simple blocks
-  // Since we might get a big block of CSS, we just insert it. 
-  // A naive approach is to use the style node textContent for fallback, or insertRule for sheet.
-  // Actually, to make deleteRule work without index shifting issues, we keep track of the rule strings themselves if using a <style> node fallback, 
-  // or we can wrap the CSS in a @media rule to easily delete it, but that's complex.
-
-  // Let's parse CSS rules roughly or simply insert one big rule if possible.
+  // Caller provides fully formed CSS rules (e.g. [data-pixon-id="..."]:hover { ... })
+  // insertRule requires one rule at a time.
   // `insertRule` requires one rule at a time.
   const rules = css
     .split('}')

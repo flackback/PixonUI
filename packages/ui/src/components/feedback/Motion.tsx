@@ -5,9 +5,13 @@ import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { generateSpringTrajectory, SpringConfig, parseStyleShortcuts } from '../../utils/motion';
-import { cachedSpringKeyframes } from '../../utils/springCache';
-import { insertScopedRules } from '../../utils/styleSheet';
+import { 
+  generateSpringTrajectory, 
+  SpringConfig, 
+  parseStyleShortcuts,
+  insertScopedRules,
+  cachedSpringKeyframes 
+} from '../../utils/motion';
 
 
 // ---------------------------------------------------------------------------
@@ -718,11 +722,6 @@ export function Motion({
     
     animationRef.current = animation;
 
-    // Ensure we start paused if we are an infinite loop off-screen
-    if (isInfinite && !effectiveIsInView) {
-      animation.pause();
-    }
-
     animation.onfinish = () => {
       if (currentSignal.aborted) return;
       setIsAnimating(false);
@@ -739,27 +738,42 @@ export function Motion({
     };
   }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete, isInfinite, effectiveIsInView, isSpringEasing, easing]);
 
-  // Unified Viewport Optimization (Pause/Play for Infinite Loops)
+  // Viewport Optimization (Pause/Play for Infinite Loops)
   useEffect(() => {
     const anim = animationRef.current;
     if (!anim || !isInfinite) return;
 
     if (!isInView) {
-      anim.pause();
+      if (anim.playState === 'running') anim.pause();
     } else {
-      anim.play();
+      if (anim.playState === 'paused') anim.play();
     }
   }, [isInView, isInfinite]);
 
   // Track standard CSS transitions/animations state for willChange optimization
-  // Includes a safety timeout fallback to ensure willChange is released even if onTransitionEnd fails
   useEffect(() => {
-    if (!waapiFrames && !shouldSkipAnimation && shouldShow && isAnimating === false) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), resolvedDuration + (delay || 0) + 50);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldShow, waapiFrames, shouldSkipAnimation, resolvedDuration, delay, isAnimating]);
+    if (waapiFrames || shouldSkipAnimation || !shouldShow || !ref.current) return;
+
+    const el = ref.current;
+    setIsAnimating(true);
+
+    const handleTransitionEnd = (e: TransitionEvent) => {
+      // Only stop if the primary properties finished
+      if (['transform', 'opacity', 'filter'].includes(e.propertyName)) {
+        setIsAnimating(false);
+      }
+    };
+
+    el.addEventListener('transitionend', handleTransitionEnd);
+    
+    // Safety fallback
+    const timer = setTimeout(() => setIsAnimating(false), resolvedDuration + (delay || 0) + 100);
+
+    return () => {
+      el.removeEventListener('transitionend', handleTransitionEnd);
+      clearTimeout(timer);
+    };
+  }, [shouldShow, waapiFrames, shouldSkipAnimation, resolvedDuration, delay]);
 
 
   useIsomorphicLayoutEffect(() => {

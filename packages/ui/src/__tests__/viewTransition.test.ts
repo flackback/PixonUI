@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { startPixonTransition } from '../utils/viewTransition';
+import { startPixonTransition } from "../utils/motion/viewTransition";
 
 describe('viewTransition', () => {
   let originalStartViewTransition: any;

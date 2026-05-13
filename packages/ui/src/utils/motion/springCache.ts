@@ -1,4 +1,4 @@
-import { generateSpringKeyframes, SpringOptions } from './spring';
+import { generateSpringTrajectory as generateSpringKeyframes, SpringConfig as SpringOptions } from './spring';
 
 type SpringResult = { keyframes: number[]; duration: number };
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { cachedSpringKeyframes, clearSpringCache } from '../utils/springCache';
+import { cachedSpringKeyframes, clearSpringCache } from "../utils/motion/springCache";
 
 describe('springCache', () => {
   beforeEach(() => {
