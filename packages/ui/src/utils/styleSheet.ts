@@ -16,8 +16,15 @@ export function getPixonSheet(): CSSStyleSheet | null {
 
   if (pixonSheet) return pixonSheet;
 
-  // Try adoptedStyleSheets if available
+  // 1. Try to find existing hydrated style tag
+  if (!pixonStyleElement) {
+    pixonStyleElement = (document.getElementById('pixon-motion-sheet') || 
+                         document.querySelector('style[data-pixon-sheet]')) as HTMLStyleElement;
+  }
+
+  // 2. Try adoptedStyleSheets if available (preferred for performance)
   if (
+    !pixonStyleElement &&
     typeof CSSStyleSheet !== 'undefined' &&
     'adoptedStyleSheets' in document &&
     document.adoptedStyleSheets !== undefined
@@ -31,17 +38,15 @@ export function getPixonSheet(): CSSStyleSheet | null {
     }
   }
 
-  // Fallback to <style> tag
+  // 3. Fallback to <style> tag
   if (!pixonStyleElement) {
-    pixonStyleElement = document.getElementById('pixon-motion-sheet') as HTMLStyleElement;
-    if (!pixonStyleElement) {
-      pixonStyleElement = document.createElement('style');
-      pixonStyleElement.id = 'pixon-motion-sheet';
-      document.head.appendChild(pixonStyleElement);
-    }
+    pixonStyleElement = document.createElement('style');
+    pixonStyleElement.id = 'pixon-motion-sheet';
+    pixonStyleElement.setAttribute('data-pixon-sheet', '');
+    document.head.appendChild(pixonStyleElement);
   }
 
-  pixonSheet = pixonStyleElement.sheet;
+  pixonSheet = pixonStyleElement.sheet as CSSStyleSheet;
   return pixonSheet;
 }
 

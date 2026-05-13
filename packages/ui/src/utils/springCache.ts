@@ -16,13 +16,15 @@ export function cachedSpringKeyframes(opts: SpringOptions = {}): SpringResult {
     velocity = 0,
     precision = 0.01,
     fps = 60,
+    restSpeed = 0.005,
+    restDelta = 0.005,
   } = opts;
 
-  const key = `${stiffness}|${damping}|${mass}|${velocity}|${precision}|${fps}`;
+  const key = `${stiffness}|${damping}|${mass}|${velocity}|${precision}|${fps}|${restSpeed}|${restDelta}`;
 
   if (cache.has(key)) {
     const result = cache.get(key)!;
-    // LRU: Move to end
+    // LRU hit: Move to end
     cache.delete(key);
     cache.set(key, result);
     return result;
@@ -43,8 +45,9 @@ export function cachedSpringKeyframes(opts: SpringOptions = {}): SpringResult {
 }
 
 /**
- * Utility for test isolation. Do not use in production.
+ * Utility for test isolation.
  */
-export function __clearSpringCache() {
+export function clearSpringCache() {
   cache.clear();
 }
+

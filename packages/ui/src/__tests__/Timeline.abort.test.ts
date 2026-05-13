@@ -3,11 +3,18 @@ import { createTimeline } from '../utils/motion';
 
 describe('createTimeline AbortSignal support', () => {
   beforeEach(() => {
+    if (!Element.prototype.animate) {
+      Element.prototype.animate = () => ({}) as any;
+    }
     vi.spyOn(Element.prototype, 'animate').mockReturnValue({
-      finished: new Promise(() => {}), // never resolves for this test
+      finished: new Promise(() => {}),
       cancel: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     } as any);
   });
+
+
 
   afterEach(() => {
     vi.restoreAllMocks();

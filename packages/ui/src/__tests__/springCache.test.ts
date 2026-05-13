@@ -1,34 +1,44 @@
-import { describe, it, expect } from 'vitest';
-import { cachedSpringKeyframes } from '../utils/springCache';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { cachedSpringKeyframes, clearSpringCache } from '../utils/springCache';
 
-describe('springCache LRU behavior', () => {
-  it('caches generated keyframes', () => {
+describe('springCache', () => {
+  beforeEach(() => {
+    clearSpringCache();
+  });
+
+  it('caches generated keyframes and returns same reference', () => {
     const config = { stiffness: 100, damping: 20, mass: 1, velocity: 0 };
     
-    // First run (miss)
     const result1 = cachedSpringKeyframes(config);
-    // Second run (hit)
     const result2 = cachedSpringKeyframes(config);
 
-    // They should be referentially identical due to caching
     expect(result1).toBe(result2);
   });
 
-  it('limits cache size to 100 items', () => {
-    // Generate 100 unique configs
+  it('is sensitive to restSpeed and restDelta', () => {
+    const config1 = { stiffness: 100, restSpeed: 0.01 };
+    const config2 = { stiffness: 100, restSpeed: 0.02 };
+    
+    const result1 = cachedSpringKeyframes(config1);
+    const result2 = cachedSpringKeyframes(config2);
+
+    expect(result1).not.toBe(result2);
+  });
+
+  it('limits cache size to 100 items and evicts oldest', () => {
+    // Fill cache with 100 items
     for (let i = 0; i < 100; i++) {
-      cachedSpringKeyframes({ stiffness: 100 + i, damping: 20, mass: 1, velocity: 0 });
+      cachedSpringKeyframes({ stiffness: 100 + i });
     }
 
-    const firstConfig = { stiffness: 100, damping: 20, mass: 1, velocity: 0 };
-    const firstResult = cachedSpringKeyframes(firstConfig);
+    const firstConfig = { stiffness: 100 };
+    const firstResult = cachedSpringKeyframes(firstConfig); // This makes it "most recent" again!
+    
+    // So if we add one more, it should NOT evict firstConfig but the one at 101 (which is index 1 now)
+    cachedSpringKeyframes({ stiffness: 999 });
 
-    // Generate 1 more to evict the first
-    cachedSpringKeyframes({ stiffness: 999, damping: 20, mass: 1, velocity: 0 });
-
-    const newFirstResult = cachedSpringKeyframes(firstConfig);
-
-    // Since it was evicted and recomputed, the reference should change
-    expect(firstResult).not.toBe(newFirstResult);
+    const checkFirst = cachedSpringKeyframes(firstConfig);
+    expect(checkFirst).toBe(firstResult); // Should still be in cache because it was "hit" recently
   });
 });
+

@@ -1,74 +1,71 @@
-export interface PixonViewTransitionFallback {
-  duration?: number;
-  easing?: string;
-  type?: 'crossfade' | 'none';
+type ViewTransitionCallback = () => void | Promise<void>;
+
+interface PixonTransitionOptions {
+  duration?: number;        // default 250
+  easing?: string;          // default 'ease-in-out'
+  skipFallback?: boolean;   // default false → degrada via overlay
 }
 
 export function startPixonTransition(
-  update: () => void | Promise<void>,
-  fallback: PixonViewTransitionFallback = {}
+  update: ViewTransitionCallback,
+  opts: PixonTransitionOptions = {}
 ): Promise<void> {
-  const { duration = 250, easing = 'cubic-bezier(0.4,0,0.2,1)', type = 'crossfade' } = fallback;
+  const { duration = 250, easing = 'ease-in-out', skipFallback = false } = opts;
 
-  return new Promise(async (resolve) => {
-    const reducedMotion =
-      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 1. Respeita prefers-reduced-motion → executa update síncrono
+  if (typeof window === 'undefined' ||
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    const result = update();
+    return result instanceof Promise ? result.then(() => {}) : Promise.resolve();
+  }
 
-    if (typeof document !== 'undefined' && 'startViewTransition' in document && !reducedMotion) {
-      try {
-        const transition = (document as any).startViewTransition(update);
-        await transition.finished;
-        resolve();
-        return;
-      } catch (e) {
-        console.warn('PixonUI: Native startViewTransition failed, falling back.', e);
-      }
-    }
+  // 2. Caminho nativo
+  const doc = document as Document & {
+    startViewTransition?: (cb: ViewTransitionCallback) => { finished: Promise<void> };
+  };
+  if (typeof doc.startViewTransition === 'function') {
+    return doc.startViewTransition(update).finished.catch(() => {});
+  }
 
-    if (type === 'crossfade' && !reducedMotion && typeof document !== 'undefined') {
-      try {
-        // Simple visual snapshot using a clone
-        const clone = document.body.cloneNode(true) as HTMLElement;
-        clone.style.position = 'fixed';
-        clone.style.top = '0';
-        clone.style.left = '0';
-        clone.style.width = '100vw';
-        clone.style.height = '100vh';
-        clone.style.pointerEvents = 'none';
-        clone.style.margin = '0';
-        clone.style.zIndex = '999999';
-        clone.style.overflow = 'hidden';
+  // 3. Fallback: overlay leve (não clona DOM)
+  if (skipFallback) {
+    const result = update();
+    return result instanceof Promise ? result.then(() => {}) : Promise.resolve();
+  }
 
-        document.documentElement.appendChild(clone);
+  return new Promise<void>((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.setAttribute('data-pixon-transition-overlay', '');
+    overlay.style.cssText = [
+      'position:fixed',
+      'inset:0',
+      'background:var(--pixon-bg, #000)',
+      'opacity:0',
+      'pointer-events:none',
+      'z-index:2147483646',
+      `transition:opacity ${duration / 2}ms ${easing}`,
+    ].join(';');
+    document.body.appendChild(overlay);
 
-        await update();
-
-        // Animate opacity out
-        const animation = clone.animate([{ opacity: 1 }, { opacity: 0 }], {
-          duration,
-          easing,
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      const onFadeIn = () => {
+        overlay.removeEventListener('transitionend', onFadeIn);
+        const result = update();
+        Promise.resolve(result).then(() => {
+          requestAnimationFrame(() => {
+            overlay.style.opacity = '0';
+            const onFadeOut = () => {
+              overlay.removeEventListener('transitionend', onFadeOut);
+              overlay.remove();
+              resolve();
+            };
+            overlay.addEventListener('transitionend', onFadeOut, { once: true });
+          });
         });
-
-        const cleanup = () => {
-          if (clone.parentNode) {
-            clone.parentNode.removeChild(clone);
-          }
-          resolve();
-        };
-
-        animation.onfinish = cleanup;
-        animation.oncancel = cleanup;
-        
-        // Failsafe
-        setTimeout(cleanup, duration + 100);
-        return;
-      } catch (e) {
-        console.warn('PixonUI: WAAPI crossfade fallback failed.', e);
-      }
-    }
-
-    // Default fallback (no animation or reduced motion)
-    await update();
-    resolve();
+      };
+      overlay.addEventListener('transitionend', onFadeIn, { once: true });
+    });
   });
 }
+

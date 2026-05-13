@@ -96,6 +96,7 @@ export interface MotionProps extends React.HTMLAttributes<HTMLDivElement> {
     duration?: number;
     delay?: number;
     easing?: MotionEasing;
+    repeat?: number | 'infinite';
   };
   /** State applied on `:hover` via pure CSS */
   hover?: MotionStyle;
@@ -446,6 +447,7 @@ export function Motion({
   // ── Hover-based visibility ────────────────────────────────────────────
   const [isHovered, setIsHovered] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const animationRef = useRef<Animation | null>(null);
   
   // ── Abort Controller ──────────────────────────────────────────────────
   const abortRef = useRef(new AbortController());
@@ -469,8 +471,27 @@ export function Motion({
     shouldShow = isHovered;
   }
 
+  // ── Viewport-aware pause/play and will-change ─────────────────────────
+  useEffect(() => {
+    const el = ref.current;
+    const anim = animationRef.current;
+    if (!el || !anim) return;
+
+    const isInfinite = transition.repeat === 'infinite' || (transition as any).loop;
+    if (!isInfinite) return;
+
+    if (isInView) {
+      el.style.willChange = 'transform, opacity, filter';
+      if (anim.playState === 'paused') anim.play();
+    } else {
+      el.style.willChange = 'auto';
+      if (anim.playState === 'running') anim.pause();
+    }
+  }, [isInView, transition.repeat]);
+
   // Track exit for onExitStart
   const prevShow = useRef(shouldShow);
+
   useEffect(() => {
     if (prevShow.current && !shouldShow && onExitStart) {
       onExitStart();
@@ -702,21 +723,40 @@ export function Motion({
       easing: 'linear', // easing is baked into keyframes
       fill: fillMode,
       delay: delay || transition?.delay || 0,
+      iterations: transition?.repeat === 'infinite' ? Infinity : (transition?.repeat ?? 1),
     });
     
+    animationRef.current = animation;
+
     animation.onfinish = () => {
       if (currentSignal.aborted) return;
       setIsAnimating(false);
+      animationRef.current = null;
       if (onComplete) onComplete();
     };
 
     return () => {
       animation.cancel();
+      animationRef.current = null;
       if (!currentSignal.aborted) {
         setIsAnimating(false);
       }
     };
   }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete]);
+
+  // Handle infinite loop viewport optimization
+  const isInfinite = loop || iterations === 'infinite' || transition?.repeat === 'infinite' || transition?.repeat === Infinity;
+  
+  useEffect(() => {
+    const anim = animationRef.current;
+    if (!anim || !isInfinite) return;
+
+    if (!isInView) {
+      anim.pause();
+    } else {
+      anim.play();
+    }
+  }, [isInView, isInfinite]);
 
   // Track standard CSS transitions/animations state for willChange optimization
   useEffect(() => {
@@ -764,7 +804,7 @@ export function Motion({
   ].join(', ');
 
   // ── Build inline styles ───────────────────────────────────────────────
-  const shouldWillChange = isAnimating || loop || iterations === 'infinite';
+  const shouldWillChange = (isAnimating || isInfinite) && isInView;
   const inlineStyles: React.CSSProperties = {
     willChange: shouldWillChange && !shouldSkipAnimation ? 'transform, opacity, filter' : 'auto',
     ...style,
