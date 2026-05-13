@@ -48,6 +48,8 @@ export interface AIResponseProps
   model?: string;
   /** Usage information (e.g., "245 tokens") */
   usage?: string | number;
+  /** Custom actions rendered inside the header (e.g., variant branch selectors) */
+  headerActions?: React.ReactNode;
 }
 
 /**
@@ -68,6 +70,7 @@ export const AIResponse = React.forwardRef<HTMLDivElement, AIResponseProps>(
     sources,
     model,
     usage,
+    headerActions,
     ...props 
   }, ref) => {
     return (
@@ -87,6 +90,13 @@ export const AIResponse = React.forwardRef<HTMLDivElement, AIResponseProps>(
             </span>
           )}
         </div>
+
+        {/* Top-right Actions Header anchor */}
+        {headerActions && (
+          <div className="absolute right-4 top-3.5 z-10 flex items-center gap-2">
+            {headerActions}
+          </div>
+        )}
 
         {/* Content */}
         <div className="pl-14 pr-4 py-4">
