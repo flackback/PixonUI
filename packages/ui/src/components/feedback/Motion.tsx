@@ -718,6 +718,13 @@ export function Motion({
     };
   }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete]);
 
+  // Track standard CSS transitions/animations state for willChange optimization
+  useEffect(() => {
+    if (!waapiFrames && !shouldSkipAnimation && shouldShow) {
+      setIsAnimating(true);
+    }
+  }, [shouldShow, waapiFrames, shouldSkipAnimation]);
+
   useLayoutEffect(() => {
     if (!layoutId) return;
     return () => {

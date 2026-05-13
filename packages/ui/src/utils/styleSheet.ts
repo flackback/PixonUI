@@ -107,3 +107,9 @@ export function insertScopedRules(scopeId: string, css: string): () => void {
     }
   };
 }
+
+export function clearStyles() {
+  pixonSheet = null;
+  pixonStyleElement = null;
+  ruleRegistry.clear();
+}

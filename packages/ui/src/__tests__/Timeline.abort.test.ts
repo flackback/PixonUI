@@ -1,7 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createTimeline } from '../utils/motion';
 
 describe('createTimeline AbortSignal support', () => {
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'animate').mockReturnValue({
+      finished: new Promise(() => {}), // never resolves for this test
+      cancel: vi.fn(),
+    } as any);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   it('rejects if signal is already aborted', async () => {
     const controller = new AbortController();
     controller.abort();

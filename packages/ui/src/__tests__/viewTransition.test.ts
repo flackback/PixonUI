@@ -27,17 +27,22 @@ describe('viewTransition', () => {
   it('uses WAAPI fallback if document.startViewTransition is not available', () => {
     document.startViewTransition = undefined as any;
     
-    // Mock Element.animate
-    const mockAnimate = vi.fn(() => ({ finished: Promise.resolve() }));
-    Element.prototype.animate = mockAnimate as any;
+    // Mock animate globally
+    const mockAnimate = vi.fn().mockReturnValue({ finished: Promise.resolve() });
+    
+    // Ensure animate exists so spyOn works
+    if (!Element.prototype.animate) {
+      (Element.prototype as any).animate = () => {};
+    }
+    
+    const spy = vi.spyOn(Element.prototype, 'animate').mockImplementation(mockAnimate);
 
     const cb = vi.fn();
     startPixonTransition(cb);
 
     expect(cb).toHaveBeenCalled();
     expect(mockAnimate).toHaveBeenCalled();
-    
-    // Restore
-    delete (Element.prototype as any).animate;
+
+    spy.mockRestore();
   });
 });

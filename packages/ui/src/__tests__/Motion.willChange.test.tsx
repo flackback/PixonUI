@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Motion } from '../components/feedback/Motion';
 
@@ -12,22 +12,22 @@ describe('Motion willChange behavior', () => {
       onfinish: null,
     });
     
+    const originalAnimate = Element.prototype.animate;
     Element.prototype.animate = mockAnimate as any;
 
     const { rerender } = render(
-      <Motion data-testid="motion" animate={{ opacity: 1 }} transition={{ duration: 100 }}>
+      <Motion 
+        data-testid="motion" 
+        animate={{ opacity: 1 }} 
+        transition={{ type: 'spring' }}
+        viewport={false}
+      >
         Test
       </Motion>
     );
 
     const el = screen.getByTestId('motion');
-
-    // Due to the initial render triggering the effect
-    // animate should be called and component state isAnimating should be true
     
-    // In our implementation, inline style gets willChange: transform, opacity, filter
-    // Note: since this happens during the effect, the first render might have auto,
-    // then it updates to will-change string. Wait for effect:
     await act(async () => {
       // allow effects to flush
     });
@@ -44,6 +44,11 @@ describe('Motion willChange behavior', () => {
     });
 
     // willChange should revert to 'auto'
-    expect(el.style.willChange).toBe('auto');
+    await waitFor(() => {
+      expect(el.style.willChange).toBe('auto');
+    }, { timeout: 2000 });
+
+    // Restore
+    Element.prototype.animate = originalAnimate;
   });
 });
