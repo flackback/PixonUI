@@ -7,13 +7,20 @@ import { VariantProvider, useVariantContext } from './VariantContext';
 
 export interface AnimateProps extends React.HTMLAttributes<HTMLDivElement> {
   layoutId?: string;
-  variants?: Record<string, Record<string, any>>;
+  layout?: boolean | 'position' | 'size';
+  custom?: any;
+  variants?: Record<string, Record<string, any> | ((custom: any) => Record<string, any>)>;
   initial?: string | Record<string, any>;
   animate?: string | Record<string, any>;
   exit?: string | Record<string, any>;
   whileHover?: string | Record<string, any>;
   whileTap?: string | Record<string, any>;
   whileInView?: string | Record<string, any>;
+  viewport?: {
+    once?: boolean;
+    margin?: string;
+    amount?: 'some' | 'all' | number;
+  };
   transition?: {
     type?: 'spring' | 'tween';
     duration?: number;
@@ -32,6 +39,8 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
   (
     {
       layoutId,
+      layout,
+      custom,
       variants,
       initial,
       animate: targetAnimate,
@@ -39,6 +48,7 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
       whileHover,
       whileTap,
       whileInView,
+      viewport,
       transition,
       as: Component = 'div',
       style,
@@ -62,7 +72,13 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
     // Resolve variant strings
     const resolveVariant = (val: any, contextVal?: any) => {
       const finalVal = val !== undefined ? val : contextVal;
-      if (typeof finalVal === 'string' && variants) return variants[finalVal];
+      if (typeof finalVal === 'string' && variants) {
+        const variantObj = variants[finalVal];
+        if (typeof variantObj === 'function') {
+          return variantObj(custom);
+        }
+        return variantObj;
+      }
       return typeof finalVal === 'object' ? finalVal : undefined;
     };
 
@@ -87,12 +103,35 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
     const [isInView, setIsInView] = useState(false);
     useEffect(() => {
       if (!whileInView || !internalRef.current) return;
+      
+      const margin = viewport?.margin;
+      const amount = viewport?.amount;
+      const once = viewport?.once;
+
+      let threshold = 0.1;
+      if (typeof amount === 'number') {
+        threshold = amount;
+      } else if (amount === 'some') {
+        threshold = 0.1;
+      } else if (amount === 'all') {
+        threshold = 0.95;
+      }
+
       const observer = new IntersectionObserver(([entry]) => {
-        setIsInView(entry?.isIntersecting ?? false);
-      }, { threshold: 0.1 });
+        const intersecting = entry?.isIntersecting ?? false;
+        setIsInView(intersecting);
+        
+        if (intersecting && once) {
+          observer.unobserve(internalRef.current!);
+        }
+      }, { 
+        rootMargin: margin,
+        threshold 
+      });
+
       observer.observe(internalRef.current);
       return () => observer.disconnect();
-    }, [whileInView]);
+    }, [whileInView, viewport?.once, viewport?.margin, viewport?.amount]);
 
     // FLIP Shared Layout Animation
     useLayoutEffect(() => {
@@ -106,8 +145,8 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
       if (oldRect && (oldRect.left !== newRect.left || oldRect.top !== newRect.top || oldRect.width !== newRect.width || oldRect.height !== newRect.height)) {
         const deltaX = oldRect.left - newRect.left;
         const deltaY = oldRect.top - newRect.top;
-        const deltaW = oldRect.width / (newRect.width || 1);
-        const deltaH = oldRect.height / (newRect.height || 1);
+        const deltaW = layout === 'position' ? 1 : oldRect.width / (newRect.width || 1);
+        const deltaH = layout === 'position' ? 1 : oldRect.height / (newRect.height || 1);
 
         el.style.transformOrigin = 'top left';
         // Invert

@@ -11,6 +11,7 @@ import { Sparkles, X, CheckCircle } from 'lucide-react';
 
 export function MotionMasterDemo() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [wiggleCount, setWiggleCount] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Parallax / Scroll Magic
@@ -95,7 +96,7 @@ export function MotionMasterDemo() {
 
         {/* Section 2: Physical Drag with Inertia */}
         <section>
-          <h2 className="text-xl font-semibold mb-6">Physics Drag (Inertia & Bounce)</h2>
+          <h2 className="text-xl font-semibold mb-6 font-sans">Physics Drag (Inertia & Bounce)</h2>
           <div className="w-full h-40 bg-slate-900 rounded-2xl border border-slate-800 p-4 relative overflow-hidden">
             <PixonMotion
               className="absolute w-24 h-24 bg-gradient-to-tr from-blue-500 to-violet-500 rounded-3xl shadow-xl shadow-blue-500/20 flex items-center justify-center cursor-grab active:cursor-grabbing z-10"
@@ -107,6 +108,77 @@ export function MotionMasterDemo() {
             >
               <span className="font-medium text-sm">Toss Me!</span>
             </PixonMotion>
+          </div>
+        </section>
+
+        {/* Section 2.5: Premium Framer Motion Parity Features */}
+        <section className="space-y-8">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-indigo-400" />
+            Framer Motion Parity (Recursos Premium)
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Feature A: Multi-Keyframe Array Property */}
+            <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col items-center justify-center gap-4">
+              <h3 className="text-sm font-semibold text-slate-400 text-center">1. Keyframes em Array (Pulse & Wiggle)</h3>
+              <PixonMotion
+                key={wiggleCount}
+                className="px-6 py-3 bg-red-500 hover:bg-red-600 rounded-xl font-medium text-sm shadow-lg shadow-red-500/20 cursor-pointer text-center"
+                animate={wiggleCount > 0 ? {
+                  scale: [1, 1.2, 0.9, 1.1, 1],
+                  rotate: [0, -12, 12, -6, 6, 0]
+                } : undefined}
+                transition={{ duration: 500 }}
+                onClick={() => setWiggleCount(c => c + 1)}
+              >
+                Disparar Wiggle!
+              </PixonMotion>
+            </div>
+
+            {/* Feature B: Dynamic Custom Variants */}
+            <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col gap-3 justify-center">
+              <h3 className="text-sm font-semibold text-slate-400 text-center mb-1">2. Variantes com Custom Props</h3>
+              <div className="flex flex-col gap-2">
+                {[0, 1, 2].map((idx) => (
+                  <PixonMotion
+                    key={idx}
+                    className="p-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-xs font-mono flex justify-between"
+                    custom={idx}
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.8 },
+                      visible: (i: number) => ({
+                        opacity: 1,
+                        scale: 1,
+                        transition: { delay: i * 0.15, type: 'spring' }
+                      })
+                    }}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <span>Item Dinâmico</span>
+                    <span className="text-indigo-400">Delay: {idx * 150}ms</span>
+                  </PixonMotion>
+                ))}
+              </div>
+            </div>
+
+            {/* Feature C: Advanced Viewport triggering */}
+            <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col items-center justify-center gap-3">
+              <h3 className="text-sm font-semibold text-slate-400 text-center">3. Trigger de Viewport Avançado</h3>
+              <PixonMotion
+                className="w-full p-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl text-center"
+                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                viewport={{ once: true, amount: 0.8 }}
+                transition={{ type: 'spring', stiffness: 200 }}
+              >
+                <div className="text-xs text-emerald-400 font-bold mb-1 font-mono uppercase tracking-wider">Dispara uma única vez</div>
+                <div className="text-sm font-medium">Ativado com 80% na Tela!</div>
+              </PixonMotion>
+            </div>
+
           </div>
         </section>
 
@@ -139,6 +211,7 @@ export function MotionMasterDemo() {
                 >
                   <PixonMotion
                     layoutId={`card-${selectedId}`}
+                    layout="position"
                     className="w-full max-w-md h-96 bg-slate-800 rounded-3xl shadow-2xl overflow-hidden relative cursor-auto"
                     onClick={(e) => e.stopPropagation()}
                   >

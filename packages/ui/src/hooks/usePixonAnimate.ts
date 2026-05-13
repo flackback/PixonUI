@@ -58,12 +58,46 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
 
     const { spring, ...waapiOptions } = options;
     
+    // Support array property values (multi-keyframes)
+    let processedKeyframes = keyframes;
+    if (!Array.isArray(keyframes) && typeof keyframes === 'object' && keyframes !== null) {
+      let maxArrayLength = 0;
+      const keys = Object.keys(keyframes);
+      
+      keys.forEach(key => {
+        const val = (keyframes as Record<string, any>)[key];
+        if (Array.isArray(val)) {
+          maxArrayLength = Math.max(maxArrayLength, val.length);
+        }
+      });
+
+      if (maxArrayLength > 0) {
+        const list: Record<string, any>[] = [];
+        for (let i = 0; i < maxArrayLength; i++) {
+          const kf: Record<string, any> = {};
+          keys.forEach(key => {
+            const val = (keyframes as Record<string, any>)[key];
+            if (Array.isArray(val)) {
+              const index = maxArrayLength > 1 
+                ? Math.min(val.length - 1, Math.round((i / (maxArrayLength - 1)) * (val.length - 1)))
+                : 0;
+              kf[key] = val[index];
+            } else {
+              kf[key] = val;
+            }
+          });
+          list.push(kf);
+        }
+        processedKeyframes = list;
+      }
+    }
+
     // Parse shorthand style shortcuts
     let parsedKeyframes: Keyframe[] | PropertyIndexedKeyframes;
-    if (Array.isArray(keyframes)) {
-      parsedKeyframes = keyframes.map(kf => parseStyleShortcuts(kf));
+    if (Array.isArray(processedKeyframes)) {
+      parsedKeyframes = processedKeyframes.map(kf => parseStyleShortcuts(kf));
     } else {
-      parsedKeyframes = [parseStyleShortcuts(keyframes as Record<string, any>)];
+      parsedKeyframes = [parseStyleShortcuts(processedKeyframes as Record<string, any>)];
     }
 
     let finalKeyframes = parsedKeyframes;
