@@ -55,7 +55,9 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       } catch (e) {
         // Fallback for browsers or test environments where commitStyles is not supported
       }
-      activeAnimRef.current.cancel();
+      try {
+        activeAnimRef.current.cancel();
+      } catch (e) {}
       activeAnimRef.current = null;
       setIsAnimating(false);
     }
@@ -208,7 +210,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       const startParsed = parseComplexTransform(first.transform as string || '');
       const endParsed = parseComplexTransform(last.transform as string || '');
 
-      progress.forEach((p) => {
+      progress.forEach((p, index) => {
         const key: Keyframe = {};
         numericProps.forEach((prop) => {
           const startVal = first[prop] as number;
@@ -221,9 +223,15 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
           key.transform = complexTransform;
         }
 
-        otherProps.forEach((prop) => {
-          key[prop] = p < 0.5 ? first[prop] : last[prop];
-        });
+        if (index === 0) {
+          otherProps.forEach((prop) => {
+            key[prop] = first[prop];
+          });
+        } else if (index === progress.length - 1) {
+          otherProps.forEach((prop) => {
+            key[prop] = last[prop];
+          });
+        }
 
         springKeys.push(key);
       });

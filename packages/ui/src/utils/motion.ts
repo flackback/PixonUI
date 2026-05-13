@@ -252,11 +252,28 @@ export function buildComplexTransform(
 ): string {
   const transforms: string[] = [];
   
-  // Get all unique properties across start and end
-  const keys = new Set([...Object.keys(startParsed), ...Object.keys(endParsed)]);
+  const TRANSFORM_ORDER = [
+    'translate3d', 'translateX', 'translateY', 'translateZ',
+    'scale3d', 'scale', 'scaleX', 'scaleY', 'scaleZ',
+    'rotate3d', 'rotate', 'rotateX', 'rotateY', 'rotateZ',
+    'skew', 'skewX', 'skewY',
+    'perspective'
+  ];
+
+  // Get all unique properties across start and end, and SORT them in standard deterministic CSS order
+  const keys = Array.from(new Set([...Object.keys(startParsed), ...Object.keys(endParsed)]))
+    .filter(k => !k.endsWith('_unit'))
+    .sort((a, b) => {
+      const idxA = TRANSFORM_ORDER.indexOf(a);
+      const idxB = TRANSFORM_ORDER.indexOf(b);
+      // Fallback to alphabetical if not in order array
+      if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
   
   keys.forEach(key => {
-    if (key.endsWith('_unit')) return; // Skip unit metadata
     
     // Default start values if missing (scale defaults to 1, others to 0)
     const defaultVal = key.startsWith('scale') ? 1 : 0;
@@ -407,36 +424,33 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
   const result: Record<string, any> = {};
   const transforms: string[] = [];
 
-  // Parse translation shorthand (x, y, translateX, translateY)
-  const txVal = style.x !== undefined ? style.x : style.translateX;
-  const tyVal = style.y !== undefined ? style.y : style.translateY;
+  const addTransform = (key: string, val: any, defaultUnit: string) => {
+    if (val !== undefined && val !== null) {
+      const formatted = typeof val === 'number' ? `${val}${defaultUnit}` : val;
+      transforms.push(`${key}(${formatted})`);
+    }
+  };
 
-  if (txVal !== undefined && txVal !== null) {
-    const tx = typeof txVal === 'number' ? `${txVal}px` : txVal;
-    transforms.push(`translateX(${tx})`);
-  }
-  if (tyVal !== undefined && tyVal !== null) {
-    const ty = typeof tyVal === 'number' ? `${tyVal}px` : tyVal;
-    transforms.push(`translateY(${ty})`);
-  }
+  // Parse translations
+  addTransform('translateX', style.x !== undefined ? style.x : style.translateX, 'px');
+  addTransform('translateY', style.y !== undefined ? style.y : style.translateY, 'px');
+  addTransform('translateZ', style.z !== undefined ? style.z : style.translateZ, 'px');
 
-  // Parse scale shorthand
-  if (style.scale !== undefined) {
-    transforms.push(`scale(${style.scale})`);
-  }
+  // Parse scaling
+  addTransform('scale', style.scale, '');
+  addTransform('scaleX', style.scaleX, '');
+  addTransform('scaleY', style.scaleY, '');
+  addTransform('scaleZ', style.scaleZ, '');
 
-  // Parse rotation shorthand
-  if (style.rotate !== undefined) {
-    transforms.push(`rotate(${typeof style.rotate === 'number' ? `${style.rotate}deg` : style.rotate})`);
-  }
+  // Parse rotations
+  addTransform('rotate', style.rotate, 'deg');
+  addTransform('rotateX', style.rotateX, 'deg');
+  addTransform('rotateY', style.rotateY, 'deg');
+  addTransform('rotateZ', style.rotateZ, 'deg');
 
-  // Parse skew shorthand
-  if (style.skewX !== undefined) {
-    transforms.push(`skewX(${typeof style.skewX === 'number' ? `${style.skewX}deg` : style.skewX})`);
-  }
-  if (style.skewY !== undefined) {
-    transforms.push(`skewY(${typeof style.skewY === 'number' ? `${style.skewY}deg` : style.skewY})`);
-  }
+  // Parse skews
+  addTransform('skewX', style.skewX, 'deg');
+  addTransform('skewY', style.skewY, 'deg');
 
   // Parse blur shorthand
   if (style.blur !== undefined) {
@@ -448,9 +462,16 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
     result.transform = transforms.join(' ');
   }
 
+  const excludeKeys = [
+    'x', 'y', 'z', 'translateX', 'translateY', 'translateZ',
+    'scale', 'scaleX', 'scaleY', 'scaleZ',
+    'rotate', 'rotateX', 'rotateY', 'rotateZ',
+    'skewX', 'skewY', 'blur'
+  ];
+
   // Copy other properties
   Object.keys(style).forEach((key) => {
-    if (['x', 'y', 'translateX', 'translateY', 'scale', 'rotate', 'skewX', 'skewY', 'blur'].includes(key)) return;
+    if (excludeKeys.includes(key)) return;
     result[key] = style[key];
   });
 
@@ -671,7 +692,7 @@ export class PixonTimeline {
           const startParsed = parseComplexTransform(first.transform as string || '');
           const endParsed = parseComplexTransform(last.transform as string || '');
 
-          progress.forEach((p) => {
+          progress.forEach((p, index) => {
             const key: Keyframe = {};
             numericProps.forEach((prop) => {
               key[prop] = interpolateValue(first[prop] as number, last[prop] as number, p);
@@ -682,9 +703,15 @@ export class PixonTimeline {
               key.transform = complexTransform;
             }
 
-            otherProps.forEach((prop) => {
-              key[prop] = p < 0.5 ? first[prop] : last[prop];
-            });
+            if (index === 0) {
+              otherProps.forEach((prop) => {
+                key[prop] = first[prop];
+              });
+            } else if (index === progress.length - 1) {
+              otherProps.forEach((prop) => {
+                key[prop] = last[prop];
+              });
+            }
 
             springKeys.push(key);
           });
