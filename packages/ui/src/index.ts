@@ -177,3 +177,4 @@ export * from './components/effects/ScrollScene';
 export * from './components/interactions/Drag';
 export * from './components/interactions/Reorder';
 export * from './utils/spring';
+export * from './utils/viewTransition';

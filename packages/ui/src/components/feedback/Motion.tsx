@@ -4,7 +4,8 @@ import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { generateSpringTrajectory, SpringConfig } from '../../utils/motion';
-import { generateSpringKeyframes } from '../../utils/spring';
+import { cachedSpringKeyframes } from '../../utils/springCache';
+import { insertScopedRules } from '../../utils/styleSheet';
 
 
 // ---------------------------------------------------------------------------
@@ -444,6 +445,21 @@ export function Motion({
 
   // ── Hover-based visibility ────────────────────────────────────────────
   const [isHovered, setIsHovered] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  // ── Abort Controller ──────────────────────────────────────────────────
+  const abortRef = useRef(new AbortController());
+  useEffect(() => {
+    if (shouldSkipAnimation) return;
+    abortRef.current.abort();
+    abortRef.current = new AbortController();
+  }, [animate, preset, fromProp, toProp, keyframes, spring, transition, duration, delay]);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current.abort();
+    };
+  }, []);
 
   const internalShow = viewport ? (once ? hasAnimated : isInView) : true;
   let shouldShow = visible !== undefined ? visible : internalShow;
@@ -494,7 +510,7 @@ export function Motion({
     let sDuration = duration;
 
     if (transition?.type === 'spring') {
-      const solver = generateSpringKeyframes({
+      const solver = cachedSpringKeyframes({
         stiffness: transition.stiffness,
         damping: transition.damping,
         mass: transition.mass,
@@ -676,6 +692,11 @@ export function Motion({
     // Fallback if browser doesn't support animate
     if (!ref.current.animate) return;
     
+    const currentSignal = abortRef.current.signal;
+    if (currentSignal.aborted) return;
+
+    setIsAnimating(true);
+    
     const animation = ref.current.animate(waapiFrames, {
       duration: springDuration,
       easing: 'linear', // easing is baked into keyframes
@@ -684,11 +705,16 @@ export function Motion({
     });
     
     animation.onfinish = () => {
+      if (currentSignal.aborted) return;
+      setIsAnimating(false);
       if (onComplete) onComplete();
     };
 
     return () => {
       animation.cancel();
+      if (!currentSignal.aborted) {
+        setIsAnimating(false);
+      }
     };
   }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete]);
 
@@ -731,8 +757,9 @@ export function Motion({
   ].join(', ');
 
   // ── Build inline styles ───────────────────────────────────────────────
+  const shouldWillChange = isAnimating || loop || iterations === 'infinite';
   const inlineStyles: React.CSSProperties = {
-    willChange: 'transform, opacity, filter',
+    willChange: shouldWillChange && !shouldSkipAnimation ? 'transform, opacity, filter' : 'auto',
     ...style,
   };
 
@@ -786,11 +813,17 @@ export function Motion({
 
   // ── Handlers ──────────────────────────────────────────────────────────
   const handleTransitionEnd = useCallback((e: React.TransitionEvent) => {
-    if (e.target === e.currentTarget && onComplete && shouldShow) onComplete();
+    if (e.target === e.currentTarget) {
+      setIsAnimating(false);
+      if (onComplete && shouldShow && !abortRef.current.signal.aborted) onComplete();
+    }
   }, [onComplete, shouldShow]);
 
   const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
-    if (e.target === e.currentTarget && onComplete) onComplete();
+    if (e.target === e.currentTarget) {
+      setIsAnimating(false);
+      if (onComplete && !abortRef.current.signal.aborted) onComplete();
+    }
   }, [onComplete]);
 
   const hoverHandlers = whileHover ? {
@@ -810,7 +843,7 @@ export function Motion({
     // Base transition for hover/tap/focus (ensures smooth in & out)
     if (hover || tap || focus) {
       blocks.push(`
-        .${scopeClass} {
+        [data-pixon-id="${rawId}"] {
           transition-property: ${transitionProps};
           transition-duration: ${resolvedDuration}ms;
           transition-timing-function: ${easingCSS};
@@ -820,7 +853,7 @@ export function Motion({
 
     if (hover) {
       blocks.push(`
-        .${scopeClass}:hover {
+        [data-pixon-id="${rawId}"]:hover {
           ${buildCSSBlock(hover)}
         }
       `);
@@ -828,7 +861,7 @@ export function Motion({
 
     if (tap) {
       blocks.push(`
-        .${scopeClass}:active {
+        [data-pixon-id="${rawId}"]:active {
           ${buildCSSBlock(tap)}
         }
       `);
@@ -836,7 +869,7 @@ export function Motion({
 
     if (focus) {
       blocks.push(`
-        .${scopeClass}:focus-visible {
+        [data-pixon-id="${rawId}"]:focus-visible {
           ${buildCSSBlock(focus)}
         }
       `);
@@ -847,12 +880,17 @@ export function Motion({
     }
 
     return blocks.join('\n');
-  }, [scopeClass, hover, tap, focus, isKeyframeMode, resolvedKeyframes, waapiFrames, kfName, resolvedDuration, easingCSS, transitionProps]);
+  }, [rawId, hover, tap, focus, isKeyframeMode, resolvedKeyframes, waapiFrames, kfName, resolvedDuration, easingCSS, transitionProps]);
+
+  useEffect(() => {
+    if (!needsStyle || !injectedCSS) return;
+    return insertScopedRules(rawId, injectedCSS);
+  }, [needsStyle, injectedCSS, rawId]);
 
   return (
     <>
-      {needsStyle && <style>{injectedCSS}</style>}
       <Comp
+        data-pixon-id={rawId}
         ref={(node: HTMLDivElement | null) => {
           // Merge refs: internal IntersectionObserver ref + user innerRef
           (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;

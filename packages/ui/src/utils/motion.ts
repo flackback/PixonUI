@@ -30,6 +30,8 @@ export interface ComputedSpring {
   duration: number;
 }
 
+const trajectoryCache = new Map<string, { progress: number[]; duration: number }>();
+
 /**
  * Solves the damped harmonic oscillator and compiles the physical path
  * into a dense array of WAAPI-compatible keyframes.
@@ -48,6 +50,14 @@ export function generateSpringTrajectory(
 ): { progress: number[]; duration: number } {
   const { stiffness = 170, damping = 26, mass = 1, precision = 0.0005 } = config;
 
+  const key = `${from}|${to}|${stiffness}|${damping}|${mass}|${precision}`;
+  if (trajectoryCache.has(key)) {
+    const result = trajectoryCache.get(key)!;
+    trajectoryCache.delete(key);
+    trajectoryCache.set(key, result);
+    return result;
+  }
+
   const w0 = Math.sqrt(stiffness / mass); // Undamped angular frequency
   const zeta = damping / (2 * Math.sqrt(stiffness * mass)); // Damping ratio
 
@@ -57,6 +67,7 @@ export function generateSpringTrajectory(
     const decayRate = zeta * w0;
     settleTime = -Math.log(precision) / decayRate;
   }
+
   // Cap duration between 0.1s and 3s for sanity
   const duration = Math.max(0.1, Math.min(3.0, settleTime));
 
@@ -90,7 +101,15 @@ export function generateSpringTrajectory(
     progress.push(p);
   }
 
-  return { progress, duration: duration * 1000 }; // Duration in milliseconds
+  const result = { progress, duration: duration * 1000 };
+  
+  if (trajectoryCache.size >= 100) {
+    const firstKey = trajectoryCache.keys().next().value;
+    if (firstKey !== undefined) trajectoryCache.delete(firstKey);
+  }
+  trajectoryCache.set(key, result);
+
+  return result; // Duration in milliseconds
 }
 
 /**
@@ -801,4 +820,54 @@ export class PixonTimeline {
 /** Chained timeline helper factory function */
 export function timeline(): PixonTimeline {
   return new PixonTimeline();
+}
+
+/**
+ * Executes an array of timeline steps sequentially, supporting AbortSignal for cancellation.
+ * @param steps Array of TimelineTrack configuration objects.
+ * @param options Options including an optional AbortSignal.
+ * @example
+ * const controller = new AbortController();
+ * createTimeline([
+ *   { target: '.box', keyframes: [{ opacity: 1 }] }
+ * ], { signal: controller.signal }).catch(e => console.log(e.name));
+ * // To abort: controller.abort()
+ */
+export async function createTimeline(
+  steps: TimelineTrack[],
+  options?: { signal?: AbortSignal }
+): Promise<void> {
+  const { signal } = options || {};
+
+  if (signal?.aborted) {
+    return Promise.reject(new DOMException('Aborted', 'AbortError'));
+  }
+
+  const t = new PixonTimeline();
+  
+  // A cada step (track setup): checar signal.aborted antes de iniciar
+  for (const step of steps) {
+    if (signal?.aborted) {
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    }
+    t.add(step);
+  }
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      t.cancel();
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+
+    if (signal) {
+      signal.addEventListener('abort', cleanup, { once: true });
+    }
+
+    t.play().finished.then(() => {
+      if (signal) {
+        signal.removeEventListener('abort', cleanup);
+      }
+      resolve();
+    }).catch(reject);
+  });
 }
