@@ -10,10 +10,17 @@ interface UseSocketOptions {
   onError?: (error: any) => void;
 }
 
+export interface UseSocketReturn {
+  socket: Socket | null;
+  emit: (event: string, data: any) => void;
+  on: (event: string, callback: (...args: any[]) => void) => () => void;
+  isConnected: boolean;
+}
+
 /**
  * Advanced Socket.io hook with Redis-ready event handling and automatic room management.
  */
-export function useSocket({ url, token, rooms = [], onConnect, onDisconnect, onError }: UseSocketOptions) {
+export function useSocket({ url, token, rooms = [], onConnect, onDisconnect, onError }: UseSocketOptions): UseSocketReturn {
   const socketRef = useRef<Socket | null>(null);
   const listenersRef = useRef<Map<string, Set<(...args: any[]) => void>>>(new Map());
 

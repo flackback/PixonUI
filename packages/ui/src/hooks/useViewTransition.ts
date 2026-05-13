@@ -1,4 +1,4 @@
-import { startPixonTransition } from '../utils/motion/viewTransition';
+import { startPixonTransition } from '../utils/motion';
 
 /**
  * Hook to wrap the native View Transitions API with a reliable WAAPI fallback.
