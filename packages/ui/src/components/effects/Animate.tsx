@@ -150,11 +150,11 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
 
         el.style.transformOrigin = 'top left';
         // Invert
-        el.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${deltaW}, ${deltaH})`;
+        el.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0px) scale(${deltaW}, ${deltaH})`;
 
         // Play to identity
         el.animate([
-          { transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${deltaW}, ${deltaH})` },
+          { transform: `translate3d(${deltaX}px, ${deltaY}px, 0px) scale(${deltaW}, ${deltaH})` },
           { transform: 'none' }
         ], {
           duration: transition?.duration ?? 400,
@@ -230,9 +230,9 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(
         if (resolvedExit) {
           const animation = triggerAnimation(resolvedExit);
           if (animation) {
-            animation.onfinish = () => {
+            animation.addEventListener('finish', () => {
               presence.onExitComplete?.();
-            };
+            });
           } else {
             presence.onExitComplete?.();
           }
@@ -368,11 +368,14 @@ type MotionTags = {
 export const motion = (new Proxy(
   {},
   {
-    get: (_target, key: string) => {
+    get: (_target, prop) => {
+      if (typeof prop === 'symbol' || prop === '$$typeof') {
+        return Reflect.get(_target, prop);
+      }
       const Component = forwardRef<HTMLElement, AnimateProps>((props, ref) => {
-        return <PixonMotion as={key as any} ref={ref} {...props} />;
+        return <PixonMotion as={prop as any} ref={ref} {...props} />;
       });
-      Component.displayName = `motion.${key}`;
+      Component.displayName = `motion.${String(prop)}`;
       return Component;
     },
   }

@@ -94,6 +94,58 @@ export function generateSpringTrajectory(
 }
 
 /**
+ * Solves the physical impulse response (shock wave) of a damped harmonic oscillator.
+ * Starts at 0, peaks at 1.0, and decays/oscillates back to 0.
+ */
+export function generateSpringImpulseTrajectory(
+  config: SpringConfig = {}
+): { progress: number[]; duration: number } {
+  const { stiffness = 170, damping = 26, mass = 1, precision = 0.0005 } = config;
+
+  const w0 = Math.sqrt(stiffness / mass); // Undamped angular frequency
+  const zeta = damping / (2 * Math.sqrt(stiffness * mass)); // Damping ratio
+
+  // Analytical approximation of settling time
+  let settleTime = 10;
+  if (zeta > 0) {
+    const decayRate = zeta * w0;
+    settleTime = -Math.log(precision) / decayRate;
+  }
+  const duration = Math.max(0.1, Math.min(3.0, settleTime));
+  const steps = Math.max(40, Math.min(180, Math.round(duration * 120)));
+  const progress: number[] = [];
+
+  // Find the peak value to normalize the progress so that the peak is exactly 1.0
+  const wd = zeta < 1 ? w0 * Math.sqrt(1 - zeta * zeta) : 0;
+  const tPeak = (zeta < 1 && wd > 0) ? Math.atan(wd / (zeta * w0)) / wd : 1 / w0;
+
+  const getDisplacement = (t: number): number => {
+    if (zeta < 1 && wd > 0) {
+      return Math.sin(wd * t) * Math.exp(-zeta * w0 * t);
+    } else if (zeta === 1) {
+      return t * w0 * Math.exp(-w0 * t);
+    } else {
+      const r1 = -w0 * (zeta - Math.sqrt(zeta * zeta - 1));
+      const r2 = -w0 * (zeta + Math.sqrt(zeta * zeta - 1));
+      return (Math.exp(r1 * t) - Math.exp(r2 * t)) / (r2 - r1);
+    }
+  };
+
+  const peakVal = getDisplacement(tPeak) || 1;
+
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * duration;
+    const d = getDisplacement(t);
+    // Normalize to peak value
+    const p = d / peakVal;
+    progress.push(p);
+  }
+
+  return { progress, duration: duration * 1000 };
+}
+
+
+/**
  * Interpolates numerical property values using pre-compiled spring trajectories
  */
 export function interpolateValue(from: number, to: number, p: number): number {
@@ -107,9 +159,68 @@ export type ParsedTransform = Record<string, number | string>;
  * Example: "translateX(10px) scale(1.5)" -> { translateX: 10, scale: 1.5 }
  */
 export function parseComplexTransform(transformStr: string): ParsedTransform {
-  if (!transformStr) return {};
+  if (!transformStr || transformStr === 'none') return {};
   const result: ParsedTransform = {};
-  
+
+  // Handle standard matrix translations/scaling so computed style captures are perfect!
+  if (transformStr.startsWith('matrix(')) {
+    const values = transformStr.slice(7, -1).split(',').map(v => parseFloat(v.trim()));
+    if (values.length === 6) {
+      const [a, b, c, d, tx, ty] = values as [number, number, number, number, number, number];
+      
+      // Calculate scale, translation, rotation
+      const scaleX = Math.sqrt(a * a + b * b);
+      const scaleY = Math.sqrt(c * c + d * d);
+      const rotate = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+      
+      if (Math.abs(scaleX - 1) > 0.0001) result.scaleX = scaleX;
+      if (Math.abs(scaleY - 1) > 0.0001) result.scaleY = scaleY;
+      
+      // If scaleX and scaleY are virtually identical, consolidate to single scale property
+      if (Math.abs(scaleX - scaleY) < 0.0001 && Math.abs(scaleX - 1) > 0.0001) {
+        result.scale = scaleX;
+        delete result.scaleX;
+        delete result.scaleY;
+      }
+      
+      if (Math.abs(rotate) > 0.01) result.rotate = rotate;
+      if (Math.abs(tx) > 0.01) result.translateX = tx;
+      if (Math.abs(ty) > 0.01) result.translateY = ty;
+      
+      return result;
+    }
+  }
+
+  if (transformStr.startsWith('matrix3d(')) {
+    // 3D Matrix parsing (simplified to extract standard translations/scalings if present)
+    const values = transformStr.slice(9, -1).split(',').map(v => parseFloat(v.trim()));
+    if (values.length === 16) {
+      const tx = values[12]!;
+      const ty = values[13]!;
+      const tz = values[14]!;
+      const scaleX = Math.sqrt(values[0]! * values[0]! + values[1]! * values[1]! + values[2]! * values[2]!);
+      const scaleY = Math.sqrt(values[4]! * values[4]! + values[5]! * values[5]! + values[6]! * values[6]!);
+      const scaleZ = Math.sqrt(values[8]! * values[8]! + values[9]! * values[9]! + values[10]! * values[10]!);
+
+      if (Math.abs(scaleX - 1) > 0.0001) result.scaleX = scaleX;
+      if (Math.abs(scaleY - 1) > 0.0001) result.scaleY = scaleY;
+      if (Math.abs(scaleZ - 1) > 0.0001) result.scaleZ = scaleZ;
+      
+      if (Math.abs(scaleX - scaleY) < 0.0001 && Math.abs(scaleX - scaleZ) < 0.0001 && Math.abs(scaleX - 1) > 0.0001) {
+        result.scale = scaleX;
+        delete result.scaleX;
+        delete result.scaleY;
+        delete result.scaleZ;
+      }
+
+      if (Math.abs(tx) > 0.01) result.translateX = tx;
+      if (Math.abs(ty) > 0.01) result.translateY = ty;
+      if (Math.abs(tz) > 0.01) result.translateZ = tz;
+
+      return result;
+    }
+  }
+
   // Extract all transform functions and their values
   const regex = /(\w+)\(([^)]+)\)/g;
   let match;
@@ -296,11 +407,17 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
   const result: Record<string, any> = {};
   const transforms: string[] = [];
 
-  // Parse translation shorthand (x, y)
-  const tx = style.x !== undefined ? (typeof style.x === 'number' ? `${style.x}px` : style.x) : null;
-  const ty = style.y !== undefined ? (typeof style.y === 'number' ? `${style.y}px` : style.y) : null;
-  if (tx !== null || ty !== null) {
-    transforms.push(`translate3d(${tx ?? '0px'}, ${ty ?? '0px'}, 0)`);
+  // Parse translation shorthand (x, y, translateX, translateY)
+  const txVal = style.x !== undefined ? style.x : style.translateX;
+  const tyVal = style.y !== undefined ? style.y : style.translateY;
+
+  if (txVal !== undefined && txVal !== null) {
+    const tx = typeof txVal === 'number' ? `${txVal}px` : txVal;
+    transforms.push(`translateX(${tx})`);
+  }
+  if (tyVal !== undefined && tyVal !== null) {
+    const ty = typeof tyVal === 'number' ? `${tyVal}px` : tyVal;
+    transforms.push(`translateY(${ty})`);
   }
 
   // Parse scale shorthand
@@ -333,12 +450,13 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
 
   // Copy other properties
   Object.keys(style).forEach((key) => {
-    if (['x', 'y', 'scale', 'rotate', 'skewX', 'skewY', 'blur'].includes(key)) return;
+    if (['x', 'y', 'translateX', 'translateY', 'scale', 'rotate', 'skewX', 'skewY', 'blur'].includes(key)) return;
     result[key] = style[key];
   });
 
   return result;
 }
+
 
 /**
  * Elegant, chainable timeline scheduler that coordinates multiple target elements
@@ -523,7 +641,7 @@ export class PixonTimeline {
               const hasScale = String(last.transform).includes('scale');
               const hasRotate = String(last.transform).includes('rotate');
 
-              if (hasTranslate) first.transform = (first.transform ?? '') + ' translate3d(0px, 0px, 0)';
+              if (hasTranslate) first.transform = (first.transform ?? '') + ' translate3d(0px, 0px, 0px)';
               if (hasScale) first.transform = (first.transform ?? '') + ' scale(1)';
               if (hasRotate) first.transform = (first.transform ?? '') + ' rotate(0deg)';
             }
@@ -540,7 +658,7 @@ export class PixonTimeline {
           const otherProps: string[] = [];
 
           Object.keys(last).forEach((key) => {
-            if (key === 'offset' || key === 'easing' || key === 'composite') return;
+            if (key === 'offset' || key === 'easing' || key === 'composite' || key === 'transform') return;
             const valStart = first[key];
             const valEnd = last[key];
             if (typeof valStart === 'number' && typeof valEnd === 'number') {
@@ -596,8 +714,8 @@ export class PixonTimeline {
         }
 
         const p = new Promise<void>((resolve) => {
-          anim.onfinish = () => resolve();
-          anim.oncancel = () => resolve();
+          anim.addEventListener('finish', () => resolve());
+          anim.addEventListener('cancel', () => resolve());
         });
         completedPromises.push(p);
       });
