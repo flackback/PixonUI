@@ -27,7 +27,7 @@ export function useSocket({ url, token, rooms = [], onConnect, onDisconnect, onE
   useEffect(() => {
     const socket = io(url, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });

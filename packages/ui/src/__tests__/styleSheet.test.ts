@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { insertScopedRules, clearStyles } from '../utils/motion/styleSheet';
+import { insertScopedRules, clearStyles } from '../utils/motion';
 
 describe('styleSheet singleton', () => {
   const originalAdopted = document.adoptedStyleSheets;

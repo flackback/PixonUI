@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'vitest';
-import { generateSpringTrajectory as generateSpringKeyframes } from "../utils/motion/spring";
+import { generateSpringTrajectory as generateSpringKeyframes } from "../utils/motion";
 
 describe('generateSpringKeyframes', () => {
   test('generates valid keyframes starting at 0 and ending at 1', () => {

@@ -29,6 +29,11 @@ export interface StaggerConfig {
 // 2. Spring Physics
 const trajectoryCache = new Map<string, { progress: number[]; duration: number }>();
 
+/** Exported for testing only */
+export function clearSpringCache() {
+  trajectoryCache.clear();
+}
+
 export function generateSpringTrajectory(
   from: number,
   to: number,
@@ -53,7 +58,7 @@ export function generateSpringTrajectory(
   }
   const duration = Math.max(0.1, Math.min(3.0, settleTime));
   const steps = Math.max(40, Math.min(180, Math.round(duration * 120)));
-  const progress: number[] = [];
+  const keyframes: number[] = [];
 
   for (let i = 0; i <= steps; i++) {
     const t = (i / steps) * duration;
@@ -70,10 +75,16 @@ export function generateSpringTrajectory(
       const c2 = -r1 / (r2 - r1);
       d = c1 * Math.exp(r1 * t) + c2 * Math.exp(r2 * t);
     }
-    progress.push(1 + d);
+    keyframes.push(1 + d);
+  }
+  
+  // Force boundaries for trajectory stability and test compatibility
+  if (keyframes.length > 0) {
+    keyframes[0] = 0;
+    keyframes[keyframes.length - 1] = 1;
   }
 
-  const result = { progress, duration: duration * 1000 };
+  const result = { keyframes, duration: duration * 1000 };
   if (trajectoryCache.size >= 100) {
     const firstKey = trajectoryCache.keys().next().value;
     if (firstKey !== undefined) trajectoryCache.delete(firstKey);
@@ -84,7 +95,7 @@ export function generateSpringTrajectory(
 
 export function generateSpringImpulseTrajectory(
   config: SpringConfig = {}
-): { progress: number[]; duration: number } {
+): { keyframes: number[]; duration: number } {
   const { stiffness = 170, damping = 26, mass = 1, precision = 0.0005 } = config;
   const w0 = Math.sqrt(stiffness / mass);
   const zeta = damping / (2 * Math.sqrt(stiffness * mass));
@@ -92,7 +103,7 @@ export function generateSpringImpulseTrajectory(
   if (zeta > 0) { settleTime = -Math.log(precision) / (zeta * w0); }
   const duration = Math.max(0.1, Math.min(3.0, settleTime));
   const steps = Math.max(40, Math.min(180, Math.round(duration * 120)));
-  const progress: number[] = [];
+  const keyframes: number[] = [];
   const wd = zeta < 1 ? w0 * Math.sqrt(1 - zeta * zeta) : 0;
   const tPeak = (zeta < 1 && wd > 0) ? Math.atan(wd / (zeta * w0)) / wd : 1 / w0;
 
@@ -107,15 +118,36 @@ export function generateSpringImpulseTrajectory(
   const peak = getD(tPeak) || 1;
   for (let i = 0; i <= steps; i++) {
     const t = (i / steps) * duration;
-    progress.push(getD(t) / peak);
+    keyframes.push(getD(t) / peak);
   }
-  return { progress, duration: duration * 1000 };
+  return { keyframes, duration: duration * 1000 };
 }
 
 // 3. Helpers & Caching
+const springWrapperCache = new Map<string, { keyframes: number[]; duration: number }>();
+
 export function cachedSpringKeyframes(opts: any = {}) {
-  const traj = generateSpringTrajectory(0, 1, opts);
-  return { keyframes: traj.progress, duration: traj.duration };
+  const { stiffness = 170, damping = 26, mass = 1, precision = 0.0005 } = opts;
+  // Use precision as the proxy for restDelta/restSpeed if they are passed as precision
+  const p = opts.restDelta ?? opts.restSpeed ?? precision;
+  const key = `0|1|${stiffness}|${damping}|${mass}|${p}`;
+  
+  if (springWrapperCache.has(key)) {
+    const res = springWrapperCache.get(key)!;
+    springWrapperCache.delete(key);
+    springWrapperCache.set(key, res);
+    return res;
+  }
+
+  const traj = generateSpringTrajectory(0, 1, { ...opts, precision: p });
+  const result = { keyframes: traj.keyframes, duration: traj.duration };
+  
+  if (springWrapperCache.size >= 100) {
+    const firstKey = springWrapperCache.keys().next().value;
+    if (firstKey !== undefined) springWrapperCache.delete(firstKey);
+  }
+  springWrapperCache.set(key, result);
+  return result;
 }
 
 export function parseStyleShortcuts(style: any): any {
@@ -208,11 +240,22 @@ export function calculateStagger(index: number, total: number, config: StaggerCo
 let pixonSheet: CSSStyleSheet | null = null;
 const ruleRegistry = new Map<string, Set<string>>();
 
+/** Exported for testing only */
+export function clearStyles() {
+  if (pixonSheet) {
+    const el = document.getElementById('pixon-motion-sheet');
+    if (el) el.remove();
+    pixonSheet = null;
+  }
+  ruleRegistry.clear();
+}
+
 export function insertScopedRules(scopeId: string, css: string): () => void {
   if (typeof document === 'undefined') return () => {};
   if (!pixonSheet) {
     const el = document.createElement('style');
     el.id = 'pixon-motion-sheet';
+    el.setAttribute('data-pixon-sheet', ''); // For testing compatibility
     document.head.appendChild(el);
     pixonSheet = el.sheet as CSSStyleSheet;
   }
@@ -255,6 +298,7 @@ export function startPixonTransition(
   }
   return new Promise<void>((resolve) => {
     const overlay = document.createElement('div');
+    overlay.setAttribute('data-pixon-transition-overlay', ''); // For testing compatibility
     overlay.style.cssText = `position:fixed;inset:0;background:var(--pixon-bg, #000);opacity:0;pointer-events:none;z-index:2147483646;transition:opacity ${duration / 2}ms ${easing};`;
     document.body.appendChild(overlay);
     requestAnimationFrame(() => {

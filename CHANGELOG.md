@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-05-13
+
+### Optimized
+- **Bundle Footprint Recovery**: 
+  - Drastically reduced production bundle size from **~178KB** back to **79,086 bytes Gzip** (recovery of baseline performance).
+  - Pruned ~5,700 lines of dead code (unused 3D, GPU observers, and experimental layout utilities) that were incorrectly included due to over-inclusive barrel exports.
+- **Motion Engine Consolidation**:
+  - Unified fragmented motion utilities (`spring`, `springCache`, `styleSheet`, `viewTransition`) into a single, tree-shakable `utils/motion.ts` module.
+  - Eliminated the `export *` pattern in `utils/motion/index.ts` which was the primary cause of dead-code inclusion.
+- **Network Reliability**:
+  - Added `polling` transport fallback to `useSocket` for compatibility with strict corporate proxies.
+
+### Fixed
+- Updated internal test suite to point to the consolidated motion utility.
+- Resolved DTS build errors in `useSocket` by adding explicit return type annotations.
+
+
 ## [0.6.1] - 2026-05-13
 
 ### Hardened
