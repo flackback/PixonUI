@@ -29,6 +29,8 @@ interface KanbanCardProps {
   spotlight?: boolean;
   spotlightColor?: string;
   spotlightSize?: number;
+  isDragOver?: boolean;
+  dropPosition?: 'top' | 'bottom' | null;
 }
 
 export const KanbanCard = React.memo(({
@@ -51,7 +53,9 @@ export const KanbanCard = React.memo(({
   isDragged,
   spotlight = true,
   spotlightColor,
-  spotlightSize = 400
+  spotlightSize = 400,
+  isDragOver,
+  dropPosition
 }: KanbanCardProps) => {
   if (renderCard) return <>{renderCard(task)}</>;
 
@@ -93,15 +97,144 @@ export const KanbanCard = React.memo(({
 
   const hasSpinningBorder = task.effect === 'spinning-border' && !isDragged;
 
-  const handleCardDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Exclude interactive elements so clicking buttons, links, timers or text fields works flawlessly
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('input') ||
+      target.closest('a') ||
+      target.closest('select') ||
+      target.closest('[role="button"]') ||
+      target.classList.contains('cursor-pointer')
+    ) {
+      return;
+    }
+    
+    // Only left click triggers dragging
+    if (e.button !== 0) return;
+
+    // Prevent propagation and default actions so board scrolling and native column dragging are not triggered
+    e.stopPropagation();
+    e.preventDefault();
+
     const cardEl = e.currentTarget;
+    const isDarkMode = document.documentElement.classList.contains('dark');
+
+    // Get exact offsets relative to card container
+    const rect = cardEl.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    // Create the premium glass drag ghost
+    const ghost = document.createElement('div');
+    ghost.id = 'pixon-drag-ghost';
+    ghost.className = cn(
+      "fixed pointer-events-none z-[9999] rounded-2xl p-6 border flex flex-col justify-between transition-transform duration-100 ease-out",
+      isDarkMode 
+        ? "bg-zinc-950/90 border-white/10 text-white shadow-xl" 
+        : "bg-white/90 border-zinc-200 text-zinc-900 shadow-xl",
+      cardClassName
+    );
+    
+    // Apply heavy dropdown-like premium blur, dimensions and content
+    ghost.style.backdropFilter = 'blur(24px)';
+    (ghost.style as any).webkitBackdropFilter = 'blur(24px)';
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+    ghost.innerHTML = cardEl.innerHTML;
+    
+    // Initial position matching pointer
+    ghost.style.left = `${e.clientX - offsetX}px`;
+    ghost.style.top = `${e.clientY - offsetY}px`;
+    ghost.style.transform = 'scale(1.01)';
+    ghost.style.opacity = '0.98';
+
+    document.body.appendChild(ghost);
+
+    // Call state-updater in KanbanBoard through onDragStart prop
+    onDragStart?.({
+      dataTransfer: { setData: () => {}, effectAllowed: 'move' }
+    } as any);
+
     cardEl.classList.add('is-being-dragged-snapshot');
-    onDragStart?.(e);
-    // Use a slightly longer timeout instead of requestAnimationFrame so Windows/Chrome
-    // has ample time to capture the styled element asynchronously.
-    setTimeout(() => {
+    document.body.classList.add('is-dragging-task');
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      ghost.style.left = `${moveEvent.clientX - offsetX}px`;
+      ghost.style.top = `${moveEvent.clientY - offsetY}px`;
+
+      // Collision checking using elementFromPoint!
+      // Temporarily hide the ghost to avoid hitting it directly if there's any lag
+      ghost.style.visibility = 'hidden';
+      const hoverEl = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+      ghost.style.visibility = 'visible';
+
+      if (!hoverEl) return;
+
+      const colEl = hoverEl.closest('[data-column-id]');
+      const tEl = hoverEl.closest('[data-task-id]');
+      const targetEl = tEl || colEl;
+
+      if (targetEl) {
+        // Dispatch standard dragover Event that bubbles up so React catches it on target column/card
+        const mockDragOverEvent = new Event('dragover', { bubbles: true, cancelable: true });
+        Object.defineProperties(mockDragOverEvent, {
+          clientX: { value: moveEvent.clientX },
+          clientY: { value: moveEvent.clientY },
+          pageX: { value: moveEvent.pageX },
+          pageY: { value: moveEvent.pageY },
+          preventDefault: { value: () => {} },
+          dataTransfer: {
+            value: {
+              dropEffect: 'move',
+              effectAllowed: 'move',
+              getData: (key: string) => (key === 'taskId' ? task.id : '')
+            }
+          },
+          currentTarget: { value: targetEl }
+        });
+        targetEl.dispatchEvent(mockDragOverEvent);
+      }
+    };
+
+    const handlePointerUp = (upEvent: PointerEvent) => {
+      ghost.remove();
       cardEl.classList.remove('is-being-dragged-snapshot');
-    }, 120);
+      document.body.classList.remove('is-dragging-task');
+
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+
+      // Find the element under the pointer on release to dispatch drop!
+      ghost.style.visibility = 'hidden';
+      const hoverEl = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+      ghost.style.visibility = 'visible';
+
+      const colEl = hoverEl?.closest('[data-column-id]');
+      const tEl = hoverEl?.closest('[data-task-id]');
+      const targetEl = tEl || colEl || cardEl.closest('[data-column-id]');
+
+      if (targetEl) {
+        // Dispatch standard drop Event on the target element!
+        const mockDropEvent = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperties(mockDropEvent, {
+          clientX: { value: upEvent.clientX },
+          clientY: { value: upEvent.clientY },
+          preventDefault: { value: () => {} },
+          dataTransfer: {
+            value: {
+              getData: (key: string) => (key === 'taskId' ? task.id : '')
+            }
+          },
+          currentTarget: { value: targetEl }
+        });
+        targetEl.dispatchEvent(mockDropEvent);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
   };
 
   const cardContent = (
@@ -109,15 +242,15 @@ export const KanbanCard = React.memo(({
       as={Surface as any}
       layoutId={task.id}
       layout="position"
+      data-task-id={task.id}
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => onTaskClick?.(e, task)}
-      draggable={draggable}
-      onDragStart={handleCardDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      draggable={false}
+      onPointerDown={handlePointerDown}
+      style={{ touchAction: 'none' }}
       className={cn(
         "relative overflow-hidden p-6 rounded-2xl transition-all duration-300 h-full w-full group",
         isDragged ? (
@@ -133,6 +266,16 @@ export const KanbanCard = React.memo(({
         cardClassName
       )}
     >
+      {isDragOver && dropPosition === 'top' && (
+        <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-cyan-500 via-cyan-400 to-transparent shadow-[0_0_10px_rgba(6,182,212,0.8)] rounded-full z-50 animate-in fade-in duration-200">
+          <span className="absolute -left-1 -top-[3px] h-2.5 w-2.5 rounded-full bg-cyan-400 border-2 border-white dark:border-zinc-950 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+        </div>
+      )}
+      {isDragOver && dropPosition === 'bottom' && (
+        <div className="absolute bottom-0 inset-x-0 h-[3px] bg-gradient-to-r from-cyan-500 via-cyan-400 to-transparent shadow-[0_0_10px_rgba(6,182,212,0.8)] rounded-full z-50 animate-in fade-in duration-200">
+          <span className="absolute -left-1 -top-[3px] h-2.5 w-2.5 rounded-full bg-cyan-400 border-2 border-white dark:border-zinc-950 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+        </div>
+      )}
       {spotlight && !isDragged && (
         <div
           className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ease-in-out"
@@ -324,18 +467,49 @@ export const KanbanCard = React.memo(({
     </PixonMotion>
   );
 
-  if (hasSpinningBorder) {
-    return (
-      <div className="relative p-[2px] rounded-2xl overflow-hidden group/spinning hover:shadow-xl dark:hover:shadow-cyan-500/10 transition-all duration-300">
-        <div className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#06b6d4_0%,#3b82f6_25%,#f43f5e_50%,#3b82f6_75%,#06b6d4_100%)] opacity-80 group-hover/spinning:opacity-100 transition-opacity duration-300" />
-        <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-white dark:bg-[#0f172a] z-10">
-          {cardContent}
+  const cardWithSpacer = (
+    <div className="flex flex-col gap-3 transition-all duration-300">
+      {/* Dynamic top spacer to physically open space for incoming card */}
+      {isDragOver && dropPosition === 'top' && (
+        <div 
+          className="w-full rounded-2xl border-2 border-dashed border-cyan-500/30 dark:border-cyan-500/20 bg-cyan-500/[0.02] flex items-center justify-center animate-in fade-in slide-in-from-top-3 duration-300 overflow-hidden"
+          style={{ height: '110px' }}
+        >
+          <div className="flex items-center gap-2 text-[10px] font-bold text-cyan-500/60 uppercase tracking-wider animate-pulse">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+            <span>Soltar Card Aqui</span>
+          </div>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  return cardContent;
+      {/* Actual Kanban Card Content */}
+      {hasSpinningBorder ? (
+        <div className="relative p-[2px] rounded-2xl overflow-hidden group/spinning hover:shadow-xl dark:hover:shadow-cyan-500/10 transition-all duration-300">
+          <div className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#06b6d4_0%,#3b82f6_25%,#f43f5e_50%,#3b82f6_75%,#06b6d4_100%)] opacity-80 group-hover/spinning:opacity-100 transition-opacity duration-300" />
+          <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-white dark:bg-[#0f172a] z-10">
+            {cardContent}
+          </div>
+        </div>
+      ) : (
+        cardContent
+      )}
+
+      {/* Dynamic bottom spacer to physically open space for incoming card */}
+      {isDragOver && dropPosition === 'bottom' && (
+        <div 
+          className="w-full rounded-2xl border-2 border-dashed border-cyan-500/30 dark:border-cyan-500/20 bg-cyan-500/[0.02] flex items-center justify-center animate-in fade-in slide-in-from-bottom-3 duration-300 overflow-hidden"
+          style={{ height: '110px' }}
+        >
+          <div className="flex items-center gap-2 text-[10px] font-bold text-cyan-500/60 uppercase tracking-wider animate-pulse">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+            <span>Soltar Card Aqui</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return cardWithSpacer;
 });
 
 KanbanCard.displayName = 'KanbanCard';

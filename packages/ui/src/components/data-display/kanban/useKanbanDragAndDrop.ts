@@ -31,12 +31,20 @@ export function useKanbanDragAndDrop({
   const touchTimeout = useRef<any>(null);
   const lastTouchPos = useRef<{ x: number, y: number } | null>(null);
 
+  const preventDefaultDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+  }, []);
+
   const handleDragStart = (e: React.DragEvent, id: string, type: 'task' | 'column') => {
     if (type === 'task') {
       e.dataTransfer.setData('taskId', id);
       onTaskDragStart?.(id);
       if (typeof document !== 'undefined') {
         document.body.classList.add('is-dragging-task');
+        document.addEventListener('dragover', preventDefaultDragOver);
       }
       // Delay state update so the browser captures the original full-opacity element as the drag image first
       setTimeout(() => {
@@ -55,13 +63,14 @@ export function useKanbanDragAndDrop({
     }
     if (typeof document !== 'undefined') {
       document.body.classList.remove('is-dragging-task');
+      document.removeEventListener('dragover', preventDefaultDragOver);
     }
     setDraggedTaskId(null);
     setDraggedColumnId(null);
     setDragOverColumnId(null);
     setDragOverTaskId(null);
     setDropPosition(null);
-  }, [draggedTaskId, onTaskDragEnd]);
+  }, [draggedTaskId, onTaskDragEnd, preventDefaultDragOver]);
 
   const handleDragOver = (e: React.DragEvent, columnId: string, taskId?: string) => {
     e.preventDefault();

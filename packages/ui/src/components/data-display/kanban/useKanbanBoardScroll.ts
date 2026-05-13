@@ -7,9 +7,11 @@ export function useKanbanBoardScroll() {
   const boardRef = useRef<HTMLDivElement>(null);
 
   const handleBoardMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('button') || 
-        (e.target as HTMLElement).closest('[draggable="true"]') ||
-        (e.target as HTMLElement).closest('.no-drag')) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || 
+        target.closest('[data-task-id]') || 
+        target.closest('input, select, textarea') ||
+        target.closest('.no-drag')) return;
     
     setIsDraggingBoard(true);
     setStartX(e.pageX - (boardRef.current?.offsetLeft || 0));

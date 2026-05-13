@@ -117,17 +117,11 @@ export function KanbanColumn({
   dropPosition
 }: KanbanColumnProps) {
   const isOverLimit = !isCollapsed && column.limit && tasks.length > column.limit;
-
-  const renderDropIndicator = () => (
-    <div className="relative w-full py-1 animate-in fade-in slide-in-from-top-1 duration-200">
-      <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-cyan-500/80 via-cyan-400 to-transparent shadow-[0_0_8px_rgba(6,182,212,0.8)] rounded-full flex items-center">
-        <span className="absolute -left-1 h-2 w-2 rounded-full bg-cyan-400 border border-white dark:border-zinc-950 shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
-      </div>
-    </div>
-  );
+  const [isHeaderHovered, setIsHeaderHovered] = React.useState(false);
 
   return (
     <div 
+      data-column-id={column.id}
       className={cn(
         "flex flex-col h-full transition-all duration-300 ease-out rounded-3xl border border-transparent p-2",
         isCollapsed ? "w-12" : "w-80",
@@ -138,13 +132,18 @@ export function KanbanColumn({
       onDragOver={(e) => onDragOver?.(e)}
       onDrop={(e) => onDrop?.(e)}
       onDragStart={(e) => onDragStart?.(e, column.id, 'column')}
-      draggable={!isCollapsed}
+      draggable={!isCollapsed && isHeaderHovered}
     >
       {/* Header */}
-      <div className={cn(
-        "flex items-center justify-between mb-4 px-2",
-        isCollapsed && "flex-col gap-4"
-      )}>
+      <div 
+        onMouseEnter={() => setIsHeaderHovered(true)}
+        onMouseLeave={() => setIsHeaderHovered(false)}
+        className={cn(
+          "flex items-center justify-between mb-4 px-2 select-none",
+          !isCollapsed && "cursor-grab active:cursor-grabbing",
+          isCollapsed && "flex-col gap-4"
+        )}
+      >
         <div className="flex items-center gap-2 min-w-0">
           <button 
             onClick={() => onCollapse?.(column.id)}
@@ -222,22 +221,21 @@ export function KanbanColumn({
         {children || tasks.map(task => {
           const isCurrentDragOver = dragOverTaskId === task.id;
           return (
-            <React.Fragment key={task.id}>
-              {isCurrentDragOver && dropPosition === 'top' && renderDropIndicator()}
-              <KanbanCard 
-                task={task} 
-                onTaskClick={(_, t) => onTaskClick?.(t)}
-                onDragStart={(e) => onDragStart?.(e, task.id, 'task')}
-                onDragOver={(e) => onDragOver?.(e, task.id)}
-                onDrop={(e) => onDrop?.(e, task.id)}
-                isDragged={draggedTaskId === task.id}
-                selectable={selectable}
-                isSelected={selectedTaskIds?.includes(task.id)}
-                onTaskSelectionChange={onTaskSelectionChange}
-                activeTimerTaskId={activeTimerTaskId}
-              />
-              {isCurrentDragOver && dropPosition === 'bottom' && renderDropIndicator()}
-            </React.Fragment>
+            <KanbanCard 
+              key={task.id}
+              task={task} 
+              onTaskClick={(_, t) => onTaskClick?.(t)}
+              onDragStart={(e) => onDragStart?.(e, task.id, 'task')}
+              onDragOver={(e) => onDragOver?.(e, task.id)}
+              onDrop={(e) => onDrop?.(e, task.id)}
+              isDragged={draggedTaskId === task.id}
+              selectable={selectable}
+              isSelected={selectedTaskIds?.includes(task.id)}
+              onTaskSelectionChange={onTaskSelectionChange}
+              activeTimerTaskId={activeTimerTaskId}
+              isDragOver={isCurrentDragOver}
+              dropPosition={isCurrentDragOver && (dropPosition === 'top' || dropPosition === 'bottom') ? dropPosition : null}
+            />
           );
         })}
       </div>
