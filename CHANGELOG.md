@@ -5,8 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.2] - 2026-05-13
+## [0.6.3] - 2026-05-14
 
+### Added
+- `timeline()` factory e keyframes helpers em `utils/motion.ts`.
+- Demo MotionMaster no Playground usando `PixonMotion`, `Surface` e `Stack`.
+- Script de medição `check-size.mjs` / `measure-perf.mjs` para validação de tamanho de gzip.
+
+## [0.6.2] - 2026-05-13
 ### Optimized
 - **Bundle Footprint Recovery**: 
   - Drastically reduced production bundle size from **~178KB** back to **79,086 bytes Gzip** (recovery of baseline performance).
