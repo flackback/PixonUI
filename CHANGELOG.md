@@ -13,7 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pruned ~5,700 lines of dead code (unused 3D, GPU observers, and experimental layout utilities) that were incorrectly included due to over-inclusive barrel exports.
 - **Motion Engine Consolidation**:
   - Unified fragmented motion utilities (`spring`, `springCache`, `styleSheet`, `viewTransition`) into a single, tree-shakable `utils/motion.ts` module.
-  - Eliminated the `export *` pattern in `utils/motion/index.ts` which was the primary cause of dead-code inclusion.
+  - Ported the full `PixonTimeline` class and `timeline()` factory API, restoring complex staggered animations for the demo suite.
+- **Hardware-Accelerated Stability**:
+  - Consolidated redundant `useEffect` hooks in `Motion.tsx` into a unified WAAPI/Viewport lifecycle, eliminating race conditions.
+  - Hardened `will-change` optimization by correctly managing `isAnimating` state across WAAPI, CSS Transitions, and Interaction states (hover/tap).
+- **Interactive Developer Experience**:
+  - Fixed "Blank Preview" state by ensuring all motion primitives are exported and initialized.
+  - Resolved `Unexpected token` errors in the `Live Playground` by enhancing code-cleaning regex to support full component snippets and ES imports.
 - **Network Reliability**:
   - Added `polling` transport fallback to `useSocket` for compatibility with strict corporate proxies.
 

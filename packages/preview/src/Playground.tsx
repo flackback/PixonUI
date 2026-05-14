@@ -9,8 +9,10 @@ interface PlaygroundProps {
 
 export function Playground({ code }: PlaygroundProps) {
   // Strip import statements so they don't break react-live's compilation
-  const cleanCode = code
-    .replace(/import\s+[\s\S]*?from\s+['"].*?['"];?/g, '')
+  const cleanCode = (code || '')
+    .replace(/import\s+[\s\S]*?from\s+['"].*?['"];?\s*/g, '')
+    .replace(/export\s+default\s+function\s+/, 'function ')
+    .replace(/export\s+default\s+/, '')
     .trim();
 
   // Create an extensive scope containing all components and icons

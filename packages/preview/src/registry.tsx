@@ -1601,9 +1601,66 @@ ${usePixonVideoPlayerSource}`,
     title: 'Motion Master Demo',
     category: 'Data Display',
     description: 'A demonstração definitiva de animações do PixonUI: Staggering (Cascata), Shared Layout (FLIP), Scroll-Linked Parallax e Physical Drag com WAAPI acelerado via GPU.',
-    code: `import { PixonMotion, AnimatePresence, LayoutGroup } from '@pixonui/react';
+    code: `import { PixonMotion, Surface, Button, Stack, Text } from '@pixonui/react';
+import { Sparkles, Zap, Activity } from 'lucide-react';
 
-// O poder unificado do PixonMotion.`,
+export default function MotionMaster() {
+  return (
+    <div className="p-8 flex flex-col items-center gap-10">
+      <PixonMotion
+        initial={{ opacity: 0, y: 40, scale: 0.8 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, type: 'spring' }}
+      >
+        <Surface className="p-12 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-[40px] shadow-2xl border border-white/20 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <Stack gap={4} align="center">
+            <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-xl">
+              <Sparkles className="h-8 w-8 text-white animate-pulse" />
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tighter">PIXON MOTION</h1>
+            <Text className="text-white/70 font-medium">Hardware Accelerated Physics</Text>
+          </Stack>
+        </Surface>
+      </PixonMotion>
+      
+      <div className="flex gap-6">
+        {[
+          { icon: <Zap />, color: 'from-amber-400 to-orange-500', delay: 0.1 },
+          { icon: <Activity />, color: 'from-cyan-400 to-blue-500', delay: 0.2 },
+          { icon: <Sparkles />, color: 'from-pink-400 to-rose-500', delay: 0.3 }
+        ].map((item, i) => (
+          <PixonMotion
+            key={i}
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ 
+              delay: item.delay, 
+              type: 'spring',
+              stiffness: 260,
+              damping: 20
+            }}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+          >
+            <div className={\`h-16 w-16 rounded-2xl bg-gradient-to-tr \${item.color} flex items-center justify-center shadow-lg border border-white/20 text-white\`}>
+              {item.icon}
+            </div>
+          </PixonMotion>
+        ))}
+      </div>
+      
+      <PixonMotion
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+      >
+        <Button variant="glass" size="lg" className="rounded-full px-8">
+          Explore Architecture
+        </Button>
+      </PixonMotion>
+    </div>
+  );
+}`,
     componentSource: `// Acesse @pixonui/react para ver as implementações do PixonMotion`,
     demo: <MotionMasterDemo />
   }

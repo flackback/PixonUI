@@ -703,77 +703,61 @@ export function Motion({
     layoutRef.current = currentRect;
   });
 
+  // ── Unified WAAPI Animation Control & Viewport Optimization ──────────
   useEffect(() => {
     const needsAnimation = shouldShow || isInfinite;
-    if (!needsAnimation || !waapiFrames || !ref.current || shouldSkipAnimation) return;
+    if (!needsAnimation || !waapiFrames || !ref.current || shouldSkipAnimation) {
+      if (animationRef.current) {
+        animationRef.current.cancel();
+        animationRef.current = null;
+        setIsAnimating(false);
+      }
+      return;
+    }
     
     const currentSignal = abortRef.current.signal;
     if (currentSignal.aborted) return;
 
-    setIsAnimating(true);
-
-    const animation = ref.current.animate(waapiFrames, {
-      duration: springDuration,
-      easing: isSpringEasing ? 'linear' : resolveEasing(easing),
-      fill: fillMode,
-      delay: delay || transition?.delay || 0,
-      iterations: transition?.repeat === 'infinite' ? Infinity : (transition?.repeat ?? 1),
-    });
+    // Start or Reuse Animation
+    let animation = animationRef.current;
     
-    animationRef.current = animation;
+    if (!animation) {
+      setIsAnimating(true);
+      animation = ref.current.animate(waapiFrames, {
+        duration: resolvedDuration,
+        easing: isSpringEasing ? 'linear' : resolveEasing(easing),
+        fill: fillMode,
+        delay: delay || transition?.delay || 0,
+        iterations: isInfinite ? Infinity : (iterations ?? 1),
+        direction: direction as any,
+      });
+      animationRef.current = animation;
 
-    animation.onfinish = () => {
-      if (currentSignal.aborted) return;
-      setIsAnimating(false);
-      animationRef.current = null;
-      if (onComplete) onComplete();
-    };
-
-    return () => {
-      animation.cancel();
-      animationRef.current = null;
-      if (!currentSignal.aborted) {
+      animation.onfinish = () => {
+        if (currentSignal.aborted) return;
         setIsAnimating(false);
-      }
-    };
-  }, [shouldShow, waapiFrames, springDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete, isInfinite, effectiveIsInView, isSpringEasing, easing]);
-
-  // Viewport Optimization (Pause/Play for Infinite Loops)
-  useEffect(() => {
-    const anim = animationRef.current;
-    if (!anim || !isInfinite) return;
-
-    if (!isInView) {
-      if (anim.playState === 'running') anim.pause();
-    } else {
-      if (anim.playState === 'paused') anim.play();
+        animationRef.current = null;
+        if (onComplete) onComplete();
+      };
     }
-  }, [isInView, isInfinite]);
 
-  // Track standard CSS transitions/animations state for willChange optimization
-  useEffect(() => {
-    if (waapiFrames || shouldSkipAnimation || !shouldShow || !ref.current) return;
-
-    const el = ref.current;
-    setIsAnimating(true);
-
-    const handleTransitionEnd = (e: TransitionEvent) => {
-      // Only stop if the primary properties finished
-      if (['transform', 'opacity', 'filter'].includes(e.propertyName)) {
-        setIsAnimating(false);
+    // Viewport Optimization: Pause/Play
+    if (viewport) {
+      if (!isInView && animation.playState === 'running') {
+        animation.pause();
+      } else if (isInView && animation.playState === 'paused') {
+        animation.play();
       }
-    };
-
-    el.addEventListener('transitionend', handleTransitionEnd);
-    
-    // Safety fallback
-    const timer = setTimeout(() => setIsAnimating(false), resolvedDuration + (delay || 0) + 100);
+    }
 
     return () => {
-      el.removeEventListener('transitionend', handleTransitionEnd);
-      clearTimeout(timer);
+      if (animation && !isInfinite) {
+        animation.cancel();
+        animationRef.current = null;
+        if (!currentSignal.aborted) setIsAnimating(false);
+      }
     };
-  }, [shouldShow, waapiFrames, shouldSkipAnimation, resolvedDuration, delay]);
+  }, [shouldShow, isInView, viewport, waapiFrames, resolvedDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete, isInfinite, isSpringEasing, easing, iterations, direction]);
 
 
   useIsomorphicLayoutEffect(() => {
@@ -886,10 +870,26 @@ export function Motion({
     }
   }, [onComplete]);
 
-  const hoverHandlers = whileHover ? {
-    onMouseEnter: () => setIsHovered(true),
-    onMouseLeave: () => setIsHovered(false),
-  } : {};
+  const hoverHandlers = {
+    ...(whileHover ? {
+      onMouseEnter: () => {
+        setIsHovered(true);
+        setIsAnimating(true);
+      },
+      onMouseLeave: () => {
+        setIsHovered(false);
+        setIsAnimating(true);
+      },
+    } : {}),
+    ...(tap ? {
+      onPointerDown: () => setIsAnimating(true),
+      onPointerUp: () => setIsAnimating(true),
+    } : {}),
+    ...(focus ? {
+      onFocus: () => setIsAnimating(true),
+      onBlur: () => setIsAnimating(true),
+    } : {}),
+  };
 
   // ── Render ────────────────────────────────────────────────────────────
   const Comp = asChild ? Slot : (as as any);
