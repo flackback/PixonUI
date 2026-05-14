@@ -366,7 +366,12 @@ export function compileSpringKeyframes(
 
     // 2. String morphing (SVG paths, colors, filters)
     morphProps.forEach((prop) => {
-      key[prop] = interpolateString(first[prop] as string, last[prop] as string, p);
+      let val = interpolateString(first[prop] as string, last[prop] as string, p);
+      // For SVG 'd' property in CSS, some browsers require path() wrapper
+      if (prop === 'd' && !val.startsWith('path(')) {
+        val = `path("${val}")`;
+      }
+      key[prop] = val;
     });
 
     // 3. Complex Transforms
@@ -403,7 +408,6 @@ export function interpolateString(from: string, to: string, p: number): string {
     const target = parseFloat(toMatches[i]!);
     const val = start + (target - start) * p;
     i++;
-    // Keep reasonable precision for performance and readability
     return val % 1 === 0 ? val.toString() : val.toFixed(3);
   });
 }
@@ -624,23 +628,34 @@ export class PixonTimeline {
       let resolvedDuration = track.duration ?? 400;
       let resolvedEasing = track.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)';
 
-      if (track.spring && Array.isArray(track.keyframes)) {
+      // Detect if we need custom interpolation (SVG paths or spring physics)
+      const needsCustomInterpolation = track.spring || (Array.isArray(track.keyframes) && track.keyframes.some(kf => 'd' in kf));
+
+      if (needsCustomInterpolation) {
         let first: Keyframe = {}, last: Keyframe = {};
-        if (track.keyframes.length >= 2) {
-          first = track.keyframes[0]!;
-          last = track.keyframes[track.keyframes.length - 1]!;
-        } else if (track.keyframes.length === 1) {
+        const kfs = track.keyframes as Keyframe[];
+        
+        if (kfs.length >= 2) {
+          first = kfs[0]!;
+          last = kfs[kfs.length - 1]!;
+        } else if (kfs.length === 1) {
           const el = targets[0] as HTMLElement;
           if (el) {
-            last = track.keyframes[0]!;
+            last = kfs[0]!;
             first = captureElementState(el, Object.keys(last));
           }
         }
 
         if (Object.keys(last).length > 0) {
-          const { keyframes, duration } = compileSpringKeyframes(first, last, track.spring, track.springType);
-          resolvedDuration = duration;
-          resolvedEasing = 'linear';
+          // Use spring config or a default smooth transition for non-spring path morphs
+          const springConfig = track.spring || { stiffness: 170, damping: 26 }; 
+          const { keyframes, duration } = compileSpringKeyframes(first, last, springConfig, track.springType);
+          
+          // Only override duration if spring was explicitly requested
+          if (track.spring) {
+            resolvedDuration = duration;
+            resolvedEasing = 'linear';
+          }
           resolvedKeyframes = keyframes;
         }
       }
@@ -762,10 +777,11 @@ export function startPixonTransition(
  * PixonTimeline Factory
  * Orchestrates multi-element WAAPI animations with stagger and spring physics.
  */
-export function timeline(tracks: TimelineTrack[] = [], options: UltimateAnimationOptions = {}): PixonTimeline {
+export function timeline(tracksOrOptions: TimelineTrack[] | UltimateAnimationOptions = [], options: UltimateAnimationOptions = {}): PixonTimeline {
   const tl = new PixonTimeline();
-  tracks.forEach(track => tl.add(track));
-  // If options were provided but no tracks yet, they might be for the whole timeline
-  // but PixonTimeline currently handles options per-track.
+  if (Array.isArray(tracksOrOptions)) {
+    tracksOrOptions.forEach(track => tl.add(track));
+  }
+  // Note: PixonTimeline doesn't currently use global options, but we could add them if needed.
   return tl;
 }

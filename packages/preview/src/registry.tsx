@@ -82,6 +82,7 @@ import { HeroDemo } from './demos/HeroDemo';
 import { DashboardDemo } from './demos/DashboardDemo';
 import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
 import { AnimeTextDemo } from './demos/AnimeTextDemo';
+import { AnimeLogoDemo } from './demos/AnimeLogoDemo';
 import AnimeTextSource from '../../ui/src/components/typography/AnimeText.tsx?raw';
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
@@ -1338,6 +1339,35 @@ ${LetterPullupSource}`,
     demo: <AnimeTextDemo />
   },
   {
+    id: 'anime-logo',
+    title: 'Anime.js Logo Morph',
+    category: 'Data Display',
+    description: 'Ultra-complex SVG path morphing and motion path trajectory following, powered by Pixon spring physics and WAAPI.',
+    code: `import { timeline, path } from '@pixonui/react';
+
+// Path trajectory helper
+const bounce = path('.bounce-path');
+
+timeline()
+  .add('.letter-m path', {
+    d: "M310,220 L310,60 ...", // Morphing path
+    spring: { stiffness: 200, damping: 10 }
+  })
+  .add('.dot', [
+    { transform: 'translate(630px, 250px)' },
+    ...Array.from({ length: 11 }).map((_, i) => {
+      const p = i / 10;
+      const pt = bounce(p);
+      return { 
+        transform: \`translate(\${pt.x}px, \${pt.y}px)\`, 
+        offset: p 
+      };
+    })
+  ])
+  .play();`,
+    demo: <AnimeLogoDemo />
+  },
+  {
     id: 'dashboard',
     title: 'Analytics Dashboard',
     category: 'Templates',
@@ -1595,7 +1625,7 @@ const { amplitudes } = useAudioVisualizer({ active: true });`,
     demo: <MotionPhysicsDemo />
   },
   {
-    id: 'video-player',
+    id: 'video-player-next',
     title: 'Video Player',
     category: 'Data Display',
     description: 'Um reprodutor de vídeo de alto desempenho acelerado por GPU com efeitos de Cinema Ambient Glow off-thread, Picture-in-Picture flutuante e atalhos de teclado integrados.',
