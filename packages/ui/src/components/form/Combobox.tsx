@@ -236,7 +236,7 @@ export interface ComboboxItemProps extends React.HTMLAttributes<HTMLDivElement> 
   textValue?: string;
 }
 
-export function ComboboxItem({ className, value, children, textValue, ...props }: ComboboxItemProps) {
+export function ComboboxItem({ className, value, children, textValue, onSelect, ...props }: ComboboxItemProps & { onSelect?: (value: string) => void }) {
   const context = useContext(ComboboxContext);
   if (!context) throw new Error('ComboboxItem must be used within Combobox');
 
@@ -259,7 +259,10 @@ export function ComboboxItem({ className, value, children, textValue, ...props }
       id={id}
       role="option"
       aria-selected={isSelected}
-      onClick={() => context.onValueChange(value)}
+      onClick={() => {
+        context.onValueChange(value);
+        onSelect?.(value);
+      }}
       onMouseEnter={() => context.setActiveIndex(itemIndex)}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-2xl px-3 py-2 text-sm outline-none transition-colors",

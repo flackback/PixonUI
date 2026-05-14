@@ -62,8 +62,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.75.0(react@18.3.1))
       '@pixonui/react':
-        specifier: ^0.5.36
-        version: 0.5.37(lucide-react@0.300.0(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: workspace:*
+        version: link:../ui
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@18.3.28)(react@18.3.1)
@@ -635,13 +635,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@pixonui/react@0.5.37':
-    resolution: {integrity: sha512-vlTwu69nXvZGqrGWsSlLltpbGaiulmmquuCOOnkuEIebK4lwecnJXwfCLdkrEjCrg7VwppNW5QkHMFrexittNQ==}
-    peerDependencies:
-      lucide-react: ^0.561.0
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
 
   '@playwright/test@1.60.0':
     resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
@@ -3125,20 +3118,6 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
-
-  '@pixonui/react@0.5.37(lucide-react@0.300.0(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      lucide-react: 0.300.0(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      socket.io-client: 4.8.3
-      tailwind-merge: 2.6.1
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
 
   '@playwright/test@1.60.0':
     dependencies:

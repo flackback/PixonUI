@@ -132,6 +132,8 @@ import useScrollSpySource from '../../ui/src/hooks/useScrollSpy.ts?raw';
 import VideoPlayerSource from '../../ui/src/components/data-display/VideoPlayer.tsx?raw';
 import usePixonVideoPlayerSource from '../../ui/src/hooks/usePixonVideoPlayer.ts?raw';
 import { MotionMasterDemo } from './demos/MotionMasterDemo';
+import { SupremeWAAPIDemo } from './demos/SupremeWAAPI';
+import { SupremeShowcase } from './demos/SupremeShowcase';
 
 export type ComponentItem = {
   id: string;
@@ -1712,6 +1714,35 @@ export default function MotionMaster() {
 }`,
     componentSource: `// Acesse @pixonui/react para ver as implementações do PixonMotion`,
     demo: <MotionMasterDemo />
+  },
+  {
+    id: 'supreme-waapi',
+    title: 'Supreme WAAPI Field',
+    category: 'Templates',
+    description: 'A demonstração definitiva de arquitetura WAAPI aditiva: 100 elementos interagindo em tempo real com o cursor através de deformação de perspectiva, rodando inteiramente na GPU Compositor Thread com zero consumo de Main Thread.',
+    code: `import { SupremeWAAPIDemo } from './demos/SupremeWAAPI';
+
+// 1. Zero dependencies
+// 2. Additive composition (composite: 'add')
+// 3. Hardware acceleration (will-change)
+// 4. Automated memory cleanup (commitStyles + cancel)
+
+<SupremeWAAPIDemo />`,
+    demo: <SupremeWAAPIDemo />
+  },
+  {
+    id: 'supreme-showcase',
+    title: 'Supreme Architect Collection',
+    category: 'Templates',
+    description: 'Três exemplos avançados de física aditiva: Liquid Momentum Tabs, Quantum Card Stack e Particle Burst Engine. Demonstra o uso de composite: add para interrupções fluidas e gerenciamento de memória agressivo.',
+    code: `import { SupremeShowcase } from './demos/SupremeShowcase';
+
+// 1. Liquid Tabs: Momentum additive physics
+// 2. Quantum Stack: Proximity ripple interference
+// 3. Particle Burst: Dynamic DOM injection & auto-cleanup
+
+<SupremeShowcase />`,
+    demo: <SupremeShowcase />
   }
 ];
 

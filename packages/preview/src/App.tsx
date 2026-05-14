@@ -35,6 +35,7 @@ import { ERPView } from './saas/ERPView';
 import { AnalyticsView } from './saas/AnalyticsView';
 import { HelpDeskView } from './saas/HelpDeskView';
 import { ProjectPortalView } from './saas/ProjectPortalView';
+import { MotionShowcase } from './MotionShowcase';
 
 // Import our custom background simulator
 import { useSimulator } from './saas/useSimulator';
@@ -59,7 +60,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'gallery' | 'saas'>('landing');
+  const [view, setView] = useState<'landing' | 'gallery' | 'saas' | 'motion'>('landing');
   const [activeId, setActiveId] = useState('button');
   const [saasTab, setSaasTab] = useState('dashboard');
   const [commandOpen, setCommandOpen] = useState(false);
@@ -106,7 +107,7 @@ export default function App() {
     setCommandOpen(false);
 
     if (value.startsWith('view:')) {
-      const targetView = value.split(':')[1] as 'landing' | 'gallery' | 'saas';
+      const targetView = value.split(':')[1] as 'landing' | 'gallery' | 'saas' | 'motion';
       setView(targetView);
       toast({
         title: "Navegação rápida",
@@ -135,33 +136,23 @@ export default function App() {
     }
   };
 
-  if (view === 'landing') {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
+      {view === 'landing' && (
         <PageTransition key="landing" preset="fade" duration={400}>
           <LandingPage 
             onEnterGallery={() => setView('gallery')} 
             onEnterSaaS={() => setView('saas')}
           />
         </PageTransition>
-        <GlobalCommandPalette 
-          open={commandOpen} 
-          onOpenChange={setCommandOpen} 
-          onSelect={handleCommandAction} 
-        />
-      </ThemeProvider>
-    );
-  }
+      )}
 
-  if (view === 'saas') {
-    return (
-      <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
+      {view === 'saas' && (
         <SaaSLayout 
           activeTab={saasTab} 
           onTabChange={setSaasTab}
           onBackToLanding={() => setView('landing')}
         >
-          {/* Animated Tab View with View Transitions simulation using unique key */}
           <PageTransition key={saasTab} preset="slide-up" duration={350}>
             {saasTab === 'dashboard' && <Dashboard />}
             {saasTab === 'inbox' && <Inbox />}
@@ -174,118 +165,114 @@ export default function App() {
             {saasTab === 'projectportal' && <ProjectPortalView />}
           </PageTransition>
         </SaaSLayout>
-        <GlobalCommandPalette 
-          open={commandOpen} 
-          onOpenChange={setCommandOpen} 
-          onSelect={handleCommandAction} 
-        />
-      </ThemeProvider>
-    );
-  }
+      )}
 
-  return (
-    <ThemeProvider defaultTheme="dark" storageKey="pixonui-theme">
-      <div className="flex h-screen w-full overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-200 bg-gray-50 text-gray-900 dark:bg-black dark:text-white">
-          <Sidebar className="flex-shrink-0">
-            <SidebarHeader>
-              <div className="flex items-center justify-between px-2 w-full">
-                <div 
-                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setView('landing')}
-                >
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg shadow-purple-500/20" />
-                  <div className="font-bold text-lg tracking-tight">PixonUI</div>
-                </div>
-                <ThemeToggle />
-              </div>
-            </SidebarHeader>
-          
-          <ScrollArea className="flex-1">
-            <SidebarContent>
-              {categories.map(([category, items]) => {
-                if (category === 'AI Elements') {
-                  return (
-                    <div key={category} className="flex flex-col mb-4">
-                      {/* Collapsible Heading Trigger */}
-                      <button
-                        type="button"
-                        onClick={() => setAiExpanded(!aiExpanded)}
-                        className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Cpu className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
-                          <span>{category}</span>
-                        </div>
-                        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-250 ${!aiExpanded ? '-rotate-90' : ''}`} />
-                      </button>
-                      
-                      {/* Collapsible Items list */}
-                      {aiExpanded && (
-                        <div className="flex flex-col gap-0.5 mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                          {items.map(item => (
-                            <SidebarItem 
-                              key={item.id} 
-                              active={activeId === item.id}
-                              onClick={() => setActiveId(item.id)}
-                              className="pl-8"
-                            >
-                              {item.title}
-                            </SidebarItem>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
+      {view === 'motion' && (
+        <PageTransition key="motion" preset="fade" duration={500}>
+          <MotionShowcase onBack={() => setView('gallery')} />
+        </PageTransition>
+      )}
 
-                return (
-                  <SidebarGroup key={category} label={category}>
-                    {items.map(item => (
-                      <SidebarItem 
-                        key={item.id} 
-                        active={activeId === item.id}
-                        onClick={() => setActiveId(item.id)}
-                      >
-                        {item.title}
-                      </SidebarItem>
-                    ))}
-                  </SidebarGroup>
-                );
-              })}
-            </SidebarContent>
-          </ScrollArea>
-          
-          <SidebarFooter>
-            <UserMenu 
-              name="Preview User" 
-              description="v0.1.0" 
-              avatarSrc="https://github.com/shadcn.png" 
-            />
-          </SidebarFooter>
-        </Sidebar>
-
-        <main className="flex-1 overflow-hidden relative transition-colors duration-200 bg-gray-50 dark:bg-zinc-950">
-          <div className="absolute inset-0 bg-[url(&quot;data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E&quot;)] pointer-events-none mix-blend-overlay opacity-5 dark:opacity-20"></div>
-          
-          <ScrollArea className="h-full w-full">
-            <div className="p-10 min-h-full">
-              {/* Dynamic Page Transition for active component document changes */}
-              <PageTransition key={activeId} preset="fade" duration={300}>
-                {activeComponent && (
-                  <ComponentDoc 
-                    title={activeComponent.title}
-                    description={activeComponent.description}
-                    code={activeComponent.code}
-                    componentSource={activeComponent.componentSource}
+      {view === 'gallery' && (
+        <div className="flex h-screen w-full overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-200 bg-gray-50 text-gray-900 dark:bg-black dark:text-white">
+            <Sidebar className="flex-shrink-0">
+              <SidebarHeader>
+                <div className="flex items-center justify-between px-2 w-full">
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => setView('landing')}
                   >
-                    {activeComponent.demo}
-                  </ComponentDoc>
-                )}
-              </PageTransition>
-            </div>
-          </ScrollArea>
-        </main>
-      </div>
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg shadow-purple-500/20" />
+                    <div className="font-bold text-lg tracking-tight">PixonUI</div>
+                  </div>
+                  <ThemeToggle />
+                </div>
+              </SidebarHeader>
+            
+            <ScrollArea className="flex-1">
+              <SidebarContent>
+                {categories.map(([category, items]) => {
+                  if (category === 'AI Elements') {
+                    return (
+                      <div key={category} className="flex flex-col mb-4">
+                        <button
+                          type="button"
+                          onClick={() => setAiExpanded(!aiExpanded)}
+                          className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Cpu className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
+                            <span>{category}</span>
+                          </div>
+                          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-250 ${!aiExpanded ? '-rotate-90' : ''}`} />
+                        </button>
+                        
+                        {aiExpanded && (
+                          <div className="flex flex-col gap-0.5 mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                            {items.map(item => (
+                              <SidebarItem 
+                                key={item.id} 
+                                active={activeId === item.id}
+                                onClick={() => setActiveId(item.id)}
+                                className="pl-8"
+                              >
+                                {item.title}
+                              </SidebarItem>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <SidebarGroup key={category} label={category}>
+                      {items.map(item => (
+                        <SidebarItem 
+                          key={item.id} 
+                          active={activeId === item.id}
+                          onClick={() => setActiveId(item.id)}
+                        >
+                          {item.title}
+                        </SidebarItem>
+                      ))}
+                    </SidebarGroup>
+                  );
+                })}
+              </SidebarContent>
+            </ScrollArea>
+            
+            <SidebarFooter>
+              <UserMenu 
+                name="Preview User" 
+                description="v0.1.0" 
+                avatarSrc="https://github.com/shadcn.png" 
+              />
+            </SidebarFooter>
+          </Sidebar>
+
+          <main className="flex-1 overflow-hidden relative transition-colors duration-200 bg-gray-50 dark:bg-zinc-950">
+            <div className="absolute inset-0 bg-[url(&quot;data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E&quot;)] pointer-events-none mix-blend-overlay opacity-5 dark:opacity-20"></div>
+            
+            <ScrollArea className="h-full w-full">
+              <div className="p-10 min-h-full">
+                <PageTransition key={activeId} preset="fade" duration={300}>
+                  {activeComponent && (
+                    <ComponentDoc 
+                      title={activeComponent.title}
+                      description={activeComponent.description}
+                      code={activeComponent.code}
+                      componentSource={activeComponent.componentSource}
+                    >
+                      {activeComponent.demo}
+                    </ComponentDoc>
+                  )}
+                </PageTransition>
+              </div>
+            </ScrollArea>
+          </main>
+        </div>
+      )}
 
       <GlobalCommandPalette 
         open={commandOpen} 
@@ -305,76 +292,81 @@ interface GlobalCommandPaletteProps {
 
 function GlobalCommandPalette({ open, onOpenChange, onSelect }: GlobalCommandPaletteProps) {
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={onOpenChange} onValueChange={onSelect}>
       <CommandInput placeholder="Procure rotas, dashboards ou componentes... (Fuzzy Search)" />
       <CommandList className="max-h-[380px]">
         <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
         
         <CommandGroup heading="Ir para Geral">
-          <CommandItem value="view:landing" onSelect={() => onSelect('view:landing')}>
+          <CommandItem value="view:landing">
             <Home className="mr-2 h-4 w-4 text-zinc-500" />
             <span>Página Inicial (Landing Page)</span>
             <CommandShortcut>Go Home</CommandShortcut>
           </CommandItem>
-          <CommandItem value="view:gallery" onSelect={() => onSelect('view:gallery')}>
+          <CommandItem value="view:gallery">
             <Layers className="mr-2 h-4 w-4 text-purple-400" />
             <span>Biblioteca de Componentes (Gallery)</span>
             <CommandShortcut>Components</CommandShortcut>
           </CommandItem>
-          <CommandItem value="view:saas" onSelect={() => onSelect('view:saas')}>
+          <CommandItem value="view:saas">
             <Compass className="mr-2 h-4 w-4 text-emerald-400" />
             <span>Entrar no Portal SaaS</span>
             <CommandShortcut>SaaS Admin</CommandShortcut>
           </CommandItem>
+          <CommandItem value="view:motion">
+            <Activity className="mr-2 h-4 w-4 text-pink-400" />
+            <span>Motion Showcase (Next-Gen)</span>
+            <CommandShortcut>Go Motion</CommandShortcut>
+          </CommandItem>
         </CommandGroup>
 
         <CommandGroup heading="Painéis do SaaS">
-          <CommandItem value="saas:dashboard" onSelect={() => onSelect('saas:dashboard')}>
+          <CommandItem value="saas:dashboard">
             <LayoutDashboard className="mr-2 h-4 w-4 text-blue-400" />
             <span>Dashboard de Indicadores</span>
           </CommandItem>
-          <CommandItem value="saas:inbox" onSelect={() => onSelect('saas:inbox')}>
+          <CommandItem value="saas:inbox">
             <MessageSquare className="mr-2 h-4 w-4 text-purple-400" />
             <span>Inbox / Chat Multicanal (Mega)</span>
           </CommandItem>
-          <CommandItem value="saas:kanban" onSelect={() => onSelect('saas:kanban')}>
+          <CommandItem value="saas:kanban">
             <Trello className="mr-2 h-4 w-4 text-amber-400" />
             <span>Kanban Board & Heurísticas de IA</span>
           </CommandItem>
-          <CommandItem value="saas:crm" onSelect={() => onSelect('saas:crm')}>
+          <CommandItem value="saas:crm">
             <Users className="mr-2 h-4 w-4 text-teal-400" />
             <span>CRM de Clientes</span>
           </CommandItem>
-          <CommandItem value="saas:analytics" onSelect={() => onSelect('saas:analytics')}>
+          <CommandItem value="saas:analytics">
             <TrendingUp className="mr-2 h-4 w-4 text-indigo-400" />
             <span>Analytics & Métricas</span>
           </CommandItem>
-          <CommandItem value="saas:helpdesk" onSelect={() => onSelect('saas:helpdesk')}>
+          <CommandItem value="saas:helpdesk">
             <HelpCircle className="mr-2 h-4 w-4 text-rose-400" />
             <span>Suporte & HelpDesk</span>
           </CommandItem>
-          <CommandItem value="saas:projectportal" onSelect={() => onSelect('saas:projectportal')}>
+          <CommandItem value="saas:projectportal">
             <Briefcase className="mr-2 h-4 w-4 text-cyan-400" />
             <span>Portal de Projetos</span>
           </CommandItem>
-          <CommandItem value="saas:settings" onSelect={() => onSelect('saas:settings')}>
+          <CommandItem value="saas:settings">
             <Settings2 className="mr-2 h-4 w-4 text-zinc-400" />
             <span>Configurações do Sistema</span>
           </CommandItem>
         </CommandGroup>
 
         <CommandGroup heading="Componentes de Destaque">
-          <CommandItem value="comp:new-components" onSelect={() => onSelect('comp:new-components')}>
+          <CommandItem value="comp:new-components">
             <Cpu className="mr-2 h-4 w-4 text-yellow-400 animate-pulse" />
             <span>Modern Essentials (Dropdown & Select Multi-Variants)</span>
             <CommandShortcut>Novo</CommandShortcut>
           </CommandItem>
-          <CommandItem value="comp:form" onSelect={() => onSelect('comp:form')}>
+          <CommandItem value="comp:form">
             <Terminal className="mr-2 h-4 w-4 text-cyan-400" />
             <span>Form & Validação (Zod vs Native-First)</span>
             <CommandShortcut>FormDemo</CommandShortcut>
           </CommandItem>
-          <CommandItem value="comp:motion-physics" onSelect={() => onSelect('comp:motion-physics')}>
+          <CommandItem value="comp:motion-physics">
             <Activity className="mr-2 h-4 w-4 text-emerald-400" />
             <span>Spring &amp; Audio Physics Studio</span>
             <CommandShortcut>Studio</CommandShortcut>

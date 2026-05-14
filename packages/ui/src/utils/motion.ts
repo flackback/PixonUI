@@ -44,18 +44,12 @@ export interface UltimateAnimationOptions {
   spring?: SpringConfig;
   springType?: SpringType;
   offset?: string | number;
+  composite?: 'replace' | 'add' | 'accumulate';
 }
 
-export interface TimelineTrack {
+export interface TimelineTrack extends UltimateAnimationOptions {
   target: AnimatableTarget;
   keyframes: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>;
-  duration?: number;
-  delay?: number;
-  stagger?: number;
-  easing?: string;
-  spring?: SpringConfig;
-  springType?: SpringType;
-  offset?: string | number;
 }
 
 export interface PixonTimelineController {
@@ -295,13 +289,16 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
   if (style.blur !== undefined) {
     result.filter = `blur(${typeof style.blur === 'number' ? `${style.blur}px` : style.blur})`;
   }
+  if (style.letterSpacing !== undefined) {
+    result.letterSpacing = typeof style.letterSpacing === 'number' ? `${style.letterSpacing}px` : style.letterSpacing;
+  }
   if (transforms.length > 0) result.transform = transforms.join(' ');
 
   const excludeKeys = [
     'x', 'y', 'z', 'translateX', 'translateY', 'translateZ',
     'scale', 'scaleX', 'scaleY', 'scaleZ',
     'rotate', 'rotateX', 'rotateY', 'rotateZ',
-    'skewX', 'skewY', 'blur'
+    'skewX', 'skewY', 'blur', 'letterSpacing'
   ];
 
   Object.keys(style).forEach((key) => {
@@ -393,22 +390,14 @@ export function compileSpringKeyframes(
 /**
  * Interpolates numbers within a string. Used for SVG path morphing, complex filters, etc.
  */
-export function interpolateString(from: string, to: string, p: number): string {
-  const numberRegex = /-?\d*\.?\d+/g;
-  const fromMatches = from.match(numberRegex);
-  const toMatches = to.match(numberRegex);
-  
-  if (!fromMatches || !toMatches || fromMatches.length !== toMatches.length) {
-    return p < 0.5 ? from : to;
-  }
-  
+export function interpolateString(f: string, t: string, p: number): string {
+  const re = /-?\d*\.?\d+/g, m1 = f.match(re), m2 = t.match(re);
+  if (!m1 || !m2 || m1.length !== m2.length) return p < .5 ? f : t;
   let i = 0;
-  return to.replace(numberRegex, () => {
-    const start = parseFloat(fromMatches[i]!);
-    const target = parseFloat(toMatches[i]!);
-    const val = start + (target - start) * p;
-    i++;
-    return val % 1 === 0 ? val.toString() : val.toFixed(3);
+  return t.replace(re, () => {
+    const s = parseFloat(m1[i]!), target = parseFloat(m2[i++]!);
+    const v = s + (target - s) * p;
+    return v % 1 === 0 ? v.toString() : v.toFixed(3);
   });
 }
 
@@ -434,47 +423,21 @@ export function path(selector: string) {
  * Captures current visual state of an element, preferring active animation keyframes 
  * to avoid getComputedStyle race conditions during active motion.
  */
-export function captureElementState(el: HTMLElement, properties: string[]): Keyframe {
+export function captureElementState(el: HTMLElement, props: string[]): Keyframe {
   const state: Keyframe = {};
-  
   if (typeof window === 'undefined') return state;
-
-  const activeAnims = el.getAnimations ? el.getAnimations() : [];
-  
-  // Try to find properties in active animations first (state stability)
-  if (activeAnims.length > 0) {
-    activeAnims.forEach(anim => {
-      if (anim.effect instanceof KeyframeEffect) {
-        const kfs = anim.effect.getKeyframes();
-        if (kfs.length > 0) {
-          const lastKf = kfs[kfs.length - 1];
-          properties.forEach(prop => {
-            if (lastKf[prop] !== undefined) state[prop] = lastKf[prop];
-          });
-        }
-      }
-    });
+  const anims = el.getAnimations?.() || [];
+  anims.forEach(a => {
+    if (a.effect instanceof KeyframeEffect) {
+      const kf = a.effect.getKeyframes().at(-1);
+      if (kf) props.forEach(p => kf[p] !== undefined && (state[p] = kf[p]));
+    }
+  });
+  const miss = props.filter(p => state[p] === undefined);
+  if (miss.length > 0) {
+    const s = getComputedStyle(el);
+    miss.forEach(p => state[p] = s.getPropertyValue(p) || (s as any)[p]);
   }
-
-  // Fallback to getComputedStyle for missing properties
-  const missing = properties.filter(p => state[p] === undefined);
-  if (missing.length > 0) {
-    const computed = window.getComputedStyle(el);
-    missing.forEach(prop => {
-      if (prop === 'transform') {
-        state.transform = computed.transform || 'none';
-      } else if (prop === 'filter') {
-        state.filter = computed.filter || 'none';
-      } else {
-        const val = (computed as any)[prop];
-        if (val !== undefined && val !== '') {
-          const num = parseFloat(val);
-          state[prop] = isNaN(num) ? val : num;
-        }
-      }
-    });
-  }
-
   return state;
 }
 
@@ -592,89 +555,45 @@ export class PixonTimeline {
   public play(): PixonTimelineController {
     this.cancel();
     this.activeAnimations = [];
-    let prevTrackStart = 0;
-    let prevTrackEnd = 0;
+    let prevStart = 0;
+    let end = 0;
     const completedPromises: Promise<void>[] = [];
-
-    this.tracks.forEach((track) => {
-      const targets = this.resolveTargets(track.target);
-      if (targets.length === 0) return;
-
-      let trackStart = prevTrackEnd;
-      if (track.offset !== undefined) {
-        if (typeof track.offset === 'number') trackStart = track.offset;
-        else if (typeof track.offset === 'string') {
-          const off = track.offset.trim();
-          if (off.startsWith('+=')) trackStart = prevTrackEnd + parseFloat(off.slice(2));
-          else if (off.startsWith('-=')) trackStart = prevTrackEnd - parseFloat(off.slice(2));
-          else if (off.startsWith('<')) {
-            const mod = off.slice(1);
-            if (mod.startsWith('+=')) trackStart = prevTrackStart + parseFloat(mod.slice(2));
-            else if (mod.startsWith('-=')) trackStart = prevTrackStart - parseFloat(mod.slice(2));
-            else if (mod) trackStart = prevTrackStart + parseFloat(mod);
-            else trackStart = prevTrackStart;
-          } else if (off.startsWith('>')) {
-            const mod = off.slice(1);
-            if (mod.startsWith('+=')) trackStart = prevTrackEnd + parseFloat(mod.slice(2));
-            else if (mod.startsWith('-=')) trackStart = prevTrackEnd - parseFloat(mod.slice(2));
-            else if (mod) trackStart = prevTrackEnd + parseFloat(mod);
-            else trackStart = prevTrackEnd;
-          }
-        }
+    this.tracks.forEach(t => {
+      const targets = this.resolveTargets(t.target);
+      if (!targets.length) return;
+      let start = end, kfs = t.keyframes as Keyframe[], dur = t.duration ?? 400, easing = t.easing ?? 'cubic-bezier(.16,1,.3,1)';
+      if (t.offset !== undefined) {
+        const off = String(t.offset);
+        if (off.startsWith('+=')) start = end + parseFloat(off.slice(2));
+        else if (off.startsWith('-=')) start = end - parseFloat(off.slice(2));
+        else if (off.startsWith('<')) start = prevStart + (parseFloat(off.slice(1)) || 0);
+        else if (off.startsWith('>')) start = end + (parseFloat(off.slice(1)) || 0);
+        else start = parseFloat(off);
       }
-      trackStart = Math.max(0, trackStart);
-
-      let resolvedKeyframes = track.keyframes as Keyframe[];
-      let resolvedDuration = track.duration ?? 400;
-      let resolvedEasing = track.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)';
-
-      // Detect if we need custom interpolation (SVG paths or spring physics)
-      const needsCustomInterpolation = track.spring || (Array.isArray(track.keyframes) && track.keyframes.some(kf => 'd' in kf));
-
-      if (needsCustomInterpolation) {
-        let first: Keyframe = {}, last: Keyframe = {};
-        const kfs = track.keyframes as Keyframe[];
-        
-        if (kfs.length >= 2) {
-          first = kfs[0]!;
-          last = kfs[kfs.length - 1]!;
-        } else if (kfs.length === 1) {
-          const el = targets[0] as HTMLElement;
-          if (el) {
-            last = kfs[0]!;
-            first = captureElementState(el, Object.keys(last));
-          }
-        }
-
-        if (Object.keys(last).length > 0) {
-          // Use spring config or a default smooth transition for non-spring path morphs
-          const springConfig = track.spring || { stiffness: 170, damping: 26 }; 
-          const { keyframes, duration } = compileSpringKeyframes(first, last, springConfig, track.springType);
-          
-          // Only override duration if spring was explicitly requested
-          if (track.spring) {
-            resolvedDuration = duration;
-            resolvedEasing = 'linear';
-          }
-          resolvedKeyframes = keyframes;
-        }
+      start = Math.max(0, start);
+      if (t.spring || (Array.isArray(t.keyframes) && t.keyframes.some(k => 'd' in k))) {
+        const last = (kfs.at(-1) || {}) as Keyframe, first = kfs.length > 1 ? (kfs[0] as Keyframe) : (targets[0] instanceof HTMLElement ? captureElementState(targets[0], Object.keys(last)) : {});
+        const s = compileSpringKeyframes(first, last, t.spring || { stiffness: 170, damping: 26 }, t.springType);
+        if (t.spring) { dur = s.duration; easing = 'linear'; }
+        kfs = s.keyframes;
       }
-
-      const staggerDelay = track.stagger ?? track.delay ?? 0;
-      let maxElDur = 0;
-      targets.forEach((el, idx) => {
-        const itemDelay = trackStart + (idx * staggerDelay);
-        const anim = el.animate(resolvedKeyframes as Keyframe[], { delay: itemDelay, duration: resolvedDuration, easing: resolvedEasing, fill: 'both' });
-        this.activeAnimations.push(anim);
-        const elDur = itemDelay + resolvedDuration;
-        if (elDur > maxElDur) maxElDur = elDur;
-        completedPromises.push(new Promise(r => { anim.onfinish = () => r(); anim.oncancel = () => r(); }));
+      const stagger = t.stagger ?? t.delay ?? 0;
+      let maxD = 0;
+      targets.forEach((el: any, i) => {
+        const d = start + (i * stagger);
+        if (el.style) el.style.willChange = 'transform, opacity';
+        const a = el.animate(kfs, { delay: d, duration: dur, easing, fill: 'both', composite: t.composite || 'add' });
+        this.activeAnimations.push(a);
+        maxD = Math.max(maxD, d + dur);
+        completedPromises.push(a.finished.then(() => {
+          if (a.playState === 'finished' && el.isConnected) {
+            a.commitStyles(); a.cancel(); if (el.style) el.style.willChange = 'auto';
+          }
+        }).catch(() => {}));
       });
-      prevTrackStart = trackStart;
-      prevTrackEnd = maxElDur;
+      prevStart = start; end = maxD;
     });
-
-    Promise.all(completedPromises).then(() => { if (this.resolveFinished) this.resolveFinished(); });
+    Promise.all(completedPromises).then(() => this.resolveFinished?.());
     return this.getController();
   }
 

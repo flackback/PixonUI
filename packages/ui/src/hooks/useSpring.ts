@@ -38,12 +38,13 @@ export function useSpring(
 
   useEffect(() => {
     const animate = () => {
-      const distance = targetValue - currentRef.current;
-      const force = distance * stiffness;
-      const acceleration = force / mass;
-      
-      velocityRef.current = (velocityRef.current + acceleration) * damping;
-      currentRef.current += velocityRef.current;
+        const distance = targetValue - currentRef.current;
+        // Proper Hooke's Law: force = stiffness * distance - damping * velocity
+        const force = (distance * (stiffness / 100)) - (velocityRef.current * (damping / 10));
+        const acceleration = force / mass;
+        
+        velocityRef.current += acceleration;
+        currentRef.current += velocityRef.current;
 
       if (Math.abs(distance) < precision && Math.abs(velocityRef.current) < precision) {
         currentRef.current = targetValue;

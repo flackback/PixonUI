@@ -103,8 +103,7 @@ export function AnimeLogoDemo() {
   }, [key]);
 
   return (
-    <div ref={containerRef} className="w-full h-[600px] flex items-center justify-center bg-[#F6F4F2] rounded-3xl relative overflow-hidden border border-zinc-200 shadow-2xl">
-      <DotGrid opacity={0.3} spacing={40} />
+    <div ref={wrapperRef} className="logo-animation-wrapper relative w-full h-[600px] flex items-center justify-center overflow-visible">
       <div className="main-logo-circle absolute w-[550px] h-[550px] rounded-full bg-white z-0 flex items-center justify-center"
         style={{
           boxShadow: '0 10px 80px rgba(0,0,0,0.02)',
@@ -112,41 +111,32 @@ export function AnimeLogoDemo() {
           opacity: 0
         }}
       />
-      <div className="main-logo w-full max-w-[600px] flex flex-col z-10 items-center justify-center h-full">
-        <div ref={wrapperRef} className="logo-animation-wrapper relative w-full h-[150px]">
-          <div ref={logoAnimRef} className="logo-animation absolute top-1/2 left-1/2 w-[1000px] h-[240px] -mt-[120px] -ml-[500px] flex flex-col justify-center items-center pointer-events-none overflow-visible">
-            <style>{`
-              .anime-logo-signs { display: flex; align-items: flex-end; height: 512px; margin-top: -352px; overflow: visible; position: relative; width: 1000px; }
-              .logo-letter { display: flex; align-items: flex-end; height: 100%; overflow: hidden; }
-              .bounced { transform-origin: 50% 100% 0px; transform: translateY(200px); }
-              .line { fill: none; stroke: #333; stroke-width: 40; stroke-linecap: square; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
-              .dot { position: absolute; top: 0; left: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; background-color: #333; border-radius: 4px; z-index: 10; pointer-events: none; }
-              .logo-text { opacity: 0; margin-top: 30px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .3em; color: #333; text-transform: uppercase; text-align: center; width: 100%; }
-            `}</style>
-            <div className="anime-logo w-full h-[120px]">
-              <div className="anime-logo-signs">
-                {['a', 'n', 'i', 'm', 'e'].map((l, i) => (
-                  <div key={l + i} className={`logo-letter letter-${l}`}>
-                    <svg className="bounced" viewBox={`0 0 ${l === 'i' ? 60 : (l === 'm' ? 340 : 200)} 240`} width={l === 'i' ? 60 : (l === 'm' ? 340 : 200)} height="240">
-                      <path className="line" d={l === 'a' ? "M30 20h130c9.996 0 10 40 10 60v140H41c-11.004 0-11-40-11-60s-.004-60 10-60h110" :
-                        l === 'n' ? "M170 220V60c0-31.046-8.656-40-19.333-40H49.333C38.656 20 30 28.954 30 60v160" :
-                          l === 'i' ? PATH_DATA.i.d1 :
-                            l === 'm' ? PATH_DATA.m.d1 :
-                              "M50 140h110c10 0 10-40 10-60s0-60-10-60H40c-10 0-10 40-10 60v80c0 20 0 60 10 60h130"} />
-                    </svg>
-                  </div>
-                ))}
-                <div className="dot" style={{ opacity: 0 }} />
+      <div ref={logoAnimRef} className="logo-animation absolute top-1/2 left-1/2 w-[1000px] h-[240px] -mt-[120px] -ml-[500px] flex flex-col justify-center items-center pointer-events-none overflow-visible z-10">
+        <style>{`
+          .anime-logo-signs { display: flex; align-items: flex-end; height: 512px; margin-top: -352px; overflow: visible; position: relative; width: 1000px; }
+          .logo-letter { display: flex; align-items: flex-end; height: 100%; overflow: hidden; }
+          .bounced { transform-origin: 50% 100% 0px; transform: translateY(200px); }
+          .line { fill: none; stroke: #333; stroke-width: 40; stroke-linecap: square; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
+          .dot { position: absolute; top: 0; left: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; background-color: #333; border-radius: 4px; z-index: 10; pointer-events: none; }
+          .logo-text { opacity: 0; margin-top: 30px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .3em; color: #333; text-transform: uppercase; text-align: center; width: 100%; }
+        `}</style>
+        <div className="anime-logo w-full h-[120px]">
+          <div className="anime-logo-signs">
+            {['a', 'n', 'i', 'm', 'e'].map((l, i) => (
+              <div key={l + i} className={`logo-letter letter-${l}`}>
+                <svg className="bounced" viewBox={`0 0 ${l === 'i' ? 60 : (l === 'm' ? 340 : 200)} 240`} width={l === 'i' ? 60 : (l === 'm' ? 340 : 200)} height="240">
+                  <path className="line" d={l === 'a' ? "M30 20h130c9.996 0 10 40 10 60v140H41c-11.004 0-11-40-11-60s-.004-60 10-60h110" :
+                    l === 'n' ? "M170 220V60c0-31.046-8.656-40-19.333-40H49.333C38.656 20 30 28.954 30 60v160" :
+                      l === 'i' ? PATH_DATA.i.d1 :
+                        l === 'm' ? PATH_DATA.m.d1 :
+                          "M50 140h110c10 0 10-40 10-60s0-60-10-60H40c-10 0-10 40-10 60v80c0 20 0 60 10 60h130"} />
+                </svg>
               </div>
-              <div className="logo-text">PixonUI Motion Engine</div>
-            </div>
+            ))}
+            <div className="dot" style={{ opacity: 0 }} />
           </div>
+          <div className="logo-text">PixonUI Motion Engine</div>
         </div>
-      </div>
-      <div className="absolute top-8 right-8 z-20">
-        <button onClick={() => setKey(k => k + 1)} className="p-4 rounded-full bg-white shadow-lg hover:shadow-xl hover:scale-105 transition-all text-zinc-600 active:scale-95">
-          <RefreshCw className="w-6 h-6" />
-        </button>
       </div>
     </div>
   );
