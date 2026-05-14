@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { timeline, path } from '@pixonui/react';
+import { timeline, path, DotGrid } from '@pixonui/react';
 import { RefreshCw } from 'lucide-react';
 
 const PATH_DATA = {
@@ -14,67 +14,7 @@ const PATH_DATA = {
   }
 };
 
-function ReactiveGrid() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouse = useRef({ x: -1000, y: -1000 });
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    let animationFrameId: number;
-    let width: number, height: number;
-    const spacing = 40;
-    const dots: { x: number; y: number; ox: number; oy: number }[] = [];
-    const resize = () => {
-      width = canvas.width = canvas.offsetWidth;
-      height = canvas.height = canvas.offsetHeight;
-      dots.length = 0;
-      for (let x = spacing / 2; x < width; x += spacing) {
-        for (let y = spacing / 2; y < height; y += spacing) {
-          dots.push({ x, y, ox: x, oy: y });
-        }
-      }
-    };
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = '#D1D1D1';
-      dots.forEach(dot => {
-        const dx = mouse.current.x - dot.ox;
-        const dy = mouse.current.y - dot.oy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = 120;
-        if (dist < maxDist) {
-          const angle = Math.atan2(dy, dx);
-          const force = (maxDist - dist) / maxDist;
-          dot.x = dot.ox - Math.cos(angle) * force * 15;
-          dot.y = dot.oy - Math.sin(angle) * force * 15;
-        } else {
-          dot.x += (dot.ox - dot.x) * 0.1;
-          dot.y += (dot.oy - dot.y) * 0.1;
-        }
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      animationFrameId = requestAnimationFrame(render);
-    };
-    window.addEventListener('resize', resize);
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    resize();
-    render();
-    return () => {
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-30 pointer-events-none z-0" />;
-}
+
 
 export function AnimeLogoDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -164,7 +104,7 @@ export function AnimeLogoDemo() {
 
   return (
     <div ref={containerRef} className="w-full h-[600px] flex items-center justify-center bg-[#F6F4F2] rounded-3xl relative overflow-hidden border border-zinc-200 shadow-2xl">
-      <ReactiveGrid />
+      <DotGrid opacity={0.3} spacing={40} />
       <div className="main-logo-circle absolute w-[550px] h-[550px] rounded-full bg-white z-0 flex items-center justify-center"
         style={{
           boxShadow: '0 10px 80px rgba(0,0,0,0.02)',

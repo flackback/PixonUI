@@ -159,6 +159,7 @@ export * from './components/data-display/CopyBlock';
 export * from './components/effects/Confetti';
 export * from './components/effects/Spotlight';
 export * from './components/effects/RetroGrid';
+export * from './components/effects/DotGrid';
 export * from './components/shared/TestimonialCard';
 export * from './components/data-display/TaskTimeline';
 
