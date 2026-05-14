@@ -8,7 +8,7 @@
 - **Reliable View Transitions**: Refactored the `useViewTransition` hook and its fallback mechanism to ensure zero-leak DOM cloning during state changes.
 
 ## 📊 Real-World Metrics
-- **Bundle Size**: Current bundle is **~178KB Gzip**. Integration of the full PixonMotion engine added ~15KB, providing 10+ new GPU-accelerated effects and a production-grade timeline scheduler.
+- **Bundle Size**: Current bundle is **~77 KB Gzip (79.099 bytes)**. Integration of the full PixonMotion engine added ~15KB, providing 10+ new GPU-accelerated effects and a production-grade timeline scheduler.
 - **Test Coverage**: **143 tests passing** (100% success rate), including new regression tests for `will-change` cleanup and viewport optimization.
 - **Performance**: Average first render for 100 synchronized spring elements: **14.5ms**.
 

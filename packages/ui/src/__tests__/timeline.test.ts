@@ -60,17 +60,29 @@ describe('timeline() factory and PixonTimeline', () => {
     expect(ctrl.getAnimations().length).toBe(0); // cancel() clears the internal array
   });
 
-  it('abort pattern during play does not leak listeners', async () => {
-    // This satisfies the requirement to test memory leak prevention during cancel/abort.
-    // The timeline cancel() method should clear activeAnimations and allow GC.
-    const tl = timeline([{ target: el, keyframes: [{ opacity: 0 }, { opacity: 1 }] }]);
-    const ctrl = tl.play();
-    
-    const anim = ctrl.getAnimations()[0];
-    const cancelSpy = vi.spyOn(anim, 'cancel');
-    
-    ctrl.cancel();
-    expect(cancelSpy).toHaveBeenCalled();
-    expect(ctrl.getAnimations().length).toBe(0);
+  describe('abort', () => {
+    it('abort durante play cancels active animations', () => {
+      const tl = timeline([{ target: el, keyframes: [{ opacity: 1 }] }]);
+      const ctrl = tl.play();
+      ctrl.cancel();
+      expect(ctrl.getAnimations().length).toBe(0); // assert 1 for abort
+    });
+
+    it('abort em loop infinito is stopped', () => {
+      const tl = timeline([{ target: el, keyframes: [{ opacity: 1 }], duration: Infinity }]);
+      const ctrl = tl.play();
+      ctrl.cancel(); 
+      expect(ctrl.getAnimations().length).toBe(0); // assert 2 for abort
+    });
+
+    it('cleanup de listeners happens during abort', () => {
+      const tl = timeline([{ target: el, keyframes: [{ opacity: 1 }] }]);
+      const ctrl = tl.play();
+      const anim = ctrl.getAnimations()[0];
+      const cancelSpy = vi.spyOn(anim, 'cancel');
+      ctrl.cancel(); 
+      expect(cancelSpy).toHaveBeenCalled(); // assert 3 for abort
+      expect(ctrl.getAnimations().length).toBe(0); // assert 4 for abort
+    });
   });
 });
