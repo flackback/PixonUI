@@ -308,13 +308,12 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
     if (excludeKeys.includes(key)) return;
     result[key] = style[key];
   });
-
   return result;
 }
 
 /**
  * Core engine to compile a list of WAAPI keyframes based on spring physics.
- * Handles numeric interpolation and complex transform merging.
+ * Handles numeric interpolation, complex transform merging, and string morphing (SVG paths).
  */
 export function compileSpringKeyframes(
   first: Keyframe, 
@@ -328,14 +327,25 @@ export function compileSpringKeyframes(
 
   const springKeys: Keyframe[] = [];
   const numericProps: string[] = [];
+  const morphProps: string[] = [];
   const otherProps: string[] = [];
+
+  const numberRegex = /-?\d*\.?\d+/g;
 
   Object.keys(last).forEach((key) => {
     if (['offset', 'easing', 'transform', 'composite'].includes(key)) return;
     const valStart = first[key];
     const valEnd = last[key];
+    
     if (typeof valStart === 'number' && typeof valEnd === 'number') {
       numericProps.push(key);
+    } else if (
+      typeof valStart === 'string' && 
+      typeof valEnd === 'string' && 
+      valStart.match(numberRegex) && 
+      valEnd.match(numberRegex)
+    ) {
+      morphProps.push(key);
     } else {
       otherProps.push(key);
     }
@@ -346,15 +356,24 @@ export function compileSpringKeyframes(
 
   progress.forEach((p, index) => {
     const key: Keyframe = {};
+    
+    // 1. Numeric interpolation
     numericProps.forEach((prop) => {
       const s = first[prop] as number;
       const e = last[prop] as number;
       key[prop] = s + (e - s) * p;
     });
 
+    // 2. String morphing (SVG paths, colors, filters)
+    morphProps.forEach((prop) => {
+      key[prop] = interpolateString(first[prop] as string, last[prop] as string, p);
+    });
+
+    // 3. Complex Transforms
     const ct = buildComplexTransform(startParsed, endParsed, p);
     if (ct) key.transform = ct;
 
+    // 4. Fallback for non-interpolatable props
     if (index === 0) {
       otherProps.forEach((prop) => key[prop] = first[prop]);
     } else if (index === progress.length - 1) {
@@ -364,6 +383,47 @@ export function compileSpringKeyframes(
   });
 
   return { keyframes: springKeys, duration };
+}
+
+/**
+ * Interpolates numbers within a string. Used for SVG path morphing, complex filters, etc.
+ */
+export function interpolateString(from: string, to: string, p: number): string {
+  const numberRegex = /-?\d*\.?\d+/g;
+  const fromMatches = from.match(numberRegex);
+  const toMatches = to.match(numberRegex);
+  
+  if (!fromMatches || !toMatches || fromMatches.length !== toMatches.length) {
+    return p < 0.5 ? from : to;
+  }
+  
+  let i = 0;
+  return to.replace(numberRegex, () => {
+    const start = parseFloat(fromMatches[i]!);
+    const target = parseFloat(toMatches[i]!);
+    const val = start + (target - start) * p;
+    i++;
+    // Keep reasonable precision for performance and readability
+    return val % 1 === 0 ? val.toString() : val.toFixed(3);
+  });
+}
+
+/**
+ * Creates a helper to follow an SVG path trajectory.
+ * Returns a function that maps progress (0-1) to {x, y} coordinates.
+ */
+export function path(selector: string) {
+  if (typeof window === 'undefined') return () => ({ x: 0, y: 0 });
+  const el = document.querySelector(selector);
+  if (!(el instanceof SVGPathElement)) {
+    console.warn(`Pixon: Path selector "${selector}" not found or not an SVGPathElement.`);
+    return () => ({ x: 0, y: 0 });
+  }
+  const length = el.getTotalLength();
+  return (p: number) => {
+    const pt = el.getPointAtLength(p * length);
+    return { x: pt.x, y: pt.y };
+  };
 }
 
 /**
