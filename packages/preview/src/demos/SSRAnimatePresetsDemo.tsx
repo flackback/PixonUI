@@ -15,10 +15,10 @@ export default function SSRAnimatePresetsDemo() {
       
       <Grid columns={{ base: 2, md: 4, lg: 6 }} gap={4}>
         {presets.map((preset) => (
-          <div key={preset} className="relative group p-4 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center min-h-[120px] overflow-hidden hover:border-purple-500/50 transition-colors">
-            <PixonSSRAnimate preset={preset} trigger="load" className="text-center">
+          <div key={preset as string} className="relative group p-4 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center min-h-[120px] overflow-hidden hover:border-purple-500/50 transition-colors">
+            <PixonSSRAnimate preset={preset as any} trigger="load" className="text-center">
               <div className="w-10 h-10 bg-purple-500 rounded-lg mx-auto mb-2 group-hover:bg-purple-400 transition-colors" />
-              <span className="text-xs font-mono text-zinc-300">{preset}</span>
+              <span className="text-xs font-mono text-zinc-300">{preset as string}</span>
             </PixonSSRAnimate>
           </div>
         ))}

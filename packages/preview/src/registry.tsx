@@ -81,6 +81,8 @@ import { BackgroundDemo } from './demos/BackgroundDemo';
 import { HeroDemo } from './demos/HeroDemo';
 import { DashboardDemo } from './demos/DashboardDemo';
 import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
+import { AnimeTextDemo } from './demos/AnimeTextDemo';
+import AnimeTextSource from '../../ui/src/components/typography/AnimeText.tsx?raw';
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
 import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
@@ -1317,6 +1319,23 @@ ${HeroTextSource}
 // LetterPullup.tsx
 ${LetterPullupSource}`,
     demo: <HeroDemo />
+  },
+  {
+    id: 'anime-text',
+    title: 'Anime.js Text Reveal',
+    category: 'Data Display',
+    description: 'Cinematic hardware-accelerated text reveals built directly on top of the PixonMotion engine. Recreates famous Anime.js letter staggers.',
+    code: `import { AnimeText } from '@pixonui/react';
+
+<AnimeText 
+  text="Cinematic Reveal" 
+  effect="bounce" 
+  staggerDelay={0.06} 
+  className="text-4xl font-black"
+/>`,
+    componentSource: `// AnimeText.tsx
+\${AnimeTextSource}`,
+    demo: <AnimeTextDemo />
   },
   {
     id: 'dashboard',

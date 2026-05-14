@@ -12,6 +12,7 @@ export * from './components/typography/HeroText';
 export * from './components/typography/LetterPullup';
 export * from './components/typography/WordReveal';
 export * from './components/typography/Typewriter';
+export * from './components/typography/AnimeText';
 export * from './components/form/Label';
 export * from './components/form/TextInput';
 export * from './components/form/Checkbox';

@@ -405,7 +405,7 @@ export class PixonTimeline {
             Object.keys(last).forEach(k => {
               if (k === 'transform') return;
               if (k === 'opacity') first.opacity = parseFloat(style.opacity) || 1;
-              else if (typeof last[k] === 'number') first[k] = parseFloat(style[k as any]) || 0;
+              else if (typeof last[k] === 'number') first[k] = parseFloat((style as any)[k] || '0') || 0;
             });
             if (last.transform) {
               if (String(last.transform).includes('translate3d')) first.transform = (first.transform ?? '') + ' translate3d(0px, 0px, 0px)';
