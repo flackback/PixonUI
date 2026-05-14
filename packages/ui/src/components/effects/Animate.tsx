@@ -1,6 +1,5 @@
 import React, { useEffect, useLayoutEffect, forwardRef, useState, useRef } from 'react';
 import { usePixonAnimate } from '../../hooks/usePixonAnimate';
-import { SpringConfig } from '../../utils/motion';
 import { usePresenceContext } from './AnimatePresence';
 import { useLayoutGroup } from './LayoutGroup';
 import { VariantProvider, useVariantContext } from './VariantContext';
@@ -17,7 +16,7 @@ export interface AnimateProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(({ layoutId, layout, custom, variants, initial, animate: targetAnimate, exit: targetExit, whileHover, whileTap, whileInView, viewport, transition, as: Component = 'div', style, children, onPointerEnter, onPointerLeave, onPointerDown, onPointerUp, ...props }, forwardedRef) => {
-  const { ref: internalRef, animate, cancel } = usePixonAnimate(), presence = usePresenceContext(), layoutGroup = useLayoutGroup(), vCtx = useVariantContext();
+  const { ref: internalRef, animate, cancel } = usePixonAnimate(), presence = usePresenceContext(), lGrp = useLayoutGroup(), vCtx = useVariantContext();
   const [staggerIdx] = useState(() => vCtx?.registerChild?.() ?? 0), [isInView, setIsInView] = useState(false);
   const lastAnimate = useRef<string>(''), lastInView = useRef<string>('');
 
@@ -42,6 +41,18 @@ export const PixonMotion = forwardRef<HTMLElement, AnimateProps>(({ layoutId, la
     }, { root: viewport?.root?.current || null, rootMargin: viewport?.rootMargin, threshold: typeof viewport?.amount === 'number' ? viewport.amount : (viewport?.amount === 'all' ? .95 : .1) });
     obs.observe(internalRef.current); return () => obs.disconnect();
   }, [whileInView, viewport]);
+
+  useLayoutEffect(() => {
+    if (!layoutId || !lGrp || !internalRef.current) return;
+    const old = lGrp.getRect(layoutId), el = internalRef.current, cur = el.getBoundingClientRect();
+    if (old && (old.left !== cur.left || old.top !== cur.top || old.width !== cur.width || old.height !== cur.height)) {
+      const dx = old.left - cur.left, dy = old.top - cur.top, dw = layout === 'position' ? 1 : old.width / (cur.width || 1), dh = layout === 'position' ? 1 : old.height / (cur.height || 1);
+      el.style.transformOrigin = 'top left';
+      el.animate([{ transform: `translate3d(${dx}px,${dy}px,0) scale(${dw},${dh})` }, { transform: 'none' }], { duration: transition?.duration || 600, easing: transition?.easing || 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+    }
+    lGrp.setRect(layoutId, cur); // Proactive registration
+    return () => { if (internalRef.current) lGrp.setRect(layoutId, internalRef.current.getBoundingClientRect()); };
+  }, [layoutId, lGrp]);
 
   const trigger = (t: any) => {
     if (!t || !internalRef.current) return null;

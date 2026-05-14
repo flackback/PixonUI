@@ -134,6 +134,7 @@ import usePixonVideoPlayerSource from '../../ui/src/hooks/usePixonVideoPlayer.ts
 import { MotionMasterDemo } from './demos/MotionMasterDemo';
 import { SupremeWAAPIDemo } from './demos/SupremeWAAPI';
 import { SupremeShowcase } from './demos/SupremeShowcase';
+import { PortalGallery } from './demos/PortalGallery';
 
 export type ComponentItem = {
   id: string;
@@ -1743,6 +1744,20 @@ export default function MotionMaster() {
 
 <SupremeShowcase />`,
     demo: <SupremeShowcase />
+  },
+  {
+    id: 'portal-gallery',
+    title: 'Omni-Motion: Portal Gallery',
+    category: 'Templates',
+    description: 'Shared Element Transition de alta fidelidade. Utiliza a tríade divina (WAAPI + FLIP + Physics) para expandir elementos da grade para um estado imersivo com continuidade perceptual absoluta.',
+    code: `import { PortalGallery } from './demos/PortalGallery';
+
+// 1. First, Last, Invert, Play (FLIP)
+// 2. Shared layoutId projection
+// 3. Kinetic Orchestration (Staggered content)
+
+<PortalGallery />`,
+    demo: <PortalGallery />
   }
 ];
 
