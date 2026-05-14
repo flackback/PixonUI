@@ -34,23 +34,27 @@ export type AnimatableTarget =
   | { current: HTMLElement | null } 
   | Array<{ current: HTMLElement | null } | Element | null>;
 
+export type SpringType = 'standard' | 'impulse';
+
 export interface UltimateAnimationOptions {
   duration?: number;
   delay?: number;
   stagger?: number;
   easing?: string;
   spring?: SpringConfig;
+  springType?: SpringType;
   offset?: string | number;
 }
 
 export interface TimelineTrack {
   target: AnimatableTarget;
-  keyframes: Keyframe[] | PropertyIndexedKeyframes;
+  keyframes: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>;
   duration?: number;
   delay?: number;
   stagger?: number;
   easing?: string;
   spring?: SpringConfig;
+  springType?: SpringType;
   offset?: string | number;
 }
 
@@ -64,6 +68,80 @@ export interface PixonTimelineController {
   finished: Promise<void>;
   /** Get all playing WAAPI active Animation objects */
   getAnimations: () => Animation[];
+}
+
+/** 
+ * Utility to expand array-valued properties and parse shorthand shortcuts.
+ * Transforms { scale: [1, 1.2], x: 0 } into [{ scale: 1, x: 0 }, { scale: 1.2, x: 0 }]
+ */
+export function prepareKeyframes(input: any): Keyframe[] {
+  let processed = input;
+  
+  const isObject = (v: any) => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+  // 1. Expand array-valued properties (PropertyIndexedKeyframes style)
+  if (isObject(input)) {
+    const keys = Object.keys(input);
+    const maxArrayLength = keys.reduce((max, key) => 
+      Array.isArray(input[key]) ? Math.max(max, input[key].length) : max, 0);
+
+    if (maxArrayLength > 0) {
+      const list: any[] = [];
+      for (let i = 0; i < maxArrayLength; i++) {
+        const kf: any = {};
+        keys.forEach(key => {
+          const val = input[key];
+          if (Array.isArray(val)) {
+            const index = maxArrayLength > 1 
+              ? Math.min(val.length - 1, Math.round((i / (maxArrayLength - 1)) * (val.length - 1)))
+              : 0;
+            kf[key] = val[index];
+          } else {
+            kf[key] = val;
+          }
+        });
+        list.push(kf);
+      }
+      processed = list;
+    } else {
+      processed = [input];
+    }
+  } else if (Array.isArray(input)) {
+    // Handle list of objects that might contain arrays (nested expansion)
+    if (input.length === 1 && isObject(input[0])) {
+      const firstKf = input[0];
+      const keys = Object.keys(firstKf);
+      const maxArrayLength = keys.reduce((max, key) => 
+        Array.isArray(firstKf[key]) ? Math.max(max, firstKf[key].length) : max, 0);
+
+      if (maxArrayLength > 0) {
+        const list: any[] = [];
+        for (let i = 0; i < maxArrayLength; i++) {
+          const kf: any = {};
+          keys.forEach(key => {
+            const val = firstKf[key];
+            if (Array.isArray(val)) {
+              const index = maxArrayLength > 1 
+                ? Math.min(val.length - 1, Math.round((i / (maxArrayLength - 1)) * (val.length - 1)))
+                : 0;
+              kf[key] = val[index];
+            } else {
+              kf[key] = val;
+            }
+          });
+          list.push(kf);
+        }
+        processed = list;
+      }
+    }
+  }
+
+  // 2. Parse style shortcuts (x, y, scale, etc.)
+  const result = Array.isArray(processed) 
+    ? processed.map(kf => parseStyleShortcuts(kf))
+    : [parseStyleShortcuts(processed)];
+
+  return result as Keyframe[];
 }
 
 // 2. Spring Physics
@@ -234,6 +312,108 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
   return result;
 }
 
+/**
+ * Core engine to compile a list of WAAPI keyframes based on spring physics.
+ * Handles numeric interpolation and complex transform merging.
+ */
+export function compileSpringKeyframes(
+  first: Keyframe, 
+  last: Keyframe, 
+  spring: SpringConfig, 
+  springType: SpringType = 'standard'
+): { keyframes: Keyframe[], duration: number } {
+  const { progress, duration } = springType === 'impulse'
+    ? generateSpringImpulseTrajectory(spring)
+    : generateSpringTrajectory(0, 1, spring);
+
+  const springKeys: Keyframe[] = [];
+  const numericProps: string[] = [];
+  const otherProps: string[] = [];
+
+  Object.keys(last).forEach((key) => {
+    if (['offset', 'easing', 'transform', 'composite'].includes(key)) return;
+    const valStart = first[key];
+    const valEnd = last[key];
+    if (typeof valStart === 'number' && typeof valEnd === 'number') {
+      numericProps.push(key);
+    } else {
+      otherProps.push(key);
+    }
+  });
+
+  const startParsed = parseComplexTransform(first.transform as string || '');
+  const endParsed = parseComplexTransform(last.transform as string || '');
+
+  progress.forEach((p, index) => {
+    const key: Keyframe = {};
+    numericProps.forEach((prop) => {
+      const s = first[prop] as number;
+      const e = last[prop] as number;
+      key[prop] = s + (e - s) * p;
+    });
+
+    const ct = buildComplexTransform(startParsed, endParsed, p);
+    if (ct) key.transform = ct;
+
+    if (index === 0) {
+      otherProps.forEach((prop) => key[prop] = first[prop]);
+    } else if (index === progress.length - 1) {
+      otherProps.forEach((prop) => key[prop] = last[prop]);
+    }
+    springKeys.push(key);
+  });
+
+  return { keyframes: springKeys, duration };
+}
+
+/**
+ * Captures current visual state of an element, preferring active animation keyframes 
+ * to avoid getComputedStyle race conditions during active motion.
+ */
+export function captureElementState(el: HTMLElement, properties: string[]): Keyframe {
+  const state: Keyframe = {};
+  
+  if (typeof window === 'undefined') return state;
+
+  const activeAnims = el.getAnimations ? el.getAnimations() : [];
+  
+  // Try to find properties in active animations first (state stability)
+  if (activeAnims.length > 0) {
+    activeAnims.forEach(anim => {
+      if (anim.effect instanceof KeyframeEffect) {
+        const kfs = anim.effect.getKeyframes();
+        if (kfs.length > 0) {
+          const lastKf = kfs[kfs.length - 1];
+          properties.forEach(prop => {
+            if (lastKf[prop] !== undefined) state[prop] = lastKf[prop];
+          });
+        }
+      }
+    });
+  }
+
+  // Fallback to getComputedStyle for missing properties
+  const missing = properties.filter(p => state[p] === undefined);
+  if (missing.length > 0) {
+    const computed = window.getComputedStyle(el);
+    missing.forEach(prop => {
+      if (prop === 'transform') {
+        state.transform = computed.transform || 'none';
+      } else if (prop === 'filter') {
+        state.filter = computed.filter || 'none';
+      } else {
+        const val = (computed as any)[prop];
+        if (val !== undefined && val !== '') {
+          const num = parseFloat(val);
+          state[prop] = isNaN(num) ? val : num;
+        }
+      }
+    });
+  }
+
+  return state;
+}
+
 export function interpolateValue(from: number, to: number, p: number): number {
   return from + (to - from) * p;
 }
@@ -247,6 +427,7 @@ export function parseComplexTransform(str: string): ParsedTransform {
   let m;
   while ((m = regex.exec(str)) !== null) {
     if (m[1] && m[2]) {
+      if (m[1] === 'matrix' || m[1] === 'matrix3d') continue;
       const v = parseFloat(m[2]);
       if (!isNaN(v)) result[m[1]] = v;
     }
@@ -308,28 +489,19 @@ export class PixonTimeline {
   public add(targetOrTrack: AnimatableTarget | TimelineTrack, keyframes?: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>, options?: UltimateAnimationOptions): this {
     if (keyframes === undefined) {
       const track = targetOrTrack as TimelineTrack;
-      if (Array.isArray(track.keyframes)) {
-        track.keyframes = track.keyframes.map((kf) => parseStyleShortcuts(kf));
-      } else if (track.keyframes && typeof track.keyframes === 'object') {
-        track.keyframes = parseStyleShortcuts(track.keyframes as any) as any;
-      }
+      track.keyframes = prepareKeyframes(track.keyframes);
       this.tracks.push(track);
     } else {
       const target = targetOrTrack as AnimatableTarget;
-      let kfs: Keyframe[] | PropertyIndexedKeyframes;
-      if (Array.isArray(keyframes)) {
-        kfs = keyframes.map((kf) => parseStyleShortcuts(kf));
-      } else {
-        kfs = [parseStyleShortcuts(keyframes as Record<string, any>)];
-      }
       this.tracks.push({
         target,
-        keyframes: kfs,
+        keyframes: prepareKeyframes(keyframes),
         duration: options?.duration,
         delay: options?.delay,
         stagger: options?.stagger,
         easing: options?.easing,
         spring: options?.spring,
+        springType: options?.springType,
         offset: options?.offset,
       });
     }
@@ -388,7 +560,7 @@ export class PixonTimeline {
       }
       trackStart = Math.max(0, trackStart);
 
-      let resolvedKeyframes = track.keyframes;
+      let resolvedKeyframes = track.keyframes as Keyframe[];
       let resolvedDuration = track.duration ?? 400;
       let resolvedEasing = track.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)';
 
@@ -398,47 +570,18 @@ export class PixonTimeline {
           first = track.keyframes[0]!;
           last = track.keyframes[track.keyframes.length - 1]!;
         } else if (track.keyframes.length === 1) {
-          const el = targets[0];
+          const el = targets[0] as HTMLElement;
           if (el) {
             last = track.keyframes[0]!;
-            const style = window.getComputedStyle(el);
-            Object.keys(last).forEach(k => {
-              if (k === 'transform') return;
-              if (k === 'opacity') first.opacity = parseFloat(style.opacity) || 1;
-              else if (typeof last[k] === 'number') first[k] = parseFloat((style as any)[k] || '0') || 0;
-            });
-            if (last.transform) {
-              if (String(last.transform).includes('translate3d')) first.transform = (first.transform ?? '') + ' translate3d(0px, 0px, 0px)';
-              if (String(last.transform).includes('scale')) first.transform = (first.transform ?? '') + ' scale(1)';
-              if (String(last.transform).includes('rotate')) first.transform = (first.transform ?? '') + ' rotate(0deg)';
-            }
+            first = captureElementState(el, Object.keys(last));
           }
         }
 
         if (Object.keys(last).length > 0) {
-          const { progress, duration } = generateSpringTrajectory(0, 1, track.spring);
+          const { keyframes, duration } = compileSpringKeyframes(first, last, track.spring, track.springType);
           resolvedDuration = duration;
           resolvedEasing = 'linear';
-          const springKeys: Keyframe[] = [];
-          const numericProps: string[] = [];
-          const otherProps: string[] = [];
-          Object.keys(last).forEach(k => {
-            if (['offset','easing','composite','transform'].includes(k)) return;
-            if (typeof first[k] === 'number' && typeof last[k] === 'number') numericProps.push(k);
-            else otherProps.push(k);
-          });
-          const sP = parseComplexTransform(first.transform as string || '');
-          const eP = parseComplexTransform(last.transform as string || '');
-          progress.forEach((p, idx) => {
-            const key: Keyframe = {};
-            numericProps.forEach(prop => key[prop] = interpolateValue(first[prop] as number, last[prop] as number, p));
-            const ct = buildComplexTransform(sP, eP, p);
-            if (ct) key.transform = ct;
-            if (idx === 0) otherProps.forEach(prop => key[prop] = first[prop]);
-            else if (idx === progress.length - 1) otherProps.forEach(prop => key[prop] = last[prop]);
-            springKeys.push(key);
-          });
-          resolvedKeyframes = springKeys;
+          resolvedKeyframes = keyframes;
         }
       }
 

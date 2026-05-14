@@ -1,9 +1,17 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
-import { generateSpringTrajectory, generateSpringImpulseTrajectory, parseStyleShortcuts, parseComplexTransform, buildComplexTransform, SpringConfig } from '../utils/motion';
+import { 
+  SpringConfig, 
+  SpringType, 
+  prepareKeyframes, 
+  compileSpringKeyframes, 
+  captureElementState 
+} from '../utils/motion';
 
 export interface PixonAnimateOptions extends KeyframeAnimationOptions {
   /** If provided, compiles a custom physical spring instead of standard easing */
   spring?: SpringConfig;
+  /** Explicitly choose solver: 'standard' (to-target) or 'impulse' (return-to-origin) */
+  springType?: SpringType;
 }
 
 export interface UsePixonAnimateReturn<T extends HTMLElement = HTMLDivElement> {
@@ -72,170 +80,34 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
 
     cancel(); // Clear any previous running animations smoothly (committing current state)
 
-    const { spring, ...waapiOptions } = options;
+    const { spring, springType, ...waapiOptions } = options;
     
-    // Support array property values (multi-keyframes)
-    let processedKeyframes = keyframes;
-    if (!Array.isArray(keyframes) && typeof keyframes === 'object' && keyframes !== null) {
-      let maxArrayLength = 0;
-      const keys = Object.keys(keyframes);
-      
-      keys.forEach(key => {
-        const val = (keyframes as Record<string, any>)[key];
-        if (Array.isArray(val)) {
-          maxArrayLength = Math.max(maxArrayLength, val.length);
-        }
-      });
-
-      if (maxArrayLength > 0) {
-        const list: Record<string, any>[] = [];
-        for (let i = 0; i < maxArrayLength; i++) {
-          const kf: Record<string, any> = {};
-          keys.forEach(key => {
-            const val = (keyframes as Record<string, any>)[key];
-            if (Array.isArray(val)) {
-              const index = maxArrayLength > 1 
-                ? Math.min(val.length - 1, Math.round((i / (maxArrayLength - 1)) * (val.length - 1)))
-                : 0;
-              kf[key] = val[index];
-            } else {
-              kf[key] = val;
-            }
-          });
-          list.push(kf);
-        }
-        processedKeyframes = list;
-      }
-    } else if (Array.isArray(keyframes) && keyframes.length === 1 && typeof keyframes[0] === 'object' && keyframes[0] !== null) {
-      const firstKf = keyframes[0];
-      const hasArrayVal = Object.values(firstKf).some(val => Array.isArray(val));
-      if (hasArrayVal) {
-        let maxArrayLength = 0;
-        const keys = Object.keys(firstKf);
-        
-        keys.forEach(key => {
-          const val = (firstKf as Record<string, any>)[key];
-          if (Array.isArray(val)) {
-            maxArrayLength = Math.max(maxArrayLength, val.length);
-          }
-        });
-
-        if (maxArrayLength > 0) {
-          const list: Record<string, any>[] = [];
-          for (let i = 0; i < maxArrayLength; i++) {
-            const kf: Record<string, any> = {};
-            keys.forEach(key => {
-              const val = (firstKf as Record<string, any>)[key];
-              if (Array.isArray(val)) {
-                const index = maxArrayLength > 1 
-                  ? Math.min(val.length - 1, Math.round((i / (maxArrayLength - 1)) * (val.length - 1)))
-                  : 0;
-                kf[key] = val[index];
-              } else {
-                kf[key] = val;
-              }
-            });
-            list.push(kf);
-          }
-          processedKeyframes = list;
-        }
-      }
-    }
-
-    // Parse shorthand style shortcuts
-    let parsedKeyframes: Keyframe[] | PropertyIndexedKeyframes;
-    if (Array.isArray(processedKeyframes)) {
-      parsedKeyframes = processedKeyframes.map(kf => parseStyleShortcuts(kf));
-    } else {
-      parsedKeyframes = [parseStyleShortcuts(processedKeyframes as Record<string, any>)];
-    }
-
-    let finalKeyframes = parsedKeyframes;
+    // 1. Prepare and parse keyframes (shortcuts & array expansion)
+    let finalKeyframes = prepareKeyframes(keyframes);
     let finalDuration = waapiOptions.duration ?? 400;
     let finalEasing = waapiOptions.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)';
 
-    // Support single keyframe auto-capture of starting state from computed styles
-    if (Array.isArray(finalKeyframes) && finalKeyframes.length === 1) {
+    // 2. State Stability: Support single keyframe auto-capture of starting state
+    if (finalKeyframes.length === 1) {
       const last = finalKeyframes[0]!;
-      const first: Keyframe = {};
-      const computed = window.getComputedStyle(el);
-
-      Object.keys(last).forEach((key) => {
-        if (key === 'offset' || key === 'easing' || key === 'composite') return;
-        if (key === 'transform') {
-          first.transform = computed.transform || 'none';
-        } else if (key === 'filter') {
-          first.filter = computed.filter || 'none';
-        } else {
-          const styleVal = computed[key as any];
-          if (styleVal !== undefined && styleVal !== '') {
-            const num = parseFloat(styleVal);
-            first[key] = isNaN(num) ? styleVal : num;
-          }
-        }
-      });
-      
+      const first = captureElementState(el, Object.keys(last));
       finalKeyframes = [first, last];
     }
 
-    if (spring && Array.isArray(finalKeyframes) && finalKeyframes.length >= 2) {
+    // 3. Encapsulated Physics: Compile spring trajectory if requested
+    if (spring && finalKeyframes.length >= 2) {
       const first = finalKeyframes[0]!;
       const last = finalKeyframes[finalKeyframes.length - 1]!;
 
-      // Determine spring solver type (standard vs impulse response for pulse/shake)
-      const isImpulse = (options as any).springType === 'impulse';
-      const { progress, duration } = isImpulse
-        ? generateSpringImpulseTrajectory(spring)
-        : generateSpringTrajectory(0, 1, spring);
+      const { keyframes: springKeys, duration } = compileSpringKeyframes(
+        first, 
+        last, 
+        spring, 
+        springType
+      );
 
       finalDuration = duration;
-      finalEasing = 'linear'; // Linearly interpolated spring keyframes
-
-      // Compile spring keyframes for all animating properties
-      const springKeys: Keyframe[] = [];
-      const numericProps: string[] = [];
-      const otherProps: string[] = [];
-
-      Object.keys(last).forEach((key) => {
-        if (key === 'offset' || key === 'easing' || key === 'transform') return;
-        const valStart = first[key];
-        const valEnd = last[key];
-        if (typeof valStart === 'number' && typeof valEnd === 'number') {
-          numericProps.push(key);
-        } else {
-          otherProps.push(key);
-        }
-      });
-
-      const startParsed = parseComplexTransform(first.transform as string || '');
-      const endParsed = parseComplexTransform(last.transform as string || '');
-
-      progress.forEach((p, index) => {
-        const key: Keyframe = {};
-        numericProps.forEach((prop) => {
-          const startVal = first[prop] as number;
-          const endVal = last[prop] as number;
-          key[prop] = startVal + (endVal - startVal) * p;
-        });
-
-        const complexTransform = buildComplexTransform(startParsed, endParsed, p);
-        if (complexTransform) {
-          key.transform = complexTransform;
-        }
-
-        if (index === 0) {
-          otherProps.forEach((prop) => {
-            key[prop] = first[prop];
-          });
-        } else if (index === progress.length - 1) {
-          otherProps.forEach((prop) => {
-            key[prop] = last[prop];
-          });
-        }
-
-        springKeys.push(key);
-      });
-
+      finalEasing = 'linear';
       finalKeyframes = springKeys;
     }
 
@@ -282,7 +154,6 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       ],
       {
         spring: { stiffness: 220, damping: 12 }, // Lively spring
-        // @ts-ignore
         springType: 'impulse',
       }
     );
@@ -300,7 +171,6 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       ],
       {
         spring: { stiffness: 450, damping: 15 }, // High frequency snappy spring
-        // @ts-ignore
         springType: 'impulse',
       }
     );
@@ -314,7 +184,6 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       ],
       {
         spring: { stiffness: 280, damping: 10 }, // Fast bouncy jelly spring
-        // @ts-ignore
         springType: 'impulse',
       }
     );
@@ -332,7 +201,6 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       ],
       {
         spring: { stiffness: 180, damping: 8 }, // Bouncy decaying pendulum
-        // @ts-ignore
         springType: 'impulse',
       }
     );
@@ -350,7 +218,6 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       ],
       {
         spring: { stiffness: 200, damping: 10 }, // Damped impact spring
-        // @ts-ignore
         springType: 'impulse',
       }
     );
