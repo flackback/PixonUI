@@ -2,7 +2,7 @@ import React, { createContext, useContext, useRef } from 'react';
 
 export interface LayoutGroupContextType {
   getRect: (layoutId: string) => DOMRect | undefined;
-  setRect: (layoutId: string, rect: DOMRect) => void;
+  setRect: (layoutId: string, rect?: DOMRect) => void;
 }
 
 export const LayoutGroupContext = createContext<LayoutGroupContextType | null>(null);
@@ -27,8 +27,9 @@ export function LayoutGroup({ children, id }: LayoutGroupProps) {
     return rectsRef.current.get(layoutId);
   };
 
-  const setRect = (layoutId: string, rect: DOMRect) => {
-    rectsRef.current.set(layoutId, rect);
+  const setRect = (layoutId: string, rect?: DOMRect) => {
+    if (rect) rectsRef.current.set(layoutId, rect);
+    else rectsRef.current.delete(layoutId);
   };
 
   return (

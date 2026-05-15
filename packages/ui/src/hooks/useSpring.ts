@@ -18,10 +18,10 @@ export function useSpring(
   config: SpringConfig = {}
 ): number {
   const {
-    stiffness = 0.15,
-    damping = 0.8,
+    stiffness = 280,
+    damping = 18,
     mass = 1,
-    precision = 0.01,
+    precision = 0.001,
     onUpdate
   } = config;
 
@@ -31,23 +31,38 @@ export function useSpring(
   const requestRef = useRef<number>();
   const onUpdateRef = useRef(onUpdate);
 
-  // Keep callback ref updated to prevent effect re-runs
   useEffect(() => {
     onUpdateRef.current = onUpdate;
   }, [onUpdate]);
 
   useEffect(() => {
-    const animate = () => {
-        const distance = targetValue - currentRef.current;
-        // Proper Hooke's Law: force = stiffness * distance - damping * velocity
-        const force = (distance * (stiffness / 100)) - (velocityRef.current * (damping / 10));
-        const acceleration = force / mass;
-        
-        velocityRef.current += acceleration;
-        currentRef.current += velocityRef.current;
+    let lastTime = performance.now();
+    
+    const animate = (time: number) => {
+      const dt = Math.min((time - lastTime) / 16.67, 2);
+      lastTime = time;
 
-      if (Math.abs(distance) < precision && Math.abs(velocityRef.current) < precision) {
+      const distance = targetValue - currentRef.current;
+      const m = Math.max(0.1, mass);
+      const force = (distance * (stiffness / 100)) - (velocityRef.current * (damping / 10));
+      const acceleration = force / m;
+      
+      // Stability clamp
+      const clampedAcc = Math.max(-100, Math.min(100, acceleration));
+      
+      velocityRef.current += clampedAcc * dt;
+      currentRef.current += velocityRef.current * dt;
+
+      if (isNaN(currentRef.current)) {
         currentRef.current = targetValue;
+        velocityRef.current = 0;
+      }
+
+      const isSettled = Math.abs(targetValue - currentRef.current) < precision && Math.abs(velocityRef.current) < precision;
+
+      if (isSettled) {
+        currentRef.current = targetValue;
+        velocityRef.current = 0;
         if (onUpdateRef.current) {
           onUpdateRef.current(targetValue);
         } else {

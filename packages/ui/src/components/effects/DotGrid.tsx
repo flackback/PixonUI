@@ -134,8 +134,10 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
               const dist = Math.sqrt(distSq);
               const angle = Math.atan2(dy, dx);
               const force = (maxDist - dist) / maxDist;
-              dot.x = dot.ox - Math.cos(angle) * force * magneticStrength;
-              dot.y = dot.oy - Math.sin(angle) * force * magneticStrength;
+              // Non-linear force for a more "magnetic" feel
+              const easedForce = force * force;
+              dot.x = dot.ox - Math.cos(angle) * easedForce * magneticStrength * 1.5;
+              dot.y = dot.oy - Math.sin(angle) * easedForce * magneticStrength * 1.5;
             } else {
               // Smoothly return to original position
               dot.x += (dot.ox - dot.x) * smoothing;
@@ -143,11 +145,22 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
             }
           }
 
-          // Optimization: don't draw if dot is static and hasn't moved 
-          // (Actually in canvas it's usually faster to just draw everyone or use a path)
           ctx.beginPath();
           ctx.arc(dot.x, dot.y, dotSize, 0, Math.PI * 2);
           ctx.fill();
+        }
+
+        // Add a subtle "Supreme" glow that follows the mouse
+        if (interactive && mx > -1000) {
+          const gradient = ctx.createRadialGradient(mx, my, 0, mx, my, maxDist * 1.5);
+          gradient.addColorStop(0, color.replace(')', ', 0.15)').replace('rgb', 'rgba').replace('#', 'rgba(')); // Rough conversion attempt
+          // Fallback if not easily convertible: just use a very faint version of the color
+          ctx.fillStyle = gradient;
+          ctx.globalAlpha = 0.2;
+          ctx.beginPath();
+          ctx.arc(mx, my, maxDist * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
         }
         animationFrameId = requestAnimationFrame(render);
       };

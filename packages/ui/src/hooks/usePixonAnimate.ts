@@ -1,26 +1,42 @@
-import { useRef, useCallback, useState, useEffect } from 'react';
-import { SpringConfig, SpringType, prepareKeyframes, compileSpringKeyframes, captureElementState } from '../utils/motion';
+import { useRef, useCallback, useState } from 'react';
+import { SpringConfig, SpringType, prepareKeyframes, compileSpringKeyframes, captureElementState, sanitizeEasing } from '../utils/motion';
 
 export interface PixonAnimateOptions extends KeyframeAnimationOptions {
-  spring?: SpringConfig;
+  spring?: SpringConfig & { velocity?: number };
   springType?: SpringType;
 }
 
 export interface UsePixonAnimateReturn<T extends HTMLElement = HTMLDivElement> {
+  /** React ref to attach to the target element */
   ref: React.RefObject<T>;
+  /** Core animation function using WAAPI */
   animate: (keyframes: Keyframe[] | PropertyIndexedKeyframes | Record<string, any>, options?: PixonAnimateOptions) => Animation | null;
+  /** Whether an animation is currently playing */
   isAnimating: boolean;
+  /** Pause the current animation */
   pause: () => void;
+  /** Resume the current animation */
   play: () => void;
+  /** Reverse the current animation */
   reverse: () => void;
+  /** Cancel and commit current styles */
   cancel: () => void;
+  /** Quick 'pulse' interaction */
   pulse: (scale?: number) => Animation | null;
+  /** Quick 'shake' interaction */
   shake: (distance?: number) => Animation | null;
+  /** Quick 'jelly' interaction */
   jelly: () => Animation | null;
+  /** Quick 'swing' interaction */
   swing: (angle?: number) => Animation | null;
+  /** Quick 'drop' interaction */
   drop: (height?: number) => Animation | null;
 }
 
+/**
+ * usePixonAnimate: Custom hook for imperative WAAPI control.
+ * Features automated memory cleanup and style committing.
+ */
 export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePixonAnimateReturn<T> {
   const ref = useRef<T | null>(null), animRef = useRef<Animation | null>(null), [isAnimating, setIsAnimating] = useState(false);
 
@@ -36,22 +52,58 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     const el = ref.current; if (!el) return null;
     cancel();
     const { spring, springType, ...waapi } = opts;
-    let finalKfs = prepareKeyframes(kfs), dur = waapi.duration ?? 400, easing = waapi.easing ?? 'cubic-bezier(.16,1,.3,1)';
-    if (finalKfs.length === 1) finalKfs = [captureElementState(el, Object.keys(finalKfs[0] as Keyframe)), finalKfs[0] as Keyframe];
+    let finalKfs = prepareKeyframes(kfs), dur = waapi.duration ?? 400, easing = waapi.easing ?? 'elite-out';
+    
+    if (finalKfs.length === 1) {
+      finalKfs = [captureElementState(el, Object.keys(finalKfs[0] as Keyframe)), finalKfs[0] as Keyframe];
+    }
+    
     if (spring && finalKfs.length >= 2) {
       const { keyframes: sKeys, duration: sDur } = compileSpringKeyframes(finalKfs[0] as Keyframe, finalKfs.at(-1) as Keyframe, spring, springType);
       dur = sDur; easing = 'linear'; finalKfs = sKeys;
     }
+    
     setIsAnimating(true);
-    if (el.style) el.style.willChange = 'transform, opacity';
-    const a = el.animate(finalKfs as Keyframe[], { duration: dur, easing, fill: 'forwards', composite: opts.composite ?? 'add', ...waapi });
+    
+    // Only hint compositor-friendly properties to will-change
+    const compositorProps = Object.keys(finalKfs[0] as Keyframe).filter(p => 
+      ['transform', 'opacity', 'filter', 'backdrop-filter'].includes(p)
+    );
+    const willChangeHint = compositorProps.join(', ');
+    if (el.style && willChangeHint && el.style.willChange !== willChangeHint) {
+      el.style.willChange = willChangeHint;
+    }
+    
+    const a = el.animate(finalKfs as Keyframe[], { 
+      fill: 'both', 
+      composite: opts.composite ?? 'replace', // Default to replace for variant stability (Supreme Fix)
+      ...waapi,
+      duration: dur, 
+      easing: sanitizeEasing(easing), 
+    });
+    
     animRef.current = a;
     a.finished.then(() => {
       if (a.playState === 'finished' && el.isConnected) {
-        a.commitStyles(); a.cancel(); if (el.style) el.style.willChange = 'auto';
-        setIsAnimating(false);
+        // Only commit if this is still the active animation
+        if (animRef.current === a) {
+          a.commitStyles(); 
+          a.cancel(); 
+          // Delay resetting will-change to avoid thrashing during rapid re-animations
+          setTimeout(() => {
+            if (el.isConnected && (!animRef.current || animRef.current.playState === 'finished')) {
+              el.style.willChange = 'auto';
+            }
+          }, 150);
+          setIsAnimating(false);
+          animRef.current = null;
+        }
       }
-    }).catch(() => setIsAnimating(false));
+    }).catch(() => {
+      if (el.style && animRef.current === a) el.style.willChange = 'auto';
+      setIsAnimating(false);
+    });
+    
     return a;
   }, [cancel]);
 

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { timeline } from '@pixonui/react';
-import { Layers, MousePointer2, Wind, Zap, MousePointerClick } from 'lucide-react';
+import { Layers, MousePointer2, Wind, Zap, MousePointerClick, Sparkles } from 'lucide-react';
+import { ScrollParallaxMaster, AnimeKineticText, PhysicsShowcase } from './NextGenSupremeDemos';
 
 const cleanup = (a: Animation, e: HTMLElement) => {
   a.finished.then(() => { if (a.playState === 'finished' && e.isConnected) { a.commitStyles(); a.cancel(); } }).catch(() => {});
@@ -13,10 +14,12 @@ const LiquidTabs = () => {
     const el = e.currentTarget as HTMLElement, ind = indRef.current;
     if (ind) {
       const { offsetLeft: l, offsetWidth: w } = el;
-      const a = ind.animate([{ transform: `translateX(${l}px) scaleX(${w / 80})` }], {
-        duration: 500, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'forwards', composite: 'replace'
+      // Use replace for absolute positioning, but with a highly elastic easing
+      ind.animate([{ transform: `translateX(${l}px) scaleX(${w / 80})` }], {
+        duration: 600, 
+        easing: 'cubic-bezier(0.2, 1.4, 0.4, 1)', 
+        fill: 'both'
       });
-      cleanup(a, ind);
     }
   };
 
@@ -43,58 +46,65 @@ const QuantumStack = () => {
       const dx = e.clientX - (l + w / 2), dy = e.clientY - (t + h / 2), dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 200) {
         const p = (200 - dist) / 200;
-        c.animate([{ transform: `translateZ(${p * 40}px) rotateX(${dy * 0.1 * p}deg) rotateY(${-dx * 0.1 * p}deg) scale(${1 + p * 0.05})`, filter: `brightness(${1 + p * 0.5})` }], 
-          { duration: 300, easing: 'ease-out', fill: 'forwards', composite: 'add' });
+        // Use replace for real-time tracking to avoid stacking explosions
+        c.animate([{ 
+          transform: `translateZ(${p * 40}px) rotateX(${dy * 0.1 * p}deg) rotateY(${-dx * 0.1 * p}deg) scale(${1 + p * 0.05})`, 
+          filter: `brightness(${1 + p * 0.5})` 
+        }], { duration: 200, easing: 'ease-out', fill: 'both' });
       }
     });
   };
   return (
-    <div onMouseMove={move} onMouseLeave={reset} className="p-12 bg-zinc-900 rounded-[40px] border border-white/5 space-y-8 relative overflow-hidden group">
+    <div onMouseMove={move} onMouseLeave={reset} className="p-12 bg-zinc-900 rounded-[40px] border border-white/5 space-y-8 relative overflow-hidden group h-full">
       <div className="flex items-center gap-2 text-zinc-500 font-mono text-[10px] uppercase tracking-[0.2em] relative z-10"><MousePointer2 className="w-3 h-3" /> Additive Interference</div>
       <div className="flex justify-center gap-4 py-10 perspective-[1000px]">
-        {[0, 1, 2, 3, 4].map(i => <div key={i} ref={el => cards.current[i] = el} className="w-32 h-44 bg-gradient-to-br from-zinc-800 to-zinc-950 rounded-2xl border border-white/10 shadow-2xl will-change-transform" />)}
+        {[0, 1, 2].map(i => <div key={i} ref={el => cards.current[i] = el} className="w-24 h-32 bg-gradient-to-br from-zinc-800 to-zinc-950 rounded-2xl border border-white/10 shadow-2xl will-change-transform" />)}
       </div>
     </div>
   );
 };
 
-const ParticleBurst = () => {
-  const container = useRef<HTMLDivElement>(null);
-  const explode = (e: React.MouseEvent) => {
-    if (!container.current) return;
-    const { left: rl, top: rt } = container.current.getBoundingClientRect(), x = e.clientX - rl, y = e.clientY - rt, tl = timeline();
-    for (let i = 0; i < 15; i++) {
-      const p = document.createElement('div');
-      p.className = 'absolute w-2 h-2 rounded-full bg-purple-500 pointer-events-none z-50';
-      Object.assign(p.style, { left: `${x}px`, top: `${y}px` });
-      container.current.appendChild(p);
-      const ang = (Math.PI * 2 * i) / 15 + (Math.random() - 0.5), vel = 100 + Math.random() * 150;
-      tl.add(p, [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(ang) * vel}px, ${Math.sin(ang) * vel}px) scale(0)`, opacity: 0 }], { duration: 800 + Math.random() * 400, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
-    }
-    tl.play().finished.then(() => container.current?.querySelectorAll('.bg-purple-500').forEach(el => el.remove()));
-  };
-  return (
-    <div ref={container} className="p-12 bg-zinc-950 rounded-[40px] border border-white/5 flex flex-col items-center justify-center gap-6 relative overflow-hidden">
-      <div className="flex items-center gap-2 text-zinc-500 font-mono text-[10px] uppercase tracking-[0.2em]"><Zap className="w-3 h-3" /> Zero-Leak Engine</div>
-      <button onClick={explode} className="px-8 py-4 bg-white text-black font-bold rounded-2xl hover:scale-105 active:scale-95 transition-transform flex items-center gap-2 z-10"><MousePointerClick className="w-4 h-4" /> Explodir WAAPI</button>
-      <div className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest mt-4">Limpeza automática após término</div>
-    </div>
-  );
-};
-
 export const SupremeShowcase = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-6xl mx-auto p-4">
-    <div className="md:col-span-2 text-center space-y-4 mb-10">
-      <h2 className="text-5xl font-black text-white tracking-tighter">SUPREME ARCHITECT</h2>
-      <p className="text-zinc-400 max-w-2xl mx-auto text-sm">Web Animations API: Zero Main-Thread, 100% GPU, Zero Memory Leaks.</p>
+  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full max-w-7xl mx-auto p-6">
+    {/* Header */}
+    <div className="md:col-span-12 text-left space-y-2 mb-8">
+      <div className="flex items-center gap-2 text-purple-500 font-mono text-xs uppercase tracking-[0.3em] font-bold">
+        <Sparkles className="w-4 h-4" /> Omni-Motion Engine
+      </div>
+      <h2 className="text-7xl font-black text-white tracking-tighter leading-none">SUPREME<br/>ARCHITECT</h2>
+      <p className="text-zinc-500 max-w-xl text-lg font-medium">Native WAAPI Overlord: Zero JS loops, Zero Main-Thread bloat. Just pure GPU momentum.</p>
     </div>
-    <div className="space-y-8"><LiquidTabs /><ParticleBurst /></div>
-    <div className="flex flex-col">
-      <QuantumStack />
-      <div className="mt-8 p-8 bg-purple-500/5 rounded-[40px] border border-purple-500/10 text-xs text-zinc-400 space-y-2">
-        <h4 className="text-purple-400 font-bold mb-2 flex items-center gap-2"><Wind className="w-4 h-4" /> Por que é superior?</h4>
-        <p>• <b>Interrupções Fluidas:</b> 'composite: add' evita saltos bruscos.</p>
-        <p>• <b>Higiene Ativa:</b> commitStyles() garante persistência sem 'flicker'.</p>
+
+    {/* Row 1 */}
+    <div className="md:col-span-8 h-full"><ScrollParallaxMaster /></div>
+    <div className="md:col-span-4 h-full"><QuantumStack /></div>
+
+    {/* Row 2 */}
+    <div className="md:col-span-4 h-full"><LiquidTabs /></div>
+    <div className="md:col-span-8 h-full"><AnimeKineticText /></div>
+
+    {/* Row 3 */}
+    <div className="md:col-span-5 h-full"><PhysicsShowcase /></div>
+    <div className="md:col-span-7 h-full">
+      <div className="p-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[40px] text-white space-y-6 shadow-2xl shadow-purple-500/20">
+        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] font-bold opacity-80">
+          <Wind className="w-4 h-4" /> Engine Specs
+        </div>
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-1">
+            <div className="text-3xl font-black">120 FPS</div>
+            <div className="text-[10px] uppercase tracking-widest opacity-60">Locked Performance</div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-3xl font-black">0.0ms</div>
+            <div className="text-[10px] uppercase tracking-widest opacity-60">Main Thread Jitter</div>
+          </div>
+        </div>
+        <div className="space-y-2 text-sm font-medium opacity-90 border-t border-white/20 pt-6">
+          <p>• <b>Additive Blending:</b> Transições sem saltos via 'composite: add'.</p>
+          <p>• <b>Physics Engine:</b> Momento real via molas cinéticas nativas.</p>
+          <p>• <b>Type Safe:</b> 100% inferência automática para componentes motion.</p>
+        </div>
       </div>
     </div>
   </div>

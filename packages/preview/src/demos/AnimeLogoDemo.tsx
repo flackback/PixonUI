@@ -91,11 +91,14 @@ export function AnimeLogoDemo() {
     ], { duration: 600, offset: 1100, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)' });
 
     // 4. MORPH E ESPALHAMENTO
-    tl.add('.letter-m .line', { d: PATH_DATA.m.d2 }, { duration: 600, offset: 400 });
-    tl.add('.letter-a, .letter-n, .letter-i, .letter-e', { translateX: 0, opacity: 1 }, { duration: 800, offset: 600, stagger: 40 });
-    tl.add('.letter-m .line', { d: PATH_DATA.m.d3 }, { duration: 600, offset: 800 });
+    const letterMLine = '.letter-m .line';
+    if (PATH_DATA.m.d2 && PATH_DATA.m.d3) {
+      tl.add(letterMLine, { d: PATH_DATA.m.d2 }, { duration: 600, offset: 400 });
+      tl.add('.letter-a, .letter-n, .letter-i, .letter-e', { translateX: 0, opacity: 1 }, { duration: 800, offset: 600, stagger: 40 });
+      tl.add(letterMLine, { d: PATH_DATA.m.d3 }, { duration: 600, offset: 800 });
+    }
 
-    tl.add('.line', { strokeDashoffset: 0 }, { duration: 1200, offset: 800, stagger: 100 });
+    tl.add('.line', { strokeDashoffset: '0' }, { duration: 1200, offset: 800, stagger: 100 });
     tl.add('.logo-text', { opacity: [0, 1], translateY: [20, 0] }, { duration: 600, offset: 2000 });
 
     tl.play();
@@ -104,10 +107,12 @@ export function AnimeLogoDemo() {
 
   return (
     <div ref={wrapperRef} className="logo-animation-wrapper relative w-full h-[600px] flex items-center justify-center overflow-visible">
-      <div className="main-logo-circle absolute w-[550px] h-[550px] rounded-full bg-white z-0 flex items-center justify-center"
+      <div className="main-logo-circle absolute w-[550px] h-[550px] rounded-full z-0 flex items-center justify-center"
         style={{
-          boxShadow: '0 10px 80px rgba(0,0,0,0.02)',
-          background: 'linear-gradient(-135deg, #FFFFFF 0%, #FBFBFB 50%, #F5F5F5 100%)',
+          boxShadow: '0 0 100px rgba(139, 92, 246, 0.15), inset 0 0 40px rgba(255,255,255,0.05)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(40px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           opacity: 0
         }}
       />
@@ -116,9 +121,9 @@ export function AnimeLogoDemo() {
           .anime-logo-signs { display: flex; align-items: flex-end; height: 512px; margin-top: -352px; overflow: visible; position: relative; width: 1000px; }
           .logo-letter { display: flex; align-items: flex-end; height: 100%; overflow: hidden; }
           .bounced { transform-origin: 50% 100% 0px; transform: translateY(200px); }
-          .line { fill: none; stroke: #333; stroke-width: 40; stroke-linecap: square; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
-          .dot { position: absolute; top: 0; left: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; background-color: #333; border-radius: 4px; z-index: 10; pointer-events: none; }
-          .logo-text { opacity: 0; margin-top: 30px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .3em; color: #333; text-transform: uppercase; text-align: center; width: 100%; }
+          .line { fill: none; stroke: #FFFFFF; stroke-width: 40; stroke-linecap: square; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+          .dot { position: absolute; top: 0; left: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; background-color: #FFFFFF; border-radius: 4px; z-index: 10; pointer-events: none; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
+          .logo-text { opacity: 0; margin-top: 30px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .4em; color: #FFFFFF; text-transform: uppercase; text-align: center; width: 100%; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
         `}</style>
         <div className="anime-logo w-full h-[120px]">
           <div className="anime-logo-signs">

@@ -130,12 +130,38 @@ export function prepareKeyframes(input: any): Keyframe[] {
     }
   }
 
-  // 2. Parse style shortcuts (x, y, scale, etc.)
+  // 3. Sanitize Easing (convert [n,n,n,n] to cubic-bezier)
   const result = Array.isArray(processed) 
     ? processed.map(kf => parseStyleShortcuts(kf))
     : [parseStyleShortcuts(processed)];
 
   return result as Keyframe[];
+}
+
+/**
+ * Converts various easing inputs into standard CSS easing strings.
+ * Supports: 'linear', 'ease-in', 'ease-out', 'ease-in-out', [x1,y1,x2,y2],
+ * and custom Pixon tokens: 'elite-out', 'inertia-bounce', 'sharp-hover'.
+ */
+export function sanitizeEasing(easing: any): string {
+  const presets: Record<string, string> = {
+    'elite-out': 'cubic-bezier(0.16, 1, 0.3, 1)',
+    'inertia-bounce': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+    'sharp-hover': 'cubic-bezier(0.22, 1, 0.36, 1)',
+    'spring-out': 'cubic-bezier(0.25, 1, 0.5, 1)',
+    'expo-out': 'cubic-bezier(0.19, 1, 0.22, 1)'
+  };
+
+  if (Array.isArray(easing) && easing.length === 4) {
+    return `cubic-bezier(${easing.join(', ')})`;
+  }
+  if (typeof easing === 'string') {
+    if (presets[easing]) return presets[easing];
+    const standard = ['linear', 'ease-in', 'ease-out', 'ease-in-out'];
+    if (standard.includes(easing)) return easing;
+    return easing;
+  }
+  return presets['elite-out'];
 }
 
 // 2. Spring Physics
@@ -149,58 +175,50 @@ export function clearSpringCache() {
 export function generateSpringTrajectory(
   from: number,
   to: number,
-  config: SpringConfig = {}
+  config: SpringConfig & { velocity?: number } = {}
 ): { progress: number[]; keyframes: number[]; duration: number } {
-  const { stiffness = 170, damping = 26, mass = 1, precision = 0.0005 } = config;
-  const key = `${from}|${to}|${stiffness}|${damping}|${mass}|${precision}`;
+  const { stiffness = 170, damping = 26, mass = 1, precision = 0.0005, velocity = 0 } = config;
+  const key = `${from}|${to}|${stiffness}|${damping}|${mass}|${precision}|${velocity}`;
   
   if (trajectoryCache.has(key)) {
     const res = trajectoryCache.get(key)!;
-    trajectoryCache.delete(key);
-    trajectoryCache.set(key, res);
+    trajectoryCache.delete(key); trajectoryCache.set(key, res);
     return res;
   }
 
   const w0 = Math.sqrt(stiffness / mass);
   const zeta = damping / (2 * Math.sqrt(stiffness * mass));
+  const v0 = -velocity; // Initial velocity
+  const x0 = to - from; // Distance to travel
+
   let settleTime = 10;
-  if (zeta > 0) {
-    const decayRate = zeta * w0;
-    settleTime = -Math.log(precision) / decayRate;
-  }
+  if (zeta > 0) settleTime = -Math.log(precision) / (zeta * w0);
+  
   const duration = Math.max(0.1, Math.min(3.0, settleTime));
-  const steps = Math.max(40, Math.min(180, Math.round(duration * 120)));
-  const progress: number[] = [];
+  const steps = Math.max(40, Math.min(240, Math.round(duration * 120)));
+  const progress: number[] = new Array(steps + 1);
 
   for (let i = 0; i <= steps; i++) {
     const t = (i / steps) * duration;
-    let d = 0;
+    let envelope = 0;
     if (zeta < 1) {
       const wd = w0 * Math.sqrt(1 - zeta * zeta);
-      d = -Math.cos(wd * t) * Math.exp(-zeta * w0 * t);
+      envelope = Math.exp(-zeta * w0 * t) * (Math.cos(wd * t) + ((zeta * w0 * x0 + v0) / (wd * x0)) * Math.sin(wd * t));
     } else if (zeta === 1) {
-      d = -(1 + w0 * t) * Math.exp(-w0 * t);
+      envelope = Math.exp(-w0 * t) * (1 + (v0 + w0 * x0) * t / x0);
     } else {
       const r1 = -w0 * (zeta - Math.sqrt(zeta * zeta - 1));
       const r2 = -w0 * (zeta + Math.sqrt(zeta * zeta - 1));
-      const c1 = r2 / (r2 - r1);
-      const c2 = -r1 / (r2 - r1);
-      d = c1 * Math.exp(r1 * t) + c2 * Math.exp(r2 * t);
+      const c1 = (v0 - r2 * x0) / (x0 * (r1 - r2));
+      const c2 = 1 - c1;
+      envelope = c1 * Math.exp(r1 * t) + c2 * Math.exp(r2 * t);
     }
-    progress.push(1 + d);
+    progress[i] = 1 - envelope;
   }
   
-  // Force boundaries for trajectory stability and test compatibility
-  if (progress.length > 0) {
-    progress[0] = 0;
-    progress[progress.length - 1] = 1;
-  }
-
+  progress[0] = 0; progress[steps] = 1;
   const result = { progress, keyframes: progress, duration: duration * 1000 };
-  if (trajectoryCache.size >= 100) {
-    const firstKey = trajectoryCache.keys().next().value;
-    if (firstKey !== undefined) trajectoryCache.delete(firstKey);
-  }
+  if (trajectoryCache.size >= 100) trajectoryCache.delete(trajectoryCache.keys().next().value!);
   trajectoryCache.set(key, result);
   return result;
 }
@@ -209,10 +227,9 @@ export function generateSpringImpulseTrajectory(
   config: SpringConfig = {}
 ): { progress: number[]; keyframes: number[]; duration: number } {
   const { stiffness = 170, damping = 26, mass = 1, precision = 0.0005 } = config;
-  const w0 = Math.sqrt(stiffness / mass);
-  const zeta = damping / (2 * Math.sqrt(stiffness * mass));
+  const w0 = Math.sqrt(stiffness / mass), zeta = damping / (2 * Math.sqrt(stiffness * mass));
   let settleTime = 10;
-  if (zeta > 0) { settleTime = -Math.log(precision) / (zeta * w0); }
+  if (zeta > 0) settleTime = -Math.log(precision) / (zeta * w0);
   const duration = Math.max(0.1, Math.min(3.0, settleTime));
   const steps = Math.max(40, Math.min(180, Math.round(duration * 120)));
   const progress: number[] = [];
@@ -222,16 +239,12 @@ export function generateSpringImpulseTrajectory(
   const getD = (t: number): number => {
     if (zeta < 1 && wd > 0) return Math.sin(wd * t) * Math.exp(-zeta * w0 * t);
     if (zeta === 1) return t * w0 * Math.exp(-w0 * t);
-    const r1 = -w0 * (zeta - Math.sqrt(zeta * zeta - 1));
-    const r2 = -w0 * (zeta + Math.sqrt(zeta * zeta - 1));
+    const r1 = -w0 * (zeta - Math.sqrt(zeta * zeta - 1)), r2 = -w0 * (zeta + Math.sqrt(zeta * zeta - 1));
     return (Math.exp(r1 * t) - Math.exp(r2 * t)) / (r2 - r1);
   };
 
   const peak = getD(tPeak) || 1;
-  for (let i = 0; i <= steps; i++) {
-    const t = (i / steps) * duration;
-    progress.push(getD(t) / peak);
-  }
+  for (let i = 0; i <= steps; i++) progress.push(getD((i / steps) * duration) / peak);
   return { progress, keyframes: progress, duration: duration * 1000 };
 }
 
@@ -315,7 +328,7 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
 export function compileSpringKeyframes(
   first: Keyframe, 
   last: Keyframe, 
-  spring: SpringConfig, 
+  spring: SpringConfig & { velocity?: number }, 
   springType: SpringType = 'standard'
 ): { keyframes: Keyframe[], duration: number } {
   const { progress, duration } = springType === 'impulse'
@@ -358,16 +371,36 @@ export function compileSpringKeyframes(
     numericProps.forEach((prop) => {
       const s = first[prop] as number;
       const e = last[prop] as number;
-      key[prop] = s + (e - s) * p;
+      let val = s + (e - s) * p;
+      
+      // Safety clamping for non-negative properties (V3.2 Supreme Hardening)
+      const nonNegative = ['opacity', 'scale', 'scaleX', 'scaleY', 'scaleZ', 'blur', 'brightness', 'spread'];
+      if (nonNegative.includes(prop) || prop.includes('radius')) {
+        val = Math.max(0.0001, val);
+      }
+      
+      key[prop] = val;
     });
 
     // 2. String morphing (SVG paths, colors, filters)
     morphProps.forEach((prop) => {
       let val = interpolateString(first[prop] as string, last[prop] as string, p);
-      // For SVG 'd' property in CSS, some browsers require path() wrapper
-      if (prop === 'd' && !val.startsWith('path(')) {
-        val = `path("${val}")`;
+      
+      // Safety clamping for common CSS functions that don't support negatives
+      if (val.includes('blur(') || val.includes('brightness(') || val.includes('opacity(') || val.includes('scale(')) {
+        val = val.replace(/(blur|brightness|opacity|scale)\(([^)]+)\)/g, (match, fn, v) => {
+          const num = parseFloat(v);
+          const unit = v.replace(/[0-9.-]/g, '');
+          return `${fn}(${Math.max(0, num)}${unit})`;
+        });
       }
+
+      // For SVG 'd' property in CSS, all modern browsers require path() wrapper
+      if (prop === 'd') {
+        const pathData = val.startsWith('path(') ? val.slice(6, -2) : val;
+        val = `path("${pathData}")`;
+      }
+
       key[prop] = val;
     });
 
@@ -389,16 +422,27 @@ export function compileSpringKeyframes(
 
 /**
  * Interpolates numbers within a string. Used for SVG path morphing, complex filters, etc.
+ * Now with enhanced precision and numeric safety padding for mismatched lists.
  */
 export function interpolateString(f: string, t: string, p: number): string {
   const re = /-?\d*\.?\d+/g, m1 = f.match(re), m2 = t.match(re);
-  if (!m1 || !m2 || m1.length !== m2.length) return p < .5 ? f : t;
-  let i = 0;
-  return t.replace(re, () => {
-    const s = parseFloat(m1[i]!), target = parseFloat(m2[i++]!);
+  if (!m1 || !m2) return p < .5 ? f : t;
+  
+  // Pad missing numeric values with safe defaults (0 for most, 1 for scale)
+  const maxLen = Math.max(m1.length, m2.length);
+  const isScale = f.includes('scale') || t.includes('scale');
+  const fallback = isScale ? 1 : 0;
+  
+  const numbers: string[] = [];
+  for (let k = 0; k < maxLen; k++) {
+    const s = parseFloat(m1[k] ?? String(fallback));
+    const target = parseFloat(m2[k] ?? String(fallback));
     const v = s + (target - s) * p;
-    return v % 1 === 0 ? v.toString() : v.toFixed(3);
-  });
+    numbers.push(v % 1 === 0 ? v.toString() : v.toFixed(4));
+  }
+
+  let cursor = 0;
+  return t.replace(re, () => numbers[cursor++] || '0');
 }
 
 /**
@@ -423,7 +467,7 @@ export function path(selector: string) {
  * Captures current visual state of an element, preferring active animation keyframes 
  * to avoid getComputedStyle race conditions during active motion.
  */
-export function captureElementState(el: HTMLElement, props: string[]): Keyframe {
+export function captureElementState(el: Element, props: string[]): Keyframe {
   const state: Keyframe = {};
   if (typeof window === 'undefined') return state;
   const anims = el.getAnimations?.() || [];
@@ -436,7 +480,15 @@ export function captureElementState(el: HTMLElement, props: string[]): Keyframe 
   const miss = props.filter(p => state[p] === undefined);
   if (miss.length > 0) {
     const s = getComputedStyle(el);
-    miss.forEach(p => state[p] = s.getPropertyValue(p) || (s as any)[p]);
+    miss.forEach(p => {
+      // 1. Check CSS properties
+      let val = s.getPropertyValue(p) || (s as any)[p];
+      // 2. Special case for SVG 'd' (path) and other attributes
+      if ((!val || val === 'none') && el instanceof SVGElement) {
+        val = el.getAttribute(p) || undefined;
+      }
+      state[p] = val;
+    });
   }
   return state;
 }
@@ -445,7 +497,7 @@ export function interpolateValue(from: number, to: number, p: number): number {
   return from + (to - from) * p;
 }
 
-export type ParsedTransform = Record<string, number | string>;
+export type ParsedTransform = Record<string, number[]>;
 
 export function parseComplexTransform(str: string): ParsedTransform {
   if (!str || str === 'none') return {};
@@ -453,26 +505,64 @@ export function parseComplexTransform(str: string): ParsedTransform {
   const regex = /(\w+)\(([^)]+)\)/g;
   let m;
   while ((m = regex.exec(str)) !== null) {
-    if (m[1] && m[2]) {
-      if (m[1] === 'matrix' || m[1] === 'matrix3d') continue;
-      const v = parseFloat(m[2]);
-      if (!isNaN(v)) result[m[1]] = v;
+    const name = m[1];
+    const rawArgs = m[2];
+    if (name && rawArgs) {
+      if (name === 'matrix' || name === 'matrix3d') continue;
+      const args = rawArgs.split(',').map(a => parseFloat(a.trim())).filter(n => !isNaN(n));
+      if (args.length > 0) result[name] = args;
     }
   }
   return result;
 }
 
+/**
+ * Optimized transform builder for high-frequency (120fps) interpolation.
+ * Merges start and end transform states into a single compositor-ready string.
+ */
 export function buildComplexTransform(start: ParsedTransform, end: ParsedTransform, p: number): string {
-  const transforms: string[] = [];
   const keys = Array.from(new Set([...Object.keys(start), ...Object.keys(end)]));
-  keys.forEach(k => {
-    const s = (start[k] as number) ?? (k.startsWith('scale') ? 1 : (k.startsWith('translate') ? 0 : 0));
-    const e = (end[k] as number) ?? (k.startsWith('scale') ? 1 : (k.startsWith('translate') ? 0 : 0));
-    const val = s + (e - s) * p;
-    const unit = k.includes('rotate') || k.includes('skew') ? 'deg' : (k.includes('translate') ? 'px' : '');
-    transforms.push(`${k}(${val}${unit})`);
-  });
-  return transforms.join(' ');
+  if (keys.length === 0) return '';
+  
+  let result = '';
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i]!;
+    const s = start[k];
+    const e = end[k];
+    
+    const isScale = k.startsWith('scale');
+    const isRotateOrSkew = k.includes('rotate') || k.includes('skew');
+    const isTranslate = k.includes('translate');
+    
+    // Determine expected argument count for this specific CSS function
+    let expectedCount = 1;
+    if (k.includes('3d')) expectedCount = 3;
+    else if (k === 'matrix') expectedCount = 6;
+    else if (k === 'matrix3d') expectedCount = 16;
+    else if (k === 'translate' || k === 'scale' || k === 'skew') expectedCount = 2;
+
+    const count = Math.max(expectedCount, (s && s.length) || 0, (e && e.length) || 0);
+    
+    result += (i === 0 ? '' : ' ') + k + '(';
+    
+    for (let j = 0; j < count; j++) {
+      // Don't output more arguments than the function expects if we only have 1 value and no end state for it
+      if (j >= 1 && j >= ((s && s.length) || 0) && j >= ((e && e.length) || 0)) break;
+
+      const sV = (s && s[j] !== undefined) ? s[j] : (isScale ? 1 : 0);
+      const eV = (e && e[j] !== undefined) ? e[j] : (isScale ? 1 : 0);
+      let val = sV + (eV - sV) * p;
+      
+      // Extreme safety clamping
+      if (isScale || k === 'blur') val = Math.max(0.0001, val);
+      
+      const unit = isRotateOrSkew ? 'deg' : (isTranslate ? 'px' : '');
+      result += (j === 0 ? '' : ', ') + (val % 1 === 0 ? val : val.toFixed(4)) + unit;
+    }
+    result += ')';
+  }
+  
+  return result;
 }
 
 export function calculateStagger(index: number, total: number, config: StaggerConfig): number {
@@ -504,8 +594,10 @@ export class PixonTimeline {
   private activeAnimations: Animation[] = [];
   private resolveFinished?: () => void;
   public finished: Promise<void>;
+  private globalOptions: UltimateAnimationOptions;
 
-  constructor() {
+  constructor(options: UltimateAnimationOptions = {}) {
+    this.globalOptions = options;
     this.finished = new Promise<void>((resolve) => {
       this.resolveFinished = resolve;
     });
@@ -561,7 +653,12 @@ export class PixonTimeline {
     this.tracks.forEach(t => {
       const targets = this.resolveTargets(t.target);
       if (!targets.length) return;
-      let start = end, kfs = t.keyframes as Keyframe[], dur = t.duration ?? 400, easing = t.easing ?? 'cubic-bezier(.16,1,.3,1)';
+      
+      let start = end;
+      let kfs = t.keyframes as Keyframe[];
+      let dur = t.duration ?? this.globalOptions.duration ?? 400;
+      let easing = t.easing ?? this.globalOptions.easing ?? 'elite-out';
+      
       if (t.offset !== undefined) {
         const off = String(t.offset);
         if (off.startsWith('+=')) start = end + parseFloat(off.slice(2));
@@ -571,25 +668,56 @@ export class PixonTimeline {
         else start = parseFloat(off);
       }
       start = Math.max(0, start);
-      if (t.spring || (Array.isArray(t.keyframes) && t.keyframes.some(k => 'd' in k))) {
-        const last = (kfs.at(-1) || {}) as Keyframe, first = kfs.length > 1 ? (kfs[0] as Keyframe) : (targets[0] instanceof HTMLElement ? captureElementState(targets[0], Object.keys(last)) : {});
+      
+      // Ensure keyframes are sanitized and d property is wrapped in path()
+      const sanitizedKfs = (Array.isArray(kfs) ? kfs : [kfs]).map(kf => {
+        const result = { ...kf };
+        if (result.d && typeof result.d === 'string' && !result.d.startsWith('path(')) {
+          result.d = `path("${result.d}")`;
+        }
+        return result;
+      });
+
+      if (t.spring || sanitizedKfs.some(k => 'd' in k)) {
+        const last = (sanitizedKfs.at(-1) || {}) as Keyframe;
+        const first = sanitizedKfs.length > 1 
+          ? (sanitizedKfs[0] as Keyframe) 
+          : (targets[0] instanceof Element ? captureElementState(targets[0], Object.keys(last)) : {});
+        
         const s = compileSpringKeyframes(first, last, t.spring || { stiffness: 170, damping: 26 }, t.springType);
         if (t.spring) { dur = s.duration; easing = 'linear'; }
         kfs = s.keyframes;
+      } else {
+        kfs = sanitizedKfs;
       }
+      
       const stagger = t.stagger ?? t.delay ?? 0;
+      const finalEasing = sanitizeEasing(easing);
       let maxD = 0;
       targets.forEach((el: any, i) => {
         const d = start + (i * stagger);
         if (el.style) el.style.willChange = 'transform, opacity';
-        const a = el.animate(kfs, { delay: d, duration: dur, easing, fill: 'both', composite: t.composite || 'add' });
+        
+        const a = el.animate(kfs, { 
+          delay: d, 
+          duration: dur, 
+          easing: finalEasing, 
+          fill: 'both', 
+          composite: t.composite || 'add' 
+        });
+        
         this.activeAnimations.push(a);
         maxD = Math.max(maxD, d + dur);
-        completedPromises.push(a.finished.then(() => {
+        
+        a.finished.then(() => {
           if (a.playState === 'finished' && el.isConnected) {
-            a.commitStyles(); a.cancel(); if (el.style) el.style.willChange = 'auto';
+            a.commitStyles();
+            a.cancel();
+            if (el.style) el.style.willChange = 'auto';
           }
-        }).catch(() => {}));
+        }).catch(() => {
+          if (el.style) el.style.willChange = 'auto';
+        });
       });
       prevStart = start; end = maxD;
     });
@@ -693,14 +821,29 @@ export function startPixonTransition(
 }
 
 /**
+ * FLIP (First, Last, Invert, Play) Helper.
+ * Calculates the transform needed to invert a layout change.
+ */
+export function calcFlip(first: DOMRect, last: DOMRect) {
+  const dx = first.left - last.left;
+  const dy = first.top - last.top;
+  const dw = first.width / last.width;
+  const dh = first.height / last.height;
+  return {
+    transform: `translate3d(${dx}px, ${dy}px, 0) scale(${dw}, ${dh})`,
+    dx, dy, dw, dh
+  };
+}
+
+/**
  * PixonTimeline Factory
  * Orchestrates multi-element WAAPI animations with stagger and spring physics.
  */
 export function timeline(tracksOrOptions: TimelineTrack[] | UltimateAnimationOptions = [], options: UltimateAnimationOptions = {}): PixonTimeline {
-  const tl = new PixonTimeline();
+  const isOptions = !Array.isArray(tracksOrOptions);
+  const tl = new PixonTimeline(isOptions ? tracksOrOptions : options);
   if (Array.isArray(tracksOrOptions)) {
     tracksOrOptions.forEach(track => tl.add(track));
   }
-  // Note: PixonTimeline doesn't currently use global options, but we could add them if needed.
   return tl;
 }
