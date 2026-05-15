@@ -37,6 +37,16 @@ export function sanitizeKeyframeProps(kf: any): Keyframe {
     if (prop === 'x') prop = 'translateX';
     if (prop === 'y') prop = 'translateY';
 
+    // V4.7 Supreme Clamping: Prevent invalid values that cause browser warnings & main-thread freezing
+    if (typeof val === 'number') {
+      if (['opacity', 'scale', 'scaleX', 'scaleY', 'borderRadius', 'borderWidth'].includes(prop)) {
+        val = Math.max(0.0001, val); // Stay slightly above 0 to avoid some browser glitches
+      }
+    } else if (typeof val === 'string' && prop === 'borderRadius' && val.includes('%')) {
+      const numeric = parseFloat(val);
+      if (numeric < 0) val = '0%';
+    }
+
     if (typeof val === 'number' && UNIT_MAP[prop]) {
       val = `${val}${UNIT_MAP[prop]}`;
     }
@@ -158,7 +168,7 @@ export function getSpringVelocityAt(t: number, x0: number, v0: number, w0: numbe
   return 0; // Simplified for overdamped
 }
 
-export function interpolateString(f: string, t: string, p: number): string {
+export function interpolateString(f: string, t: string, p: number, propName?: string): string {
   // Color Detection (Hex, RGB, RGBA, HSL)
   const isColor = (s: string) => s.startsWith('#') || s.startsWith('rgb') || s.startsWith('hsl');
   if (isColor(f) && isColor(t)) {
@@ -190,9 +200,12 @@ export function interpolateString(f: string, t: string, p: number): string {
   if (!m1 || !m2) return p < .5 ? f : t;
   
   const numbers: string[] = [];
+  const shouldClamp = propName && ['opacity', 'scale', 'borderRadius', 'borderWidth'].some(x => propName.includes(x));
+
   for (let k = 0; k < Math.max(m1.length, m2.length); k++) {
     const s = parseFloat(m1[k] ?? '0'), target = parseFloat(m2[k] ?? '0');
-    const v = s + (target - s) * p;
+    let v = s + (target - s) * p;
+    if (shouldClamp) v = Math.max(0, v);
     numbers.push(v % 1 === 0 ? v.toString() : v.toFixed(5));
   }
 
@@ -308,10 +321,10 @@ export function compileSpringKeyframes(first: Keyframe, last: Keyframe, spring: 
         const s = typeof first[prop] === 'string' ? parseFloat(first[prop] as string) || 0 : (first[prop] as number) || 0;
         const e = last[prop] as number;
         let val = s + (e - s) * p;
-        if (['opacity', 'scale'].some(x => prop.includes(x))) val = Math.max(0.0001, val);
+        if (['opacity', 'scale', 'borderRadius', 'borderWidth'].some(x => prop.includes(x))) val = Math.max(0.0001, val);
         k[prop] = val;
       });
-      morph.forEach(prop => k[prop] = interpolateString(first[prop] as string || '', last[prop] as string, p));
+      morph.forEach(prop => k[prop] = interpolateString(first[prop] as string || '', last[prop] as string, p, prop));
       k.transform = buildComplexTransform(sT, eT, p);
       return k;
     })

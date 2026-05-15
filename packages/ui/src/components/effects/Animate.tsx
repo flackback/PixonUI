@@ -76,7 +76,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 ) => {
   const Component = (as || 'div') as any;
   const { ref: internalRef, animate: pixonAnimate } = usePixonAnimate<any>();
-  const [activeInteraction, setActiveInteraction] = React.useState<string | null>(null);
+  const activeInteractionRef = useRef<string | null>(null);
   const vCtx = useContext(VariantContext);
   const pCtx = useContext(PresenceContext);
   const lGrp = useContext(LayoutGroupContext);
@@ -109,8 +109,9 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
   const staggerIdx = vCtx?.index ?? propStaggerIdx ?? 0;
 
-  const trigger = useCallback((target: Record<string, any>, label = 'animate', force = false) => {
+  const trigger = useCallback((propTarget: any, label = 'animate', force = false) => {
     const el = internalRef.current;
+    const target = resolve(propTarget);
     if (!el || !target) return null;
 
     const targetKey = (typeof target === 'string' ? target : (target._variantName || JSON.stringify(target))) + label;
@@ -203,17 +204,20 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     else if (externalRef) externalRef.current = internalRef.current;
   }, [externalRef, internalRef]);
 
-  // Initial State Cache Pre-population
+  // V4.7 Supreme: Aggressive State Seeding to eliminate layout thrashing
   useEffect(() => {
     const el = internalRef.current;
-    if (el && initial) {
-      const rInitial = resolve(initial);
-      if (rInitial && typeof rInitial === 'object') {
+    if (el) {
+      const seed = { 
+        ...resolve(initial || vCtx?.initial), 
+        ...resolve(targetAnimate || vCtx?.animate) 
+      };
+      if (Object.keys(seed).length > 0) {
         const cached = elementStateRegistry.get(el) || {};
-        elementStateRegistry.set(el, { ...cached, ...rInitial });
+        elementStateRegistry.set(el, { ...seed, ...cached });
       }
     }
-  }, [initial, resolve]);
+  }, [initial, targetAnimate, vCtx?.initial, vCtx?.animate, resolve]);
 
   // Initial Styles Injection
   const initialStyles = useMemo(() => {
@@ -252,34 +256,57 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     }
   }, [vCtx?.interactive, trigger, targetAnimate, initial]);
 
-  // Interaction: Hover
-  const handleMouseEnter = () => {
-    if (whileHover) {
-      setActiveInteraction(typeof whileHover === 'string' ? whileHover : 'whileHover');
-      trigger(resolve(whileHover), 'whileHover');
-    }
-  };
-  const handleMouseLeave = () => {
-    setActiveInteraction(null);
-    if (whileHover) {
-      const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(initial || vCtx?.initial);
-      trigger(rAnim, 'animate', true);
-    }
-  };
+  // V4.8 Hyper-Hover: Native Listener Pipeline to bypass React SyntheticEvents
+  useEffect(() => {
+    const el = internalRef.current;
+    if (!el) return;
 
-  // Interaction: Tap
-  const handleMouseDown = () => {
+    const onEnter = () => {
+      if (whileHover) {
+        activeInteractionRef.current = typeof whileHover === 'string' ? whileHover : 'whileHover';
+        el.style.willChange = 'transform, opacity';
+        trigger(resolve(whileHover), 'whileHover');
+      }
+    };
+
+    const onLeave = () => {
+      activeInteractionRef.current = null;
+      if (whileHover) {
+        const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(initial || vCtx?.initial);
+        if (rAnim) trigger(rAnim, 'animate', true);
+      }
+    };
+
+    const onDown = () => {
+      if (whileTap) {
+        activeInteractionRef.current = typeof whileTap === 'string' ? whileTap : 'whileTap';
+        trigger(resolve(whileTap), 'whileTap');
+      }
+    };
+
+    const onUp = () => {
+      activeInteractionRef.current = null;
+      if (whileTap) trigger(resolve(targetAnimate || vCtx?.animate), 'animate', true);
+    };
+
+    if (whileHover) {
+      el.addEventListener('mouseenter', onEnter, { passive: true });
+      el.addEventListener('mouseleave', onLeave, { passive: true });
+    }
     if (whileTap) {
-      setActiveInteraction(typeof whileTap === 'string' ? whileTap : 'whileTap');
-      trigger(resolve(whileTap), 'whileTap');
+      el.addEventListener('mousedown', onDown, { passive: true });
+      window.addEventListener('mouseup', onUp, { passive: true });
     }
-  };
-  const handleMouseUp = () => {
-    setActiveInteraction(null);
-    if (whileTap) trigger(resolve(targetAnimate || vCtx?.animate), 'animate', true);
-  };
 
-  // Interaction: InView
+    return () => {
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+      el.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [whileHover, whileTap, trigger, resolve, targetAnimate, vCtx?.animate, initial, vCtx?.initial]);
+
+  // Interaction: InView (Lazy)
   useEffect(() => {
     if (!whileInView || !internalRef.current || hasInViewTriggered.current) return;
     const observer = new IntersectionObserver(([entry]) => {
@@ -301,8 +328,14 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   // Exit Animation
   useEffect(() => {
     if (!isPresent && exit) {
-      const a = trigger(resolve(exit), 'exit');
-      a?.finished.then(() => pCtx?.onExitComplete?.()).catch(() => pCtx?.onExitComplete?.());
+      const animations = trigger(resolve(exit), 'exit');
+      if (animations && Array.isArray(animations)) {
+        Promise.all(animations.map(a => a.finished)).finally(() => {
+          pCtx?.onExitComplete?.();
+        });
+      } else {
+        pCtx?.onExitComplete?.();
+      }
     }
   }, [isPresent, exit, pCtx, trigger]);
 
@@ -367,16 +400,12 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       {...props}
       ref={internalRef}
       style={initialStyles}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
     >
       <VariantContext.Provider value={{
         initial: initial || vCtx?.initial,
         animate: targetAnimate || vCtx?.animate,
         exit: exit || vCtx?.exit,
-        interactive: activeInteraction || vCtx?.interactive,
+        interactive: activeInteractionRef.current || vCtx?.interactive,
         index: staggerIdx,
         registerChild: vCtx?.registerChild || (() => 0)
       }}>

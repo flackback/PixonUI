@@ -1,324 +1,257 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useAnimationControls, Button } from '@pixonui/react';
-import { Play } from 'lucide-react';
-
-const paths = [
-  "M4,80.3307481 L4,103.14209", "M12,80.3307481 L12,103.14209", "M20,80.3307481 L20,103.14209",
-  "M28,79.2468955 L28,103.14209", "M36,78.1629412 L36,103.14209", "M44,75.4792747 L44,103.14209",
-  "M52,72.7420239 L52,103.14209", "M60,69.5063186 L60,103.14209", "M68,66.251244 L68,103.14209",
-  "M76,61.8968703 L76,103.14209", "M84,58.6428398 L84,103.14209", "M92,55.3517013 L92,103.14209",
-  "M100,52.1459205 L100,103.14209", "M108,49.9758708 L108,103.14209", "M116,49.9648003 L116,103.14209",
-  "M124,52.0421408 L124,103.14209", "M132,54.207588 L132,103.14209", "M140,57.4549402 L140,103.14209",
-  "M148,59.7410947 L148,103.14209", "M156,60.7705138 L156,103.14209", "M164,59.6868773 L164,103.14209",
-  "M172,56.4734051 L172,103.14209", "M180,49.799018 L180,103.14209", "M188,42.3419581 L188,103.14209",
-  "M196,35.8617977 L196,103.14209", "M204,29.3524204 L204,103.14209", "M212,23.9352737 L212,103.14209",
-  "M220,19.5951742 L220,103.14209", "M228,18.5101493 L228,103.14209", "M236,16.3400995 L236,103.14209",
-  "M244,14.1700498 L244,103.14209", "M252,12 L252,103.14209"
-];
-
-const AnimePathItem = ({ d, index, controls }: { d: string; index: number, controls: any }) => {
-  const pathRef = useRef<SVGPathElement>(null);
-  const [length, setLength] = useState(0);
-
-  useEffect(() => {
-    if (pathRef.current) {
-      setLength(pathRef.current.getTotalLength());
-    }
-  }, []);
-
-  if (length === 0) return <path ref={pathRef} d={d} stroke="transparent" />;
-
-  return (
-    <motion.path
-      d={d}
-      strokeDasharray={length || 1000}
-      animate={controls}
-      staggerIdx={index}
-      initial={{ 
-        strokeDashoffset: -(length || 1000),
-        stroke: '#FFFFFF',
-        strokeWidth: 2
-      }}
-      transition={{
-        strokeDashoffset: {
-          duration: 1.2,
-          delay: index * 0.06,
-          easing: [0.16, 1, 0.3, 1], // easeOutExpo
-          repeat: Infinity,
-          repeatType: 'mirror'
-        },
-        stroke: {
-          duration: 2.0,
-          delay: index * 0.06,
-          easing: 'linear',
-          repeat: Infinity,
-          repeatType: 'mirror'
-        },
-        strokeWidth: {
-          duration: 0.8,
-          delay: 1.2 + (index * 0.04),
-          easing: 'linear',
-          repeat: Infinity,
-          repeatType: 'mirror'
-        }
-      }}
-    />
-  );
-};
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useAnimationControls, Surface } from '@pixonui/react';
 
 export default function AnimePathDemo() {
-  const controls = useAnimationControls();
-
-  const handlePlay = () => {
-    // Reset first
-    controls.set({ 
-      strokeDashoffset: -200, // Large enough to hide
-      stroke: '#FFFFFF',
-      strokeWidth: 2
-    });
-
-    // Start animation
-    controls.start((i: number) => ({
-      strokeDashoffset: 0,
-      stroke: `rgb(200, ${i * 8}, 150)`,
-      strokeWidth: 6
-    }));
-  };
+  const vortexControls = useAnimationControls();
+  const synthControls = useAnimationControls();
+  const neuralControls = useAnimationControls();
+  
+  const [activeView, setActiveView] = useState<'vortex' | 'synth' | 'neural'>('vortex');
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black gap-12 p-8">
-      <div className="relative group flex flex-col items-center gap-8">
-        <Button 
-          variant="cyber" 
-          size="lg" 
-          onClick={handlePlay}
-          leftIcon={<Play className="h-5 w-5 fill-current" />}
-          className="px-8 py-6 rounded-2xl text-lg font-bold tracking-widest uppercase transition-all hover:scale-105 active:scale-95"
-        >
-          Execute Motion
-        </Button>
+    <div className="min-h-screen bg-[#020617] text-white p-4 md:p-12 font-sans selection:bg-cyan-500/30">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <header className="mb-20">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <span className="font-black text-xl italic tracking-tighter">P</span>
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50">
+                PixonUI Motion Showcase
+              </h1>
+              <p className="text-white/40 text-sm font-medium tracking-wide uppercase">Hyper-Hover Engine V4.8</p>
+            </div>
+          </div>
 
-        {/* Cinematic Backdrop Glow */}
-        <div className="absolute -inset-20 bg-gradient-to-tr from-purple-500/10 via-pink-500/5 to-transparent blur-[100px] opacity-50 group-hover:opacity-80 transition-opacity duration-1000 pointer-events-none" />
-        
-        <div className="relative p-12 bg-white/5 backdrop-blur-3xl rounded-[2rem] border border-white/10 shadow-[0_32px_120px_-20px_rgba(0,0,0,0.5)]">
-          <svg 
-            width="252" 
-            height="94" 
-            viewBox="3 11 252 94" 
-            xmlns="http://www.w3.org/2000/svg"
-            className="overflow-visible"
-          >
-            {paths.map((d, i) => (
-              <AnimePathItem key={i} d={d} index={i} controls={controls} />
+          <div className="flex gap-4 p-1.5 bg-white/5 rounded-2xl border border-white/10 w-fit backdrop-blur-xl">
+            {(['vortex', 'synth', 'neural'] as const).map((view) => (
+              <button
+                key={view}
+                onClick={() => setActiveView(view)}
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-500 capitalize ${
+                  activeView === view 
+                    ? 'bg-white text-black shadow-xl scale-105' 
+                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {view}
+              </button>
             ))}
-          </svg>
-        </div>
-
-        <div className="mt-8 text-center space-y-4">
-          <p className="text-white/40 text-sm font-medium tracking-[0.2em] uppercase">
-            Pixon Motion Engine
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/20" />
-            <span className="text-white/60 text-xs italic">Inspired by Anime.js</span>
-            <div className="h-px w-8 bg-gradient-to-l from-transparent to-white/20" />
           </div>
-        </div>
-      </div>
+        </header>
 
-      <a 
-        href="http://anime-js.com" 
-        className="logo opacity-30 hover:opacity-100 transition-opacity duration-500 mb-20"
-      >
-        <img 
-          src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1137/anime-logo.png" 
-          alt="Anime.js Logo"
-          className="h-6 invert"
-        />
-      </a>
-
-      {/* NEW: Kinetic Ripple Grid */}
-      <div className="flex flex-col items-center gap-8 mb-20 w-full max-w-2xl">
-        <div className="text-center">
-          <p className="text-cyan-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 02</p>
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Kinetic Ripple</h2>
-          <p className="text-white/40 text-sm italic">Staggered scale & rotate orchestration</p>
+        {/* Content Section */}
+        <div className="relative min-h-[600px]">
+          {activeView === 'vortex' && <EventHorizon controls={vortexControls} />}
+          {activeView === 'synth' && <FluidSynth controls={synthControls} />}
+          {activeView === 'neural' && <NeuralSynapse controls={neuralControls} />}
         </div>
 
-        <div className="grid grid-cols-10 gap-3 p-8 bg-white/5 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl">
-          {Array.from({ length: 50 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg shadow-lg shadow-cyan-500/20"
-              initial={{ scale: 1, rotate: 0 }}
-              animate={{
-                scale: [1, 0.2, 1],
-                rotate: [0, 180, 360]
-              }}
-              transition={{
-                duration: 2,
-                delay: (i % 10) * 0.1 + Math.floor(i / 10) * 0.1,
-                repeat: Infinity,
-                repeatDelay: 1,
-                easing: [0.22, 1, 0.36, 1]
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* NEW: Orbital Flux */}
-      <div className="flex flex-col items-center gap-8 mb-32 w-full max-w-2xl">
-        <div className="text-center">
-          <p className="text-pink-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 03</p>
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Orbital Flux</h2>
-          <p className="text-white/40 text-sm italic">Multi-axis synchronized motion</p>
-        </div>
-
-        <div className="relative w-80 h-80 flex items-center justify-center bg-white/5 backdrop-blur-md rounded-[3rem] border border-white/5">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-4 h-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full shadow-[0_0_20px_rgba(236,72,153,0.5)]"
-              initial={{ x: 0, y: 0, opacity: 0 }}
-              animate={{
-                x: Math.cos((i / 12) * Math.PI * 2) * 120,
-                y: Math.sin((i / 12) * Math.PI * 2) * 120,
-                opacity: [0, 1, 0],
-                scale: [0.5, 1.5, 0.5]
-              }}
-              transition={{
-                duration: 3,
-                delay: i * 0.15,
-                repeat: Infinity,
-                easing: "elite-out"
-              }}
-            />
-          ))}
-          <div className="w-16 h-16 bg-white/10 rounded-full blur-2xl opacity-20 animate-pulse" />
-          <div className="absolute inset-0 border border-white/5 rounded-[3rem] animate-[spin_20s_linear_infinite]" />
-        </div>
-      </div>
-
-      {/* NEW: Dynamic Typography */}
-      <div className="flex flex-col items-center gap-8 mb-20 w-full max-w-2xl">
-        <div className="text-center">
-          <p className="text-amber-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 04</p>
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Dynamic Typography</h2>
-          <p className="text-white/40 text-sm italic">Spring-based character staggering</p>
-        </div>
-
-        <div className="flex gap-1">
-          {"PIXONUI".split("").map((char, i) => (
-            <motion.span
-              key={i}
-              className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-t from-amber-500 to-yellow-200"
-              initial={{ y: 20, opacity: 0, scale: 0 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              transition={{
-                type: 'spring',
-                stiffness: 400,
-                damping: 15,
-                delay: i * 0.1,
-                repeat: Infinity,
-                repeatType: 'mirror',
-                repeatDelay: 1
-              }}
-            >
-              {char}
-            </motion.span>
-          ))}
-        </div>
-      </div>
-
-      {/* NEW: Chromic Waves */}
-      <div className="flex flex-col items-center gap-8 mb-32 w-full max-w-2xl">
-        <div className="text-center">
-          <p className="text-emerald-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 05</p>
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Chromic Waves</h2>
-          <p className="text-white/40 text-sm italic">Staggered color interpolation & flow</p>
-        </div>
-
-        <div className="flex gap-2 p-8 bg-white/5 backdrop-blur-md rounded-3xl border border-white/5">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="w-4 h-24 rounded-full"
-              initial={{ backgroundColor: '#10b981', scaleY: 1 }}
-              animate={{ 
-                backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#10b981'],
-                scaleY: [1, 1.8, 0.6, 1]
-              }}
-              transition={{
-                duration: 4,
-                delay: i * 0.1,
-                repeat: Infinity,
-                easing: 'easeInOutExpo'
-              }}
-            />
-          ))}
-      </div>
-
-      </div>
-
-      {/* NEW: Fractal Explosion */}
-      <div className="flex flex-col items-center gap-8 mb-40 w-full max-w-2xl">
-        <div className="text-center">
-          <p className="text-rose-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 06</p>
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Fractal Explosion</h2>
-          <p className="text-white/40 text-sm italic">Hover to fragment the composition</p>
-        </div>
-
-        <motion.div 
-          className="relative w-64 h-64 group cursor-crosshair"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(20, 1fr)',
-            gridTemplateRows: 'repeat(20, 1fr)'
-          }}
-          whileHover="explode"
-        >
-          {Array.from({ length: 400 }).map((_, i) => {
-            const randX = (Math.random() - 0.5) * 600;
-            const randY = (Math.random() - 0.5) * 600;
-            const randRot = (Math.random() - 0.5) * 1080;
-            
-            return (
-              <motion.div
-                key={i}
-                className="w-full h-full"
-                style={{
-                  backgroundColor: `hsl(${200 + i * 0.4}, 80%, 60%)`,
-                }}
-                initial={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
-                variants={{
-                  explode: {
-                    x: randX,
-                    y: randY,
-                    rotate: randRot,
-                    scale: 0.1,
-                    opacity: 0,
-                    borderRadius: '50%'
-                  }
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 120,
-                  damping: 12,
-                  mass: 0.8
-                }}
-              />
-            );
-          })}
-          {/* Core Label */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-white font-black text-xl tracking-[0.5em] opacity-0 group-hover:opacity-100 transition-opacity duration-500 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-              FRACTAL
-            </span>
+        {/* Footer Info */}
+        <footer className="mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-white/20 text-xs tracking-widest uppercase font-bold">
+            All animations powered by WAAPI & Direct-Trigger Pipeline
           </div>
-        </motion.div>
+          <div className="flex gap-8">
+            <div className="text-center">
+              <p className="text-white font-bold text-lg leading-none">60</p>
+              <p className="text-white/20 text-[10px] uppercase font-black tracking-tighter">FPS Target</p>
+            </div>
+            <div className="text-center">
+              <p className="text-white font-bold text-lg leading-none">0ms</p>
+              <p className="text-white/20 text-[10px] uppercase font-black tracking-tighter">Input Lag</p>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
+  );
+}
+
+/**
+ * NEW SEQUENCE 01: Event Horizon
+ * Physics-based gravitational vortex with 150 particles.
+ */
+function EventHorizon({ controls }: { controls: any }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="relative w-full aspect-video md:aspect-[21/9] bg-[#030712] rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl flex items-center justify-center group"
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+
+        controls.set((idx: number) => {
+          const angle = (idx / 150) * Math.PI * 2 * 3; // Swirl multiplier
+          const baseRadius = 80 + (idx % 20) * 12;
+          const px = cx + Math.cos(angle) * baseRadius;
+          const py = cy + Math.sin(angle) * baseRadius;
+
+          const dist = Math.sqrt((mx - px)**2 + (my - py)**2);
+          if (dist < 200) {
+            const force = (200 - dist) / 200;
+            const pushX = (px - mx) * force * 0.8;
+            const pushY = (py - my) * force * 0.8;
+            return { 
+              x: px - cx + pushX, 
+              y: py - cy + pushY, 
+              scale: 0.5 + force * 2,
+              opacity: 0.2 + force * 0.8,
+              filter: `blur(${force * 8}px) brightness(${1 + force * 2})`
+            };
+          }
+          return null;
+        });
+      }}
+      onClick={() => {
+        controls.start({
+          x: 0, y: 0, scale: 4, opacity: 0,
+          transition: { type: 'spring', stiffness: 100, damping: 20, delay: (i: any) => i * 0.001 }
+        }).then(() => setTimeout(() => controls.start("initial"), 500));
+      }}
+    >
+      <div className="absolute w-40 h-40 bg-cyan-500/20 blur-[80px] rounded-full animate-pulse" />
+      <div className="absolute w-1 h-1 bg-white rounded-full shadow-[0_0_20px_white]" />
+
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {Array.from({ length: 150 }).map((_, i) => {
+          const angle = (i / 150) * Math.PI * 2 * 3;
+          const radius = 80 + (i % 20) * 12;
+          const startX = Math.cos(angle) * radius;
+          const startY = Math.sin(angle) * radius;
+
+          return (
+            <motion.div
+              key={i}
+              animate={controls}
+              initial="initial"
+              staggerIdx={i}
+              variants={{
+                initial: { x: startX, y: startY, scale: 1, opacity: 0.3, filter: 'blur(1px)' }
+              }}
+              className="absolute w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+            />
+          );
+        })}
+      </div>
+
+      <div className="absolute bottom-8 left-8">
+        <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em] mb-1">Interactive Vortex</p>
+        <p className="text-cyan-400/60 text-[8px] font-bold uppercase tracking-widest">Move mouse to distort gravity field</p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * NEW SEQUENCE 02: Fluid Synth
+ * Glassmorphic data visualization equalizer.
+ */
+function FluidSynth({ controls }: { controls: any }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative w-full h-[600px] bg-gradient-to-b from-[#0f172a] to-[#020617] rounded-[3rem] overflow-hidden border border-white/5 flex items-center justify-center gap-2 px-12 group"
+    >
+      {Array.from({ length: 32 }).map((_, i) => (
+        <motion.div
+          key={i}
+          animate={controls}
+          initial="initial"
+          staggerIdx={i}
+          variants={{
+            initial: { height: 40 + Math.random() * 100, opacity: 0.3, backgroundColor: 'rgba(255,255,255,0.1)' }
+          }}
+          whileHover={{
+            height: 400,
+            opacity: 1,
+            backgroundColor: 'rgba(34,211,238,0.8)',
+            boxShadow: '0 0 40px rgba(34,211,238,0.4)',
+            scaleX: 1.5,
+            transition: { type: 'spring', stiffness: 400, damping: 15 }
+          }}
+          className="flex-1 min-w-[8px] max-w-[20px] rounded-full backdrop-blur-md border border-white/10"
+        />
+      ))}
+
+      <div className="absolute top-12 left-12">
+        <h2 className="text-2xl font-black text-white/10 italic">FLUID SYNTH</h2>
+      </div>
+      <div className="absolute bottom-8 right-12 text-right">
+        <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em]">Kinetic Equalizer</p>
+        <p className="text-fuchsia-500/60 text-[8px] font-bold uppercase tracking-widest">Hover to trigger physical morphing</p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * NEW SEQUENCE 03: Neural Synapse
+ * Interactive light-grid with ripple propagation.
+ */
+function NeuralSynapse({ controls }: { controls: any }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, filter: 'blur(20px)' }}
+      animate={{ opacity: 1, filter: 'blur(0px)' }}
+      className="relative w-full aspect-video md:aspect-[21/9] bg-[#020617] rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl flex items-center justify-center group p-20"
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        controls.set((idx: number) => {
+          const row = Math.floor(idx / 12);
+          const col = idx % 12;
+          const px = col * 60 + 100;
+          const py = row * 60 + 80;
+
+          const dist = Math.sqrt((mx - px)**2 + (my - py)**2);
+          if (dist < 150) {
+            const force = (150 - dist) / 150;
+            return {
+              scale: 1 + force * 1.5,
+              opacity: 0.1 + force * 0.9,
+              backgroundColor: force > 0.8 ? 'rgba(255,255,255,1)' : 'rgba(34,211,238,0.5)',
+              boxShadow: `0 0 ${force * 30}px rgba(34,211,238,0.5)`
+            };
+          }
+          return { scale: 1, opacity: 0.1, backgroundColor: 'rgba(255,255,255,0.1)', boxShadow: 'none' };
+        });
+      }}
+    >
+      <div className="grid grid-cols-12 gap-10">
+        {Array.from({ length: 72 }).map((_, i) => (
+          <motion.div
+            key={i}
+            animate={controls}
+            initial="initial"
+            staggerIdx={i}
+            variants={{
+              initial: { scale: 1, opacity: 0.1, backgroundColor: 'rgba(255,255,255,0.1)' }
+            }}
+            className="w-3 h-3 rounded-full border border-white/10"
+          />
+        ))}
+      </div>
+
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <h3 className="text-9xl font-black text-white/[0.01] tracking-[1em] uppercase group-hover:tracking-[0.5em] transition-all duration-1000">
+          NEURAL
+        </h3>
+      </div>
+
+      <div className="absolute bottom-8 left-12">
+        <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em] mb-1">Synapse Mesh</p>
+        <p className="text-blue-400/60 text-[8px] font-bold uppercase tracking-widest">Responsive light nodes</p>
+      </div>
+    </motion.div>
   );
 }
