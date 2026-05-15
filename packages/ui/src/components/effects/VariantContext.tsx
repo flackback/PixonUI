@@ -4,6 +4,8 @@ export interface VariantContextType {
   initial?: string | Record<string, any>;
   animate?: string | Record<string, any>;
   exit?: string | Record<string, any>;
+  interactive?: string | null;
+  index?: number;
   staggerChildren?: number;
   delayChildren?: number;
   registerChild: () => number;
@@ -27,6 +29,7 @@ export function VariantProvider({
   initial,
   animate,
   exit,
+  interactive,
   staggerChildren,
   delayChildren,
 }: VariantProviderProps) {
@@ -47,6 +50,7 @@ export function VariantProvider({
     initial: initial !== undefined ? initial : parentContext?.initial,
     animate: animate !== undefined ? animate : parentContext?.animate,
     exit: exit !== undefined ? exit : parentContext?.exit,
+    interactive: interactive !== undefined ? interactive : parentContext?.interactive,
     staggerChildren,
     delayChildren,
     registerChild: () => {

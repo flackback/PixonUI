@@ -5,12 +5,13 @@ export type SpringType = 'standard' | 'impulse';
 export type StaggerConfig = { delay?: number; amount?: number; from?: 'first' | 'last' | 'center' | number };
 
 const trajectoryCache = new Map<string, { progress: number[]; keyframes: number[]; duration: number }>();
-const elementStateRegistry = new WeakMap<HTMLElement, { targetKey: string; lastUpdate: number }>();
+// V4.7 Supreme: Unified registry for element state, interaction keys, and style caching
+export const elementStateRegistry = new WeakMap<Element, Record<string, any>>();
 
-export function shouldTrigger(el: HTMLElement, targetKey: string): boolean {
-  const state = elementStateRegistry.get(el);
-  if (state && state.targetKey === targetKey) return false;
-  elementStateRegistry.set(el, { targetKey, lastUpdate: Date.now() });
+export function shouldTrigger(el: Element, targetKey: string): boolean {
+  const state = elementStateRegistry.get(el) || {};
+  if (state.targetKey === targetKey) return false;
+  elementStateRegistry.set(el, { ...state, targetKey, lastUpdate: Date.now() });
   return true;
 }
 
@@ -19,8 +20,33 @@ export function shouldTrigger(el: HTMLElement, targetKey: string): boolean {
  * Hardened physics, matrix decomposition, and color-aware interpolation.
  */
 
+const UNIT_MAP: Record<string, string> = {
+  rotate: 'deg', rotateX: 'deg', rotateY: 'deg', rotateZ: 'deg',
+  translateX: 'px', translateY: 'px', translateZ: 'px',
+  x: 'px', y: 'px',
+  skewX: 'deg', skewY: 'deg', perspective: 'px'
+};
+
+export function sanitizeKeyframeProps(kf: any): Keyframe {
+  const sanitized: any = {};
+  Object.keys(kf).forEach(p => {
+    let prop = p;
+    let val = kf[p];
+    
+    // Map shorthands
+    if (prop === 'x') prop = 'translateX';
+    if (prop === 'y') prop = 'translateY';
+
+    if (typeof val === 'number' && UNIT_MAP[prop]) {
+      val = `${val}${UNIT_MAP[prop]}`;
+    }
+    sanitized[prop] = val;
+  });
+  return sanitized;
+}
+
 export function prepareKeyframes(input: any): Keyframe[] {
-  if (Array.isArray(input)) return input.map(k => typeof k === 'object' ? k : { transform: k });
+  if (Array.isArray(input)) return input.map(k => sanitizeKeyframeProps(typeof k === 'object' ? k : { transform: k }));
   if (typeof input === 'object') {
     const keys = Object.keys(input);
     
@@ -33,20 +59,19 @@ export function prepareKeyframes(input: any): Keyframe[] {
         keys.forEach(k => {
           const val = input[k];
           if (Array.isArray(val)) {
-            // Distribute values across keyframes
             kf[k] = val[Math.min(i, val.length - 1)];
           } else {
             kf[k] = val;
           }
         });
-        return kf;
+        return sanitizeKeyframeProps(kf);
       });
     }
 
-    if (keys.every(k => !isNaN(Number(k)))) return Object.values(input);
-    return [input];
+    if (keys.every(k => !isNaN(Number(k)))) return Object.values(input).map(sanitizeKeyframeProps);
+    return [sanitizeKeyframeProps(input)];
   }
-  return [{ transform: input }];
+  return [sanitizeKeyframeProps({ transform: input })];
 }
 
 export function sanitizeEasing(easing: any): string {
@@ -57,7 +82,10 @@ export function sanitizeEasing(easing: any): string {
     'elite-out': 'cubic-bezier(0.16, 1, 0.3, 1)',
     'elite-in-out': 'cubic-bezier(0.87, 0, 0.13, 1)',
     'spring-out': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-    'soft-bounce': 'cubic-bezier(0.47, 1.64, 0.41, 0.8)'
+    'soft-bounce': 'cubic-bezier(0.47, 1.64, 0.41, 0.8)',
+    'easeInExpo': 'cubic-bezier(0.7, 0, 0.84, 0)',
+    'easeOutExpo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+    'easeInOutExpo': 'cubic-bezier(0.87, 0, 0.13, 1)'
   };
   return presets[easing] || easing || 'ease';
 }
@@ -223,7 +251,16 @@ export function calcFlip(first: any, last: any) {
 }
 
 export function captureElementState(el: Element, props: string[]): Keyframe {
-  const state: Keyframe = {}, s = getComputedStyle(el);
+  const state: Keyframe = {};
+  const cached = elementStateRegistry.get(el);
+  
+  // V4.7 Supreme: Use cache first to prevent layout-inducing getComputedStyle calls
+  if (cached) {
+    props.forEach(p => {
+      if (cached[p] !== undefined) state[p] = cached[p];
+    });
+  }
+
   const anims = (el as any).getAnimations?.() || [];
   anims.forEach((a: any) => {
     if (a.effect instanceof KeyframeEffect) {
@@ -231,17 +268,23 @@ export function captureElementState(el: Element, props: string[]): Keyframe {
       if (kf) props.forEach(p => kf[p] !== undefined && (state[p] = kf[p]));
     }
   });
-  props.forEach(p => { 
-    if (state[p] === undefined) {
-      const val = s.getPropertyValue(p) || (s as any)[p];
-      // Supreme Fix: Auto-parse numeric values and strip units for starting state
+
+  // If we still have missing props, we MUST query computedStyle (unavoidable)
+  const missing = props.filter(p => state[p] === undefined);
+  if (missing.length > 0) {
+    const s = getComputedStyle(el);
+    missing.forEach(p => {
+      const val = s.getPropertyValue(p) || (s as any)[p] || (el as any).getAttribute?.(p);
       if (typeof val === 'string' && /^-?\d*\.?\d+(px|%|em|rem|vh|vw|deg|rad|turn)?$/.test(val)) {
         state[p] = parseFloat(val);
       } else {
         state[p] = val;
       }
-    }
-  });
+    });
+  }
+
+  // Update cache with combined state
+  elementStateRegistry.set(el, { ...(cached || {}), ...state });
   return state;
 }
 

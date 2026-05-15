@@ -200,6 +200,125 @@ export default function AnimePathDemo() {
           <div className="absolute inset-0 border border-white/5 rounded-[3rem] animate-[spin_20s_linear_infinite]" />
         </div>
       </div>
+
+      {/* NEW: Dynamic Typography */}
+      <div className="flex flex-col items-center gap-8 mb-20 w-full max-w-2xl">
+        <div className="text-center">
+          <p className="text-amber-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 04</p>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Dynamic Typography</h2>
+          <p className="text-white/40 text-sm italic">Spring-based character staggering</p>
+        </div>
+
+        <div className="flex gap-1">
+          {"PIXONUI".split("").map((char, i) => (
+            <motion.span
+              key={i}
+              className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-t from-amber-500 to-yellow-200"
+              initial={{ y: 20, opacity: 0, scale: 0 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              transition={{
+                type: 'spring',
+                stiffness: 400,
+                damping: 15,
+                delay: i * 0.1,
+                repeat: Infinity,
+                repeatType: 'mirror',
+                repeatDelay: 1
+              }}
+            >
+              {char}
+            </motion.span>
+          ))}
+        </div>
+      </div>
+
+      {/* NEW: Chromic Waves */}
+      <div className="flex flex-col items-center gap-8 mb-32 w-full max-w-2xl">
+        <div className="text-center">
+          <p className="text-emerald-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 05</p>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Chromic Waves</h2>
+          <p className="text-white/40 text-sm italic">Staggered color interpolation & flow</p>
+        </div>
+
+        <div className="flex gap-2 p-8 bg-white/5 backdrop-blur-md rounded-3xl border border-white/5">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="w-4 h-24 rounded-full"
+              initial={{ backgroundColor: '#10b981', scaleY: 1 }}
+              animate={{ 
+                backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#10b981'],
+                scaleY: [1, 1.8, 0.6, 1]
+              }}
+              transition={{
+                duration: 4,
+                delay: i * 0.1,
+                repeat: Infinity,
+                easing: 'easeInOutExpo'
+              }}
+            />
+          ))}
+      </div>
+
+      </div>
+
+      {/* NEW: Fractal Explosion */}
+      <div className="flex flex-col items-center gap-8 mb-40 w-full max-w-2xl">
+        <div className="text-center">
+          <p className="text-rose-400/60 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Sequence 06</p>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter">Fractal Explosion</h2>
+          <p className="text-white/40 text-sm italic">Hover to fragment the composition</p>
+        </div>
+
+        <motion.div 
+          className="relative w-64 h-64 group cursor-crosshair"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(20, 1fr)',
+            gridTemplateRows: 'repeat(20, 1fr)'
+          }}
+          whileHover="explode"
+        >
+          {Array.from({ length: 400 }).map((_, i) => {
+            const randX = (Math.random() - 0.5) * 600;
+            const randY = (Math.random() - 0.5) * 600;
+            const randRot = (Math.random() - 0.5) * 1080;
+            
+            return (
+              <motion.div
+                key={i}
+                className="w-full h-full"
+                style={{
+                  backgroundColor: `hsl(${200 + i * 0.4}, 80%, 60%)`,
+                }}
+                initial={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
+                variants={{
+                  explode: {
+                    x: randX,
+                    y: randY,
+                    rotate: randRot,
+                    scale: 0.1,
+                    opacity: 0,
+                    borderRadius: '50%'
+                  }
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 120,
+                  damping: 12,
+                  mass: 0.8
+                }}
+              />
+            );
+          })}
+          {/* Core Label */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-white font-black text-xl tracking-[0.5em] opacity-0 group-hover:opacity-100 transition-opacity duration-500 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+              FRACTAL
+            </span>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

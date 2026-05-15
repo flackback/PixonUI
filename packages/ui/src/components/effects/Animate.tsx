@@ -10,7 +10,8 @@ import {
   SpringConfig, 
   Transition,
   Target,
-  shouldTrigger
+  shouldTrigger,
+  elementStateRegistry
 } from '../../utils/motion';
 
 export interface AnimateProps<T extends React.ElementType = 'div'> {
@@ -26,18 +27,20 @@ export interface AnimateProps<T extends React.ElementType = 'div'> {
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 // V4.7 Supreme Singleton Batching System
-const measureQueue = new Map<HTMLElement, (rect: DOMRect) => void>();
+const measureQueue = new WeakMap<HTMLElement, (rect: DOMRect) => void>();
+// Keep track of elements in queue for iteration in processLayoutQueues
+const elementsInQueue = new Set<HTMLElement>();
 let rafId: number | null = null;
 
 function processLayoutQueues() {
-  if (measureQueue.size === 0) {
+  if (elementsInQueue.size === 0) {
     rafId = null;
     return;
   }
   
-  const elements = Array.from(measureQueue.keys()).filter(el => el.isConnected);
+  const elements = Array.from(elementsInQueue).filter(el => el.isConnected);
   if (elements.length === 0) {
-    measureQueue.clear();
+    elementsInQueue.clear();
     rafId = null;
     return;
   }
@@ -51,7 +54,7 @@ function processLayoutQueues() {
   } catch (e) {
     console.warn('PixonUI Layout Error:', e);
   } finally {
-    measureQueue.clear();
+    elementsInQueue.clear();
     rafId = null;
   }
 }
@@ -73,6 +76,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 ) => {
   const Component = (as || 'div') as any;
   const { ref: internalRef, animate: pixonAnimate } = usePixonAnimate<any>();
+  const [activeInteraction, setActiveInteraction] = React.useState<string | null>(null);
   const vCtx = useContext(VariantContext);
   const pCtx = useContext(PresenceContext);
   const lGrp = useContext(LayoutGroupContext);
@@ -90,16 +94,16 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   const latestProps = useRef({ onAnimationComplete, variants, transition });
   latestProps.current = { onAnimationComplete, variants, transition };
 
-  // Sync internal and external refs
-  useIsomorphicLayoutEffect(() => {
-    if (typeof externalRef === 'function') externalRef(internalRef.current);
-    else if (externalRef) externalRef.current = internalRef.current;
-  }, [externalRef, internalRef]);
-
   const resolve = useCallback((target: any) => {
     if (!target) return null;
     const { variants: currentVariants } = latestProps.current;
-    if (typeof target === 'string' && currentVariants?.[target]) return currentVariants[target];
+    if (typeof target === 'string' && currentVariants?.[target]) {
+      const resolved = currentVariants[target];
+      if (resolved && typeof resolved === 'object' && !Array.isArray(resolved)) {
+        return { ...resolved, _variantName: target };
+      }
+      return resolved;
+    }
     return target;
   }, []);
 
@@ -109,7 +113,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const el = internalRef.current;
     if (!el || !target) return null;
 
-    const targetKey = JSON.stringify(target) + label;
+    const targetKey = (typeof target === 'string' ? target : (target._variantName || JSON.stringify(target))) + label;
     
     // V4.7 Supreme Gate: Intelligent Filtering
     const isInteractive = ['whileHover', 'whileTap', 'whileInView'].includes(label);
@@ -131,7 +135,35 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const effectiveTransition = (force && typeof force === 'object') ? { ...currentTransition, ...force } : currentTransition;
     const targetProps = Object.keys(target);
     
-    // V4.7 Supreme: Support for per-property transitions
+    // V4.7 Supreme: Intelligent Property Batching
+    // Only split if properties have explicit individual transitions
+    const sharedTransition = typeof effectiveTransition === 'object' && Object.keys(effectiveTransition).every(k => !targetProps.includes(k));
+    
+    if (sharedTransition) {
+      const stag = calculateStagger(staggerIdx, 1, (effectiveTransition as any)?.staggerChildren ? { amount: (effectiveTransition as any).staggerChildren } : {});
+      const opts = {
+        duration: (effectiveTransition?.duration ?? 400) * 1000,
+        delay: (effectiveTransition?.delay ?? 0) * 1000 + stag,
+        easing: effectiveTransition?.easing || 'elite-out',
+        spring: effectiveTransition?.type === 'spring' ? { stiffness: effectiveTransition.stiffness, damping: effectiveTransition.damping, mass: effectiveTransition.mass } : undefined,
+        iterations: effectiveTransition?.repeat === Infinity ? Infinity : (effectiveTransition?.repeat || 1),
+        direction: effectiveTransition?.repeatType === 'mirror' ? 'alternate' : 'normal',
+        endDelay: (effectiveTransition?.repeatDelay ?? 0) * 1000,
+        additive: label === 'whileHover' || label === 'whileTap',
+      };
+      const animations = [pixonAnimate(target, opts)];
+      
+      if (currentOnComplete) {
+        const a = animations[0];
+        if (a) a.onfinish = () => {
+          if (activeLabel.current === label) activeLabel.current = 'idle';
+          currentOnComplete(label);
+        };
+      }
+      return animations;
+    }
+
+    // Fallback to per-property splitting if complex transitions are defined
     const triggerProperty = (prop: string, val: any) => {
       const propTrans = (effectiveTransition as any)?.[prop] || effectiveTransition;
       const stag = calculateStagger(staggerIdx, 1, propTrans?.staggerChildren ? { amount: propTrans.staggerChildren } : {});
@@ -150,20 +182,38 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       return pixonAnimate({ [prop]: val }, opts);
     };
 
-    // If we have per-property transitions, split the trigger
     const animations = targetProps.map(p => triggerProperty(p, target[p]));
     
-    // Signal completion once (heuristic: using the first one or a timeout)
     if (currentOnComplete) {
       const mainAnim = animations[0];
-      if (mainAnim) mainAnim.onfinish = () => {
-        if (activeLabel.current === label) activeLabel.current = 'idle';
-        currentOnComplete(label);
-      };
+      if (mainAnim) {
+        mainAnim.onfinish = () => {
+          if (activeLabel.current === label) activeLabel.current = 'idle';
+          currentOnComplete(label);
+        };
+      }
     }
 
-    return animations[0];
-  }, [pixonAnimate, stableTransition, staggerIdx]);
+    return animations;
+  }, [staggerIdx, pixonAnimate, shouldTrigger]);
+
+  // Sync internal and external refs
+  useIsomorphicLayoutEffect(() => {
+    if (typeof externalRef === 'function') externalRef(internalRef.current);
+    else if (externalRef) externalRef.current = internalRef.current;
+  }, [externalRef, internalRef]);
+
+  // Initial State Cache Pre-population
+  useEffect(() => {
+    const el = internalRef.current;
+    if (el && initial) {
+      const rInitial = resolve(initial);
+      if (rInitial && typeof rInitial === 'object') {
+        const cached = elementStateRegistry.get(el) || {};
+        elementStateRegistry.set(el, { ...cached, ...rInitial });
+      }
+    }
+  }, [initial, resolve]);
 
   // Initial Styles Injection
   const initialStyles = useMemo(() => {
@@ -191,9 +241,26 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     if (rAnim && !whileInView) trigger(rAnim, 'animate');
   }, [isPresent, stableTarget, vCtx?.animate, trigger, whileInView]);
 
+  // Reactive Interaction: Listen to parent
+  useEffect(() => {
+    if (vCtx?.interactive && variants?.[vCtx.interactive]) {
+      trigger(variants[vCtx.interactive], vCtx.interactive);
+    } else if (!vCtx?.interactive && activeLabel.current?.startsWith('while')) {
+      // Revert to base state
+      const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(initial || vCtx?.initial);
+      if (rAnim) trigger(rAnim, 'animate', true);
+    }
+  }, [vCtx?.interactive, trigger, targetAnimate, initial]);
+
   // Interaction: Hover
-  const handleMouseEnter = () => whileHover && trigger(resolve(whileHover), 'whileHover');
+  const handleMouseEnter = () => {
+    if (whileHover) {
+      setActiveInteraction(typeof whileHover === 'string' ? whileHover : 'whileHover');
+      trigger(resolve(whileHover), 'whileHover');
+    }
+  };
   const handleMouseLeave = () => {
+    setActiveInteraction(null);
     if (whileHover) {
       const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(initial || vCtx?.initial);
       trigger(rAnim, 'animate', true);
@@ -201,8 +268,16 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   };
 
   // Interaction: Tap
-  const handleMouseDown = () => whileTap && trigger(resolve(whileTap), 'whileTap');
-  const handleMouseUp = () => whileTap && trigger(resolve(targetAnimate || vCtx?.animate), 'animate', true);
+  const handleMouseDown = () => {
+    if (whileTap) {
+      setActiveInteraction(typeof whileTap === 'string' ? whileTap : 'whileTap');
+      trigger(resolve(whileTap), 'whileTap');
+    }
+  };
+  const handleMouseUp = () => {
+    setActiveInteraction(null);
+    if (whileTap) trigger(resolve(targetAnimate || vCtx?.animate), 'animate', true);
+  };
 
   // Interaction: InView
   useEffect(() => {
@@ -237,6 +312,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const el = internalRef.current;
     if (!el || !layout || typeof window === 'undefined') return;
 
+    elementsInQueue.add(el);
     measureQueue.set(el, (cur) => {
       // V4.7 Supreme: Skip layout if currently in an interactive state to prevent jitter
       if (['whileHover', 'whileTap'].includes(activeLabel.current || '')) return;
@@ -278,6 +354,12 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     });
 
     requestLayoutProcess();
+    
+    return () => {
+      elementsInQueue.delete(el);
+      const anims = (el as any).getAnimations?.() || [];
+      anims.forEach((a: any) => a.cancel());
+    };
   }, [layout, layoutId, lGrp, trigger]);
 
   return (
@@ -290,7 +372,16 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
     >
-      {children}
+      <VariantContext.Provider value={{
+        initial: initial || vCtx?.initial,
+        animate: targetAnimate || vCtx?.animate,
+        exit: exit || vCtx?.exit,
+        interactive: activeInteraction || vCtx?.interactive,
+        index: staggerIdx,
+        registerChild: vCtx?.registerChild || (() => 0)
+      }}>
+        {children}
+      </VariantContext.Provider>
     </Component>
   );
 }) as <T extends React.ElementType = 'div'>(props: AnimateProps<T> & { ref?: React.ForwardedRef<any> }) => React.ReactElement;

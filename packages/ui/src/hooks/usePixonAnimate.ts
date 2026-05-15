@@ -6,7 +6,8 @@ import {
   compileSpringKeyframes, 
   captureElementState, 
   sanitizeEasing,
-  getSpringVelocityAt
+  getSpringVelocityAt,
+  elementStateRegistry
 } from '../utils/motion';
 
 export interface PixonAnimateOptions extends KeyframeAnimationOptions {
@@ -29,7 +30,8 @@ export interface UsePixonAnimateReturn<T extends HTMLElement = HTMLDivElement> {
 }
 
 // Global store to track animation state without React render loops
-const animationStateStore = new Map<HTMLElement, { isAnimating: boolean; subscribers: Set<() => void> }>();
+// V4.7 Supreme: Using WeakMap to prevent memory leaks for unmounted elements
+const animationStateStore = new WeakMap<HTMLElement, { isAnimating: boolean; subscribers: Set<() => void> }>();
 
 function getStore(el: HTMLElement) {
   if (!animationStateStore.has(el)) {
@@ -132,12 +134,10 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       ['transform', 'opacity', 'filter', 'backdrop-filter'].includes(p)
     );
     
-    if (el.style) {
-      // Clear inline styles for animated properties to let WAAPI take precedence
+    if (el instanceof HTMLElement || el instanceof SVGElement) {
       targetProps.forEach(p => {
-        if (p in el.style) (el.style as any)[p] = '';
+        if (isNaN(Number(p)) && p in el.style && (el.style as any)[p] !== '') (el.style as any)[p] = '';
       });
-      if (compositorProps.length > 0) el.style.willChange = compositorProps.join(', ');
     }
     
     const a = el.animate(finalKfs as Keyframe[], { 
@@ -147,7 +147,12 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       duration: dur, 
       easing: sanitizeEasing(easing), 
     });
-    
+
+    // V4.7 Supreme: Update global registry with final target to avoid DOM reads in next cycle
+    const finalState = finalKfs.at(-1) as Keyframe;
+    const cached = elementStateRegistry.get(el) || {};
+    elementStateRegistry.set(el, { ...cached, ...finalState });
+
     if (!isAdditive) animRef.current = a;
 
     a.finished.then(() => {
