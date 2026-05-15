@@ -83,6 +83,8 @@ import { DashboardDemo } from './demos/DashboardDemo';
 import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
 
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
+import MotionHeroDemo from './demos/MotionHero';
+import AnimePathDemo from './demos/AnimePathDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
 import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
 import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
@@ -1451,9 +1453,42 @@ ${VideoPlayerSource}
 ${usePixonVideoPlayerSource}`,
     demo: <VideoPlayerDemo />
   },
+  {
+    id: 'motion-hero',
+    title: 'Motion Hero V4',
+    category: 'Effects',
+    description: 'Uma vitrine premium do motor de animação Pixon V4, apresentando um fundo DotGrid interativo reativo ao mouse e animações de entrada escalonadas off-thread de alto desempenho.',
+    code: `import { PixonMotion, motion } from '@pixonui/react';
 
+<div className="bg-[#f8fafc]">
+  <InteractiveDotGrid />
+  <PixonMotion initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <h1>Pixon Motion</h1>
+  </PixonMotion>
+</div>`,
+    demo: <MotionHeroDemo />
+  },
+  {
+    id: 'anime-path',
+    title: 'Anime.js Path Animation',
+    category: 'Feedback',
+    description: 'High-fidelity replication of Anime.js SVG path animation using PixonUI Motion Engine. Features staggered delays, property-specific durations, and mirror repeats.',
+    code: `import { motion } from '@pixonui/react';
 
-
-
+// Property-specific transitions
+<motion.path
+  animate={{ 
+    strokeDashoffset: 0,
+    stroke: 'rgb(200, 100, 150)',
+    strokeWidth: 6
+  }}
+  transition={{
+    strokeDashoffset: { duration: 1200, delay: i * 60, repeat: Infinity, repeatType: 'mirror' },
+    stroke: { duration: 2000, repeat: Infinity, repeatType: 'mirror' },
+    strokeWidth: { duration: 800, delay: 1200 + (i * 40), repeat: Infinity, repeatType: 'mirror' }
+  }}
+/>`,
+    demo: <AnimePathDemo />
+  },
 ];
 

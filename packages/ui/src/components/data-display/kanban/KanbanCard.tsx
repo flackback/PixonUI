@@ -72,9 +72,18 @@ export const KanbanCard = React.memo(({
     return () => observer.disconnect();
   }, []);
 
+  const cachedRect = useRef<DOMRect | null>(null);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (cardRef.current) {
+      cachedRect.current = cardRef.current.getBoundingClientRect();
+    }
+  };
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || !spotlight) return;
-    const rect = cardRef.current.getBoundingClientRect();
+    if (!cardRef.current || !spotlight || !cachedRect.current) return;
+    const rect = cachedRect.current;
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     cardRef.current.style.setProperty('--spotlight-x', `${x}px`);
@@ -245,8 +254,11 @@ export const KanbanCard = React.memo(({
       data-task-id={task.id}
       ref={cardRef}
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        cachedRect.current = null;
+      }}
       onClick={(e) => onTaskClick?.(e, task)}
       draggable={false}
       onPointerDown={handlePointerDown}

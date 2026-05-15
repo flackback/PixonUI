@@ -117,7 +117,7 @@ export function KanbanFilterBar({
         <div className="w-px h-4 bg-zinc-200 dark:bg-white/10 mx-1" />
 
         <Popover>
-          <PopoverTrigger>
+          <PopoverTrigger asChild>
             <Button variant="ghost" size="sm" className="h-9 gap-2 text-zinc-600 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5">
               <SortAsc className="h-4 w-4" />
               {translations?.sort || (locale === 'pt' ? 'Ordenar' : 'Sort')}
@@ -164,7 +164,7 @@ function FilterPopover({ label, options, selected, onSelect, locale, translation
 }) {
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         <Button 
           variant="ghost" 
           size="sm" 

@@ -41,9 +41,11 @@ export function Popover({ children, open, onOpenChange }: PopoverProps) {
 
 export interface PopoverTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
+  /** If true, the trigger will merge its props into its child instead of rendering a button */
+  asChild?: boolean;
 }
 
-export function PopoverTrigger({ className, children, ...props }: PopoverTriggerProps) {
+export function PopoverTrigger({ className, children, asChild, ...props }: PopoverTriggerProps) {
   const context = useContext(PopoverContext);
   if (!context) throw new Error('PopoverTrigger must be used within Popover');
 
@@ -52,16 +54,36 @@ export function PopoverTrigger({ className, children, ...props }: PopoverTrigger
     props.onClick?.(e as any);
   };
 
+  const triggerProps = {
+    ref: context.triggerRef,
+    type: "button",
+    "aria-haspopup": "dialog",
+    "aria-expanded": context.isOpen ? "true" : "false",
+    onClick: handleClick,
+    className: cn(!asChild && "inline-flex items-center justify-center", className),
+    ...props,
+  };
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement<any>, {
+      ...triggerProps,
+      className: cn(children.props.className, className),
+      onClick: (e: any) => {
+        children.props.onClick?.(e);
+        handleClick(e);
+      },
+      ref: (node: any) => {
+        // Handle both ref objects and function refs
+        const { ref } = children as any;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+        (context.triggerRef as any).current = node;
+      },
+    });
+  }
+
   return (
-    <button
-      ref={context.triggerRef as any}
-      type="button"
-      aria-haspopup="dialog"
-      aria-expanded={context.isOpen ? "true" : "false"}
-      onClick={handleClick}
-      className={cn("inline-flex items-center justify-center", className)}
-      {...props}
-    >
+    <button {...triggerProps as any}>
       {children}
     </button>
   );
