@@ -35,7 +35,7 @@ import { ERPView } from './saas/ERPView';
 import { AnalyticsView } from './saas/AnalyticsView';
 import { HelpDeskView } from './saas/HelpDeskView';
 import { ProjectPortalView } from './saas/ProjectPortalView';
-import { MotionShowcase } from './MotionShowcase';
+
 
 // Import our custom background simulator
 import { useSimulator } from './saas/useSimulator';
@@ -60,7 +60,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'gallery' | 'saas' | 'motion'>('landing');
+  const [view, setView] = useState<'landing' | 'gallery' | 'saas'>('landing');
   const [activeId, setActiveId] = useState('button');
   const [saasTab, setSaasTab] = useState('dashboard');
   const [commandOpen, setCommandOpen] = useState(false);
@@ -167,11 +167,7 @@ export default function App() {
         </SaaSLayout>
       )}
 
-      {view === 'motion' && (
-        <PageTransition key="motion" preset="fade" duration={500}>
-          <MotionShowcase onBack={() => setView('gallery')} />
-        </PageTransition>
-      )}
+
 
       {view === 'gallery' && (
         <div className="flex h-screen w-full overflow-hidden font-sans selection:bg-purple-500/30 transition-colors duration-200 bg-gray-50 text-gray-900 dark:bg-black dark:text-white">
@@ -313,11 +309,7 @@ function GlobalCommandPalette({ open, onOpenChange, onSelect }: GlobalCommandPal
             <span>Entrar no Portal SaaS</span>
             <CommandShortcut>SaaS Admin</CommandShortcut>
           </CommandItem>
-          <CommandItem value="view:motion">
-            <Activity className="mr-2 h-4 w-4 text-pink-400" />
-            <span>Motion Showcase (Next-Gen)</span>
-            <CommandShortcut>Go Motion</CommandShortcut>
-          </CommandItem>
+
         </CommandGroup>
 
         <CommandGroup heading="Painéis do SaaS">
@@ -366,11 +358,7 @@ function GlobalCommandPalette({ open, onOpenChange, onSelect }: GlobalCommandPal
             <span>Form & Validação (Zod vs Native-First)</span>
             <CommandShortcut>FormDemo</CommandShortcut>
           </CommandItem>
-          <CommandItem value="comp:motion-physics">
-            <Activity className="mr-2 h-4 w-4 text-emerald-400" />
-            <span>Spring &amp; Audio Physics Studio</span>
-            <CommandShortcut>Studio</CommandShortcut>
-          </CommandItem>
+
         </CommandGroup>
       </CommandList>
     </CommandDialog>

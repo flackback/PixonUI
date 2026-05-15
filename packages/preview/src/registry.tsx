@@ -50,7 +50,7 @@ import AISchemaDisplaySource from '../../ui/src/components/ai/AISchemaDisplay.ts
 import { ChartDemo } from './demos/ChartDemo';
 import { ExtrasDemo } from './demos/ExtrasDemo';
 import { TableDemo } from './demos/TableDemo';
-import { MotionDemo } from './demos/MotionDemo';
+
 import { VideoPlayerDemo } from './demos/VideoPlayerDemo';
 import { StructureDemo } from './demos/StructureDemo';
 import { ChatMegaDemo } from './demos/ChatMegaDemo';
@@ -75,15 +75,13 @@ import { PageLoaderDemo } from './demos/PageLoaderDemo';
 import { KanbanDemo } from './demos/KanbanDemo';
 import { NewComponentsDemo } from './demos/NewComponentsDemo';
 import { TenNewComponentsDemo } from './demos/TenNewComponentsDemo';
-import { MotionPhysicsDemo } from './demos/MotionPhysicsDemo';
+
 import { HooksDemo } from './demos/HooksDemo';
 import { BackgroundDemo } from './demos/BackgroundDemo';
 import { HeroDemo } from './demos/HeroDemo';
 import { DashboardDemo } from './demos/DashboardDemo';
 import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
-import { AnimeTextDemo } from './demos/AnimeTextDemo';
-import { AnimeLogoDemo } from './demos/AnimeLogoDemo';
-import AnimeTextSource from '../../ui/src/components/typography/AnimeText.tsx?raw';
+
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
 import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
@@ -111,30 +109,15 @@ import StatusDotSource from '../../ui/src/components/data-display/StatusDot.tsx?
 import StepperSource from '../../ui/src/components/navigation/Stepper.tsx?raw';
 import SpotlightSource from '../../ui/src/components/layout/Spotlight.tsx?raw';
 
-import { CreativeComponentsDemo } from './demos/CreativeComponentsDemo';
-import ConfettiSource from '../../ui/src/components/effects/Confetti.tsx?raw';
-import RetroGridSource from '../../ui/src/components/effects/RetroGrid.tsx?raw';
-import DockSource from '../../ui/src/components/navigation/Dock.tsx?raw';
-import AnimatedListSource from '../../ui/src/components/data-display/AnimatedList.tsx?raw';
 import CopyBlockSource from '../../ui/src/components/data-display/CopyBlock.tsx?raw';
-import GallerySource from '../../ui/src/components/data-display/Gallery.tsx?raw';
-import TestimonialCardSource from '../../ui/src/components/shared/TestimonialCard.tsx?raw';
 
 // Next-Gen Additions
-import { NextGenDemo } from './demos/NextGenDemo';
-import TiltSource from '../../ui/src/components/effects/Tilt.tsx?raw';
-import InteractiveMeshGradientSource from '../../ui/src/components/effects/InteractiveMeshGradient.tsx?raw';
-import WaveformVisualizerSource from '../../ui/src/components/chat/WaveformVisualizer.tsx?raw';
-import ScrollSpySource from '../../ui/src/components/navigation/ScrollSpy.tsx?raw';
-import useScrollSpySource from '../../ui/src/hooks/useScrollSpy.ts?raw';
+
 
 // Video Player Raw Sources
 import VideoPlayerSource from '../../ui/src/components/data-display/VideoPlayer.tsx?raw';
 import usePixonVideoPlayerSource from '../../ui/src/hooks/usePixonVideoPlayer.ts?raw';
-import { MotionMasterDemo } from './demos/MotionMasterDemo';
-import { SupremeWAAPIDemo } from './demos/SupremeWAAPI';
-import { SupremeShowcase } from './demos/SupremeShowcase';
-import { PortalGallery } from './demos/PortalGallery';
+
 
 export type ComponentItem = {
   id: string;
@@ -1193,41 +1176,8 @@ ${StepperSource}
 ${SpotlightSource}`,
     demo: <ExtrasDemo />
   },
-  {
-    id: 'advanced-motion',
-    title: 'Advanced Motion',
-    category: 'Feedback',
-    description: 'High-performance animation primitives using WAAPI and View Transitions.',
-    code: `import { Reveal, Magnetic, NumberTicker, Parallax } from '@pixonui/react';
 
-// Reveal
-<Reveal direction="up">
-  <h1>Hello World</h1>
-</Reveal>
 
-// Magnetic
-<Magnetic>
-  <Button>Hover Me</Button>
-</Magnetic>
-
-// Number Ticker
-<NumberTicker value={100} />
-
-// Parallax
-<Parallax speed={0.5}>
-  <img src="..." />
-</Parallax>`,
-    demo: <MotionDemo />
-  },
-  {
-    id: 'motion',
-    title: 'Motion',
-    category: 'Feedback',
-    description: 'Animation primitives for building fluid interfaces.',
-    code: `import { Motion, MotionGroup } from '@pixonui/react';
-// See MotionDemo.tsx`,
-    demo: <MotionDemo />
-  },
   {
     id: 'structure',
     title: 'Structure',
@@ -1324,52 +1274,8 @@ ${HeroTextSource}
 ${LetterPullupSource}`,
     demo: <HeroDemo />
   },
-  {
-    id: 'anime-text',
-    title: 'Anime.js Text Reveal',
-    category: 'Data Display',
-    description: 'Cinematic hardware-accelerated text reveals built directly on top of the PixonMotion engine. Recreates famous Anime.js letter staggers.',
-    code: `import { AnimeText } from '@pixonui/react';
 
-<AnimeText 
-  text="Cinematic Reveal" 
-  effect="bounce" 
-  staggerDelay={0.06} 
-  className="text-4xl font-black"
-/>`,
-    componentSource: `// AnimeText.tsx
-\${AnimeTextSource}`,
-    demo: <AnimeTextDemo />
-  },
-  {
-    id: 'anime-logo',
-    title: 'Anime.js Logo Morph',
-    category: 'Data Display',
-    description: 'Ultra-complex SVG path morphing and motion path trajectory following, powered by Pixon spring physics and WAAPI.',
-    code: `import { timeline, path } from '@pixonui/react';
 
-// Path trajectory helper
-const bounce = path('.bounce-path');
-
-timeline()
-  .add('.letter-m path', {
-    d: "M310,220 L310,60 ...", // Morphing path
-    spring: { stiffness: 200, damping: 10 }
-  })
-  .add('.dot', [
-    { transform: 'translate(630px, 250px)' },
-    ...Array.from({ length: 11 }).map((_, i) => {
-      const p = i / 10;
-      const pt = bounce(p);
-      return { 
-        transform: \`translate(\${pt.x}px, \${pt.y}px)\`, 
-        offset: p 
-      };
-    })
-  ])
-  .play();`,
-    demo: <AnimeLogoDemo />
-  },
   {
     id: 'dashboard',
     title: 'Analytics Dashboard',
@@ -1494,54 +1400,7 @@ ${SpotlightSource}`,
 />`,
     demo: <CRMAdvancedDemo />
   },
-  {
-    id: 'creative-components',
-    title: 'Creative Animations',
-    category: 'Templates',
-    description: 'Efeitos visuais dinâmicos e componentes criativos premium: Confetti, RetroGrid, Dock, Spotlight, AnimatedList, CopyBlock, Gallery e TestimonialGrid.',
-    code: `import { 
-  Confetti, 
-  RetroGrid, 
-  Dock, 
-  AnimatedList, 
-  CopyBlock, 
-  Gallery, 
-  TestimonialGrid,
-  SpotlightEffectCard 
-} from '@pixonui/react';
 
-// Confetti
-confettiRef.current.fire({ count: 100 });
-
-// Mac-like Zoom Dock
-<Dock items={items} />
-
-// Staggered Entrance List
-<AnimatedList stagger={60}>
-  <Item />
-</AnimatedList>`,
-    componentSource: `// Confetti.tsx
-${ConfettiSource}
-
-// RetroGrid.tsx
-${RetroGridSource}
-
-// Dock.tsx
-${DockSource}
-
-// AnimatedList.tsx
-${AnimatedListSource}
-
-// CopyBlock.tsx
-${CopyBlockSource}
-
-// Gallery.tsx
-${GallerySource}
-
-// TestimonialCard.tsx
-${TestimonialCardSource}`,
-    demo: <CreativeComponentsDemo />
-  },
   {
     id: 'task-timeline',
     title: 'Task Timeline Grid',
@@ -1569,64 +1428,8 @@ const { groups, stats, ...actions } = useTaskTimeline({ initialGroups });
 \${useTaskTimelineSource}`,
     demo: <TaskTimelineDemo />
   },
-  {
-    id: 'next-gen',
-    title: 'Next-Gen Expansion',
-    category: 'Templates',
-    description: 'A showcase of our advanced, performance-optimized visual additions: InteractiveMeshGradient, Tilt 3D Containers, WaveformVisualizer, ScrollSpy, and Kanban AI Risk Overlays.',
-    code: `import { 
-  Tilt, 
-  InteractiveMeshGradient, 
-  WaveformVisualizer, 
-  ScrollSpy, 
-  useScrollSpy,
-  KanbanCard
-} from '@pixonui/react';
 
-// Use InteractiveMeshGradient for gorgeous dynamic fluid background
-<InteractiveMeshGradient speed={1.5} />
 
-// Wrap elements with Tilt to apply smooth 3D mouse perspective physics
-<Tilt maxTilt={15} scale={1.02}>
-  <Card>...</Card>
-</Tilt>
-
-// Display voice waveform line amplitudes with dynamic progress coloring
-<WaveformVisualizer isPlaying={isPlaying} barsCount={48} color="#06b6d4" />
-
-// Highlight active section dynamically on sidebar using IntersectionObserver
-<ScrollSpy items={sections} />`,
-    componentSource: `// InteractiveMeshGradient.tsx
-${InteractiveMeshGradientSource}
-
-// Tilt.tsx
-${TiltSource}
-
-// WaveformVisualizer.tsx
-${WaveformVisualizerSource}
-
-// ScrollSpy.tsx
-${ScrollSpySource}
-
-// useScrollSpy.ts
-${useScrollSpySource}`,
-    demo: <NextGenDemo />
-  },
-  {
-    id: 'motion-physics',
-    title: 'Spring & Audio Studio',
-    category: 'Templates',
-    description: 'Um laboratório interativo combinando física de molas clássica (usePixonAnimate), estiramento elástico de curvas Bezier e oscilogramas de áudio em tempo real.',
-    code: `import { usePixonAnimate, useAudioVisualizer } from '@pixonui/react';
-
-// 1. Spring physics hook
-const { ref, animate } = usePixonAnimate();
-animate([ { scale: 1 }, { scale: 1.2 } ], { spring: { stiffness: 200, damping: 15 } });
-
-// 2. Real-time microphone audio spectrogams
-const { amplitudes } = useAudioVisualizer({ active: true });`,
-    demo: <MotionPhysicsDemo />
-  },
   {
     id: 'video-player-next',
     title: 'Video Player',
@@ -1648,116 +1451,9 @@ ${VideoPlayerSource}
 ${usePixonVideoPlayerSource}`,
     demo: <VideoPlayerDemo />
   },
-  {
-    id: 'motion-master',
-    title: 'Motion Master Demo',
-    category: 'Data Display',
-    description: 'A demonstração definitiva de animações do PixonUI: Staggering (Cascata), Shared Layout (FLIP), Scroll-Linked Parallax e Physical Drag com WAAPI acelerado via GPU.',
-    code: `import { PixonMotion, Surface, Button, Stack, Text } from '@pixonui/react';
-import { Sparkles, Zap, Activity } from 'lucide-react';
 
-export default function MotionMaster() {
-  return (
-    <div className="p-8 flex flex-col items-center gap-10">
-      <PixonMotion
-        initial={{ opacity: 0, y: 40, scale: 0.8 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.8, type: 'spring' }}
-      >
-        <Surface className="p-12 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-[40px] shadow-2xl border border-white/20 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <Stack gap={4} align="center">
-            <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-xl">
-              <Sparkles className="h-8 w-8 text-white animate-pulse" />
-            </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter">PIXON MOTION</h1>
-            <Text className="text-white/70 font-medium">Hardware Accelerated Physics</Text>
-          </Stack>
-        </Surface>
-      </PixonMotion>
-      
-      <div className="flex gap-6">
-        {[
-          { icon: <Zap />, color: 'from-amber-400 to-orange-500', delay: 0.1 },
-          { icon: <Activity />, color: 'from-cyan-400 to-blue-500', delay: 0.2 },
-          { icon: <Sparkles />, color: 'from-pink-400 to-rose-500', delay: 0.3 }
-        ].map((item, i) => (
-          <PixonMotion
-            key={i}
-            initial={{ scale: 0, rotate: -45 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ 
-              delay: item.delay, 
-              type: 'spring',
-              stiffness: 260,
-              damping: 20
-            }}
-            whileHover={{ scale: 1.1, rotate: 5 }}
-          >
-            <div className={\`h-16 w-16 rounded-2xl bg-gradient-to-tr \${item.color} flex items-center justify-center shadow-lg border border-white/20 text-white\`}>
-              {item.icon}
-            </div>
-          </PixonMotion>
-        ))}
-      </div>
-      
-      <PixonMotion
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-      >
-        <Button variant="glass" size="lg" className="rounded-full px-8">
-          Explore Architecture
-        </Button>
-      </PixonMotion>
-    </div>
-  );
-}`,
-    componentSource: `// Acesse @pixonui/react para ver as implementações do PixonMotion`,
-    demo: <MotionMasterDemo />
-  },
-  {
-    id: 'supreme-waapi',
-    title: 'Supreme WAAPI Field',
-    category: 'Templates',
-    description: 'A demonstração definitiva de arquitetura WAAPI aditiva: 100 elementos interagindo em tempo real com o cursor através de deformação de perspectiva, rodando inteiramente na GPU Compositor Thread com zero consumo de Main Thread.',
-    code: `import { SupremeWAAPIDemo } from './demos/SupremeWAAPI';
 
-// 1. Zero dependencies
-// 2. Additive composition (composite: 'add')
-// 3. Hardware acceleration (will-change)
-// 4. Automated memory cleanup (commitStyles + cancel)
 
-<SupremeWAAPIDemo />`,
-    demo: <SupremeWAAPIDemo />
-  },
-  {
-    id: 'supreme-showcase',
-    title: 'Supreme Architect Collection',
-    category: 'Templates',
-    description: 'Três exemplos avançados de física aditiva: Liquid Momentum Tabs, Quantum Card Stack e Particle Burst Engine. Demonstra o uso de composite: add para interrupções fluidas e gerenciamento de memória agressivo.',
-    code: `import { SupremeShowcase } from './demos/SupremeShowcase';
 
-// 1. Liquid Tabs: Momentum additive physics
-// 2. Quantum Stack: Proximity ripple interference
-// 3. Particle Burst: Dynamic DOM injection & auto-cleanup
-
-<SupremeShowcase />`,
-    demo: <SupremeShowcase />
-  },
-  {
-    id: 'portal-gallery',
-    title: 'Omni-Motion: Portal Gallery',
-    category: 'Templates',
-    description: 'Shared Element Transition de alta fidelidade. Utiliza a tríade divina (WAAPI + FLIP + Physics) para expandir elementos da grade para um estado imersivo com continuidade perceptual absoluta.',
-    code: `import { PortalGallery } from './demos/PortalGallery';
-
-// 1. First, Last, Invert, Play (FLIP)
-// 2. Shared layoutId projection
-// 3. Kinetic Orchestration (Staggered content)
-
-<PortalGallery />`,
-    demo: <PortalGallery />
-  }
 ];
 
