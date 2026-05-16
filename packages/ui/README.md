@@ -91,6 +91,20 @@ function Hero() {
 }
 ```
 
+### Motion Engine Quick Guide
+```tsx
+import { motion, timeline, usePixonAnimate } from '@pixonui/react';
+```
+
+- `motion.*` (`motion.div`, `motion.span`, etc.) is the primary declarative API.
+- `timeline()` supports:
+  - `timeline(tracks).play()`
+  - `timeline().add(...).play()`
+- Unit convention:
+  - `motion.*` transition `duration/delay` in **seconds**
+  - `usePixonAnimate` and `timeline()` `duration/delay` in **milliseconds**
+- For best performance in dense scenes, animate `transform`/`opacity` first.
+
 ## 📄 License
 
 MIT
