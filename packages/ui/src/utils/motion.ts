@@ -12,15 +12,56 @@ export type SpringConfig = {
 };
 export type SpringType = 'standard' | 'impulse';
 export type StaggerConfig = {
-  /** Base delay before the stagger starts (seconds). */
+  /** Base delay before the stagger starts (ms). */
   delay?: number;
-  /** Delay between steps (seconds). */
+  /** Delay between steps (ms). */
   amount?: number;
   /** Anchor point for the stagger calculation. */
   from?: 'first' | 'last' | 'center' | number;
   /** Optional grid definition for position-based staggering. */
   grid?: [columns: number, rows: number];
 };
+
+const warnedTimeKeys = new Set<string>();
+
+function isDevRuntime() {
+  try {
+    return typeof process !== 'undefined' && process.env.NODE_ENV !== 'production';
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * VNext time normalizer.
+ * Canonical unit is milliseconds (ms) for all numeric motion/timeline APIs.
+ * If a legacy "seconds-like" value is detected, it is converted with an explicit warning.
+ */
+export function normalizeTimeMs(
+  value: unknown,
+  fallback = 0,
+  ctx: { prop?: string; source?: string } = {}
+): number {
+  const raw = Number(value);
+  if (!Number.isFinite(raw)) return fallback;
+  if (raw < 0) return 0;
+  if (raw === 0) return 0;
+
+  // Legacy seconds heuristics (e.g. 0.4, 1.2, 2).
+  const looksLikeSeconds = raw > 0 && raw < 20;
+  if (!looksLikeSeconds) return raw;
+
+  const key = `${ctx.source || 'motion'}:${ctx.prop || 'time'}`;
+  if (isDevRuntime() && !warnedTimeKeys.has(key)) {
+    warnedTimeKeys.add(key);
+    console.warn(
+      `[Pixon Motion vNext] "${ctx.prop || 'time'}" now expects milliseconds. ` +
+      `Received legacy seconds-like value ${raw}; auto-converting to ${raw * 1000}ms. ` +
+      `Please migrate to ${raw * 1000}.`
+    );
+  }
+  return raw * 1000;
+}
 
 const trajectoryCache = new Map<string, { progress: number[]; keyframes: number[]; duration: number }>();
 const TRAJECTORY_CACHE_MAX = 100;
@@ -472,7 +513,10 @@ export function insertScopedRules(scopeId: string, css: string): () => void {
  * V4.7 Supreme: Supports center-based and numeric offset staggers.
  */
 export function calculateStagger(index: number, total: number, config: StaggerConfig = {}): number {
-  const { delay = 0, amount = 0.05, from = 'first', grid } = config;
+  const delay = normalizeTimeMs(config.delay ?? 0, 0, { prop: 'stagger.delay', source: 'calculateStagger' });
+  const amount = normalizeTimeMs(config.amount ?? 50, 50, { prop: 'stagger.amount', source: 'calculateStagger' });
+  const from = config.from ?? 'first';
+  const grid = config.grid;
   let offset = 0;
 
   if (grid && grid[0] > 0) {
@@ -511,13 +555,15 @@ export function calculateStagger(index: number, total: number, config: StaggerCo
     else if (typeof from === 'number') offset = Math.abs(from - index);
   }
 
-  return (delay + offset * amount) * 1000;
+  return delay + offset * amount;
 }
 
 export type Target = Record<string, any> | string;
 export type Transition = {
   type?: 'spring' | 'tween';
+  /** Duration in milliseconds. */
   duration?: number;
+  /** Delay in milliseconds. */
   delay?: number;
   stiffness?: number;
   damping?: number;
@@ -526,9 +572,16 @@ export type Transition = {
   easing?: string | number[];
   repeat?: number;
   repeatType?: 'loop' | 'mirror' | 'reverse';
+  /** Delay between repeats in milliseconds. */
   repeatDelay?: number;
+  /** Per-child stagger in milliseconds. */
   staggerChildren?: number;
+  /** Base children delay in milliseconds. */
   delayChildren?: number;
+  /** Stagger anchor for children. */
+  staggerFrom?: 'first' | 'last' | 'center' | number;
+  /** Optional stagger grid [columns, rows]. */
+  staggerGrid?: [columns: number, rows: number];
 };
 
 export function clearSpringCache() { trajectoryCache.clear(); }
@@ -692,8 +745,13 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
             fill: 'both',
             ...(track.options || {}),
           };
-          if (typeof track.duration === 'number') opts.duration = track.duration;
-          if (typeof track.at === 'number') opts.delay = (opts.delay ?? 0) + track.at;
+          if (typeof track.duration === 'number') {
+            opts.duration = normalizeTimeMs(track.duration, 400, { prop: 'duration', source: 'timeline(tracks)' });
+          }
+          if (typeof track.at === 'number') {
+            const curDelay = normalizeTimeMs(opts.delay ?? 0, 0, { prop: 'delay', source: 'timeline(tracks)' });
+            opts.delay = curDelay + normalizeTimeMs(track.at, 0, { prop: 'at', source: 'timeline(tracks)' });
+          }
 
           const anim = (el as any).animate(track.keyframes, opts);
           if (anim) animations.push(anim);
@@ -725,8 +783,14 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
 
   const api = {
     add(target: any, keyframes: any, segOpts: TimelineAddOptions = {}) {
-      const offset = typeof segOpts.offset === 'number' ? segOpts.offset : cursor;
-      const duration = typeof segOpts.duration === 'number' ? segOpts.duration : (typeof (segOpts as any).duration === 'number' ? (segOpts as any).duration : 400);
+      const offset = typeof segOpts.offset === 'number'
+        ? normalizeTimeMs(segOpts.offset, 0, { prop: 'offset', source: 'timeline().add' })
+        : cursor;
+      const duration = typeof segOpts.duration === 'number'
+        ? normalizeTimeMs(segOpts.duration, 400, { prop: 'duration', source: 'timeline().add' })
+        : (typeof (segOpts as any).duration === 'number'
+          ? normalizeTimeMs((segOpts as any).duration, 400, { prop: 'duration', source: 'timeline().add' })
+          : 400);
       segments.push({ target, keyframes, options: { ...segOpts, offset, duration } });
       cursor = Math.max(cursor, offset + duration);
       return api;
@@ -741,11 +805,11 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
 
       nowSegments.forEach((seg) => {
         const { target, keyframes, options: segOpts } = seg;
-        const baseOffset = segOpts.offset ?? 0;
-        const duration = segOpts.duration ?? 400;
-        const delay = (segOpts.delay ?? 0) + baseOffset;
+        const baseOffset = normalizeTimeMs(segOpts.offset ?? 0, 0, { prop: 'offset', source: 'timeline().play' });
+        const duration = normalizeTimeMs(segOpts.duration ?? 400, 400, { prop: 'duration', source: 'timeline().play' });
+        const delay = normalizeTimeMs(segOpts.delay ?? 0, 0, { prop: 'delay', source: 'timeline().play' }) + baseOffset;
         const easing = (segOpts.easing ?? globalEasing) as any;
-        const stagger = segOpts.stagger ?? 0;
+        const stagger = normalizeTimeMs(segOpts.stagger ?? 0, 0, { prop: 'stagger', source: 'timeline().play' });
 
         const nodes: any[] =
           typeof target === 'string'

@@ -1,5 +1,6 @@
 import React from 'react';
 import { SSR_ANIMATE_PRESETS } from './SSRAnimate.presets';
+import { normalizeTimeMs } from '../../utils/motion';
 
 type SafeHTMLTags = 'div' | 'section' | 'article' | 'span' | 'li' | 'ul' | 'main' | 'header' | 'footer' | 'nav';
 
@@ -74,6 +75,8 @@ export function PixonSSRAnimate({
   const mergedInitial = { ...presetConfig?.initial, ...initial };
   const mergedAnimate = { ...presetConfig?.animate, ...animate };
   const mergedTransition = { ...presetConfig?.transition, ...transition };
+  const durationMs = normalizeTimeMs(mergedTransition.duration ?? 400, 400, { prop: 'duration', source: 'SSRAnimate.transition' });
+  const delayMs = normalizeTimeMs(mergedTransition.delay ?? 0, 0, { prop: 'delay', source: 'SSRAnimate.transition' });
 
   // Smart default logic for opacity:
   // If `animate` provides opacity and `initial` does not exist OR does not provide opacity, infer intent as 0.
@@ -110,8 +113,8 @@ export function PixonSSRAnimate({
     '--pixon-anim-skewY': formatUnit(mergedAnimate.skewY ?? 0, 'deg'),
     '--pixon-anim-blur': formatUnit(mergedAnimate.blur ?? 0, 'px'),
 
-    '--pixon-dur': `${mergedTransition.duration ?? 400}ms`,
-    '--pixon-delay': `${mergedTransition.delay ?? 0}ms`,
+    '--pixon-dur': `${durationMs}ms`,
+    '--pixon-delay': `${delayMs}ms`,
     '--pixon-ease': mergedTransition.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)',
     '--pixon-iterations': mergedTransition.iterations ?? 1,
     '--pixon-direction': mergedTransition.direction ?? 'normal',
@@ -155,9 +158,13 @@ export function PixonSSRAnimate({
           filter: blur(var(--pixon-init-blur, 0px));
         }
 
-        .pixon-ssr-view-trigger {
-          animation-timeline: view();
-          animation-range: entry 10% cover 30%;
+        /* Scroll-driven timeline only when supported.
+           Fallback stays as normal time-based animation (load trigger semantics). */
+        @supports (animation-timeline: view()) {
+          .pixon-ssr-view-trigger {
+            animation-timeline: view();
+            animation-range: entry 10% cover 30%;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {

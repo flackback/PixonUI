@@ -40,12 +40,10 @@ function animeStaggerMs(
   eachMs: number,
   opts: { grid: [number, number]; from: 'center' | 'first' | 'last' | number; start?: number }
 ) {
-  const amountSeconds = eachMs / 1000;
-  const delaySeconds = (opts.start ?? 0) / 1000;
   return (index: number, total: number) =>
     calculateStagger(index, total, {
-      amount: amountSeconds,
-      delay: delaySeconds,
+      amount: eachMs,
+      delay: opts.start ?? 0,
       grid: opts.grid,
       from: opts.from,
     });

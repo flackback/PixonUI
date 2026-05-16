@@ -1,5 +1,5 @@
 import React, { useRef, useLayoutEffect } from 'react';
-import { usePixonScroll, usePixonTransform, timeline, motion } from '@pixonui/react';
+import { timeline, motion, useMotionValueValue, useScroll, useTransform } from '@pixonui/react';
 import { MousePointer2, Zap, Wind, Sparkles, Move } from 'lucide-react';
 
 /**
@@ -7,13 +7,15 @@ import { MousePointer2, Zap, Wind, Sparkles, Move } from 'lucide-react';
  */
 export const ScrollParallaxMaster = () => {
   const container = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = usePixonScroll();
+  const { scrollYProgress } = useScroll();
   
   // Transform values based on scroll
-  const y1 = usePixonTransform(scrollYProgress, [0, 1], [0, -200]);
-  const y2 = usePixonTransform(scrollYProgress, [0, 1], [0, -400]);
-  const r = usePixonTransform(scrollYProgress, [0, 1], [0, 45]);
-  const opacity = usePixonTransform(scrollYProgress, [0.1, 0.4], [1, 0]);
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -200]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, -400]);
+  const r = useTransform(scrollYProgress, [0, 1], [0, 45]);
+  const opacity = useTransform(scrollYProgress, [0.1, 0.4], [1, 0]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+  const scrollProgress = useMotionValueValue(scrollYProgress);
 
   return (
     <div ref={container} className="relative h-[400px] w-full bg-zinc-900 rounded-[40px] border border-white/5 overflow-hidden p-8 flex flex-col items-center justify-center">
@@ -22,18 +24,18 @@ export const ScrollParallaxMaster = () => {
       </div>
       
       {/* Background Layer */}
-      <div 
+      <motion.div 
         className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.1),transparent)] transition-opacity duration-700"
-        style={{ opacity: 1 - scrollYProgress }}
+        style={{ opacity: bgOpacity }}
       />
       
       {/* Parallax Elements */}
-      <div 
+      <motion.div 
         className="absolute w-40 h-40 bg-purple-500/20 blur-3xl rounded-full"
-        style={{ transform: `translateY(${y1}px)` }}
+        style={{ y: y1 }}
       />
       
-      <div 
+      <motion.div 
         className="relative z-10 text-center space-y-4"
         style={{ opacity }}
       >
@@ -41,16 +43,16 @@ export const ScrollParallaxMaster = () => {
           SCROLL<br/>DEPTH
         </h3>
         <p className="text-zinc-500 text-xs font-mono uppercase tracking-widest">
-          {Math.round(scrollYProgress * 100)}% Progress
+          {Math.round(scrollProgress * 100)}% Progress
         </p>
-      </div>
+      </motion.div>
 
-      <div 
+      <motion.div 
         className="absolute bottom-10 right-10 w-20 h-20 border-2 border-white/10 rounded-2xl flex items-center justify-center"
-        style={{ transform: `translateY(${y2}px) rotate(${r}deg)` }}
+        style={{ y: y2, rotate: r }}
       >
         <Sparkles className="text-white/20 w-8 h-8" />
-      </div>
+      </motion.div>
 
       <div className="absolute bottom-4 left-0 right-0 flex justify-center">
         <div className="w-px h-12 bg-gradient-to-b from-white/0 via-white/20 to-white/0 animate-bounce" />
@@ -79,7 +81,7 @@ export const AnimeKineticText = () => {
     ], { 
       duration: 800, 
       easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-      stagger: 0.05 
+      stagger: 50 
     });
 
     tl.play();

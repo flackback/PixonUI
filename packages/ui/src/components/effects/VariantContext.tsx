@@ -8,6 +8,9 @@ export interface VariantContextType {
   index?: number;
   staggerChildren?: number;
   delayChildren?: number;
+  staggerFrom?: 'first' | 'last' | 'center' | number;
+  staggerGrid?: [columns: number, rows: number];
+  totalChildren?: number;
   registerChild: () => number;
 }
 
@@ -23,6 +26,8 @@ interface VariantProviderProps {
   interactive?: string | null;
   staggerChildren?: number;
   delayChildren?: number;
+  staggerFrom?: 'first' | 'last' | 'center' | number;
+  staggerGrid?: [columns: number, rows: number];
 }
 
 export function VariantProvider({
@@ -33,6 +38,8 @@ export function VariantProvider({
   interactive,
   staggerChildren,
   delayChildren,
+  staggerFrom,
+  staggerGrid,
 }: VariantProviderProps) {
   const parentContext = useVariantContext();
   
@@ -54,12 +61,15 @@ export function VariantProvider({
     interactive: interactive !== undefined ? interactive : parentContext?.interactive,
     staggerChildren,
     delayChildren,
+    staggerFrom,
+    staggerGrid,
+    totalChildren: React.Children.count(children),
     registerChild: () => {
       const index = childCount.current;
       childCount.current += 1;
       return index;
     }
-  }), [initial, animate, exit, staggerChildren, delayChildren, parentContext]);
+  }), [initial, animate, exit, staggerChildren, delayChildren, staggerFrom, staggerGrid, parentContext, children]);
 
   return (
     <VariantContext.Provider value={contextValue}>

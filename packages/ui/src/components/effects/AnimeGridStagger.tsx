@@ -16,7 +16,7 @@ type Point = { x: number; y: number };
 const DOT_STEP_REM = 1;
 const DOT_SIZE_REM = 0.25;
 const DOT_MARGIN_REM = 0.375;
-const DOT_DELAY_SECONDS = 0.05;
+const DOT_DELAY_MS = 50;
 const DOT_DURATION_MS = 1300;
 const CURSOR_PULSE_MS = 600;
 
@@ -125,7 +125,7 @@ export function AnimeGridStagger({
         if (!dotEl) return;
 
         const delayMs = calculateStagger(index, total, {
-          amount: DOT_DELAY_SECONDS,
+          amount: DOT_DELAY_MS,
           grid: [rows, rows],
           from: fromIndex,
         });

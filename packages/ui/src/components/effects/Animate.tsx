@@ -1,5 +1,6 @@
 import React, { useRef, useMemo, useCallback, useEffect, useLayoutEffect, useContext } from 'react';
 import { usePixonAnimate, type PixonAnimateOptions } from '../../hooks/usePixonAnimate';
+import { useScroll, useSpring as useMotionSpring, useTransform } from '../../motion/hooks';
 import { PresenceContext } from './AnimatePresence';
 import { VariantContext } from './VariantContext';
 import { LayoutGroupContext } from './LayoutGroup';
@@ -7,18 +8,29 @@ import {
   captureElementState, 
   calcFlip, 
   calculateStagger, 
-  SpringConfig, 
+  normalizeTimeMs,
   Transition,
   Target,
   shouldTrigger,
   elementStateRegistry
 } from '../../utils/motion';
 import { applyStyleObject, applyStyleObjectImmediate } from '../../motion/applyStyles';
+import {
+  revealOnScroll as createRevealOnScrollPreset,
+  parallax as createParallaxPreset,
+  staggerChildren as createStaggerChildrenPreset,
+  type ParallaxOptions,
+  type RevealOnScrollOptions,
+  type StaggerChildrenOptions,
+} from '../../motion/presets';
 
 type AnimateOwnProps<T extends React.ElementType = 'div'> = {
   layoutId?: string; layout?: boolean | 'position' | 'size'; custom?: any;
   variants?: Record<string, any>; initial?: Target; animate?: Target; exit?: Target;
   whileHover?: Target; whileTap?: Target; whileInView?: Target;
+  revealOnScroll?: boolean | RevealOnScrollOptions;
+  parallax?: boolean | ParallaxOptions;
+  staggerChildren?: boolean | StaggerChildrenOptions;
   viewport?: { once?: boolean; root?: any; rootMargin?: string; amount?: 'some' | 'all' | number; };
   transition?: Transition; as?: T; onAnimationComplete?: (definition: string) => void;
   children?: React.ReactNode; style?: Record<string, any>; className?: string;
@@ -100,7 +112,7 @@ function requestLayoutProcess() {
  * This wrapper will be removed after the next major release.
  */
 export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'>(
-  { as, children, initial, animate: targetAnimate, exit, variants, transition, whileHover, whileTap, whileInView, viewport, layout, layoutId, onAnimationComplete, staggerIdx: propStaggerIdx, ...props }: AnimateProps<T> & { staggerIdx?: number },
+  { as, children, initial, animate: targetAnimate, exit, variants, transition, whileHover, whileTap, whileInView, revealOnScroll, parallax, staggerChildren, viewport, layout, layoutId, onAnimationComplete, staggerIdx: propStaggerIdx, ...props }: AnimateProps<T> & { staggerIdx?: number },
   externalRef: React.ForwardedRef<any>
 ) => {
   const Component = (as || 'div') as any;
@@ -117,12 +129,109 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   const lastTargetKey = useRef<string>('');
   const hasInViewTriggered = useRef(false);
   const styleCleanupRef = useRef<null | (() => void)>(null);
+  const inheritedIndexRef = useRef<number | null>(null);
+  const localChildCounterRef = useRef(0);
+  const prevAnimateRef = useRef<any>(targetAnimate || vCtx?.animate);
+
+  if (inheritedIndexRef.current === null) {
+    inheritedIndexRef.current = vCtx?.registerChild ? vCtx.registerChild() : 0;
+  }
+
+  const contextAnimate = targetAnimate || vCtx?.animate;
+  if (prevAnimateRef.current !== contextAnimate) {
+    localChildCounterRef.current = 0;
+    prevAnimateRef.current = contextAnimate;
+  }
+
+  const revealCfgKey = useMemo(() => JSON.stringify(revealOnScroll ?? null), [revealOnScroll]);
+  const revealCfg = useMemo(() => {
+    if (!revealOnScroll) return null;
+    return createRevealOnScrollPreset(typeof revealOnScroll === 'object' ? revealOnScroll : {});
+  }, [revealCfgKey]);
+
+  const staggerPresetKey = useMemo(() => JSON.stringify(staggerChildren ?? null), [staggerChildren]);
+  const staggerPreset = useMemo(() => {
+    if (!staggerChildren) return null;
+    return createStaggerChildrenPreset(typeof staggerChildren === 'object' ? staggerChildren : {});
+  }, [staggerPresetKey]);
+
+  const parallaxCfgKey = useMemo(() => JSON.stringify(parallax ?? null), [parallax]);
+  const parallaxCfg = useMemo(() => {
+    if (!parallax) return null;
+    return createParallaxPreset(typeof parallax === 'object' ? parallax : {});
+  }, [parallaxCfgKey]);
+
+  const { scrollXProgress, scrollYProgress } = useScroll({ enabled: !!parallaxCfg });
+  const parallaxRange = useMemo<[number, number]>(() => {
+    if (!parallaxCfg) return [0, 0];
+    return [parallaxCfg.range[0], parallaxCfg.range[1]];
+  }, [parallaxCfg]);
+
+  const parallaxRaw = useTransform(
+    parallaxCfg?.axis === 'x' ? scrollXProgress : scrollYProgress,
+    [0, 1],
+    parallaxRange
+  );
+  const parallaxSpringCfg = useMemo(() => parallaxCfg?.smooth ?? {}, [parallaxCfg]);
+  const parallaxSmooth = useMotionSpring(parallaxRaw, parallaxSpringCfg);
+  const parallaxMv = parallaxCfg?.smooth ? parallaxSmooth : parallaxRaw;
+  const parallaxStyle = useMemo(() => {
+    if (!parallaxCfg) return null;
+    return parallaxCfg.axis === 'x' ? ({ x: parallaxMv } as const) : ({ y: parallaxMv } as const);
+  }, [parallaxCfg, parallaxMv]);
+
+  useEffect(() => {
+    if (!parallaxCfg) return;
+    if (parallaxCfg.source === 'container') {
+      console.warn('[Pixon Motion] `parallax.source: "container"` currently falls back to page scroll in `motion.*`.');
+    }
+  }, [parallaxCfg]);
+
+  const resolvedInitial = useMemo<Target | undefined>(() => {
+    if (initial !== undefined) return initial;
+    if (!revealCfg) return initial;
+    return { opacity: 0, y: revealCfg.distance, scale: revealCfg.scale } as Target;
+  }, [initial, revealCfg]);
+
+  const resolvedWhileInView = useMemo<Target | undefined>(() => {
+    if (whileInView !== undefined) return whileInView;
+    if (!revealCfg) return whileInView;
+    return { opacity: 1, y: 0, scale: 1 } as Target;
+  }, [whileInView, revealCfg]);
+
+  const resolvedViewport = useMemo(() => {
+    if (!revealCfg) return viewport;
+    return {
+      once: revealCfg.once,
+      amount: revealCfg.amount,
+      rootMargin: revealCfg.rootMargin,
+      ...(viewport || {}),
+    };
+  }, [viewport, revealCfg]);
+
+  const resolvedTransition = useMemo<Transition | undefined>(() => {
+    const base: Transition = {
+      ...(staggerPreset ? {
+        staggerChildren: staggerPreset.stagger,
+        delayChildren: staggerPreset.delayChildren,
+        staggerFrom: staggerPreset.from,
+        staggerGrid: staggerPreset.grid,
+      } : {}),
+      ...(revealCfg ? {
+        duration: revealCfg.duration,
+        easing: revealCfg.easing,
+        delay: revealCfg.delay,
+      } : {}),
+      ...(transition || {}),
+    };
+    return Object.keys(base).length > 0 ? base : undefined;
+  }, [transition, revealCfg, staggerPreset]);
 
   // V4.7 Supreme: Prop & Callback Stabilization
-  const stableTransition = useMemo(() => JSON.stringify(transition), [transition]);
+  const stableTransition = useMemo(() => JSON.stringify(resolvedTransition), [resolvedTransition]);
   const stableTarget = useMemo(() => JSON.stringify(targetAnimate), [targetAnimate]);
   const latestProps = useRef({ onAnimationComplete, variants, transition });
-  latestProps.current = { onAnimationComplete, variants, transition };
+  latestProps.current = { onAnimationComplete, variants, transition: resolvedTransition };
 
   const resolve = useCallback((target: any) => {
     if (!target) return null;
@@ -139,7 +248,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
   // Element-local stagger index must win over inherited context index.
   // Otherwise siblings that pass `staggerIdx` collapse to the same index (usually 0).
-  const staggerIdx = propStaggerIdx ?? vCtx?.index ?? 0;
+  const staggerIdx = propStaggerIdx ?? inheritedIndexRef.current ?? vCtx?.index ?? 0;
 
   const trigger = useCallback((propTarget: any, label = 'animate', force: boolean | Partial<Transition> = false) => {
     const el = internalRef.current;
@@ -187,13 +296,32 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
           ...(typeof currentTransition === 'object' && currentTransition ? currentTransition : {}),
           ...(inlineTransition && typeof inlineTransition === 'object' ? inlineTransition : {}),
         };
-    const resolveDelaySeconds = (delayVal: any) => {
+    const resolveDelayMs = (delayVal: any, prop = 'delay') => {
       if (typeof delayVal === 'function') {
         const out = delayVal(staggerIdx);
-        return Number.isFinite(out) ? Number(out) : 0;
+        return normalizeTimeMs(out, 0, { prop, source: 'motion.transition' });
       }
-      const out = Number(delayVal ?? 0);
-      return Number.isFinite(out) ? out : 0;
+      return normalizeTimeMs(delayVal ?? 0, 0, { prop, source: 'motion.transition' });
+    };
+
+    const resolveStaggerMs = (transitionConfig: any) => {
+      const inheritedStaggerChildren = vCtx?.staggerChildren;
+      const inheritedDelayChildren = vCtx?.delayChildren;
+      const inheritedFrom = vCtx?.staggerFrom;
+      const inheritedGrid = vCtx?.staggerGrid;
+
+      const amount = transitionConfig?.staggerChildren ?? inheritedStaggerChildren ?? 0;
+      const delayChildren = transitionConfig?.delayChildren ?? inheritedDelayChildren ?? 0;
+      const from = transitionConfig?.staggerFrom ?? inheritedFrom ?? 'first';
+      const grid = transitionConfig?.staggerGrid ?? inheritedGrid;
+      const totalChildren = Math.max(1, vCtx?.totalChildren ?? 1);
+
+      return calculateStagger(staggerIdx, totalChildren, {
+        delay: delayChildren,
+        amount,
+        from,
+        grid,
+      });
     };
     const targetProps = Object.keys(target);
     const wantsAdditive = label === 'whileHover' || label === 'whileTap';
@@ -205,18 +333,17 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const sharedTransition = typeof effectiveTransition === 'object' && Object.keys(effectiveTransition).every(k => !targetProps.includes(k));
     
     if (sharedTransition) {
-      const stag = calculateStagger(staggerIdx, 1, (effectiveTransition as any)?.staggerChildren ? { amount: (effectiveTransition as any).staggerChildren } : {});
+      const stag = resolveStaggerMs(effectiveTransition);
       const opts: PixonAnimateOptions = {
-        // Framer-like API: duration/delay are in seconds
-        duration: (effectiveTransition?.duration ?? 0.4) * 1000,
-        delay: resolveDelaySeconds(effectiveTransition?.delay) * 1000 + stag,
+        duration: normalizeTimeMs(effectiveTransition?.duration ?? 400, 400, { prop: 'duration', source: 'motion.transition' }),
+        delay: resolveDelayMs(effectiveTransition?.delay, 'delay') + stag,
         easing: effectiveTransition?.easing || 'elite-out',
         spring: effectiveTransition?.type === 'spring'
           ? { stiffness: effectiveTransition.stiffness, damping: effectiveTransition.damping, mass: effectiveTransition.mass, velocity: (effectiveTransition as any).velocity }
           : undefined,
         iterations: effectiveTransition?.repeat === Infinity ? Infinity : (effectiveTransition?.repeat || 1),
         direction: effectiveTransition?.repeatType === 'mirror' ? 'alternate' : 'normal',
-        endDelay: (effectiveTransition?.repeatDelay ?? 0) * 1000,
+        endDelay: normalizeTimeMs(effectiveTransition?.repeatDelay ?? 0, 0, { prop: 'repeatDelay', source: 'motion.transition' }),
         additive: false,
         transformMode: 'channels',
         channel,
@@ -236,19 +363,18 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     // Fallback to per-property splitting if complex transitions are defined
     const triggerProperty = (prop: string, val: any) => {
       const propTrans = (effectiveTransition as any)?.[prop] || effectiveTransition;
-      const stag = calculateStagger(staggerIdx, 1, propTrans?.staggerChildren ? { amount: propTrans.staggerChildren } : {});
+      const stag = resolveStaggerMs(propTrans);
       
       const opts: PixonAnimateOptions = {
-        // Framer-like API: duration/delay are in seconds
-        duration: (propTrans?.duration ?? 0.4) * 1000,
-        delay: resolveDelaySeconds(propTrans?.delay) * 1000 + stag,
+        duration: normalizeTimeMs(propTrans?.duration ?? 400, 400, { prop: `${prop}.duration`, source: 'motion.transition' }),
+        delay: resolveDelayMs(propTrans?.delay, `${prop}.delay`) + stag,
         easing: propTrans?.easing || effectiveTransition?.easing || 'elite-out',
         spring: propTrans?.type === 'spring'
           ? { stiffness: propTrans.stiffness, damping: propTrans.damping, mass: propTrans.mass, velocity: (propTrans as any).velocity }
           : undefined,
         iterations: propTrans?.repeat === Infinity ? Infinity : (propTrans?.repeat || 1),
         direction: propTrans?.repeatType === 'mirror' ? 'alternate' : 'normal',
-        endDelay: (propTrans?.repeatDelay ?? 0) * 1000,
+        endDelay: normalizeTimeMs(propTrans?.repeatDelay ?? 0, 0, { prop: `${prop}.repeatDelay`, source: 'motion.transition' }),
         additive: false,
         transformMode: 'channels',
         channel,
@@ -283,7 +409,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const el = internalRef.current;
     if (el) {
       const seed = { 
-        ...resolve(initial || vCtx?.initial), 
+        ...resolve(resolvedInitial || vCtx?.initial), 
         ...resolve(targetAnimate || vCtx?.animate) 
       };
       if (Object.keys(seed).length > 0) {
@@ -291,7 +417,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
         elementStateRegistry.set(el, { ...seed, ...cached });
       }
     }
-  }, [initial, targetAnimate, vCtx?.initial, vCtx?.animate, resolve]);
+  }, [resolvedInitial, targetAnimate, vCtx?.initial, vCtx?.animate, resolve]);
 
   // Initial styles: avoid passing transform shorthands to React `style`.
   const initialStyles = useMemo(() => stripTransformishStyle(props.style as any), [props.style]);
@@ -303,7 +429,8 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
     styleCleanupRef.current?.();
     const merged = {
-      ...(resolve(initial || vCtx?.initial) || {}),
+      ...(resolve(resolvedInitial || vCtx?.initial) || {}),
+      ...(parallaxStyle || {}),
       ...(props.style || {}),
     };
     const applied = applyStyleObject(el, merged as any, 'base');
@@ -313,7 +440,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       styleCleanupRef.current?.();
       styleCleanupRef.current = null;
     };
-  }, [props.style, initial, vCtx?.initial, resolve]);
+  }, [props.style, resolvedInitial, vCtx?.initial, resolve, parallaxStyle]);
 
   // Main Animation Trigger & Controller Subscription
   useEffect(() => {
@@ -338,19 +465,24 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     }
 
     const rAnim = resolve(targetAnimate || vCtx?.animate);
-    if (rAnim && !whileInView) trigger(rAnim, 'animate');
-  }, [isPresent, stableTarget, vCtx?.animate, trigger, whileInView]);
+    if (rAnim && !resolvedWhileInView) trigger(rAnim, 'animate');
+  }, [isPresent, stableTarget, vCtx?.animate, trigger, resolvedWhileInView]);
 
   // Reactive Interaction: Listen to parent
   useEffect(() => {
     if (vCtx?.interactive && variants?.[vCtx.interactive]) {
       trigger(variants[vCtx.interactive], vCtx.interactive);
-    } else if (!vCtx?.interactive && activeLabel.current?.startsWith('while')) {
-      // Revert to base state
-      const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(initial || vCtx?.initial);
+    } else if (
+      !vCtx?.interactive &&
+      (activeLabel.current === 'whileHover' || activeLabel.current === 'whileTap')
+    ) {
+      // Revert only transient gesture states (hover/tap) to base state.
+      // Do not reset whileInView on parent re-renders, otherwise elements
+      // can jump back to `initial` (e.g. opacity: 0) while scrolling.
+      const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(resolvedInitial || vCtx?.initial);
       if (rAnim) trigger(rAnim, 'animate', true);
     }
-  }, [vCtx?.interactive, trigger, targetAnimate, initial]);
+  }, [vCtx?.interactive, trigger, targetAnimate, resolvedInitial]);
 
   // V4.8 Hyper-Hover: Native Listener Pipeline to bypass React SyntheticEvents
   useEffect(() => {
@@ -368,7 +500,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const onLeave = () => {
       activeInteractionRef.current = null;
       if (whileHover) {
-        const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(initial || vCtx?.initial);
+        const rAnim = resolve(targetAnimate || vCtx?.animate) || resolve(resolvedInitial || vCtx?.initial);
         if (rAnim) trigger(rAnim, 'animate', true);
       }
     };
@@ -400,26 +532,30 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       el.removeEventListener('mousedown', onDown);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [whileHover, whileTap, trigger, resolve, targetAnimate, vCtx?.animate, initial, vCtx?.initial]);
+  }, [whileHover, whileTap, trigger, resolve, targetAnimate, vCtx?.animate, resolvedInitial, vCtx?.initial]);
 
   // Interaction: InView (Lazy)
   useEffect(() => {
-    if (!whileInView || !internalRef.current || hasInViewTriggered.current) return;
+    if (!resolvedWhileInView || !internalRef.current || hasInViewTriggered.current) return;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry?.isIntersecting) {
-        trigger(resolve(whileInView), 'whileInView');
-        if (viewport?.once) {
+        trigger(resolve(resolvedWhileInView), 'whileInView');
+        if (resolvedViewport?.once) {
           hasInViewTriggered.current = true;
           observer.disconnect();
         }
-      } else if (!viewport?.once) {
-        trigger(resolve(initial || vCtx?.initial), 'initial');
+      } else if (!resolvedViewport?.once) {
+        trigger(resolve(resolvedInitial || vCtx?.initial), 'initial');
       }
-    }, { root: viewport?.root, rootMargin: viewport?.rootMargin, threshold: viewport?.amount === 'all' ? 1 : (typeof viewport?.amount === 'number' ? viewport.amount : 0.1) });
+    }, {
+      root: resolvedViewport?.root,
+      rootMargin: resolvedViewport?.rootMargin,
+      threshold: resolvedViewport?.amount === 'all' ? 1 : (typeof resolvedViewport?.amount === 'number' ? resolvedViewport.amount : 0.1),
+    });
 
     observer.observe(internalRef.current);
     return () => observer.disconnect();
-  }, [whileInView, viewport, trigger, initial, vCtx?.initial]);
+  }, [resolvedWhileInView, resolvedViewport, trigger, resolvedInitial, vCtx?.initial]);
 
   // Exit Animation
   useEffect(() => {
@@ -504,12 +640,21 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       style={initialStyles}
     >
       <VariantContext.Provider value={{
-        initial: initial || vCtx?.initial,
+        initial: resolvedInitial || vCtx?.initial,
         animate: targetAnimate || vCtx?.animate,
         exit: exit || vCtx?.exit,
         interactive: activeInteractionRef.current || vCtx?.interactive,
         index: staggerIdx,
-        registerChild: vCtx?.registerChild || (() => 0)
+        staggerChildren: resolvedTransition?.staggerChildren ?? vCtx?.staggerChildren,
+        delayChildren: resolvedTransition?.delayChildren ?? vCtx?.delayChildren,
+        staggerFrom: (resolvedTransition as any)?.staggerFrom ?? vCtx?.staggerFrom,
+        staggerGrid: (resolvedTransition as any)?.staggerGrid ?? vCtx?.staggerGrid,
+        totalChildren: React.Children.count(children),
+        registerChild: () => {
+          const next = localChildCounterRef.current;
+          localChildCounterRef.current += 1;
+          return next;
+        }
       }}>
         {children}
       </VariantContext.Provider>

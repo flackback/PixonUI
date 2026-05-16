@@ -97,12 +97,24 @@ import { motion, timeline, usePixonAnimate } from '@pixonui/react';
 ```
 
 - `motion.*` (`motion.div`, `motion.span`, etc.) is the primary declarative API.
+- One-line scroll reveal preset:
+  - `<motion.div revealOnScroll />`
+  - Optional tuning: `<motion.div revealOnScroll={{ delay: 120, distance: 40, scale: 0.95, amount: 0.3 }} />`
+- One-line parallax preset:
+  - `<motion.div parallax />`
+  - Optional tuning: `<motion.div parallax={{ axis: 'y', from: 0, to: -120 }} />`
+- Official stagger preset:
+  - `<motion.div staggerChildren />`
+  - Optional tuning: `<motion.div staggerChildren={{ stagger: 90, delayChildren: 40, from: 'center' }} />`
 - `timeline()` supports:
   - `timeline(tracks).play()`
   - `timeline().add(...).play()`
 - Unit convention:
-  - `motion.*` transition `duration/delay` in **seconds**
-  - `usePixonAnimate` and `timeline()` `duration/delay` in **milliseconds**
+  - Numeric timing values use **milliseconds** (`duration`, `delay`, `repeatDelay`, `staggerChildren`, `delayChildren`)
+  - Applies to `motion.*`, `usePixonAnimate`, `timeline()`, `SSRAnimate/SSRStagger`
+- Scroll hook:
+  - `usePixonScroll` is now a MotionValue adapter (deprecated name)
+  - Prefer `useScroll` + `useTransform`
 - For best performance in dense scenes, animate `transform`/`opacity` first.
 
 ## 📄 License

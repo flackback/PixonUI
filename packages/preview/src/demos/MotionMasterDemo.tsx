@@ -3,8 +3,8 @@ import {
   PixonMotion,
   AnimatePresence,
   LayoutGroup,
-  usePixonScroll,
-  usePixonTransform,
+  useScroll,
+  useTransform,
   useDrag,
   PixonSSRAnimate,
   BorderBeam,
@@ -19,9 +19,9 @@ export function MotionMasterDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Parallax / Scroll Magic
-  const { scrollYProgress } = usePixonScroll({ container: containerRef });
-  const headerOpacity = usePixonTransform(scrollYProgress, [0, 0.15], [1, 0.2]);
-  const headerScale = usePixonTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
+  const { scrollYProgress } = useScroll({ container: containerRef });
+  const headerOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0.2]);
+  const headerScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
   
   // Drag Physics Configuration
   const { isDragging, offset, dragProps } = useDrag(undefined, undefined, {
@@ -57,7 +57,7 @@ export function MotionMasterDemo() {
       {/* Scroll-Linked Header */}
       <PixonMotion
         className="sticky top-0 z-20 p-8 flex flex-col items-center justify-center border-b border-slate-800/60 bg-slate-950/70 backdrop-blur-xl"
-        style={{ opacity: headerOpacity as any, transform: `scale(${headerScale})` }}
+        style={{ opacity: headerOpacity as any, scale: headerScale as any }}
       >
         <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-indigo-400 text-xs font-semibold tracking-wide uppercase mb-3">
           <Zap className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
@@ -96,7 +96,7 @@ export function MotionMasterDemo() {
             }}
             initial="hidden"
             animate="visible"
-            transition={{ staggerChildren: 0.15 }}
+            transition={{ staggerChildren: 150 }}
           >
             {[1, 2, 3].map((i) => (
               <PixonMotion
@@ -204,7 +204,7 @@ export function MotionMasterDemo() {
                         opacity: 1,
                         scale: 1,
                         translateY: 0,
-                        transition: { delay: i * 0.18, type: 'spring', stiffness: 300 }
+                        transition: { delay: i * 180, type: 'spring', stiffness: 300 }
                       })
                     }}
                     initial="hidden"

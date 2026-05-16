@@ -201,10 +201,11 @@ export function useSpring(source: MotionValue<number> | number, options: SpringO
 export interface UseScrollOptions {
   container?: React.RefObject<HTMLElement | null>;
   axis?: 'x' | 'y';
+  enabled?: boolean;
 }
 
 export function useScroll(options: UseScrollOptions = {}) {
-  const { container, axis = 'y' } = options;
+  const { container, axis = 'y', enabled = true } = options;
 
   const scrollX = useMotionValue(0);
   const scrollY = useMotionValue(0);
@@ -212,6 +213,8 @@ export function useScroll(options: UseScrollOptions = {}) {
   const scrollYProgress = useMotionValue(0);
 
   useEffect(() => {
+    if (!enabled) return;
+
     let ticking = false;
 
     const read = () => {
@@ -261,7 +264,7 @@ export function useScroll(options: UseScrollOptions = {}) {
       window.removeEventListener('resize', onScroll as any);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [container, axis]);
+  }, [container, axis, enabled]);
 
   return { scrollX, scrollY, scrollXProgress, scrollYProgress };
 }

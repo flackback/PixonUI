@@ -1,426 +1,370 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  HeroText, 
-  Background, 
-  GlowButton, 
-  Reveal, 
-  Surface, 
-  Heading, 
-  Text, 
-  Container, 
-  Stack, 
-  Grid,
+import { ArrowRight, Cpu, Rocket, Sparkles, Zap } from 'lucide-react';
+import {
+  AnimeGridStagger,
   Badge,
-  TextGradient,
-  ShinyText,
-  LetterPullup,
   Button,
-  PageLoader,
-  PageTransition,
-  TextMotion,
-  Magnetic,
-  Parallax,
-  NumberTicker,
-  motion,
-  usePixonAnimate,
   CopyBlock,
+  Container,
+  DotGrid,
+  GlowButton,
+  Grid,
+  Heading,
+  motion,
+  PixonSSRAnimate,
+  ScrollScene,
+  Stack,
+  Surface,
+  Text,
+  ThemeToggle,
+  parallax,
+  useMotionValueValue,
+  useScroll,
+  useTransform,
+  useTheme,
 } from '@pixonui/react';
-import { 
-  Zap, 
-  Sparkles, 
-  ArrowRight, 
-  Github, 
-  Accessibility, 
-  Palette,
-  Rocket,
-  Activity,
-  Play,
-  RotateCw,
-  Flame,
-  Anchor,
-  TrendingDown,
-  Layers,
-  Orbit,
-  Type,
-  RefreshCw,
-  Target,
-  Disc,
-} from 'lucide-react';
 
 interface LandingPageProps {
   onEnterGallery: () => void;
   onEnterSaaS: () => void;
 }
 
+const METRICS = [
+  { value: '120fps', label: 'Compositor First' },
+  { value: '0 jank', label: 'Frame Stability' },
+  { value: 'SSR', label: 'Hydration Safe' },
+  { value: 'WAAPI', label: 'Native Pipeline' },
+];
 
+const FEATURES = [
+  {
+    icon: Zap,
+    title: 'Motion sem re-render',
+    text: 'Animação em CSS/WAAPI com execução fora da thread principal para manter fluidez mesmo em páginas densas.',
+  },
+  {
+    icon: Cpu,
+    title: 'SSR-first por padrão',
+    text: 'Landing renderiza com presets SSR e segue segura para hidratação, incluindo fallback de timeline em browsers sem suporte.',
+  },
+  {
+    icon: Sparkles,
+    title: 'API curta e previsível',
+    text: 'Transições declarativas com presets e stagger sem event-bus manual, reduzindo código e chance de regressão.',
+  },
+];
 
+const ANIME_GRID_CODE = `import { AnimeGridStagger, Surface } from '@pixonui/react';
 
+export function AnimeGridSection() {
+  return (
+    <Surface className="rounded-3xl border border-white/10 bg-[#04112d]/75 p-8 md:p-12">
+      <AnimeGridStagger
+        rows={23}
+        dotColor="#7b8ba5"
+        cursorColor="#22d3ee"
+        className="max-w-full scale-[0.72] md:scale-[0.9]"
+      />
+    </Surface>
+  );
+}`;
 
-
-
-export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <PageLoader variant="glass" text="INITIALIZING PIXONUI..." />;
-  }
+function ScrollParallaxCard() {
+  const { scrollYProgress } = useScroll();
+  const parallaxPreset = parallax({ axis: 'y', from: 0, to: -120 });
+  const parallaxY = useTransform(scrollYProgress, [0, 1], parallaxPreset.range);
+  const orbX = useTransform(scrollYProgress, [0, 1], [0, 220]);
+  const progressWidth = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
+  const glowOpacity = useTransform(scrollYProgress, [0, 0.6], [0.15, 0.95]);
+  const orbTransform = useTransform([orbX, parallaxY], ([x, y]) => `translate3d(${x}px, ${y}px, 0)`);
+  const progressValue = useMotionValueValue(scrollYProgress);
 
   return (
-    <PageTransition preset="blur" duration={800}>
-      <div className="relative min-h-screen w-full bg-[#030303] text-white overflow-x-hidden">
-        {/* Background Effects */}
-        <Background variant="mesh" animate className="opacity-50" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
-        
-        {/* Navbar */}
-        <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
-          <Container className="flex h-16 items-center justify-between">
-            <motion.div 
-              className="flex items-center gap-2.5 cursor-pointer"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20" />
-              <span className="text-xl font-bold tracking-tight">PixonUI</span>
-            </motion.div>
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-white/60 hover:text-white transition-colors">Features</a>
-
-              <a href="#performance" className="text-sm text-white/60 hover:text-white transition-colors">Performance</a>
-            </div>
-            <div className="flex items-center gap-4">
-              <Magnetic>
-                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
-                  <Github className="h-4 w-4 mr-2" /> GitHub
-                </Button>
-              </Magnetic>
-              <Magnetic strength={0.2}>
-                <GlowButton onClick={onEnterGallery} className="px-4 py-2 text-sm">
-                  Explore Components
-                </GlowButton>
-              </Magnetic>
-            </div>
-          </Container>
-        </nav>
-
-        {/* Hero Section */}
-        <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full" />
-            <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
-          </div>
-          
-          <Container>
-            <Stack gap={8} align="center" className="text-center max-w-4xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.6, y: -20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                whileHover={{ y: -4 }}
-              >
-                <Badge variant="neutral" className="bg-white/5 border-white/10 text-cyan-400 px-4 py-1 rounded-full cursor-default select-none shadow-glow">
-                  <Sparkles className="h-3 w-3 mr-2 inline animate-pulse" />
-                  Version 0.1.0 is now live
-                </Badge>
-              </motion.div>
-
-              <div className="space-y-4">
-                <LetterPullup 
-                  text="The Next Generation of"
-                  className="text-4xl md:text-6xl font-bold tracking-tight text-white/70"
-                />
-                <HeroText 
-                  title=""
-                  highlight="Glassmorphic UI"
-                  className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter"
-                />
-              </div>
-
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 100, damping: 18, delay: 0.2 }}
-              >
-                <TextMotion 
-                  type="word"
-                  text="A high-performance, accessible, and beautifully crafted component library for React. Built with zero heavy dependencies and a focus on modern aesthetics."
-                  className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed justify-center"
-                  stagger={30}
-                />
-              </motion.div>
-
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 150, damping: 16, delay: 0.4 }}
-                className="flex flex-col sm:flex-row items-center gap-6"
-              >
-                <Magnetic strength={0.3}>
-                  <GlowButton className="px-10 h-16 text-xl" onClick={onEnterGallery}>
-                    Explore Components <ArrowRight className="ml-2 h-6 w-6" />
-                  </GlowButton>
-                </Magnetic>
-                <Magnetic strength={0.2}>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="px-10 h-16 text-xl border-white/10 bg-white/5 hover:bg-white/10"
-                    onClick={onEnterSaaS}
-                  >
-                    <Rocket className="mr-2 h-6 w-6 text-cyan-500" />
-                    View SaaS Demo
-                  </Button>
-                </Magnetic>
-              </motion.div>
-            </Stack>
-          </Container>
-        </section>
-
-        {/* Stats Section */}
-        <section id="performance" className="py-12 border-y border-white/5 bg-white/[0.02]">
-          <Container>
-            <Grid className="grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <Stack gap={1}>
-                <div className="text-3xl md:text-4xl font-bold text-cyan-400">
-                  <NumberTicker value={120} />
-                  <span className="text-xl ml-1">FPS</span>
-                </div>
-                <Text className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Performance</Text>
-              </Stack>
-              <Stack gap={1}>
-                <div className="text-3xl md:text-4xl font-bold text-purple-400">
-                  <NumberTicker value={65} />
-                  <span className="text-xl ml-1">+</span>
-                </div>
-                <Text className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Components</Text>
-              </Stack>
-              <Stack gap={1}>
-                <div className="text-3xl md:text-4xl font-bold text-blue-400">
-                  <NumberTicker value={0} />
-                </div>
-                <Text className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Dependencies</Text>
-              </Stack>
-              <Stack gap={1}>
-                <div className="text-3xl md:text-4xl font-bold text-emerald-400">
-                  <NumberTicker value={100} />
-                  <span className="text-xl ml-1">%</span>
-                </div>
-                <Text className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Accessible</Text>
-              </Stack>
-            </Grid>
-          </Container>
-        </section>
-
-        {/* Features Grid */}
-        <section id="features" className="py-32 relative">
-          <Container>
-            <div className="mb-20 text-center">
-              <Reveal>
-                <Heading as="h2" className="text-4xl md:text-5xl font-bold mb-6">
-                  Built for <TextGradient from="from-cyan-400" to="to-blue-600">Modern Engineers</TextGradient>
-                </Heading>
-                <Text className="text-lg text-white/40 max-w-2xl mx-auto">Everything you need to build world-class interfaces in record time.</Text>
-              </Reveal>
-            </div>
-
-            <Grid cols={1} gap={8} className="md:grid-cols-3">
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, rootMargin: '-100px' }}
-                transition={{ type: 'spring', stiffness: 100, damping: 14 }}
-                className="h-full cursor-pointer hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-300"
-              >
-                <Surface className="p-10 h-full group hover:border-cyan-500/30 transition-all duration-500 hover:bg-white/[0.05] relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 blur-2xl rounded-full" />
-                  <div className="h-14 w-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
-                    <Zap className="h-7 w-7 text-cyan-400" />
-                  </div>
-                  <Heading as="h3" className="text-2xl font-bold mb-4">Ultra Performance</Heading>
-                  <Text className="text-white/50 leading-relaxed text-lg">
-                    Optimized for 120fps compositor interactions. Physics-based springs compile into off-thread WAAPI keyframes, freeing the main thread completely.
-                  </Text>
-                </Surface>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, rootMargin: '-100px' }}
-                transition={{ type: 'spring', stiffness: 100, damping: 14, delay: 0.15 }}
-                className="h-full cursor-pointer hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-300"
-              >
-                <Surface className="p-10 h-full group hover:border-purple-500/30 transition-all duration-500 hover:bg-white/[0.05] relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 blur-2xl rounded-full" />
-                  <div className="h-14 w-14 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500">
-                    <Accessibility className="h-7 w-7 text-purple-400" />
-                  </div>
-                  <Heading as="h3" className="text-2xl font-bold mb-4">Pragmatic A11y</Heading>
-                  <Text className="text-white/50 leading-relaxed text-lg">
-                    Full keyboard navigation, focus trap primitives, and WAI-ARIA compliance baked directly into our markup. No compromise on accessibility.
-                  </Text>
-                </Surface>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, rootMargin: '-100px' }}
-                transition={{ type: 'spring', stiffness: 100, damping: 14, delay: 0.3 }}
-                className="h-full cursor-pointer hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-300"
-              >
-                <Surface className="p-10 h-full group hover:border-blue-500/30 transition-all duration-500 hover:bg-white/[0.05] relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 blur-2xl rounded-full" />
-                  <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
-                    <Palette className="h-7 w-7 text-blue-400" />
-                  </div>
-                  <Heading as="h3" className="text-2xl font-bold mb-4">Glassmorphism 2.0</Heading>
-                  <Text className="text-white/50 leading-relaxed text-lg">
-                    Vibrant, dark, high-end aesthetics featuring mouse-following glows, frosted borders, and interactive backdrop blur filtering.
-                  </Text>
-                </Surface>
-              </motion.div>
-            </Grid>
-          </Container>
-        </section>
-
-
-
-        {/* Component Showcase Preview */}
-        <section id="components" className="py-32 bg-white/[0.01] border-y border-white/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[120px] rounded-full -mr-64 -mt-64" />
-          <Container>
-            <Grid cols={1} gap={16} className="lg:grid-cols-2 items-center">
-              <Stack gap={8}>
-                <Reveal>
-                  <Badge variant="neutral" className="bg-cyan-500/10 border-cyan-500/20 text-cyan-400 px-4 py-1">
-                    Interactive Components
-                  </Badge>
-                  <Heading as="h2" className="text-5xl md:text-6xl font-bold mt-6 leading-tight">
-                    Complex logic, <br />
-                    <ShinyText className="text-cyan-400">Simple API.</ShinyText>
-                  </Heading>
-                  <Text className="text-xl text-white/50 mt-8 leading-relaxed">
-                    From advanced Kanban boards with multi-select to AI-ready prompt inputs. 
-                    PixonUI handles the complexity so you can focus on your product.
-                  </Text>
-                  <div className="flex items-center gap-10 mt-12">
-                    <div className="flex flex-col">
-                      <span className="text-3xl font-bold text-white">65+</span>
-                      <span className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mt-1">Components</span>
-                    </div>
-                    <div className="w-px h-12 bg-white/10" />
-                    <div className="flex flex-col">
-                      <span className="text-3xl font-bold text-white">0</span>
-                      <span className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mt-1">Heavy Deps</span>
-                    </div>
-                    <div className="w-px h-12 bg-white/10" />
-                    <div className="flex flex-col">
-                      <span className="text-3xl font-bold text-white">100%</span>
-                      <span className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mt-1">TypeScript</span>
-                    </div>
-                  </div>
-                </Reveal>
-              </Stack>
-
-              <Reveal delay={0.4} className="relative">
-                <Parallax speed={0.05}>
-                  <div className="absolute -inset-8 bg-cyan-500/20 blur-[100px] rounded-full opacity-20 animate-pulse" />
-                  <Surface className="relative aspect-video rounded-[2.5rem] overflow-hidden border-white/10 bg-black/40 backdrop-blur-3xl p-1.5 shadow-2xl group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-transparent to-purple-500/10 opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
-                    <div className="h-full w-full rounded-[2.3rem] bg-[#0a0a0a] p-8 flex flex-col gap-6">
-                      <div className="flex items-center justify-between border-b border-white/5 pb-6">
-                        <div className="flex gap-2">
-                          <div className="h-3.5 w-3.5 rounded-full bg-red-500/40" />
-                          <div className="h-3.5 w-3.5 rounded-full bg-amber-500/40" />
-                          <div className="h-3.5 w-3.5 rounded-full bg-green-500/40" />
-                        </div>
-                        <div className="h-6 w-40 rounded-full bg-white/5" />
-                      </div>
-                      <div className="flex-1 flex items-center justify-center">
-                        <Stack gap={5} align="center" className="w-full max-w-sm">
-                          <div className="h-14 w-full rounded-2xl bg-white/5 animate-pulse" />
-                          <div className="h-14 w-full rounded-2xl bg-white/5 animate-pulse delay-150" />
-                          <div className="h-14 w-full rounded-2xl bg-white/5 animate-pulse delay-300" />
-                        </Stack>
-                      </div>
-                    </div>
-                  </Surface>
-                </Parallax>
-              </Reveal>
-            </Grid>
-          </Container>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-48 relative overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-blue-600/10 blur-[150px] rounded-full" />
-          <Container className="relative z-10 text-center">
-            <Reveal>
-              <Heading as="h2" className="text-5xl md:text-8xl font-black mb-12 tracking-tighter">
-                Ready to build the <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">future of the web?</span>
-              </Heading>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
-                <Magnetic strength={0.4}>
-                  <GlowButton className="px-16 h-20 text-2xl" onClick={onEnterGallery}>
-                    Start Building Now
-                  </GlowButton>
-                </Magnetic>
-                <Magnetic strength={0.2}>
-                  <Button variant="ghost" size="lg" className="px-10 h-20 text-xl text-white/60 hover:text-white">
-                    View on GitHub
-                  </Button>
-                </Magnetic>
-              </div>
-            </Reveal>
-          </Container>
-        </section>
-
-        {/* Footer */}
-        <footer className="py-20 border-t border-white/5 bg-black/60 backdrop-blur-xl">
-          <Container>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-              <div className="col-span-1 md:col-span-2">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600" />
-                  <span className="text-2xl font-bold tracking-tight">PixonUI</span>
-                </div>
-                <Text className="text-white/40 max-w-sm text-lg leading-relaxed">
-                  The most advanced glassmorphic component library for React. 
-                  Built for speed, accessibility, and beauty.
-                </Text>
-              </div>
-              <Stack gap={4}>
-                <Text className="font-bold text-white uppercase tracking-widest text-xs">Resources</Text>
-                <a href="#" className="text-white/40 hover:text-white transition-colors">Documentation</a>
-                <a href="#" className="text-white/40 hover:text-white transition-colors">Components</a>
-                <a href="#" className="text-white/40 hover:text-white transition-colors">Templates</a>
-              </Stack>
-              <Stack gap={4}>
-                <Text className="font-bold text-white uppercase tracking-widest text-xs">Community</Text>
-                <a href="#" className="text-white/40 hover:text-white transition-colors">GitHub</a>
-                <a href="#" className="text-white/40 hover:text-white transition-colors">Twitter</a>
-                <a href="#" className="text-white/40 hover:text-white transition-colors">Discord</a>
-              </Stack>
-            </div>
-            <div className="flex flex-col md:flex-row justify-between items-center pt-12 border-t border-white/5 gap-6">
-              <Text className="text-sm text-white/20">
-                © 2025 PixonUI. Built with passion for the community.
-              </Text>
-              <div className="flex gap-8">
-                <a href="#" className="text-xs text-white/20 hover:text-white transition-colors">Privacy Policy</a>
-                <a href="#" className="text-xs text-white/20 hover:text-white transition-colors">Terms of Service</a>
-              </div>
-            </div>
-          </Container>
-        </footer>
+    <Surface className="relative overflow-hidden rounded-3xl border border-cyan-400/30 bg-cyan-50/70 p-8 dark:border-cyan-400/20 dark:bg-[#04112d]/80">
+      <motion.div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(34,211,238,0.28),transparent_60%)]"
+        style={{ opacity: glowOpacity }}
+      />
+      <div className="relative z-10 mb-6 flex items-center justify-between">
+        <Heading as="h3" className="text-xl font-semibold">Scroll Parallax (fallback JS)</Heading>
+        <span className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">
+          {Math.round(progressValue * 100)}%
+        </span>
       </div>
-    </PageTransition>
+
+      <div className="relative z-10 h-2 w-full overflow-hidden rounded-full bg-slate-300/60 dark:bg-white/10">
+        <motion.div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-blue-500" style={{ width: progressWidth }} />
+      </div>
+
+      <div className="relative z-10 mt-8 h-28 rounded-2xl border border-slate-300/60 bg-white/40 dark:border-white/10 dark:bg-black/20">
+        <motion.div
+          className="absolute left-4 top-8 h-12 w-12 rounded-full bg-cyan-300/70 blur-[1px]"
+          style={{ transform: orbTransform }}
+        />
+      </div>
+    </Surface>
+  );
+}
+
+export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
+  const { theme } = useTheme();
+  const isDark = theme !== 'light';
+
+  return (
+    <div className="relative min-h-screen overflow-x-hidden bg-slate-100 text-zinc-900 dark:bg-[#020617] dark:text-white">
+      {/* @ts-ignore */}
+      <style precedence="default" href="landing-ssr-v1">{`
+        .ssr-aurora {
+          background:
+            radial-gradient(40% 40% at 20% 20%, rgba(34, 211, 238, 0.16), transparent 60%),
+            radial-gradient(45% 45% at 80% 15%, rgba(99, 102, 241, 0.14), transparent 62%),
+            radial-gradient(55% 55% at 50% 100%, rgba(14, 165, 233, 0.14), transparent 65%);
+          animation: ssr-aurora-pulse 13s ease-in-out infinite alternate;
+        }
+
+        @keyframes ssr-aurora-pulse {
+          from { filter: saturate(1) brightness(0.95); }
+          to { filter: saturate(1.15) brightness(1.08); }
+        }
+
+        @keyframes ssr-soft-glow {
+          from { box-shadow: 0 0 0 rgba(34, 211, 238, 0.0); }
+          to { box-shadow: 0 0 28px rgba(34, 211, 238, 0.2); }
+        }
+
+        .ssr-soft-glow {
+          animation: ssr-soft-glow 4.6s ease-in-out infinite alternate;
+        }
+      `}</style>
+
+      <div className="pointer-events-none absolute inset-0">
+        <DotGrid
+          variant="dots"
+          interactive
+          pauseWhenOutOfView
+          spacing={24}
+          dotSize={1.2}
+          maxDist={140}
+          magneticStrength={20}
+          smoothing={0.08}
+          color={isDark ? '#7f8ea9' : '#94a3b8'}
+          opacity={isDark ? 0.42 : 0.5}
+          className="absolute inset-0"
+        />
+      </div>
+      <div className={`pointer-events-none absolute inset-0 ssr-aurora ${isDark ? 'opacity-100' : 'opacity-40'}`} />
+
+      <header className="relative z-10 border-b border-slate-300/40 bg-white/45 backdrop-blur-xl dark:border-white/10 dark:bg-black/10">
+        <Container className="flex h-16 items-center justify-between">
+          <PixonSSRAnimate preset="fadeInLeft" transition={{ duration: 420 }} className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/30" />
+            <span className="text-lg font-semibold tracking-tight">PixonUI Motion</span>
+          </PixonSSRAnimate>
+          <PixonSSRAnimate preset="fadeInRight" transition={{ duration: 420, delay: 220 }} className="flex items-center gap-3">
+            <ThemeToggle className="border border-slate-300/60 bg-white/70 dark:border-white/10 dark:bg-white/5" />
+            <Button variant="ghost" size="sm" className="text-zinc-600 hover:text-zinc-900 dark:text-white/70 dark:hover:text-white" onClick={onEnterSaaS}>
+              SaaS
+            </Button>
+            <GlowButton className="h-9 px-4 text-sm" onClick={onEnterGallery}>
+              Abrir galeria
+            </GlowButton>
+          </PixonSSRAnimate>
+        </Container>
+      </header>
+
+      <main className="relative z-10">
+        <section className="py-20 md:py-28">
+          <Container>
+            <ScrollScene
+              as="div"
+              timeline="view"
+              axis="block"
+              range={{ start: 'entry 0%', end: 'cover 80%' }}
+              from={{ y: 0, scale: 1, opacity: 1 }}
+              to={{ y: -72, scale: 0.97, opacity: 1 }}
+              fallback="static"
+            >
+              <Stack gap={8} align="center" className="mx-auto max-w-4xl text-center">
+              <PixonSSRAnimate preset="scaleInBounce" transition={{ duration: 700 }}>
+                <Badge variant="neutral" className="border-cyan-400/30 bg-cyan-500/10 px-4 py-1 text-cyan-300">
+                  <Sparkles className="mr-2 inline h-3.5 w-3.5" />
+                  Landing SSR pronta para produção
+                </Badge>
+              </PixonSSRAnimate>
+
+              <PixonSSRAnimate preset="blurInUp" transition={{ duration: 880, delay: 300 }}>
+                <Heading as="h1" className="text-4xl font-black tracking-tight md:text-6xl">
+                  Motion Engine do Pixon
+                  <span className={isDark ? 'block bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent' : 'block text-zinc-700'}>
+                    simples de escrever, fluido para executar
+                  </span>
+                </Heading>
+              </PixonSSRAnimate>
+
+              <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 820, delay: 520 }}>
+                <Text className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-white/70 md:text-lg">
+                  Esta página usa animações SSR com presets nativos, stagger declarativo e scroll-driven timeline com fallback.
+                  Sem loop imperativo por frame e sem dependência de biblioteca externa.
+                </Text>
+              </PixonSSRAnimate>
+
+              <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 860, delay: 760 }} className="flex flex-col items-center gap-4 sm:flex-row">
+                <GlowButton className="h-12 px-8" onClick={onEnterGallery}>
+                  Explorar componentes
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </GlowButton>
+                <Button variant="outline" size="lg" className="h-12 border-white/20 bg-white/5 px-8" onClick={onEnterSaaS}>
+                  <Rocket className="mr-2 h-4 w-4 text-cyan-300" />
+                  Ver SaaS demo
+                </Button>
+              </PixonSSRAnimate>
+              </Stack>
+            </ScrollScene>
+          </Container>
+        </section>
+
+        <section className="border-y border-slate-300/40 bg-white/50 py-10 dark:border-white/10 dark:bg-white/[0.02]">
+          <Container>
+            <Grid className="grid-cols-2 gap-5 md:grid-cols-4">
+              {METRICS.map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  data-testid={`metric-card-${index}`}
+                  revealOnScroll={{ delay: index * 80, amount: 0.35, distance: 32, scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 140, damping: 18 }}
+                >
+                  <PixonSSRAnimate
+                    initial={{ y: 0, opacity: 1 }}
+                    animate={{ y: -6, opacity: 1 }}
+                    transition={{ duration: 4400, delay: 700 + index * 260, easing: 'ease-in-out', iterations: 'infinite', direction: 'alternate' }}
+                    as="div"
+                  >
+                    <Surface className="ssr-soft-glow border-slate-300/50 bg-white/80 p-5 text-center dark:border-white/10 dark:bg-[#060f28]/70">
+                      <div className="text-2xl font-bold text-cyan-300 md:text-3xl">{item.value}</div>
+                      <Text className="mt-1 text-xs uppercase tracking-[0.16em] text-zinc-500 dark:text-white/45">{item.label}</Text>
+                    </Surface>
+                  </PixonSSRAnimate>
+                </motion.div>
+              ))}
+            </Grid>
+          </Container>
+        </section>
+
+        <section className="py-16 md:py-24">
+          <Container>
+            <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 680 }}>
+              <Heading as="h2" className="mb-10 text-center text-3xl font-bold md:text-4xl">
+                Base SSR + WAAPI preparada para escalar
+              </Heading>
+            </PixonSSRAnimate>
+
+            <Grid className="gap-6 md:grid-cols-3">
+              {FEATURES.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <motion.div
+                    key={feature.title}
+                    data-testid={`feature-card-${index}`}
+                    revealOnScroll={{ delay: index * 100, amount: 0.28, distance: 36, scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 130, damping: 18 }}
+                  >
+                    <PixonSSRAnimate
+                      initial={{ y: 0, opacity: 1 }}
+                      animate={{ y: -10, opacity: 1 }}
+                      transition={{ duration: 5600, delay: 1100 + index * 320, easing: 'ease-in-out', iterations: 'infinite', direction: 'alternate' }}
+                      as="div"
+                    >
+                      <Surface className="ssr-soft-glow h-full border-slate-300/50 bg-white/80 p-7 dark:border-white/10 dark:bg-[#061333]/70">
+                        <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                      <Heading as="h3" className="mb-3 text-xl font-semibold">
+                        {feature.title}
+                      </Heading>
+                      <Text className="text-sm leading-relaxed text-zinc-600 dark:text-white/65">{feature.text}</Text>
+                    </Surface>
+                  </PixonSSRAnimate>
+                  </motion.div>
+                );
+              })}
+            </Grid>
+          </Container>
+        </section>
+
+        <section className="pb-20 md:pb-28">
+          <Container>
+            <Grid className="gap-6 md:grid-cols-2">
+              <motion.div
+                data-testid="scroll-scene-card"
+                revealOnScroll={{ amount: 0.25, distance: 48, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+              >
+                <ScrollScene
+                  as="div"
+                  className="rounded-3xl border border-slate-300/50 bg-white/80 p-10 dark:border-white/10 dark:bg-[#061841]/70"
+                  timeline="view"
+                  axis="block"
+                  range={{ start: 'entry 10%', end: 'cover 50%' }}
+                  from={{ y: 120, opacity: 1, scale: 0.92, blur: 0 }}
+                  to={{ y: 0, opacity: 1, scale: 1, blur: 0 }}
+                  fallback="animate"
+                >
+                  <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 900, delay: 320 }}>
+                    <Heading as="h3" className="mb-3 text-2xl font-semibold">
+                      ScrollScene em ação
+                    </Heading>
+                    <Text className="text-zinc-600 dark:text-white/70">
+                      Este card usa timeline de scroll nativa quando disponível. Em fallback, anima por tempo na entrada.
+                    </Text>
+                  </PixonSSRAnimate>
+                </ScrollScene>
+              </motion.div>
+
+              <motion.div
+                data-testid="parallax-card"
+                revealOnScroll={{ delay: 80, amount: 0.25, distance: 48, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+              >
+                <ScrollParallaxCard />
+              </motion.div>
+            </Grid>
+          </Container>
+        </section>
+
+        <section className="pb-24 md:pb-32">
+          <Container>
+            <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 760, delay: 180 }}>
+              <Heading as="h2" className="mb-10 text-center text-3xl font-bold md:text-4xl">
+                Anime.js Style Grid (100% Pixon)
+              </Heading>
+            </PixonSSRAnimate>
+
+            <Grid className="items-start gap-6 lg:grid-cols-2">
+              <PixonSSRAnimate preset="blurInScale" trigger="view" transition={{ duration: 820, delay: 320 }}>
+                <Surface className="flex items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-[#04112d]/75 p-8 md:p-12">
+                  <AnimeGridStagger
+                    rows={23}
+                    dotColor="#7b8ba5"
+                    cursorColor="#22d3ee"
+                    className="max-w-full scale-[0.72] md:scale-[0.9]"
+                  />
+                </Surface>
+              </PixonSSRAnimate>
+
+              <PixonSSRAnimate preset="fadeInRight" trigger="view" transition={{ duration: 820, delay: 460 }}>
+                <CopyBlock
+                  title="Código da animação"
+                  language="tsx"
+                  code={ANIME_GRID_CODE}
+                  lineNumbers
+                  maxHeight="520px"
+                  variant="terminal"
+                  className="h-full border-white/10"
+                />
+              </PixonSSRAnimate>
+            </Grid>
+          </Container>
+        </section>
+      </main>
+    </div>
   );
 }

@@ -84,6 +84,7 @@ import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
 
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
 import AnimePathDemo from './demos/AnimePathDemo';
+import AnimePenReplicasDemo from './demos/AnimePenReplicasDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
 import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
 import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
@@ -1473,6 +1474,22 @@ ${usePixonVideoPlayerSource}`,
   }}
 />`,
     demo: <AnimePathDemo />
+  },
+  {
+    id: 'anime-pen-replicas',
+    title: 'Anime.js Pen Replicas',
+    category: 'Feedback',
+    description: 'Replicação 100% Pixon do pen Sphere Network Intro (LMrRNW), com o código exibido abaixo do orbe.',
+    code: `import { timeline, motion } from '@pixonui/react';
+
+// 1) Sphere Network Intro (LMrRNW) com SVG + timeline + rAF leve
+const tl = timeline({ easing: 'ease-out' });
+tl
+  .add(paths, { strokeDashoffset: [setDash, 0] }, { duration: 3900, stagger: 250 })
+  .play();
+
+// Código completo da réplica fica logo abaixo do orbe no demo`,
+    demo: <AnimePenReplicasDemo />
   },
 ];
 

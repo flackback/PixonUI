@@ -17,11 +17,50 @@ By pre-calculating physical spring curves on initiation and feeding them directl
   - Custom-property registration runs once.
   - Transform template injection runs once.
 - `staggerIdx` precedence is fixed at engine level (`prop` wins over inherited context), preventing stacked particles in dense demos.
+- `motion.*` now supports `revealOnScroll` preset to reduce boilerplate and avoid common in-view flicker setups.
 
 ### Unit conventions (important)
-- `motion.*` transitions (`Animate.tsx` API): `duration` / `delay` are in **seconds**.
-- `usePixonAnimate` options: `duration` / `delay` are in **milliseconds**.
-- `timeline()` track/add options: `duration`, `delay`, `offset`, `stagger` are in **milliseconds**.
+- Canonical numeric timing unit is **milliseconds (ms)** across motion APIs.
+- `motion.*` transitions: `duration`, `delay`, `repeatDelay`, `staggerChildren`, `delayChildren` in **ms**.
+- `usePixonAnimate` options: `duration` / `delay` in **ms**.
+- `timeline()` track/add options: `duration`, `delay`, `offset`, `stagger` in **ms**.
+- `SSRAnimate` / `SSRStagger` transition `duration` / `delay` / `stagger` in **ms**.
+
+### `revealOnScroll` preset (Framer-like one-liner)
+
+Use this when you want "appear on scroll" without repeating `initial + whileInView + viewport` setup:
+
+```tsx
+<motion.div revealOnScroll />
+```
+
+Optional tuning:
+
+```tsx
+<motion.div revealOnScroll={{ delay: 120, distance: 40, scale: 0.95, amount: 0.3 }} />
+```
+
+Defaults:
+- `once: true`
+- `amount: 0.25`
+- `distance: 32`
+- `scale: 0.96`
+- `delay: 0`
+
+Important behavior:
+- Preset uses `initial.opacity = 0` + `whileInView.opacity = 1`, with `once: true` by default, to avoid scroll flicker regressions.
+
+### Official presets (vNext)
+- `revealOnScroll(options?)`
+- `parallax(options?)`
+- `staggerChildren(options?)`
+
+Example:
+```tsx
+<motion.div revealOnScroll />
+<motion.div parallax={{ axis: 'y', from: 0, to: -120 }} />
+<motion.div staggerChildren={{ stagger: 80, delayChildren: 0, from: 'center' }} />
+```
 
 ### Rules for high-density interactive scenes
 - Prefer `transform` + `opacity` for per-frame updates.
