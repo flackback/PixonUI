@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { motion, timeline } from '@pixonui/react';
 
 type TimelineHandle = {
@@ -29,28 +29,7 @@ const SPHERE_PATHS = [
   'M109.698 109.332c-24.408 24.407-51.12 37.268-59.663 28.726-8.542-8.543 4.319-35.255 28.727-59.662 24.407-24.408 51.12-37.27 59.662-28.727 8.543 8.543-4.319 35.255-28.726 59.663z',
 ];
 
-const ORB_CODE = `import { timeline } from '@pixonui/react';
-
-const tl = timeline({ easing: 'ease-out' });
-tl.add(paths, { strokeDashoffset: [dash, 0] }, {
-  duration: 3900,
-  stagger: 250,
-});
-tl.play();
-
-function loop(time: number) {
-  paths.forEach((path, index) => {
-    const percent = (1 - Math.sin(index * 0.35 + 0.0022 * time)) / 2;
-    const tx = 2 + (-6 * percent);
-    const ty = 2 + (-6 * percent);
-    path.style.transform = \`translate(\${tx}px, \${ty}px)\`;
-  });
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);`;
-
 function SphereNetworkReplica() {
-  const hostRef = useRef<HTMLDivElement | null>(null);
   const sphereAnimationRef = useRef<HTMLDivElement | null>(null);
   const sphereRef = useRef<SVGSVGElement | null>(null);
   const gradientRef = useRef<SVGLinearGradientElement | null>(null);
@@ -58,21 +37,6 @@ function SphereNetworkReplica() {
   const rafRef = useRef<number | null>(null);
   const shadowStartRef = useRef<number | null>(null);
   const gradientId = useId().replace(/:/g, '');
-
-  const fitToParent = useCallback(() => {
-    const host = hostRef.current;
-    const sphereAnimation = sphereAnimationRef.current;
-    if (!host || !sphereAnimation) return;
-    sphereAnimation.style.transform = 'scale(1)';
-    const ratio = host.clientWidth / Math.max(1, sphereAnimation.offsetWidth);
-    sphereAnimation.style.transform = `scale(${ratio})`;
-  }, []);
-
-  useEffect(() => {
-    fitToParent();
-    window.addEventListener('resize', fitToParent);
-    return () => window.removeEventListener('resize', fitToParent);
-  }, [fitToParent]);
 
   useEffect(() => {
     const sphere = sphereRef.current;
@@ -139,43 +103,29 @@ function SphereNetworkReplica() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 90 }}
-      className="rounded-3xl border border-white/10 bg-transparent p-6"
+      className="relative mx-auto h-[620px] w-full max-w-[980px] overflow-visible"
     >
-      <p className="mb-1 text-[11px] font-black uppercase tracking-[0.35em] text-cyan-300/70">Pen Replica</p>
-      <h3 className="mb-4 text-xl font-black text-white">Sphere Network Intro (`LMrRNW`)</h3>
-
-      <div ref={hostRef} className="relative mx-auto h-[500px] w-full max-w-[980px] overflow-visible">
-        <div className="absolute right-[-40px] top-[30px] h-[520px] w-[520px]">
-          <div ref={sphereAnimationRef} className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2">
-            <svg ref={sphereRef} className="h-full w-full" viewBox="0 0 440 440" stroke="rgba(80,80,80,.35)">
-              <defs>
-                <linearGradient ref={gradientRef} id={`sphere-gradient-${gradientId}`} x1="5%" x2="5%" y1="0%" y2="15%">
-                  <stop stopColor="#373734" offset="0%" />
-                  <stop stopColor="#242423" offset="50%" />
-                  <stop stopColor="#0D0D0C" offset="100%" />
-                </linearGradient>
-              </defs>
-              {SPHERE_PATHS.map((d, index) => (
-                <path
-                  key={`${index}-${d.slice(0, 20)}`}
-                  data-sphere-path
-                  d={d}
-                  fill={`url(#sphere-gradient-${gradientId})`}
-                  strokeWidth={0.5}
-                  stroke="rgba(80,80,80,.35)"
-                  style={{ backfaceVisibility: 'hidden', transformBox: 'fill-box', transformOrigin: 'center' }}
-                />
-              ))}
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto mt-6 w-full max-w-[980px] rounded-2xl border border-white/10 bg-black/25 p-4">
-        <p className="mb-3 text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300/70">Código</p>
-        <pre className="max-h-[320px] overflow-auto whitespace-pre text-xs leading-relaxed text-white/80">
-          <code>{ORB_CODE}</code>
-        </pre>
+      <div ref={sphereAnimationRef} className="absolute left-1/2 top-1/2 h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2">
+        <svg ref={sphereRef} className="h-full w-full" viewBox="0 0 440 440" stroke="rgba(80,80,80,.35)">
+          <defs>
+            <linearGradient ref={gradientRef} id={`sphere-gradient-${gradientId}`} x1="5%" x2="5%" y1="0%" y2="15%">
+              <stop stopColor="#373734" offset="0%" />
+              <stop stopColor="#242423" offset="50%" />
+              <stop stopColor="#0D0D0C" offset="100%" />
+            </linearGradient>
+          </defs>
+          {SPHERE_PATHS.map((d, index) => (
+            <path
+              key={`${index}-${d.slice(0, 20)}`}
+              data-sphere-path
+              d={d}
+              fill={`url(#sphere-gradient-${gradientId})`}
+              strokeWidth={0.8}
+              stroke="rgba(80,80,80,.35)"
+              style={{ backfaceVisibility: 'hidden', transformBox: 'fill-box', transformOrigin: 'center' }}
+            />
+          ))}
+        </svg>
       </div>
     </motion.div>
   );

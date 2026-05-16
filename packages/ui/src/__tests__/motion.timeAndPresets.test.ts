@@ -43,6 +43,20 @@ describe('motion presets', () => {
     });
   });
 
+  it('warns and converts legacy second-like values in presets', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(revealOnScroll({ duration: 0.6, delay: 0.2 })).toMatchObject({
+      duration: 600,
+      delay: 200,
+    });
+    expect(staggerChildren({ stagger: 0.08, delayChildren: 0.04 })).toMatchObject({
+      stagger: 80,
+      delayChildren: 40,
+    });
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
   it('returns parallax defaults and accepts overrides', () => {
     expect(parallax()).toMatchObject({ axis: 'y', range: [0, -120], source: 'page', clamp: true });
     expect(parallax({ axis: 'x', from: 10, to: 120, source: 'container' })).toMatchObject({

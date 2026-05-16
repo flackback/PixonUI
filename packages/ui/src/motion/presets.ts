@@ -1,4 +1,5 @@
 import type { SpringOptions } from './hooks';
+import { normalizeTimeMs } from '../utils/motion';
 
 export interface RevealOnScrollOptions {
   distance?: number;
@@ -33,8 +34,8 @@ export function revealOnScroll(options: RevealOnScrollOptions = {}): Required<Re
   return {
     distance: options.distance ?? 32,
     scale: options.scale ?? 0.96,
-    duration: options.duration ?? 600,
-    delay: options.delay ?? 0,
+    duration: normalizeTimeMs(options.duration ?? 600, 600, { prop: 'revealOnScroll.duration', source: 'motion.preset' }),
+    delay: normalizeTimeMs(options.delay ?? 0, 0, { prop: 'revealOnScroll.delay', source: 'motion.preset' }),
     amount: options.amount ?? 0.25,
     once: options.once ?? true,
     easing: options.easing ?? 'elite-out',
@@ -62,8 +63,8 @@ export function parallax(options: ParallaxOptions = {}) {
 
 export function staggerChildren(options: StaggerChildrenOptions = {}): Required<StaggerChildrenOptions> {
   return {
-    stagger: options.stagger ?? 80,
-    delayChildren: options.delayChildren ?? 0,
+    stagger: normalizeTimeMs(options.stagger ?? 80, 80, { prop: 'staggerChildren.stagger', source: 'motion.preset' }),
+    delayChildren: normalizeTimeMs(options.delayChildren ?? 0, 0, { prop: 'staggerChildren.delayChildren', source: 'motion.preset' }),
     from: options.from ?? 'first',
     grid: options.grid ?? [1, 1],
   };

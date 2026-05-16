@@ -7,7 +7,8 @@ import {
   captureElementState, 
   sanitizeEasing,
   getSpringVelocityAt,
-  elementStateRegistry
+  elementStateRegistry,
+  normalizeTimeMs,
 } from '../utils/motion';
 import { ensureTransformChannels, supportsTypedCustomProperties, type TransformChannel } from '../motion/transformChannels';
 import { prepareChannelKeyframes } from '../motion/keyframes';
@@ -173,8 +174,10 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       finalKfs = [currentState, finalKfs[0]!];
     }
 
-    let dur = typeof waapi.duration === 'number' ? waapi.duration : 400;
+    let dur = normalizeTimeMs(waapi.duration ?? 400, 400, { prop: 'duration', source: 'usePixonAnimate' });
     let easing = waapi.easing ?? 'elite-out';
+    const normalizedDelay = normalizeTimeMs(waapi.delay ?? 0, 0, { prop: 'delay', source: 'usePixonAnimate' });
+    const normalizedEndDelay = normalizeTimeMs((waapi as any).endDelay ?? 0, 0, { prop: 'endDelay', source: 'usePixonAnimate' });
     
     // Auto-capture starting state if missing
     if (finalKfs.length === 1 && !isAdditive) {
@@ -222,7 +225,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     if (wantsChannels && !usingChannels) {
       const hasVars = (finalKfs as any[]).some((kf) => Object.keys(kf || {}).some((k) => k.startsWith('--')));
       if (hasVars) {
-        const delayMs = typeof waapi.delay === 'number' ? waapi.delay : 0;
+        const delayMs = normalizedDelay;
         const iters = typeof waapi.iterations === 'number' ? waapi.iterations : 1;
         varTween = tweenCustomProperties(el as any, finalKfs as any, {
           duration: dur,
@@ -250,6 +253,8 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
           composite: isAdditive ? 'add' : (opts.composite ?? 'replace'),
           ...waapi,
           duration: dur,
+          delay: normalizedDelay,
+          endDelay: normalizedEndDelay,
           easing: sanitizedEasing,
         });
       } else {
@@ -259,6 +264,8 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
           fill: 'both',
           ...waapi,
           duration: dur,
+          delay: normalizedDelay,
+          endDelay: normalizedEndDelay,
           easing: 'linear',
         });
       }
@@ -268,6 +275,8 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
         composite: isAdditive ? 'add' : (opts.composite ?? 'replace'),
         ...waapi,
         duration: dur,
+        delay: normalizedDelay,
+        endDelay: normalizedEndDelay,
         easing: sanitizedEasing,
       });
     }

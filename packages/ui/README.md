@@ -116,6 +116,7 @@ import { motion, timeline, usePixonAnimate } from '@pixonui/react';
   - `usePixonScroll` is now a MotionValue adapter (deprecated name)
   - Prefer `useScroll` + `useTransform`
 - For best performance in dense scenes, animate `transform`/`opacity` first.
+- vNext implementation roadmap: `docs/MOTION_VNEXT_ROADMAP.md`.
 
 ## 📄 License
 
