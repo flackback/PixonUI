@@ -48,7 +48,7 @@ export const AIReasoningCollapse = React.forwardRef<HTMLDivElement, AIReasoningC
 
     // Internal timer for thinking duration
     const [seconds, setSeconds] = useState(0);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Track thinking state changes to manage auto-timer
     useEffect(() => {

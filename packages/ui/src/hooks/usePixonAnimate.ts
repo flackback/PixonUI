@@ -9,13 +9,22 @@ import {
   getSpringVelocityAt,
   elementStateRegistry
 } from '../utils/motion';
+import { ensureTransformChannels, supportsTypedCustomProperties, type TransformChannel } from '../motion/transformChannels';
+import { prepareChannelKeyframes } from '../motion/keyframes';
+import { tweenCustomProperties } from '../motion/varTween';
 
-export interface PixonAnimateOptions extends KeyframeAnimationOptions {
+export interface PixonAnimateOptions extends Omit<KeyframeAnimationOptions, 'easing'> {
+  /** Accepts WAAPI easing strings or a cubic-bezier tuple `[x1,y1,x2,y2]` (Framer-like). */
+  easing?: string | number[];
   spring?: SpringConfig & { velocity?: number };
   springType?: SpringType;
   /** Whether to stack this animation on top of others using WAAPI additive compositing */
   additive?: boolean;
   onComplete?: () => void;
+  /** Use CSS variable transform channels instead of animating `transform` directly. */
+  transformMode?: 'transform' | 'channels';
+  /** Target transform channel (only used when transformMode = 'channels'). */
+  channel?: TransformChannel;
 }
 
 export interface UsePixonAnimateReturn<T extends HTMLElement = HTMLDivElement> {
@@ -64,7 +73,9 @@ function bumpStore(el: HTMLElement, delta: number) {
 export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePixonAnimateReturn<T> {
   const ref = useRef<T | null>(null);
   const animRef = useRef<Animation | null>(null);
+  const channelMainRef = useRef<Map<TransformChannel, Animation>>(new Map());
   const activeAnimsRef = useRef<Set<Animation>>(new Set());
+  const varTweensRef = useRef<Map<Animation, { cancel: () => void }>>(new Map());
   const activeElementRef = useRef<T | null>(null);
   const lastInterruption = useRef<{ time: number, velocity: number }>({ time: 0, velocity: 0 });
 
@@ -88,6 +99,10 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       activeAnimsRef.current.forEach((a) => {
         try { a.cancel(); } catch {}
       });
+      varTweensRef.current.forEach((t) => {
+        try { t.cancel(); } catch {}
+      });
+      varTweensRef.current.clear();
       activeAnimsRef.current.clear();
       animRef.current = null;
       if (el) {
@@ -99,26 +114,34 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
   }, []);
 
   const cancel = useCallback(() => {
-    if (animRef.current) {
-      const a = animRef.current;
-      // V4.7 Velocity Extraction Logic
-      if (a.playState === 'running' && a.currentTime !== null) {
-        // Simple heuristic: distance-based velocity estimate for the next spring
-        const p = (a.currentTime as number) / (a.effect?.getTiming().duration as number || 400);
-        lastInterruption.current = { time: performance.now(), velocity: (1 - p) * 10 }; 
+    const el = ref.current;
+    const mains: Animation[] = [];
+    if (animRef.current) mains.push(animRef.current);
+    channelMainRef.current.forEach((a) => mains.push(a));
+
+    // De-dupe
+    const unique = Array.from(new Set(mains));
+    for (const a of unique) {
+      // V4.7 Velocity Extraction Logic (only meaningful for the "primary" animation).
+      if (a === animRef.current && a.playState === 'running' && a.currentTime !== null) {
+        const p = (a.currentTime as number) / ((a.effect?.getTiming().duration as number) || 400);
+        lastInterruption.current = { time: performance.now(), velocity: (1 - p) * 10 };
       }
-      
-      try { if (a.playState === 'running' && ref.current) a.commitStyles(); } catch(e){}
-      // Cancel the current "main" animation.
-      try { a.cancel(); } catch(e){}
-      const wasActive = activeAnimsRef.current.delete(a);
-      animRef.current = null;
-      if (wasActive && ref.current) {
-        bumpStore(ref.current, -1);
-        if (getStore(ref.current).activeCount === 0) {
-          try { ref.current.style.willChange = ''; } catch {}
-        }
+
+      try { if (a.playState === 'running' && el) a.commitStyles(); } catch {}
+      try { a.cancel(); } catch {}
+      const vt = varTweensRef.current.get(a);
+      if (vt) {
+        try { vt.cancel(); } catch {}
+        varTweensRef.current.delete(a);
       }
+      if (activeAnimsRef.current.delete(a) && el) bumpStore(el, -1);
+    }
+
+    animRef.current = null;
+    channelMainRef.current.clear();
+    if (el && getStore(el).activeCount === 0) {
+      try { el.style.willChange = ''; } catch {}
     }
   }, []);
 
@@ -131,8 +154,18 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     const isAdditive = opts.additive || opts.composite === 'add';
     // Remove synchronous cancel() to allow WAAPI native smooth replacement
 
-    const { spring, springType, ...waapi } = opts;
-    let finalKfs = prepareKeyframes(kfs);
+    const { spring, springType, transformMode = 'transform', channel = 'base', ...waapi } = opts;
+
+    const wantsChannels = transformMode === 'channels';
+    const canTypedVars = wantsChannels && supportsTypedCustomProperties();
+    const usingChannels = wantsChannels && canTypedVars;
+
+    if (wantsChannels) {
+      ensureTransformChannels();
+      try { el.classList.add('px-transform'); } catch {}
+    }
+
+    let finalKfs = wantsChannels ? prepareChannelKeyframes(kfs, channel) : prepareKeyframes(kfs);
     
     // V4.7 Supreme: Prepend current state if there's a delay to ensure 'fill: both' holds the start state
     if (waapi.delay && finalKfs.length === 1) {
@@ -140,7 +173,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       finalKfs = [currentState, finalKfs[0]!];
     }
 
-    let dur = waapi.duration ?? 400;
+    let dur = typeof waapi.duration === 'number' ? waapi.duration : 400;
     let easing = waapi.easing ?? 'elite-out';
     
     // Auto-capture starting state if missing
@@ -151,9 +184,10 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     // Apply Momentum-Aware Spring Physics
     if (spring && finalKfs.length >= 2) {
       const initialVelocity = opts.spring?.velocity ?? lastInterruption.current.velocity;
+      const lastKeyframe = finalKfs[finalKfs.length - 1] as Keyframe;
       const { keyframes: sKeys, duration: sDur } = compileSpringKeyframes(
         finalKfs[0] as Keyframe, 
-        finalKfs.at(-1) as Keyframe, 
+        lastKeyframe as Keyframe, 
         { ...spring, velocity: initialVelocity }, 
         springType
       );
@@ -163,7 +197,9 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       lastInterruption.current.velocity = 0; // Reset after consumption
     }
     
-    const prevMain = (!isAdditive ? animRef.current : null);
+    const prevMain = (!isAdditive
+      ? (wantsChannels ? (channelMainRef.current.get(channel) ?? null) : animRef.current)
+      : null);
     
     const targetProps = Object.keys(finalKfs[0] as Keyframe);
     const compositorProps = targetProps.filter(p => ['transform', 'opacity', 'filter', 'backdrop-filter'].includes(p));
@@ -176,16 +212,71 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       });
     }
     
-    const a = el.animate(finalKfs as Keyframe[], { 
-      fill: 'both', 
-      composite: isAdditive ? 'add' : (opts.composite ?? 'replace'),
-      ...waapi,
-      duration: dur, 
-      easing: sanitizeEasing(easing), 
-    });
+    const sanitizedEasing = sanitizeEasing(easing);
+
+    // Fallback: browsers without typed custom properties can't animate CSS vars via WAAPI.
+    // We run a tiny rAF tween for the vars and optionally a WAAPI animation for non-var props.
+    let varTween: ReturnType<typeof tweenCustomProperties> | null = null;
+    let a: Animation | null = null;
+
+    if (wantsChannels && !usingChannels) {
+      const hasVars = (finalKfs as any[]).some((kf) => Object.keys(kf || {}).some((k) => k.startsWith('--')));
+      if (hasVars) {
+        const delayMs = typeof waapi.delay === 'number' ? waapi.delay : 0;
+        const iters = typeof waapi.iterations === 'number' ? waapi.iterations : 1;
+        varTween = tweenCustomProperties(el as any, finalKfs as any, {
+          duration: dur,
+          delay: delayMs,
+          easing: sanitizedEasing,
+          iterations: iters,
+          direction: (waapi.direction as any) ?? 'normal',
+          fill: (waapi.fill as any) ?? 'both',
+        });
+      }
+
+      const stripVars = (kf: any) => {
+        const out: any = {};
+        for (const k of Object.keys(kf || {})) {
+          if (!k.startsWith('--')) out[k] = kf[k];
+        }
+        return out;
+      };
+      const nonVarKfs = (finalKfs as any[]).map(stripVars);
+      const hasNonVar = nonVarKfs.some((kf) => Object.keys(kf || {}).length > 0);
+
+      if (hasNonVar) {
+        a = el.animate(nonVarKfs as Keyframe[], {
+          fill: 'both',
+          composite: isAdditive ? 'add' : (opts.composite ?? 'replace'),
+          ...waapi,
+          duration: dur,
+          easing: sanitizedEasing,
+        });
+      } else {
+        // Timer-only WAAPI animation so callers can await `.finished`.
+        const opacity = (typeof getComputedStyle === 'function') ? getComputedStyle(el).opacity : '1';
+        a = el.animate([{ opacity }, { opacity }], {
+          fill: 'both',
+          ...waapi,
+          duration: dur,
+          easing: 'linear',
+        });
+      }
+    } else {
+      a = el.animate(finalKfs as Keyframe[], {
+        fill: 'both',
+        composite: isAdditive ? 'add' : (opts.composite ?? 'replace'),
+        ...waapi,
+        duration: dur,
+        easing: sanitizedEasing,
+      });
+    }
+
+    if (!a) return null;
+    if (varTween) varTweensRef.current.set(a, varTween);
 
     // V4.7 Supreme: Update global registry with final target to avoid DOM reads in next cycle
-    const finalState = finalKfs.at(-1) as Keyframe;
+    const finalState = finalKfs[finalKfs.length - 1] as Keyframe;
     const cached = elementStateRegistry.get(el) || {};
     elementStateRegistry.set(el, { ...cached, ...finalState });
 
@@ -198,7 +289,8 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     }
 
     if (!isAdditive) {
-      animRef.current = a;
+      if (wantsChannels) channelMainRef.current.set(channel, a);
+      else animRef.current = a;
       // Replace semantics: cancel previous main animation after the new one is created
       // to avoid piling up running WAAPI instances on hover-in/out storms.
       if (prevMain && prevMain !== a) {
@@ -212,14 +304,26 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       if (!activeAnimsRef.current.has(a)) return;
       activeAnimsRef.current.delete(a);
       bumpStore(el, -1);
-      if (animRef.current === a) animRef.current = null;
+      if (wantsChannels) {
+        if (channelMainRef.current.get(channel) === a) channelMainRef.current.delete(channel);
+      } else {
+        if (animRef.current === a) animRef.current = null;
+      }
+      const vt = varTweensRef.current.get(a);
+      if (vt) {
+        if (!completed) {
+          try { vt.cancel(); } catch {}
+        }
+        varTweensRef.current.delete(a);
+      }
       if (completed && opts.onComplete) opts.onComplete();
       if (getStore(el).activeCount === 0) {
         try { el.style.willChange = ''; } catch {}
       }
     };
 
-    a.finished.then(() => finalize(true)).catch(() => finalize(false));
+    const done = varTween ? a.finished.then(() => varTween.finished) : a.finished;
+    done.then(() => finalize(true)).catch(() => finalize(false));
     
     return a;
   }, [cancel]);

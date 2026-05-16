@@ -13,6 +13,7 @@ import {
   shouldTrigger,
   elementStateRegistry
 } from '../../utils/motion';
+import { applyStyleObject, applyStyleObjectImmediate } from '../../motion/applyStyles';
 
 type AnimateOwnProps<T extends React.ElementType = 'div'> = {
   layoutId?: string; layout?: boolean | 'position' | 'size'; custom?: any;
@@ -20,8 +21,9 @@ type AnimateOwnProps<T extends React.ElementType = 'div'> = {
   whileHover?: Target; whileTap?: Target; whileInView?: Target;
   viewport?: { once?: boolean; root?: any; rootMargin?: string; amount?: 'some' | 'all' | number; };
   transition?: Transition; as?: T; onAnimationComplete?: (definition: string) => void;
-  children?: React.ReactNode; style?: React.CSSProperties; className?: string;
+  children?: React.ReactNode; style?: Record<string, any>; className?: string;
   id?: string;
+  staggerIdx?: number;
 };
 
 export type AnimateProps<T extends React.ElementType = 'div'> =
@@ -39,6 +41,15 @@ const TRANSFORMISH_PROPS = new Set([
   'skewX', 'skewY',
   'perspective',
 ]);
+
+function stripTransformishStyle(style?: React.CSSProperties | undefined) {
+  if (!style) return style;
+  const out: any = {};
+  for (const k of Object.keys(style)) {
+    if (!TRANSFORMISH_PROPS.has(k)) out[k] = (style as any)[k];
+  }
+  return out as React.CSSProperties;
+}
 
 // V4.7 Supreme Singleton Batching System
 const measureQueue = new WeakMap<HTMLElement, (rect: DOMRect) => void>();
@@ -84,6 +95,10 @@ function requestLayoutProcess() {
  * The ultimate compositor-first animation component.
  * Features: Liquid Interruption, Additive Interactions, and Loop-Immune Layout.
  */
+/**
+ * @deprecated Use `motion.*` (ex: `motion.div`) as the primary API.
+ * This wrapper will be removed after the next major release.
+ */
 export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'>(
   { as, children, initial, animate: targetAnimate, exit, variants, transition, whileHover, whileTap, whileInView, viewport, layout, layoutId, onAnimationComplete, staggerIdx: propStaggerIdx, ...props }: AnimateProps<T> & { staggerIdx?: number },
   externalRef: React.ForwardedRef<any>
@@ -101,6 +116,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   const layoutTriggeredRef = useRef(false);
   const lastTargetKey = useRef<string>('');
   const hasInViewTriggered = useRef(false);
+  const styleCleanupRef = useRef<null | (() => void)>(null);
 
   // V4.7 Supreme: Prop & Callback Stabilization
   const stableTransition = useMemo(() => JSON.stringify(transition), [transition]);
@@ -121,12 +137,26 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     return target;
   }, []);
 
-  const staggerIdx = vCtx?.index ?? propStaggerIdx ?? 0;
+  // Element-local stagger index must win over inherited context index.
+  // Otherwise siblings that pass `staggerIdx` collapse to the same index (usually 0).
+  const staggerIdx = propStaggerIdx ?? vCtx?.index ?? 0;
 
   const trigger = useCallback((propTarget: any, label = 'animate', force: boolean | Partial<Transition> = false) => {
     const el = internalRef.current;
-    const target = resolve(propTarget);
-    if (!el || !target) return null;
+    const resolved = resolve(propTarget);
+    if (!el || !resolved) return null;
+
+    // Framer-like targets may include `transition` inside the target object.
+    // This key is metadata and must not be treated as an animatable CSS prop.
+    const inlineTransition =
+      resolved && typeof resolved === 'object' && !Array.isArray(resolved)
+        ? (resolved as any).transition
+        : undefined;
+    const target =
+      resolved && typeof resolved === 'object' && !Array.isArray(resolved)
+        ? Object.fromEntries(Object.entries(resolved).filter(([k]) => k !== 'transition'))
+        : resolved;
+    if (!target || (typeof target === 'object' && Object.keys(target).length === 0)) return null;
 
     const targetKey = (typeof target === 'string' ? target : (target._variantName || JSON.stringify(target))) + label;
     
@@ -148,11 +178,27 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
     const { transition: currentTransition, onAnimationComplete: currentOnComplete } = latestProps.current;
     const effectiveTransition = (force && typeof force === 'object')
-      ? { ...(typeof currentTransition === 'object' && currentTransition ? currentTransition : {}), ...force }
-      : currentTransition;
+      ? {
+          ...(typeof currentTransition === 'object' && currentTransition ? currentTransition : {}),
+          ...(inlineTransition && typeof inlineTransition === 'object' ? inlineTransition : {}),
+          ...force
+        }
+      : {
+          ...(typeof currentTransition === 'object' && currentTransition ? currentTransition : {}),
+          ...(inlineTransition && typeof inlineTransition === 'object' ? inlineTransition : {}),
+        };
+    const resolveDelaySeconds = (delayVal: any) => {
+      if (typeof delayVal === 'function') {
+        const out = delayVal(staggerIdx);
+        return Number.isFinite(out) ? Number(out) : 0;
+      }
+      const out = Number(delayVal ?? 0);
+      return Number.isFinite(out) ? out : 0;
+    };
     const targetProps = Object.keys(target);
     const wantsAdditive = label === 'whileHover' || label === 'whileTap';
-    const allTransformish = targetProps.every((p) => TRANSFORMISH_PROPS.has(p));
+    const channel: PixonAnimateOptions['channel'] =
+      label === 'layout' ? 'layout' : wantsAdditive ? 'gesture' : 'base';
     
     // V4.7 Supreme: Intelligent Property Batching
     // Only split if properties have explicit individual transitions
@@ -163,13 +209,17 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       const opts: PixonAnimateOptions = {
         // Framer-like API: duration/delay are in seconds
         duration: (effectiveTransition?.duration ?? 0.4) * 1000,
-        delay: (effectiveTransition?.delay ?? 0) * 1000 + stag,
+        delay: resolveDelaySeconds(effectiveTransition?.delay) * 1000 + stag,
         easing: effectiveTransition?.easing || 'elite-out',
-        spring: effectiveTransition?.type === 'spring' ? { stiffness: effectiveTransition.stiffness, damping: effectiveTransition.damping, mass: effectiveTransition.mass } : undefined,
+        spring: effectiveTransition?.type === 'spring'
+          ? { stiffness: effectiveTransition.stiffness, damping: effectiveTransition.damping, mass: effectiveTransition.mass, velocity: (effectiveTransition as any).velocity }
+          : undefined,
         iterations: effectiveTransition?.repeat === Infinity ? Infinity : (effectiveTransition?.repeat || 1),
         direction: effectiveTransition?.repeatType === 'mirror' ? 'alternate' : 'normal',
         endDelay: (effectiveTransition?.repeatDelay ?? 0) * 1000,
-        additive: wantsAdditive && allTransformish,
+        additive: false,
+        transformMode: 'channels',
+        channel,
       };
       const animations = [pixonAnimate(target, opts)];
       
@@ -191,13 +241,17 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       const opts: PixonAnimateOptions = {
         // Framer-like API: duration/delay are in seconds
         duration: (propTrans?.duration ?? 0.4) * 1000,
-        delay: (propTrans?.delay ?? 0) * 1000 + stag,
+        delay: resolveDelaySeconds(propTrans?.delay) * 1000 + stag,
         easing: propTrans?.easing || effectiveTransition?.easing || 'elite-out',
-        spring: propTrans?.type === 'spring' ? { stiffness: propTrans.stiffness, damping: propTrans.damping, mass: propTrans.mass } : undefined,
+        spring: propTrans?.type === 'spring'
+          ? { stiffness: propTrans.stiffness, damping: propTrans.damping, mass: propTrans.mass, velocity: (propTrans as any).velocity }
+          : undefined,
         iterations: propTrans?.repeat === Infinity ? Infinity : (propTrans?.repeat || 1),
         direction: propTrans?.repeatType === 'mirror' ? 'alternate' : 'normal',
         endDelay: (propTrans?.repeatDelay ?? 0) * 1000,
-        additive: wantsAdditive && TRANSFORMISH_PROPS.has(prop),
+        additive: false,
+        transformMode: 'channels',
+        channel,
       };
       
       return pixonAnimate({ [prop]: val }, opts);
@@ -239,12 +293,27 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     }
   }, [initial, targetAnimate, vCtx?.initial, vCtx?.animate, resolve]);
 
-  // Initial Styles Injection
-  const initialStyles = useMemo(() => {
-    const start = resolve(initial || vCtx?.initial);
-    if (!start) return props.style;
-    return { ...props.style, ...start };
-  }, []);
+  // Initial styles: avoid passing transform shorthands to React `style`.
+  const initialStyles = useMemo(() => stripTransformishStyle(props.style as any), [props.style]);
+
+  // Apply transform-channel styles (MotionValues + shorthands) without React re-renders.
+  useIsomorphicLayoutEffect(() => {
+    const el = internalRef.current as any;
+    if (!el) return;
+
+    styleCleanupRef.current?.();
+    const merged = {
+      ...(resolve(initial || vCtx?.initial) || {}),
+      ...(props.style || {}),
+    };
+    const applied = applyStyleObject(el, merged as any, 'base');
+    styleCleanupRef.current = applied.cleanup;
+
+    return () => {
+      styleCleanupRef.current?.();
+      styleCleanupRef.current = null;
+    };
+  }, [props.style, initial, vCtx?.initial, resolve]);
 
   // Main Animation Trigger & Controller Subscription
   useEffect(() => {
@@ -255,6 +324,13 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       const subscriber = (t: any, trans: any) => {
         // Resolve function targets using staggerIdx
         const resolvedTarget = typeof t === 'function' ? t(staggerIdx) : t;
+        if (trans && typeof trans === 'object' && (trans as any).__instant) {
+          const el = internalRef.current as any;
+          if (el && resolvedTarget && typeof resolvedTarget === 'object') {
+            applyStyleObjectImmediate(el, resolvedTarget, 'base');
+          }
+          return Promise.resolve(null);
+        }
         return trigger(resolvedTarget, 'animate', trans || true);
       };
       (subscriber as any)._idx = staggerIdx;
@@ -441,28 +517,37 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   );
 }) as <T extends React.ElementType = 'div'>(props: AnimateProps<T> & { ref?: React.ForwardedRef<any> }) => React.ReactElement;
 
-export const motion = {
-  div: (props: AnimateProps<'div'>) => <PixonMotion as="div" {...props} />,
-  section: (props: AnimateProps<'section'>) => <PixonMotion as="section" {...props} />,
-  nav: (props: AnimateProps<'nav'>) => <PixonMotion as="nav" {...props} />,
-  header: (props: AnimateProps<'header'>) => <PixonMotion as="header" {...props} />,
-  main: (props: AnimateProps<'main'>) => <PixonMotion as="main" {...props} />,
-  aside: (props: AnimateProps<'aside'>) => <PixonMotion as="aside" {...props} />,
-  button: (props: AnimateProps<'button'>) => <PixonMotion as="button" {...props} />,
-  span: (props: AnimateProps<'span'>) => <PixonMotion as="span" {...props} />,
-  a: (props: AnimateProps<'a'>) => <PixonMotion as="a" {...props} />,
-  h1: (props: AnimateProps<'h1'>) => <PixonMotion as="h1" {...props} />,
-  h2: (props: AnimateProps<'h2'>) => <PixonMotion as="h2" {...props} />,
-  p: (props: AnimateProps<'p'>) => <PixonMotion as="p" {...props} />,
-  img: (props: AnimateProps<'img'>) => <PixonMotion as="img" {...props} />,
-  li: (props: AnimateProps<'li'>) => <PixonMotion as="li" {...props} />,
-  ul: (props: AnimateProps<'ul'>) => <PixonMotion as="ul" {...props} />,
-  // SVG Elements
-  svg: (props: AnimateProps<'svg'>) => <PixonMotion as="svg" {...props} />,
-  path: (props: AnimateProps<'path'>) => <PixonMotion as="path" {...props} />,
-  circle: (props: AnimateProps<'circle'>) => <PixonMotion as="circle" {...props} />,
-  rect: (props: AnimateProps<'rect'>) => <PixonMotion as="rect" {...props} />,
-};
+type MotionComponent<K extends keyof React.JSX.IntrinsicElements> = React.ForwardRefExoticComponent<
+  AnimateProps<K> & React.RefAttributes<any>
+>;
+type MotionProxy = { [K in keyof React.JSX.IntrinsicElements]: MotionComponent<K> };
+
+const motionCache = new Map<string, React.ForwardRefExoticComponent<any>>();
+
+/**
+ * Primary API (Framer-like): `motion.div`, `motion.span`, `motion.svg`, etc.
+ * Uses WAAPI + transform channels under the hood (no transform conflicts).
+ */
+export const motion: MotionProxy = new Proxy(
+  {} as MotionProxy,
+  {
+    get(_target, key) {
+      if (typeof key !== 'string') return undefined;
+      // Avoid Proxy self-recursion / weird JS internals / thenables.
+      if (key === 'then' || key === '__proto__' || key === 'prototype' || key === 'constructor') return undefined;
+      const as = key as keyof React.JSX.IntrinsicElements;
+      const cached = motionCache.get(key);
+      if (cached) return cached as any;
+
+      const MotionEl = React.forwardRef<any, any>((props, ref) => (
+        <PixonMotion as={as as any} {...props} ref={ref} />
+      ));
+      MotionEl.displayName = `motion.${key}`;
+      motionCache.set(key, MotionEl);
+      return MotionEl as any;
+    },
+  }
+);
 
 /**
  * useAnimationControls V4.7 Supreme
@@ -479,7 +564,7 @@ export function useAnimationControls() {
     set: (target: any) => {
       subscribers.current.forEach(s => {
         const resolved = typeof target === 'function' ? target((s as any)._idx) : target;
-        s(resolved, { duration: 0 });
+        s(resolved, { __instant: true });
       });
     },
     stop: () => {

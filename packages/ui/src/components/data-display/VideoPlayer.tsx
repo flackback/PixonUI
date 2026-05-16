@@ -66,7 +66,7 @@ export function VideoPlayer({
   const [showClipboardToast, setShowClipboardToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Constrain Draggable Miniplayer within Viewport with 12px margin
   const constrainMiniplayer = useCallback((offset: { x: number; y: number }) => {

@@ -83,15 +83,7 @@ import { DashboardDemo } from './demos/DashboardDemo';
 import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
 
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
-import MotionHeroDemo from './demos/MotionHero';
 import AnimePathDemo from './demos/AnimePathDemo';
-import OrbitLoaderDemo from './demos/OrbitLoaderDemo';
-import ScrambleRevealDemo from './demos/ScrambleRevealDemo';
-import SparkBurstDemo from './demos/SparkBurstDemo';
-import CometLoaderDemo from './demos/CometLoaderDemo';
-import MagneticDemo from './demos/MagneticDemo';
-import RippleTapDemo from './demos/RippleTapDemo';
-import IceDotGridDemo from './demos/IceDotGridDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
 import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
 import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
@@ -1461,21 +1453,6 @@ ${usePixonVideoPlayerSource}`,
     demo: <VideoPlayerDemo />
   },
   {
-    id: 'motion-hero',
-    title: 'Motion Hero V4',
-    category: 'Effects',
-    description: 'Uma vitrine premium do motor de animação Pixon V4, apresentando um fundo DotGrid interativo reativo ao mouse e animações de entrada escalonadas off-thread de alto desempenho.',
-    code: `import { PixonMotion, motion } from '@pixonui/react';
-
-<div className="bg-[#f8fafc]">
-  <InteractiveDotGrid />
-  <PixonMotion initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-    <h1>Pixon Motion</h1>
-  </PixonMotion>
-</div>`,
-    demo: <MotionHeroDemo />
-  },
-  {
     id: 'anime-path',
     title: 'Anime.js Path Animation',
     category: 'Feedback',
@@ -1496,81 +1473,6 @@ ${usePixonVideoPlayerSource}`,
   }}
 />`,
     demo: <AnimePathDemo />
-  },
-  {
-    id: 'orbit-loader',
-    title: 'OrbitLoader',
-    category: 'Feedback',
-    description: 'Loader circular compositor-first com loop infinito (WAAPI via Motion).',
-    code: `import { OrbitLoader } from '@pixonui/react';
-
-<OrbitLoader size={48} duration={1200} />`,
-    demo: <OrbitLoaderDemo />
-  },
-  {
-    id: 'scramble-reveal',
-    title: 'ScrambleReveal',
-    category: 'Effects',
-    description: 'Efeito de texto estilo “hacker reveal” + entrada suave (useTextScramble + Motion).',
-    code: `import { ScrambleReveal } from '@pixonui/react';
-
-<ScrambleReveal text="PixonUI Motion Engine" />`,
-    demo: <ScrambleRevealDemo />
-  },
-  {
-    id: 'spark-burst',
-    title: 'SparkBurst',
-    category: 'Effects',
-    description: 'Burst de partículas no clique com WAAPI direto (sem canvas).',
-    code: `import { SparkBurst, Button } from '@pixonui/react';
-
-<SparkBurst sparks={16} radius={34} color="#22d3ee">
-  <Button>Clique</Button>
-</SparkBurst>`,
-    demo: <SparkBurstDemo />
-  },
-  {
-    id: 'comet-loader',
-    title: 'CometLoader',
-    category: 'Feedback',
-    description: 'Loader premium com rotação visível (ring + comet) usando Motion/WAAPI.',
-    code: `import { CometLoader } from '@pixonui/react';
-
-<CometLoader size={48} duration={1100} />`,
-    demo: <CometLoaderDemo />
-  },
-  {
-    id: 'magnetic',
-    title: 'Magnetic',
-    category: 'Effects',
-    description: 'Wrapper com efeito magnético no pointer (spring via usePixonAnimate).',
-    code: `import { MagneticEffect, Button } from '@pixonui/react';
-
-<MagneticEffect strength={12}>
-  <Button>CTA</Button>
-</MagneticEffect>`,
-    demo: <MagneticDemo />
-  },
-  {
-    id: 'ripple-tap',
-    title: 'RippleTap',
-    category: 'Effects',
-    description: 'Ripple no clique com WAAPI direto, clip no container.',
-    code: `import { RippleTap, Button } from '@pixonui/react';
-
-<RippleTap className="rounded-xl" color="#22d3ee">
-  <Button>Click</Button>
-</RippleTap>`,
-    demo: <RippleTapDemo />
-  },
-  {
-    id: 'ice-dotgrid',
-    title: 'Ice DotGrid (Mouse)',
-    category: 'Effects',
-    description: 'Página com fundo branco gelo e dotgrid de “bilinhas” cinzas que se move com o mouse.',
-    code: `// Preview-only page (demo)
-// Veja packages/preview/src/demos/IceDotGridDemo.tsx`,
-    demo: <IceDotGridDemo />
   },
 ];
 

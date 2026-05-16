@@ -6,6 +6,30 @@ By pre-calculating physical spring curves on initiation and feeding them directl
 
 ---
 
+## Status (May 16, 2026)
+
+### Verified now
+- `timeline()` is working in both modes:
+  - Factory mode: `timeline(tracks).play()`
+  - Builder mode: `timeline().add(...).play()`
+- Motion-value core is running without React re-render loops by default.
+- Transform channels are stable and memoized at runtime:
+  - Custom-property registration runs once.
+  - Transform template injection runs once.
+- `staggerIdx` precedence is fixed at engine level (`prop` wins over inherited context), preventing stacked particles in dense demos.
+
+### Unit conventions (important)
+- `motion.*` transitions (`Animate.tsx` API): `duration` / `delay` are in **seconds**.
+- `usePixonAnimate` options: `duration` / `delay` are in **milliseconds**.
+- `timeline()` track/add options: `duration`, `delay`, `offset`, `stagger` are in **milliseconds**.
+
+### Rules for high-density interactive scenes
+- Prefer `transform` + `opacity` for per-frame updates.
+- Avoid animating heavy string props per frame (`boxShadow`, complex `filter`, etc.).
+- For pointer-reactive grids/particles, prefer instant control updates (`controls.set`) instead of spawning new WAAPI animations on every pointer event.
+
+---
+
 ## Architectural Comparison
 
 | Feature | Framer Motion | Anime.js | PixonUI Motion Engine |

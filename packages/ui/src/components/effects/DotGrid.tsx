@@ -28,6 +28,21 @@ export interface DotGridProps extends React.CanvasHTMLAttributes<HTMLCanvasEleme
    * @default true 
    */
   interactive?: boolean;
+  /**
+   * Render variant.
+   * - `dots`: classic dot grid
+   * - `dashes`: "bilinhas" ice texture grid
+   * @default 'dots'
+   */
+  variant?: 'dots' | 'dashes';
+  /** Dash length in px (variant='dashes') @default 8 */
+  dashLength?: number;
+  /** Dash thickness in px (variant='dashes') @default 1 */
+  dashThickness?: number;
+  /** Parallax strength in px (variant='dashes') @default 18 */
+  parallax?: number;
+  /** Pause rendering when out of viewport @default true */
+  pauseWhenOutOfView?: boolean;
   /** 
    * The maximum distance (in pixels) the mouse affects the dots. 
    * @default 120 
@@ -69,6 +84,11 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
       dotSize = 1.5,
       opacity = 0.3,
       interactive = true,
+      variant = 'dots',
+      dashLength = 8,
+      dashThickness = 1,
+      parallax = 18,
+      pauseWhenOutOfView = true,
       maxDist = 120,
       magneticStrength = 15,
       smoothing = 0.1,
@@ -81,6 +101,8 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const mouse = useRef({ x: -2000, y: -2000 });
     const dotsRef = useRef<{ x: number; y: number; ox: number; oy: number }[]>([]);
+    const dashOffset = useRef({ x: 0, y: 0 });
+    const dashTarget = useRef({ x: 0, y: 0 });
     
     useImperativeHandle(ref, () => canvasRef.current!);
 
@@ -91,18 +113,20 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
       if (!ctx) return;
 
       let animationFrameId: number;
-      let width: number, height: number;
+      let width = 0, height = 0, dpr = 1;
 
       const resize = () => {
-        const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
-        width = canvas.width = rect.width * dpr;
-        height = canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
+        dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        width = Math.max(1, Math.floor(rect.width));
+        height = Math.max(1, Math.floor(rect.height));
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         
         // Use logical width/height for dot generation
-        const logicalWidth = rect.width;
-        const logicalHeight = rect.height;
+        const logicalWidth = width;
+        const logicalHeight = height;
 
         dotsRef.current = [];
         for (let x = spacing / 2; x < logicalWidth; x += spacing) {
@@ -113,55 +137,79 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
       };
 
       const render = () => {
-        const rect = canvas.getBoundingClientRect();
-        ctx.clearRect(0, 0, rect.width, rect.height);
-        ctx.fillStyle = color;
+        if (pauseWhenOutOfView) {
+          const r = canvas.getBoundingClientRect();
+          if (r.bottom < 0 || r.top > window.innerHeight || r.right < 0 || r.left > window.innerWidth) {
+            animationFrameId = requestAnimationFrame(render);
+            return;
+          }
+        }
+
+        ctx.clearRect(0, 0, width, height);
         
         const dots = dotsRef.current;
         const mx = mouse.current.x;
         const my = mouse.current.y;
-        
-        for (let i = 0; i < dots.length; i++) {
-          const dot = dots[i];
-          if (!dot) continue;
-          
-          if (interactive) {
-            const dx = mx - dot.ox;
-            const dy = my - dot.oy;
-            const distSq = dx * dx + dy * dy;
-            const maxDistSq = maxDist * maxDist;
 
-            if (distSq < maxDistSq) {
-              const dist = Math.sqrt(distSq);
-              const angle = Math.atan2(dy, dx);
-              const force = (maxDist - dist) / maxDist;
-              // Non-linear force for a more "magnetic" feel
-              const easedForce = force * force;
-              dot.x = dot.ox - Math.cos(angle) * easedForce * magneticStrength * 1.5;
-              dot.y = dot.oy - Math.sin(angle) * easedForce * magneticStrength * 1.5;
-            } else {
-              // Smoothly return to original position
-              dot.x += (dot.ox - dot.x) * smoothing;
-              dot.y += (dot.oy - dot.y) * smoothing;
+        if (variant === 'dashes') {
+          // Smooth parallax offset based on mouse.
+          dashOffset.current.x += (dashTarget.current.x - dashOffset.current.x) * 0.08;
+          dashOffset.current.y += (dashTarget.current.y - dashOffset.current.y) * 0.08;
+
+          ctx.globalAlpha = opacity;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = dashThickness;
+          ctx.lineCap = 'round';
+
+          const ox = dashOffset.current.x;
+          const oy = dashOffset.current.y;
+          const startX = -spacing + (ox % spacing);
+          const startY = -spacing + (oy % spacing);
+          let idx = 0;
+          for (let x = startX; x <= width + spacing; x += spacing) {
+            for (let y = startY; y <= height + spacing; y += spacing) {
+              const horizontal = (idx++ % 2) === 0;
+              ctx.beginPath();
+              if (horizontal) {
+                ctx.moveTo(x - dashLength / 2, y);
+                ctx.lineTo(x + dashLength / 2, y);
+              } else {
+                ctx.moveTo(x, y - dashLength / 2);
+                ctx.lineTo(x, y + dashLength / 2);
+              }
+              ctx.stroke();
             }
           }
-
-          ctx.beginPath();
-          ctx.arc(dot.x, dot.y, dotSize, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Add a subtle "Supreme" glow that follows the mouse
-        if (interactive && mx > -1000) {
-          const gradient = ctx.createRadialGradient(mx, my, 0, mx, my, maxDist * 1.5);
-          gradient.addColorStop(0, color.replace(')', ', 0.15)').replace('rgb', 'rgba').replace('#', 'rgba(')); // Rough conversion attempt
-          // Fallback if not easily convertible: just use a very faint version of the color
-          ctx.fillStyle = gradient;
-          ctx.globalAlpha = 0.2;
-          ctx.beginPath();
-          ctx.arc(mx, my, maxDist * 1.5, 0, Math.PI * 2);
-          ctx.fill();
           ctx.globalAlpha = 1;
+        } else {
+          ctx.fillStyle = color;
+          for (let i = 0; i < dots.length; i++) {
+            const dot = dots[i];
+            if (!dot) continue;
+
+            if (interactive) {
+              const dx = mx - dot.ox;
+              const dy = my - dot.oy;
+              const distSq = dx * dx + dy * dy;
+              const maxDistSq = maxDist * maxDist;
+
+              if (distSq < maxDistSq) {
+                const dist = Math.sqrt(distSq);
+                const angle = Math.atan2(dy, dx);
+                const force = (maxDist - dist) / maxDist;
+                const easedForce = force * force;
+                dot.x = dot.ox - Math.cos(angle) * easedForce * magneticStrength * 1.5;
+                dot.y = dot.oy - Math.sin(angle) * easedForce * magneticStrength * 1.5;
+              } else {
+                dot.x += (dot.ox - dot.x) * smoothing;
+                dot.y += (dot.oy - dot.y) * smoothing;
+              }
+            }
+
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, dotSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
         animationFrameId = requestAnimationFrame(render);
       };
@@ -172,10 +220,21 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
           x: e.clientX - rect.left,
           y: e.clientY - rect.top,
         };
+
+        if (variant === 'dashes') {
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const nx = (e.clientX - cx) / (rect.width / 2 || 1);
+          const ny = (e.clientY - cy) / (rect.height / 2 || 1);
+          dashTarget.current.x = -nx * parallax;
+          dashTarget.current.y = -ny * parallax;
+        }
       };
 
       const handleMouseLeave = () => {
         mouse.current = { x: -2000, y: -2000 };
+        dashTarget.current.x = 0;
+        dashTarget.current.y = 0;
       };
 
       window.addEventListener('resize', resize);
@@ -193,7 +252,7 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
         canvas.removeEventListener('mouseleave', handleMouseLeave);
         cancelAnimationFrame(animationFrameId);
       };
-    }, [color, spacing, dotSize, interactive, maxDist, magneticStrength, smoothing]);
+    }, [color, spacing, dotSize, interactive, variant, dashLength, dashThickness, parallax, pauseWhenOutOfView, maxDist, magneticStrength, smoothing, opacity]);
 
     return (
       <canvas

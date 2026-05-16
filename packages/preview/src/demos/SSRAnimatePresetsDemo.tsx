@@ -13,7 +13,7 @@ export default function SSRAnimatePresetsDemo() {
         <p className="text-zinc-400">Zero-JS React Server Component Animations</p>
       </div>
       
-      <Grid columns={{ base: 2, md: 4, lg: 6 }} gap={4}>
+      <Grid cols={2} md={4} lg={6} gap={4}>
         {presets.map((preset) => (
           <div key={preset as string} className="relative group p-4 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center min-h-[120px] overflow-hidden hover:border-purple-500/50 transition-colors">
             <PixonSSRAnimate preset={preset as any} trigger="load" className="text-center">

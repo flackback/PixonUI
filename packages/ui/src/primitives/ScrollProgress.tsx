@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '../utils/cn';
 import { useScroll } from '../hooks/useScroll';
+import { useMotionValueValue } from '../hooks/useMotionValue';
 
 export interface ScrollProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   color?: string;
@@ -15,7 +16,8 @@ export function ScrollProgress({
   position = 'top',
   ...props 
 }: ScrollProgressProps) {
-  const { scrollProgressY } = useScroll();
+  const { scrollYProgress } = useScroll();
+  const progress = useMotionValueValue(scrollYProgress);
 
   return (
     <div
@@ -30,8 +32,8 @@ export function ScrollProgress({
       <div
         className={cn("h-full transition-all duration-75 ease-out", color)}
         style={{ 
-          width: `${scrollProgressY * 100}%`,
-          boxShadow: scrollProgressY > 0 ? `0 0 10px ${color.replace('bg-', 'var(--')}` : 'none'
+          width: `${progress * 100}%`,
+          boxShadow: progress > 0 ? `0 0 10px ${color.replace('bg-', 'var(--')}` : 'none'
         }}
       />
     </div>

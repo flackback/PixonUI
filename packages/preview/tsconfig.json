@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "noEmit": true,
     "types": ["react", "react-dom"],
     "baseUrl": ".",
@@ -10,7 +9,5 @@
     }
   },
   "include": ["src/**/*"],
-  "references": [
-    { "path": "../ui" }
-  ]
+  "references": []
 }

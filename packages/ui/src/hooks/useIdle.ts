@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
  */
 export function useIdle(timeout: number = 3000): boolean {
   const [isIdle, setIsIdle] = useState(false);
-  const timeoutId = useRef<NodeJS.Timeout>();
+  const timeoutId = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     const handleActivity = () => {

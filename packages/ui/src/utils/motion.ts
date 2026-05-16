@@ -239,10 +239,24 @@ export function getSpringVelocityAt(t: number, x0: number, v0: number, w0: numbe
   return 0; // Simplified for overdamped
 }
 
-export function interpolateString(f: string, t: string, p: number, propName?: string): string {
+function toInterpolableText(v: any): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') return String(v);
+  // Handles CSS Typed OM values (e.g. CSSUnitValue) and other stringable objects.
+  try { return String(v); } catch { return ''; }
+}
+
+export function interpolateString(f: any, t: any, p: number, propName?: string): string {
+  const from = toInterpolableText(f);
+  const to = toInterpolableText(t);
+
   // Color Detection (Hex, RGB, RGBA, HSL)
-  const isColor = (s: string) => s.startsWith('#') || s.startsWith('rgb') || s.startsWith('hsl');
-  if (isColor(f) && isColor(t)) {
+  const isColor = (s: string) => {
+    const x = s.trim().toLowerCase();
+    return x.startsWith('#') || x.startsWith('rgb') || x.startsWith('hsl');
+  };
+  if (isColor(from) && isColor(to)) {
     const parse = (s: string) => {
       if (s.startsWith('#')) {
         const h = s.slice(1);
@@ -255,9 +269,9 @@ export function interpolateString(f: string, t: string, p: number, propName?: st
                 s.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%(?:,\s*([\d.]+))?\)/);
       return m ? [parseFloat(m[1]!), parseFloat(m[2]!), parseFloat(m[3]!), parseFloat(m[4] ?? '1')] : [0, 0, 0, 1];
     };
-    const [c1a, c1b, c1c, a1] = parse(f);
-    const [c2a, c2b, c2c, a2] = parse(t);
-    const isHsl = f.includes('hsl');
+    const [c1a, c1b, c1c, a1] = parse(from);
+    const [c2a, c2b, c2c, a2] = parse(to);
+    const isHsl = from.includes('hsl');
     const a = (c1a! + (c2a! - c1a!) * p);
     const b = (c1b! + (c2b! - c1b!) * p);
     const c = (c1c! + (c2c! - c1c!) * p);
@@ -267,8 +281,8 @@ export function interpolateString(f: string, t: string, p: number, propName?: st
       : `rgba(${Math.round(a)}, ${Math.round(b)}, ${Math.round(c)}, ${alpha})`;
   }
 
-  const re = /-?\d*\.?\d+/g, m1 = f.match(re), m2 = t.match(re);
-  if (!m1 || !m2) return p < .5 ? f : t;
+  const re = /-?\d*\.?\d+/g, m1 = from.match(re), m2 = to.match(re);
+  if (!m1 || !m2) return p < .5 ? from : to;
   
   const numbers: string[] = [];
   const shouldClamp = propName && ['opacity', 'scale', 'borderRadius', 'borderWidth'].some(x => propName.includes(x));
@@ -281,7 +295,7 @@ export function interpolateString(f: string, t: string, p: number, propName?: st
   }
 
   let cursor = 0;
-  return t.replace(re, () => numbers[cursor++] || '0');
+  return to.replace(re, () => numbers[cursor++] || '0');
 }
 
 export function parseComplexTransform(str: string): Record<string, { val: number; unit: string }[]> {
@@ -348,7 +362,8 @@ export function captureElementState(el: Element, props: string[]): Keyframe {
   const anims = (el as any).getAnimations?.() || [];
   anims.forEach((a: any) => {
     if (a.effect instanceof KeyframeEffect) {
-      const kf = a.effect.getKeyframes().at(-1);
+      const all = a.effect.getKeyframes();
+      const kf = all && all.length ? all[all.length - 1] : undefined;
       if (kf) props.forEach(p => kf[p] !== undefined && (state[p] = kf[p]));
     }
   });
@@ -359,6 +374,11 @@ export function captureElementState(el: Element, props: string[]): Keyframe {
     const s = getComputedStyle(el);
     missing.forEach(p => {
       const val = s.getPropertyValue(p) || (s as any)[p] || (el as any).getAttribute?.(p);
+      // CSS custom properties must preserve units as strings (WAAPI expects strings).
+      if (typeof val === 'string' && p.startsWith('--')) {
+        state[p] = val.trim();
+        return;
+      }
       if (typeof val === 'string' && /^-?\d*\.?\d+(px|%|em|rem|vh|vw|deg|rad|turn)?$/.test(val)) {
         state[p] = parseFloat(val);
       } else {
@@ -395,7 +415,7 @@ export function compileSpringKeyframes(first: Keyframe, last: Keyframe, spring: 
         if (['opacity', 'scale', 'borderRadius', 'borderWidth'].some(x => prop.includes(x))) val = Math.max(0.0001, val);
         k[prop] = val;
       });
-      morph.forEach(prop => k[prop] = interpolateString(first[prop] as string || '', last[prop] as string, p, prop));
+      morph.forEach(prop => k[prop] = interpolateString(first[prop], last[prop], p, prop));
       k.transform = buildComplexTransform(sT, eT, p);
       return k;
     })
@@ -502,7 +522,8 @@ export type Transition = {
   stiffness?: number;
   damping?: number;
   mass?: number;
-  easing?: string;
+  velocity?: number;
+  easing?: string | number[];
   repeat?: number;
   repeatType?: 'loop' | 'mirror' | 'reverse';
   repeatDelay?: number;
@@ -629,29 +650,130 @@ export interface TimelineTrack {
   at?: number | string;
 }
 
-export function timeline(tracks: TimelineTrack[] = [], options: any = {}) {
-  // Minimal timeline controller for WAAPI (matches tests + provides imperative control).
-  const resolvedTracks = [...tracks];
+export interface TimelineFactoryOptions {
+  easing?: any;
+}
 
-  return {
-    play() {
+type TimelineController = {
+  getAnimations: () => Animation[];
+  seek: (t: number) => void;
+  cancel: () => void;
+};
+
+type TimelineAddOptions = TimelineAnimateOptions & {
+  /** Duration in ms. */
+  duration?: number;
+  /** Absolute start offset in ms (timeline position). */
+  offset?: number;
+  /** Stagger per-target delay in ms. */
+  stagger?: number;
+};
+
+export function timeline(tracks: TimelineTrack[], options?: TimelineFactoryOptions): { play(): TimelineController };
+export function timeline(options?: TimelineFactoryOptions): {
+  add: (target: any, keyframes: any, segOpts?: TimelineAddOptions) => any;
+  play: () => TimelineController;
+  cancel: () => void;
+};
+export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, options?: TimelineFactoryOptions) {
+  // 1) Back-compat mode: timeline(tracks[]).play()
+  if (Array.isArray(tracks)) {
+    const resolvedTracks = [...tracks];
+
+    return {
+      play(): TimelineController {
+        const animations: Animation[] = [];
+
+        resolvedTracks.forEach((track) => {
+          const el = typeof track.target === 'string' ? document.querySelector(track.target) : track.target;
+          if (!el || typeof (el as any).animate !== 'function') return;
+
+          const opts: KeyframeAnimationOptions = {
+            fill: 'both',
+            ...(track.options || {}),
+          };
+          if (typeof track.duration === 'number') opts.duration = track.duration;
+          if (typeof track.at === 'number') opts.delay = (opts.delay ?? 0) + track.at;
+
+          const anim = (el as any).animate(track.keyframes, opts);
+          if (anim) animations.push(anim);
+        });
+
+        return {
+          getAnimations: () => animations,
+          seek: (t: number) => {
+            animations.forEach((a) => {
+              try { (a as any).currentTime = t; } catch {}
+            });
+          },
+          cancel: () => {
+            animations.forEach((a) => {
+              try { a.cancel(); } catch {}
+            });
+            animations.length = 0;
+          },
+        };
+      },
+    };
+  }
+
+  // 2) Builder mode: timeline({ easing }).add(...).play()
+  const defaults = (tracks || options || {}) as TimelineFactoryOptions;
+  const segments: Array<{ target: any; keyframes: any; options: TimelineAddOptions }> = [];
+  let cursor = 0;
+  let active: TimelineController | null = null;
+
+  const api = {
+    add(target: any, keyframes: any, segOpts: TimelineAddOptions = {}) {
+      const offset = typeof segOpts.offset === 'number' ? segOpts.offset : cursor;
+      const duration = typeof segOpts.duration === 'number' ? segOpts.duration : (typeof (segOpts as any).duration === 'number' ? (segOpts as any).duration : 400);
+      segments.push({ target, keyframes, options: { ...segOpts, offset, duration } });
+      cursor = Math.max(cursor, offset + duration);
+      return api;
+    },
+    play(): TimelineController {
+      // Cancel previous run
+      active?.cancel?.();
       const animations: Animation[] = [];
 
-      resolvedTracks.forEach((track) => {
-        const el = typeof track.target === 'string' ? document.querySelector(track.target) : track.target;
-        if (!el || typeof (el as any).animate !== 'function') return;
+      const globalEasing = defaults.easing;
+      const nowSegments = [...segments];
 
-        const opts: KeyframeAnimationOptions = {
-          fill: 'both',
-          ...(track.options || {}),
-        };
-        if (typeof track.duration === 'number') opts.duration = track.duration;
+      nowSegments.forEach((seg) => {
+        const { target, keyframes, options: segOpts } = seg;
+        const baseOffset = segOpts.offset ?? 0;
+        const duration = segOpts.duration ?? 400;
+        const delay = (segOpts.delay ?? 0) + baseOffset;
+        const easing = (segOpts.easing ?? globalEasing) as any;
+        const stagger = segOpts.stagger ?? 0;
 
-        const anim = (el as any).animate(track.keyframes, opts);
-        if (anim) animations.push(anim);
+        const nodes: any[] =
+          typeof target === 'string'
+            ? Array.from(document.querySelectorAll(target))
+            : Array.isArray(target)
+              ? target
+              : target && typeof (target as any).length === 'number' && !(target as any).animate
+                ? Array.from(target as any)
+                : [target];
+
+        nodes.forEach((node, idx) => {
+          if (!node || typeof (node as any).animate !== 'function') return;
+          const opts: KeyframeAnimationOptions = {
+            fill: 'both',
+            ...(segOpts as any),
+            duration,
+            delay: delay + idx * stagger,
+            easing: easing != null ? sanitizeEasing(easing) : undefined,
+          };
+          delete (opts as any).offset;
+          delete (opts as any).stagger;
+
+          const anim = (node as any).animate(keyframes, opts);
+          if (anim) animations.push(anim);
+        });
       });
 
-      return {
+      active = {
         getAnimations: () => animations,
         seek: (t: number) => {
           animations.forEach((a) => {
@@ -665,8 +787,16 @@ export function timeline(tracks: TimelineTrack[] = [], options: any = {}) {
           animations.length = 0;
         },
       };
+
+      return active;
+    },
+    cancel() {
+      active?.cancel();
+      active = null;
     },
   };
+
+  return api;
 }
 
 export interface TimelineAnimateOptions extends KeyframeAnimationOptions {

@@ -61,7 +61,7 @@ export const Typewriter = ({
   useEffect(() => {
     if (words.length === 0) return;
 
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     const fullWord = words[currentWordIndex] || '';
 
     if (state === 'typing') {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { timeline, path, DotGrid } from '@pixonui/react';
+import { timeline, DotGrid } from '@pixonui/react';
 import { RefreshCw } from 'lucide-react';
 
 const PATH_DATA = {

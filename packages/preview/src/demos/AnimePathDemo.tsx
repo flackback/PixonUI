@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useAnimationControls, AnimeTweenComposition } from '@pixonui/react';
+import { motion, useAnimationControls, AnimeGridStagger } from '@pixonui/react';
 
 export default function AnimePathDemo() {
   const vortexControls = useAnimationControls();
-  const synthControls = useAnimationControls();
   const neuralControls = useAnimationControls();
-  
   const [activeView, setActiveView] = useState<'vortex' | 'synth' | 'neural' | 'animejs'>('vortex');
 
   return (
@@ -45,7 +43,7 @@ export default function AnimePathDemo() {
         {/* Content Section */}
         <div className="relative min-h-[600px]">
           {activeView === 'vortex' && <EventHorizon controls={vortexControls} />}
-          {activeView === 'synth' && <FluidSynth controls={synthControls} />}
+          {activeView === 'synth' && <FluidSynth />}
           {activeView === 'neural' && <NeuralSynapse controls={neuralControls} />}
           {activeView === 'animejs' && <AnimeJsGrid />}
         </div>
@@ -73,73 +71,109 @@ export default function AnimePathDemo() {
 
 /**
  * NEW SEQUENCE 01: Event Horizon
- * Physics-based gravitational vortex with 150 particles.
+ * 100% Pixon: motion + controls + instant set loop.
  */
 function EventHorizon({ controls }: { controls: any }) {
+  const rectRef = useRef<DOMRect | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const pointerRef = useRef({ x: 0, y: 0, active: false });
+
+  const particles = React.useMemo(
+    () =>
+      Array.from({ length: 96 }).map((_, i) => ({
+        baseAngle: (i / 96) * Math.PI * 2 * 3,
+        radius: 72 + (i % 16) * 10,
+        speed: 0.7 + (i % 9) * 0.08,
+        wobble: (i % 7) * 0.18,
+      })),
+    []
+  );
+
+  useEffect(() => {
+    const animate = (time: number) => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        rafRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      const pointer = pointerRef.current;
+      const rect = rectRef.current;
+      const cx = (rect?.width ?? 0) / 2;
+      const cy = (rect?.height ?? 0) / 2;
+
+      controls.set((idx: number) => {
+        const p = particles[idx]!;
+        const phase = time * 0.001 * p.speed + p.baseAngle;
+        let x = Math.cos(phase) * p.radius + Math.cos(phase * 1.7) * (p.wobble * 8);
+        let y = Math.sin(phase) * p.radius + Math.sin(phase * 1.3) * (p.wobble * 8);
+        let scale = 0.65 + (Math.sin(phase * 2.1) * 0.5 + 0.5) * 0.5;
+        let opacity = 0.2 + (Math.cos(phase * 1.9) * 0.5 + 0.5) * 0.55;
+
+        if (pointer.active && rect) {
+          const px = cx + x;
+          const py = cy + y;
+          const dx = px - pointer.x;
+          const dy = py - pointer.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 170) {
+            const force = (170 - dist) / 170;
+            const safeDist = Math.max(0.001, dist);
+            x += (dx / safeDist) * force * 22;
+            y += (dy / safeDist) * force * 22;
+            scale += force * 0.6;
+            opacity = Math.min(1, opacity + force * 0.45);
+          }
+        }
+
+        return { x, y, scale, opacity };
+      });
+
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [controls, particles]);
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="relative w-full aspect-video md:aspect-[21/9] bg-[#030712] rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl flex items-center justify-center group"
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        const cx = rect.width / 2;
-        const cy = rect.height / 2;
-
-        controls.set((idx: number) => {
-          const angle = (idx / 150) * Math.PI * 2 * 3; // Swirl multiplier
-          const baseRadius = 80 + (idx % 20) * 12;
-          const px = cx + Math.cos(angle) * baseRadius;
-          const py = cy + Math.sin(angle) * baseRadius;
-
-          const dist = Math.sqrt((mx - px)**2 + (my - py)**2);
-          if (dist < 200) {
-            const force = (200 - dist) / 200;
-            const pushX = (px - mx) * force * 0.8;
-            const pushY = (py - my) * force * 0.8;
-            return { 
-              x: px - cx + pushX, 
-              y: py - cy + pushY, 
-              scale: 0.5 + force * 2,
-              opacity: 0.2 + force * 0.8,
-              filter: `blur(${force * 8}px) brightness(${1 + force * 2})`
-            };
-          }
-          return null;
-        });
+      onMouseEnter={(e) => {
+        rectRef.current = e.currentTarget.getBoundingClientRect();
+        pointerRef.current.x = e.clientX - rectRef.current.left;
+        pointerRef.current.y = e.clientY - rectRef.current.top;
+        pointerRef.current.active = true;
       }}
-      onClick={() => {
-        controls.start({
-          x: 0, y: 0, scale: 4, opacity: 0,
-          transition: { type: 'spring', stiffness: 100, damping: 20, delay: (i: any) => i * 0.001 }
-        }).then(() => setTimeout(() => controls.start("initial"), 500));
+      onMouseMove={(e) => {
+        const rect = rectRef.current;
+        if (!rect) return;
+        pointerRef.current.x = e.clientX - rect.left;
+        pointerRef.current.y = e.clientY - rect.top;
+        pointerRef.current.active = true;
+      }}
+      onMouseLeave={() => {
+        pointerRef.current.active = false;
       }}
     >
       <div className="absolute w-40 h-40 bg-cyan-500/20 blur-[80px] rounded-full animate-pulse" />
       <div className="absolute w-1 h-1 bg-white rounded-full shadow-[0_0_20px_white]" />
 
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {Array.from({ length: 150 }).map((_, i) => {
-          const angle = (i / 150) * Math.PI * 2 * 3;
-          const radius = 80 + (i % 20) * 12;
-          const startX = Math.cos(angle) * radius;
-          const startY = Math.sin(angle) * radius;
-
-          return (
-            <motion.div
-              key={i}
-              animate={controls}
-              initial="initial"
-              staggerIdx={i}
-              variants={{
-                initial: { x: startX, y: startY, scale: 1, opacity: 0.3, filter: 'blur(1px)' }
-              }}
-              className="absolute w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)]"
-            />
-          );
-        })}
+        {particles.map((_, i) => (
+          <motion.div
+            key={i}
+            animate={controls}
+            initial={{ x: 0, y: 0, scale: 1, opacity: 0.3 }}
+            staggerIdx={i}
+            className="absolute left-1/2 top-1/2 w-1 h-1 -ml-0.5 -mt-0.5 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+            style={{ willChange: 'transform, opacity' }}
+          />
+        ))}
       </div>
 
       <div className="absolute bottom-8 left-8">
@@ -154,7 +188,7 @@ function EventHorizon({ controls }: { controls: any }) {
  * NEW SEQUENCE 02: Fluid Synth
  * Glassmorphic data visualization equalizer.
  */
-function FluidSynth({ controls }: { controls: any }) {
+function FluidSynth() {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -164,21 +198,26 @@ function FluidSynth({ controls }: { controls: any }) {
       {Array.from({ length: 32 }).map((_, i) => (
         <motion.div
           key={i}
-          animate={controls}
-          initial="initial"
-          staggerIdx={i}
-          variants={{
-            initial: { height: 40 + Math.random() * 100, opacity: 0.3, backgroundColor: 'rgba(255,255,255,0.1)' }
+          initial={{ scaleY: 0.35, opacity: 0.35 }}
+          animate={{ scaleY: [0.35, 1, 0.45, 0.8, 0.35], opacity: [0.35, 1, 0.45, 0.8, 0.35] }}
+          transition={{
+            duration: 1.8 + ((i % 7) * 0.08),
+            delay: i * 0.035,
+            repeat: Infinity,
+            repeatType: 'loop',
+            easing: 'ease-in-out',
           }}
           whileHover={{
-            height: 400,
+            scaleY: 1.2,
+            scaleX: 1.18,
             opacity: 1,
-            backgroundColor: 'rgba(34,211,238,0.8)',
-            boxShadow: '0 0 40px rgba(34,211,238,0.4)',
-            scaleX: 1.5,
-            transition: { type: 'spring', stiffness: 400, damping: 15 }
+            transition: { type: 'spring', stiffness: 280, damping: 20 }
           }}
-          className="flex-1 min-w-[8px] max-w-[20px] rounded-full backdrop-blur-md border border-white/10"
+          className="flex-1 min-w-[8px] max-w-[20px] rounded-full border border-white/10 bg-white/10 origin-bottom"
+          style={{
+            height: '320px',
+            willChange: 'transform, opacity',
+          }}
         />
       ))}
 
@@ -187,7 +226,7 @@ function FluidSynth({ controls }: { controls: any }) {
       </div>
       <div className="absolute bottom-8 right-12 text-right">
         <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em]">Kinetic Equalizer</p>
-        <p className="text-fuchsia-500/60 text-[8px] font-bold uppercase tracking-widest">Hover to trigger physical morphing</p>
+        <p className="text-fuchsia-500/60 text-[8px] font-bold uppercase tracking-widest">Auto loop compositor-first</p>
       </div>
     </motion.div>
   );
@@ -195,50 +234,104 @@ function FluidSynth({ controls }: { controls: any }) {
 
 /**
  * NEW SEQUENCE 03: Neural Synapse
- * Interactive light-grid with ripple propagation.
+ * 100% Pixon: motion + controls + instant set loop.
  */
 function NeuralSynapse({ controls }: { controls: any }) {
+  const rectRef = useRef<DOMRect | null>(null);
+  const pointerRef = useRef({ x: 0, y: 0, active: false });
+  const rafRef = useRef<number | null>(null);
+
+  const nodes = React.useMemo(
+    () =>
+      Array.from({ length: 72 }).map((_, i) => ({
+        row: Math.floor(i / 12),
+        col: i % 12,
+        phase: (i % 11) * 0.35,
+        speed: 0.9 + (i % 7) * 0.12,
+      })),
+    []
+  );
+
+  useEffect(() => {
+    const animate = (time: number) => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        rafRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      const rect = rectRef.current;
+      const pointer = pointerRef.current;
+
+      controls.set((idx: number) => {
+        const n = nodes[idx]!;
+        const t = time * 0.001 * n.speed + n.phase;
+        let x = Math.sin(t * 1.3 + n.col * 0.35) * 3.2;
+        let y = Math.cos(t * 1.1 + n.row * 0.42) * 3.2;
+        let scale = 0.84 + (Math.sin(t) * 0.5 + 0.5) * 0.42;
+        let opacity = 0.2 + (Math.cos(t * 1.2) * 0.5 + 0.5) * 0.35;
+
+        if (pointer.active && rect) {
+          const cellW = rect.width / 12;
+          const cellH = rect.height / 6;
+          const px = (n.col + 0.5) * cellW;
+          const py = (n.row + 0.5) * cellH;
+          const dx = px - pointer.x;
+          const dy = py - pointer.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 170) {
+            const force = (170 - dist) / 170;
+            const safe = Math.max(0.001, dist);
+            x += (dx / safe) * force * 16;
+            y += (dy / safe) * force * 16;
+            scale += force * 1.1;
+            opacity = Math.min(1, opacity + force * 0.55);
+          }
+        }
+
+        return { x, y, scale, opacity };
+      });
+
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [controls, nodes]);
+
   return (
     <motion.div 
-      initial={{ opacity: 0, filter: 'blur(20px)' }}
-      animate={{ opacity: 1, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       className="relative w-full aspect-video md:aspect-[21/9] bg-[#020617] rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl flex items-center justify-center group p-20"
+      onMouseEnter={(e) => {
+        rectRef.current = e.currentTarget.getBoundingClientRect();
+        pointerRef.current.x = e.clientX - rectRef.current.left;
+        pointerRef.current.y = e.clientY - rectRef.current.top;
+        pointerRef.current.active = true;
+      }}
       onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-
-        controls.set((idx: number) => {
-          const row = Math.floor(idx / 12);
-          const col = idx % 12;
-          const px = col * 60 + 100;
-          const py = row * 60 + 80;
-
-          const dist = Math.sqrt((mx - px)**2 + (my - py)**2);
-          if (dist < 150) {
-            const force = (150 - dist) / 150;
-            return {
-              scale: 1 + force * 1.5,
-              opacity: 0.1 + force * 0.9,
-              backgroundColor: force > 0.8 ? 'rgba(255,255,255,1)' : 'rgba(34,211,238,0.5)',
-              boxShadow: `0 0 ${force * 30}px rgba(34,211,238,0.5)`
-            };
-          }
-          return { scale: 1, opacity: 0.1, backgroundColor: 'rgba(255,255,255,0.1)', boxShadow: 'none' };
-        });
+        const rect = rectRef.current;
+        if (!rect) return;
+        pointerRef.current.x = e.clientX - rect.left;
+        pointerRef.current.y = e.clientY - rect.top;
+        pointerRef.current.active = true;
+      }}
+      onMouseLeave={() => {
+        pointerRef.current.active = false;
       }}
     >
       <div className="grid grid-cols-12 gap-10">
-        {Array.from({ length: 72 }).map((_, i) => (
+        {nodes.map((_, i) => (
           <motion.div
             key={i}
             animate={controls}
-            initial="initial"
+            initial={{ x: 0, y: 0, scale: 1, opacity: 0.2 }}
             staggerIdx={i}
-            variants={{
-              initial: { scale: 1, opacity: 0.1, backgroundColor: 'rgba(255,255,255,0.1)' }
-            }}
-            className="w-3 h-3 rounded-full border border-white/10"
+            className="w-3 h-3 rounded-full border border-cyan-300/20 bg-cyan-300/20"
+            style={{ willChange: 'transform, opacity' }}
           />
         ))}
       </div>
@@ -258,8 +351,8 @@ function NeuralSynapse({ controls }: { controls: any }) {
 }
 
 /**
- * Anime.js Grid Tween Composition (WAAPI via PixonUI)
- * Replica do pen: https://codepen.io/juliangarnier/pen/vENeqdN
+ * Anime.js Advanced Grid Staggering (WAAPI via PixonUI)
+ * Replica do pen: https://codepen.io/juliangarnier/pen/GgRzgqp
  */
 function AnimeJsGrid() {
   return (
@@ -270,13 +363,18 @@ function AnimeJsGrid() {
     >
       <div className="absolute top-10 left-12">
         <p className="text-black/40 text-[10px] font-black uppercase tracking-[0.5em] mb-1">Anime.js</p>
-        <p className="text-black/70 text-xs font-bold tracking-tight">Grid Tween Composition (PixonUI WAAPI)</p>
+        <p className="text-black/70 text-xs font-bold tracking-tight">Advanced Grid Staggering (PixonUI WAAPI)</p>
       </div>
 
-      <AnimeTweenComposition />
+      <AnimeGridStagger
+        rows={41}
+        dotColor="#d1d5db"
+        cursorColor="#374151"
+        className="scale-[0.72] sm:scale-[0.84] md:scale-100 origin-center"
+      />
 
       <div className="absolute bottom-10 right-12 text-right">
-        <p className="text-black/40 text-[10px] font-black uppercase tracking-[0.5em]">Hover / Click</p>
+        <p className="text-black/40 text-[10px] font-black uppercase tracking-[0.5em]">Auto Loop</p>
         <p className="text-black/60 text-[10px] font-semibold">Replicado sem Anime.js</p>
       </div>
     </motion.div>

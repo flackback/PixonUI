@@ -60,7 +60,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'gallery' | 'saas'>('landing');
+  const [view, setView] = useState<'landing' | 'gallery' | 'saas' | 'motion'>('landing');
   const [activeId, setActiveId] = useState('button');
   const [saasTab, setSaasTab] = useState('dashboard');
   const [commandOpen, setCommandOpen] = useState(false);

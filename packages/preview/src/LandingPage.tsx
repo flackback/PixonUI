@@ -232,7 +232,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-100px' }}
+                viewport={{ once: true, rootMargin: '-100px' }}
                 transition={{ type: 'spring', stiffness: 100, damping: 14 }}
                 className="h-full cursor-pointer hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-300"
               >
@@ -251,7 +251,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-100px' }}
+                viewport={{ once: true, rootMargin: '-100px' }}
                 transition={{ type: 'spring', stiffness: 100, damping: 14, delay: 0.15 }}
                 className="h-full cursor-pointer hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-300"
               >
@@ -270,7 +270,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-100px' }}
+                viewport={{ once: true, rootMargin: '-100px' }}
                 transition={{ type: 'spring', stiffness: 100, damping: 14, delay: 0.3 }}
                 className="h-full cursor-pointer hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-300"
               >

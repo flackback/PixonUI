@@ -80,6 +80,7 @@ const SpringPhysicsDemo = React.memo(() => {
   const [damping, setDamping] = useState(18);
   const [trigger, setTrigger] = useState(0);
   const sv = useSpring(trigger, { stiffness, damping });
+  const padLeft = useTransform(sv, [0, 1], ['0px', '240px']);
 
   return (
     <section className="py-40">
@@ -94,11 +95,11 @@ const SpringPhysicsDemo = React.memo(() => {
             <div className="relative h-32 bg-black rounded-3xl overflow-hidden border border-white/5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full h-px bg-white/5 absolute" />
-                <div className="w-full h-16 flex items-center will-change-transform" style={{ paddingLeft: `${sv * 240}px` }}>
+                <motion.div className="w-full h-16 flex items-center will-change-transform" style={{ paddingLeft: padLeft }}>
                   <div className="w-16 h-16 bg-white rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.2)] flex items-center justify-center text-black">
                     <Atom className="w-6 h-6" />
                   </div>
-                </div>
+                </motion.div>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -257,9 +258,11 @@ export const MotionShowcase = React.memo(({ onBack }: { onBack: () => void }) =>
         <motion.div 
           className="fixed inset-0 pointer-events-none z-[1]"
           style={{
-            background: useTransform([spotlightX, spotlightY], ([x, y]) => 
-              `radial-gradient(800px circle at ${x} ${y}, rgba(139, 92, 246, 0.1), transparent 80%)`
-            ),
+            background: useTransform([spotlightX, spotlightY], (v: string[]) => {
+              const x = v[0] ?? '0px';
+              const y = v[1] ?? '0px';
+              return `radial-gradient(800px circle at ${x} ${y}, rgba(139, 92, 246, 0.1), transparent 80%)`;
+            }),
           }}
         />
 
@@ -296,7 +299,7 @@ export const MotionShowcase = React.memo(({ onBack }: { onBack: () => void }) =>
         <section className="py-40 px-6 max-w-7xl mx-auto space-y-96 relative z-10">
           <div className="grid md:grid-cols-2 gap-32 items-center">
             <motion.div initial={cardVariants.initial} whileInView={cardVariants.whileInView}
-              viewport={{ ...VIEWPORT, margin: '0px' }} transition={TX_12} className="space-y-10">
+              viewport={{ ...VIEWPORT, rootMargin: '0px' }} transition={TX_12} className="space-y-10">
               <div className="flex items-center gap-2 text-purple-500 font-mono text-xs uppercase tracking-[0.3em] font-bold">
                 <Sparkles className="w-4 h-4" /> Omni-Motion
               </div>

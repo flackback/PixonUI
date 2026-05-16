@@ -80,7 +80,7 @@ export type MotionEasing =
   | (string & {});  // Allow arbitrary cubic-bezier values
 
 export interface MotionProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 
   // ── Preset API (backward compat) ──────────────────────────────────────
   /** Quick preset animation. Ignored when `from`/`to` are provided. */
@@ -380,6 +380,10 @@ function buildKeyframesCSS(name: string, steps: any[]): string {
 // Shared Layout Registry for Page-wide elements matching layoutId
 const sharedLayoutRegistry = new Map<string, { rect: DOMRect; timestamp: number }>();
 
+/**
+ * @deprecated Prefer `motion.*` (ex: `motion.div`) for the unified Motion VNext API.
+ * This component will be removed after the next major release.
+ */
 export function Motion({
   children,
   // Preset
