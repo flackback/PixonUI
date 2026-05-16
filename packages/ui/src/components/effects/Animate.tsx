@@ -142,8 +142,9 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     
     if (sharedTransition) {
       const stag = calculateStagger(staggerIdx, 1, (effectiveTransition as any)?.staggerChildren ? { amount: (effectiveTransition as any).staggerChildren } : {});
-      const opts = {
-        duration: (effectiveTransition?.duration ?? 400) * 1000,
+      const opts = { 
+        // Framer-like API: duration/delay are in seconds
+        duration: (effectiveTransition?.duration ?? 0.4) * 1000,
         delay: (effectiveTransition?.delay ?? 0) * 1000 + stag,
         easing: effectiveTransition?.easing || 'elite-out',
         spring: effectiveTransition?.type === 'spring' ? { stiffness: effectiveTransition.stiffness, damping: effectiveTransition.damping, mass: effectiveTransition.mass } : undefined,
@@ -170,7 +171,8 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       const stag = calculateStagger(staggerIdx, 1, propTrans?.staggerChildren ? { amount: propTrans.staggerChildren } : {});
       
       const opts = {
-        duration: (propTrans?.duration ?? 400) * 1000,
+        // Framer-like API: duration/delay are in seconds
+        duration: (propTrans?.duration ?? 0.4) * 1000,
         delay: (propTrans?.delay ?? 0) * 1000 + stag,
         easing: propTrans?.easing || effectiveTransition?.easing || 'elite-out',
         spring: propTrans?.type === 'spring' ? { stiffness: propTrans.stiffness, damping: propTrans.damping, mass: propTrans.mass } : undefined,

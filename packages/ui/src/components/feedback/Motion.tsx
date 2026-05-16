@@ -459,6 +459,15 @@ export function Motion({
   const [isHovered, setIsHovered] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const animationRef = useRef<Animation | null>(null);
+  const waapiSigRef = useRef<{
+    frames: Keyframe[];
+    duration: number;
+    easing: string;
+    fill: MotionProps['fillMode'];
+    delay: number;
+    iterations: number;
+    direction: MotionProps['direction'];
+  } | null>(null);
   
   // ── Abort Controller ──────────────────────────────────────────────────
   const abortRef = useRef(new AbortController());
@@ -705,11 +714,13 @@ export function Motion({
 
   // ── Unified WAAPI Animation Control & Viewport Optimization ──────────
   useEffect(() => {
-    const needsAnimation = shouldShow || isInfinite;
+    // Keep infinite, viewport-driven loops alive while off-screen so we can pause/resume smoothly.
+    const needsAnimation = shouldShow || (viewport && isInfinite && visible === undefined && !whileHover);
     if (!needsAnimation || !waapiFrames || !ref.current || shouldSkipAnimation) {
       if (animationRef.current) {
         animationRef.current.cancel();
         animationRef.current = null;
+        waapiSigRef.current = null;
         setIsAnimating(false);
       }
       return;
@@ -720,6 +731,37 @@ export function Motion({
 
     // Start or Reuse Animation
     let animation = animationRef.current;
+
+    // If keyframes/timing options change, recreate to avoid stale animations.
+    const resolvedDelay = (delay ?? transition?.delay ?? 0);
+    const nextSig = {
+      frames: waapiFrames,
+      duration: resolvedDuration,
+      easing: isSpringEasing ? 'linear' : resolveEasing(easing),
+      fill: fillMode,
+      delay: resolvedDelay,
+      iterations: isInfinite ? Infinity : (iterations ?? 1),
+      direction,
+    } as const;
+
+    const prevSig = waapiSigRef.current;
+    const sigChanged = !!prevSig && (
+      prevSig.frames !== nextSig.frames ||
+      prevSig.duration !== nextSig.duration ||
+      prevSig.easing !== nextSig.easing ||
+      prevSig.fill !== nextSig.fill ||
+      prevSig.delay !== nextSig.delay ||
+      prevSig.iterations !== nextSig.iterations ||
+      prevSig.direction !== nextSig.direction
+    );
+
+    if (animation && sigChanged) {
+      try { animation.cancel(); } catch {}
+      animation = null;
+      animationRef.current = null;
+      waapiSigRef.current = null;
+      setIsAnimating(false);
+    }
     
     if (!animation) {
       setIsAnimating(true);
@@ -727,18 +769,22 @@ export function Motion({
         duration: resolvedDuration,
         easing: isSpringEasing ? 'linear' : resolveEasing(easing),
         fill: fillMode,
-        delay: delay || transition?.delay || 0,
+        delay: resolvedDelay,
         iterations: isInfinite ? Infinity : (iterations ?? 1),
         direction: direction as any,
       });
       animationRef.current = animation;
+      waapiSigRef.current = nextSig as any;
 
       animation.onfinish = () => {
         if (currentSignal.aborted) return;
         setIsAnimating(false);
         animationRef.current = null;
+        waapiSigRef.current = null;
         if (onComplete) onComplete();
       };
+    } else {
+      waapiSigRef.current = nextSig as any;
     }
 
     // Viewport Optimization: Pause/Play
@@ -749,15 +795,19 @@ export function Motion({
         animation.play();
       }
     }
-
-    return () => {
-      if (animation && !isInfinite) {
-        animation.cancel();
-        animationRef.current = null;
-        if (!currentSignal.aborted) setIsAnimating(false);
-      }
-    };
   }, [shouldShow, isInView, viewport, waapiFrames, resolvedDuration, fillMode, delay, transition, shouldSkipAnimation, onComplete, isInfinite, isSpringEasing, easing, iterations, direction]);
+
+  // Ensure we always cancel on unmount to avoid orphaned WAAPI animations (especially infinite loops).
+  useEffect(() => {
+    return () => {
+      const a = animationRef.current;
+      if (a) {
+        try { a.cancel(); } catch {}
+      }
+      animationRef.current = null;
+      waapiSigRef.current = null;
+    };
+  }, []);
 
 
   useIsomorphicLayoutEffect(() => {

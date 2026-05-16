@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useAnimationControls, Surface } from '@pixonui/react';
+import { motion, useAnimationControls, AnimeTweenComposition } from '@pixonui/react';
 
 export default function AnimePathDemo() {
   const vortexControls = useAnimationControls();
   const synthControls = useAnimationControls();
   const neuralControls = useAnimationControls();
   
-  const [activeView, setActiveView] = useState<'vortex' | 'synth' | 'neural'>('vortex');
+  const [activeView, setActiveView] = useState<'vortex' | 'synth' | 'neural' | 'animejs'>('vortex');
 
   return (
     <div className="min-h-screen bg-[#020617] text-white p-4 md:p-12 font-sans selection:bg-cyan-500/30">
@@ -26,7 +26,7 @@ export default function AnimePathDemo() {
           </div>
 
           <div className="flex gap-4 p-1.5 bg-white/5 rounded-2xl border border-white/10 w-fit backdrop-blur-xl">
-            {(['vortex', 'synth', 'neural'] as const).map((view) => (
+            {(['vortex', 'synth', 'neural', 'animejs'] as const).map((view) => (
               <button
                 key={view}
                 onClick={() => setActiveView(view)}
@@ -36,7 +36,7 @@ export default function AnimePathDemo() {
                     : 'text-white/40 hover:text-white hover:bg-white/5'
                 }`}
               >
-                {view}
+                {view === 'animejs' ? 'animejs' : view}
               </button>
             ))}
           </div>
@@ -47,6 +47,7 @@ export default function AnimePathDemo() {
           {activeView === 'vortex' && <EventHorizon controls={vortexControls} />}
           {activeView === 'synth' && <FluidSynth controls={synthControls} />}
           {activeView === 'neural' && <NeuralSynapse controls={neuralControls} />}
+          {activeView === 'animejs' && <AnimeJsGrid />}
         </div>
 
         {/* Footer Info */}
@@ -251,6 +252,32 @@ function NeuralSynapse({ controls }: { controls: any }) {
       <div className="absolute bottom-8 left-12">
         <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em] mb-1">Synapse Mesh</p>
         <p className="text-blue-400/60 text-[8px] font-bold uppercase tracking-widest">Responsive light nodes</p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Anime.js Grid Tween Composition (WAAPI via PixonUI)
+ * Replica do pen: https://codepen.io/juliangarnier/pen/vENeqdN
+ */
+function AnimeJsGrid() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative w-full aspect-video md:aspect-[21/9] bg-[#f8fafc] rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl flex items-center justify-center"
+    >
+      <div className="absolute top-10 left-12">
+        <p className="text-black/40 text-[10px] font-black uppercase tracking-[0.5em] mb-1">Anime.js</p>
+        <p className="text-black/70 text-xs font-bold tracking-tight">Grid Tween Composition (PixonUI WAAPI)</p>
+      </div>
+
+      <AnimeTweenComposition />
+
+      <div className="absolute bottom-10 right-12 text-right">
+        <p className="text-black/40 text-[10px] font-black uppercase tracking-[0.5em]">Hover / Click</p>
+        <p className="text-black/60 text-[10px] font-semibold">Replicado sem Anime.js</p>
       </div>
     </motion.div>
   );

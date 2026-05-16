@@ -1,10 +1,29 @@
 import { CSSProperties } from 'react';
 
-export type SpringConfig = { stiffness?: number; damping?: number; mass?: number; precision?: number };
+export type SpringConfig = {
+  stiffness?: number;
+  damping?: number;
+  mass?: number;
+  /** Precision threshold used to decide when the spring "settled" (smaller = longer). */
+  precision?: number;
+  /** Framer-style stop conditions (used for cache key + precision fallback). */
+  restSpeed?: number;
+  restDelta?: number;
+};
 export type SpringType = 'standard' | 'impulse';
-export type StaggerConfig = { delay?: number; amount?: number; from?: 'first' | 'last' | 'center' | number };
+export type StaggerConfig = {
+  /** Base delay before the stagger starts (seconds). */
+  delay?: number;
+  /** Delay between steps (seconds). */
+  amount?: number;
+  /** Anchor point for the stagger calculation. */
+  from?: 'first' | 'last' | 'center' | number;
+  /** Optional grid definition for position-based staggering. */
+  grid?: [columns: number, rows: number];
+};
 
 const trajectoryCache = new Map<string, { progress: number[]; keyframes: number[]; duration: number }>();
+const TRAJECTORY_CACHE_MAX = 100;
 // V4.7 Supreme: Unified registry for element state, interaction keys, and style caching
 export const elementStateRegistry = new WeakMap<Element, Record<string, any>>();
 
@@ -109,10 +128,25 @@ export function generateSpringTrajectory(
   to: number,
   config: SpringConfig & { velocity?: number } = {}
 ): { progress: number[]; keyframes: number[]; duration: number } {
-  const { stiffness = 170, damping = 26, mass = 1, precision = 0.0001, velocity = 0 } = config;
-  const key = `${from}|${to}|${stiffness}|${damping}|${mass}|${precision}|${velocity}`;
+  const {
+    stiffness = 170,
+    damping = 26,
+    mass = 1,
+    precision: precisionProp = 0.0001,
+    restDelta,
+    restSpeed,
+    velocity = 0,
+  } = config;
+  const precision = restDelta ?? precisionProp;
+  const key = `${from}|${to}|${stiffness}|${damping}|${mass}|${precision}|${restSpeed ?? ''}|${restDelta ?? ''}|${velocity}`;
   
-  if (trajectoryCache.has(key)) return trajectoryCache.get(key)!;
+  if (trajectoryCache.has(key)) {
+    const cached = trajectoryCache.get(key)!;
+    // LRU touch: keep insertion order by moving to the end
+    trajectoryCache.delete(key);
+    trajectoryCache.set(key, cached);
+    return cached;
+  }
 
   const w0 = Math.sqrt(stiffness / mass);
   const zeta = damping / (2 * Math.sqrt(stiffness * mass));
@@ -145,9 +179,16 @@ export function generateSpringTrajectory(
   };
 
   for (let i = 0; i <= steps; i++) progress[i] = solve((i / steps) * duration);
+  // Make the endpoints exact to avoid tiny numeric overshoots breaking consumers/tests.
+  if (progress.length > 0) {
+    progress[0] = 0;
+    progress[progress.length - 1] = 1;
+  }
   
   const result = { progress, keyframes: progress, duration: duration * 1000 };
-  if (trajectoryCache.size >= 200) trajectoryCache.delete(trajectoryCache.keys().next().value!);
+  if (trajectoryCache.size >= TRAJECTORY_CACHE_MAX) {
+    trajectoryCache.delete(trajectoryCache.keys().next().value!);
+  }
   trajectoryCache.set(key, result);
   return result;
 }
@@ -336,8 +377,8 @@ export function generateSpringImpulseTrajectory(config: SpringConfig) {
 }
 
 export function cachedSpringKeyframes(opts: any = {}) {
-  const { from = 0, to = 1, stiffness = 170, damping = 26, mass = 1 } = opts;
-  return generateSpringTrajectory(from, to, { stiffness, damping, mass });
+  const { from = 0, to = 1, stiffness = 170, damping = 26, mass = 1, restSpeed, restDelta, precision, velocity } = opts;
+  return generateSpringTrajectory(from, to, { stiffness, damping, mass, restSpeed, restDelta, precision, velocity });
 }
 
 export function parseStyleShortcuts(style: Record<string, any>): Record<string, any> {
@@ -347,17 +388,35 @@ export function parseStyleShortcuts(style: Record<string, any>): Record<string, 
   if (style.y !== undefined) transforms.push(`translateY(${typeof style.y === 'number' ? `${style.y}px` : style.y})`);
   if (style.scale !== undefined) transforms.push(`scale(${style.scale})`);
   if (style.rotate !== undefined) transforms.push(`rotate(${typeof style.rotate === 'number' ? `${style.rotate}deg` : style.rotate})`);
-  if (transforms.length > 0) result.transform = transforms.join(' ');
+
+  if (transforms.length > 0) {
+    // Avoid passing non-standard shorthand props (or numeric rotate) to WAAPI.
+    delete result.x;
+    delete result.y;
+    delete result.scale;
+    delete result.rotate;
+
+    // Merge with any explicit transform the user provided.
+    const existing = typeof result.transform === 'string' ? result.transform : '';
+    result.transform = [existing, transforms.join(' ')].filter(Boolean).join(' ').trim();
+  }
   return result;
 }
 
 export function insertScopedRules(scopeId: string, css: string): () => void {
   if (typeof document === 'undefined') return () => {};
-  const style = document.createElement('style');
-  style.setAttribute('data-pixon-scope', scopeId);
-  style.innerHTML = css;
-  document.head.appendChild(style);
-  return () => { try { document.head.removeChild(style); } catch(e){} };
+
+  pixonScopedCss.set(scopeId, css);
+  rebuildPixonSheet();
+
+  return () => {
+    pixonScopedCss.delete(scopeId);
+    if (pixonScopedCss.size === 0) {
+      clearStyles();
+    } else {
+      rebuildPixonSheet();
+    }
+  };
 }
 
 /**
@@ -365,13 +424,45 @@ export function insertScopedRules(scopeId: string, css: string): () => void {
  * V4.7 Supreme: Supports center-based and numeric offset staggers.
  */
 export function calculateStagger(index: number, total: number, config: StaggerConfig = {}): number {
-  const { delay = 0, amount = 0.05, from = 'first' } = config;
+  const { delay = 0, amount = 0.05, from = 'first', grid } = config;
   let offset = 0;
-  if (from === 'first') offset = index;
-  else if (from === 'last') offset = total - 1 - index;
-  else if (from === 'center') offset = Math.abs((total - 1) / 2 - index);
-  else if (typeof from === 'number') offset = Math.abs(from - index);
-  
+
+  if (grid && grid[0] > 0) {
+    const [cols, rows] = grid;
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+
+    let anchorCol = 0;
+    let anchorRow = 0;
+
+    if (from === 'first') {
+      anchorCol = 0;
+      anchorRow = 0;
+    } else if (from === 'last') {
+      const anchorIndex = Math.max(0, total - 1);
+      anchorCol = anchorIndex % cols;
+      anchorRow = Math.floor(anchorIndex / cols);
+    } else if (from === 'center') {
+      // True geometric center (works even when the last row is incomplete).
+      anchorCol = (cols - 1) / 2;
+      anchorRow = (rows - 1) / 2;
+    } else if (typeof from === 'number') {
+      const anchorIndex = Math.max(0, Math.min(total - 1, from));
+      anchorCol = anchorIndex % cols;
+      anchorRow = Math.floor(anchorIndex / cols);
+    }
+
+    // Position-based staggering (Euclidean distance) to create radial/diagonal waves.
+    const dx = col - anchorCol;
+    const dy = row - anchorRow;
+    offset = Math.sqrt(dx * dx + dy * dy);
+  } else {
+    if (from === 'first') offset = index;
+    else if (from === 'last') offset = total - 1 - index;
+    else if (from === 'center') offset = Math.abs((total - 1) / 2 - index);
+    else if (typeof from === 'number') offset = Math.abs(from - index);
+  }
+
   return (delay + offset * amount) * 1000;
 }
 
@@ -389,39 +480,162 @@ export type Transition = {
 };
 
 export function clearSpringCache() { trajectoryCache.clear(); }
-export function clearStyles() { /* Legacy placeholder */ }
+
+let pixonSheetTag: HTMLStyleElement | null = null;
+const pixonScopedCss = new Map<string, string>();
+
+function getPixonSheetTag(): HTMLStyleElement | null {
+  if (typeof document === 'undefined') return null;
+  if (pixonSheetTag && pixonSheetTag.isConnected) return pixonSheetTag;
+
+  const existing = document.querySelector('style[data-pixon-sheet]') as HTMLStyleElement | null;
+  if (existing) {
+    pixonSheetTag = existing;
+    return existing;
+  }
+
+  const style = document.createElement('style');
+  style.setAttribute('data-pixon-sheet', '');
+  document.head.appendChild(style);
+  pixonSheetTag = style;
+  return style;
+}
+
+function rebuildPixonSheet() {
+  const tag = getPixonSheetTag();
+  if (!tag) return;
+
+  const blocks: string[] = [];
+  for (const [id, css] of pixonScopedCss.entries()) {
+    blocks.push(`/* ${id} */\n${css}`);
+  }
+  tag.textContent = blocks.join('\n');
+}
+
+export function clearStyles() {
+  pixonScopedCss.clear();
+  if (pixonSheetTag && pixonSheetTag.parentNode) {
+    try { pixonSheetTag.parentNode.removeChild(pixonSheetTag); } catch {}
+  }
+  pixonSheetTag = null;
+}
 
 export function startPixonTransition(
   update: () => void | Promise<void>,
   options: { duration?: number, easing?: string } = {}
 ) {
-  if (!(document as any).startViewTransition) {
+  if (typeof document === 'undefined') {
     update();
     return Promise.resolve();
   }
-  return (document as any).startViewTransition(update).finished;
+
+  const prefersReduced =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)')?.matches;
+
+  if (prefersReduced) {
+    update();
+    return Promise.resolve();
+  }
+
+  if ((document as any).startViewTransition) {
+    return (document as any).startViewTransition(update).finished;
+  }
+
+  // Fallback: simple overlay crossfade without cloning DOM nodes.
+  const duration = options.duration ?? 180;
+  const easing = options.easing ?? 'cubic-bezier(0.16, 1, 0.3, 1)';
+
+  const overlay = document.createElement('div');
+  overlay.setAttribute('data-pixon-transition-overlay', '');
+  Object.assign(overlay.style, {
+    position: 'fixed',
+    inset: '0',
+    background: 'rgba(0,0,0,0)',
+    opacity: '0',
+    pointerEvents: 'none',
+    zIndex: '2147483647',
+    transition: `opacity ${duration}ms ${easing}`,
+  } as CSSStyleDeclaration);
+
+  document.body.appendChild(overlay);
+
+  return new Promise<void>((resolve) => {
+    let phase: 'in' | 'out' = 'in';
+
+    const cleanup = () => {
+      overlay.removeEventListener('transitionend', onEnd);
+      try { overlay.remove(); } catch {}
+      resolve();
+    };
+
+    const onEnd = async () => {
+      if (phase === 'in') {
+        phase = 'out';
+        try { await update(); } catch {}
+        requestAnimationFrame(() => {
+          overlay.style.opacity = '0';
+        });
+        return;
+      }
+      cleanup();
+    };
+
+    overlay.addEventListener('transitionend', onEnd);
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+    });
+  });
 }
 
 export interface TimelineTrack {
   target: any;
   keyframes: any;
   options?: PixonAnimateOptions;
+  /** Duration in ms (convenience). */
+  duration?: number;
   at?: number | string;
 }
 
 export function timeline(tracks: TimelineTrack[] = [], options: any = {}) {
-  // Simple serial execution for now, V4.7 Supreme Timeline coming soon
-  let promise = Promise.resolve();
-  tracks.forEach(track => {
-    promise = promise.then(() => {
-      const el = typeof track.target === 'string' ? document.querySelector(track.target) : track.target;
-      if (el && (el as any)._pixonAnimate) {
-        return (el as any)._pixonAnimate(track.keyframes, track.options)?.finished;
-      }
-      return Promise.resolve();
-    });
-  });
-  return promise;
+  // Minimal timeline controller for WAAPI (matches tests + provides imperative control).
+  const resolvedTracks = [...tracks];
+
+  return {
+    play() {
+      const animations: Animation[] = [];
+
+      resolvedTracks.forEach((track) => {
+        const el = typeof track.target === 'string' ? document.querySelector(track.target) : track.target;
+        if (!el || typeof (el as any).animate !== 'function') return;
+
+        const opts: KeyframeAnimationOptions = {
+          fill: 'both',
+          ...(track.options || {}),
+        };
+        if (typeof track.duration === 'number') opts.duration = track.duration;
+
+        const anim = (el as any).animate(track.keyframes, opts);
+        if (anim) animations.push(anim);
+      });
+
+      return {
+        getAnimations: () => animations,
+        seek: (t: number) => {
+          animations.forEach((a) => {
+            try { (a as any).currentTime = t; } catch {}
+          });
+        },
+        cancel: () => {
+          animations.forEach((a) => {
+            try { a.cancel(); } catch {}
+          });
+          animations.length = 0;
+        },
+      };
+    },
+  };
 }
 
 export interface PixonAnimateOptions extends KeyframeAnimationOptions {

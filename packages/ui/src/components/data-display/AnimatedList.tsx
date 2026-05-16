@@ -125,7 +125,8 @@ export function AnimatedList({
 
     items.forEach((item, index) => {
       const delay = columns
-        ? calculateStagger(index, items.length, { delay: stagger, grid: [columns, Math.ceil(items.length / columns)], from })
+        // `calculateStagger` expects seconds and returns ms.
+        ? calculateStagger(index, items.length, { amount: stagger / 1000, grid: [columns, Math.ceil(items.length / columns)], from })
         : index * stagger;
 
       const timeoutId = setTimeout(() => {

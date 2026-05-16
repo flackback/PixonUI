@@ -23,8 +23,13 @@ export function NumberTicker({
 
   useEffect(() => {
     if (!hasAnimated) return;
+    startTimeRef.current = null;
+
+    let cancelled = false;
+    let rafId: number | null = null;
 
     const animate = (timestamp: number) => {
+      if (cancelled) return;
       if (!startTimeRef.current) startTimeRef.current = timestamp;
       const progress = Math.min((timestamp - startTimeRef.current - delay) / duration, 1);
       
@@ -34,15 +39,20 @@ export function NumberTicker({
       }
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
       }
     };
 
     const timeout = setTimeout(() => {
-      requestAnimationFrame(animate);
+      if (cancelled) return;
+      rafId = requestAnimationFrame(animate);
     }, delay);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, [hasAnimated, value, duration, delay]);
 
   return (

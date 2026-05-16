@@ -163,6 +163,13 @@ export * from './components/effects/Confetti';
 export * from './components/effects/Spotlight';
 export * from './components/effects/RetroGrid';
 export * from './components/effects/DotGrid';
+export * from './components/effects/AnimeTweenComposition';
+export * from './components/effects/OrbitLoader';
+export * from './components/effects/ScrambleReveal';
+export * from './components/effects/SparkBurst';
+export * from './components/effects/CometLoader';
+export * from './components/effects/Magnetic';
+export * from './components/effects/RippleTap';
 export * from './components/shared/TestimonialCard';
 export * from './components/data-display/TaskTimeline';
 

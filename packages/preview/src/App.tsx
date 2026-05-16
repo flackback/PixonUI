@@ -85,7 +85,7 @@ export default function App() {
 
   const categories = useMemo(() => {
     const groups: Record<string, ComponentItem[]> = {};
-    const order = ['Inputs', 'Data Display', 'Feedback', 'Navigation', 'Overlay', 'Layout', 'Forms', 'AI Elements', 'Templates'];
+    const order = ['Inputs', 'Data Display', 'Feedback', 'Effects', 'Navigation', 'Overlay', 'Layout', 'Forms', 'AI Elements', 'Templates'];
     
     registry.forEach(item => {
       if (!groups[item.category]) groups[item.category] = [];
