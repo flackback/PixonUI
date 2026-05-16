@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { cn } from '../../utils/cn';
 
-export interface DotGridProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface DotGridProps extends React.CanvasHTMLAttributes<HTMLCanvasElement> {
   /** 
    * Color of the dots. 
    * Can be a CSS color (hex, rgb, etc.) 
@@ -123,6 +123,7 @@ export const DotGrid = forwardRef<HTMLCanvasElement, DotGridProps>(
         
         for (let i = 0; i < dots.length; i++) {
           const dot = dots[i];
+          if (!dot) continue;
           
           if (interactive) {
             const dx = mx - dot.ox;

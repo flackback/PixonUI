@@ -259,7 +259,7 @@ export const KanbanCard = React.memo(({
         setIsHovered(false);
         cachedRect.current = null;
       }}
-      onClick={(e) => onTaskClick?.(e, task)}
+      onClick={(e: React.MouseEvent) => onTaskClick?.(e, task)}
       draggable={false}
       onPointerDown={handlePointerDown}
       style={{ touchAction: 'none' }}

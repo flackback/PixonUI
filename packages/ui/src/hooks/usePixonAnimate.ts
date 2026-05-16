@@ -1,4 +1,4 @@
-import { useRef, useCallback, useSyncExternalStore } from 'react';
+import { useRef, useCallback, useSyncExternalStore, useEffect } from 'react';
 import { 
   SpringConfig, 
   SpringType, 
@@ -15,6 +15,7 @@ export interface PixonAnimateOptions extends KeyframeAnimationOptions {
   springType?: SpringType;
   /** Whether to stack this animation on top of others using WAAPI additive compositing */
   additive?: boolean;
+  onComplete?: () => void;
 }
 
 export interface UsePixonAnimateReturn<T extends HTMLElement = HTMLDivElement> {
@@ -31,21 +32,29 @@ export interface UsePixonAnimateReturn<T extends HTMLElement = HTMLDivElement> {
 
 // Global store to track animation state without React render loops
 // V4.7 Supreme: Using WeakMap to prevent memory leaks for unmounted elements
-const animationStateStore = new WeakMap<HTMLElement, { isAnimating: boolean; subscribers: Set<() => void> }>();
+const animationStateStore = new WeakMap<HTMLElement, { activeCount: number; subscribers: Set<() => void> }>();
 
 function getStore(el: HTMLElement) {
   if (!animationStateStore.has(el)) {
-    animationStateStore.set(el, { isAnimating: false, subscribers: new Set() });
+    animationStateStore.set(el, { activeCount: 0, subscribers: new Set() });
   }
   return animationStateStore.get(el)!;
 }
 
-function updateStore(el: HTMLElement, isAnimating: boolean) {
+function updateStore(el: HTMLElement, nextIsAnimating: boolean) {
   const store = getStore(el);
-  if (store.isAnimating !== isAnimating) {
-    store.isAnimating = isAnimating;
-    store.subscribers.forEach(s => s());
-  }
+  const prevIsAnimating = store.activeCount > 0;
+  store.activeCount = nextIsAnimating ? Math.max(1, store.activeCount) : 0;
+  const nowIsAnimating = store.activeCount > 0;
+  if (prevIsAnimating !== nowIsAnimating) store.subscribers.forEach(s => s());
+}
+
+function bumpStore(el: HTMLElement, delta: number) {
+  const store = getStore(el);
+  const prevIsAnimating = store.activeCount > 0;
+  store.activeCount = Math.max(0, store.activeCount + delta);
+  const nowIsAnimating = store.activeCount > 0;
+  if (prevIsAnimating !== nowIsAnimating) store.subscribers.forEach(s => s());
 }
 
 /**
@@ -55,6 +64,8 @@ function updateStore(el: HTMLElement, isAnimating: boolean) {
 export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePixonAnimateReturn<T> {
   const ref = useRef<T | null>(null);
   const animRef = useRef<Animation | null>(null);
+  const activeAnimsRef = useRef<Set<Animation>>(new Set());
+  const activeElementRef = useRef<T | null>(null);
   const lastInterruption = useRef<{ time: number, velocity: number }>({ time: 0, velocity: 0 });
 
   // Reactive subscription to the external state store
@@ -66,9 +77,26 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       store.subscribers.add(onStoreChange);
       return () => store.subscribers.delete(onStoreChange);
     }, []),
-    () => (ref.current ? getStore(ref.current).isAnimating : false),
+    () => (ref.current ? getStore(ref.current).activeCount > 0 : false),
     () => false // SSR
   );
+
+  useEffect(() => {
+    return () => {
+      const el = activeElementRef.current || ref.current;
+      // Cancel everything we created for this element (including additive ones).
+      activeAnimsRef.current.forEach((a) => {
+        try { a.cancel(); } catch {}
+      });
+      activeAnimsRef.current.clear();
+      animRef.current = null;
+      if (el) {
+        updateStore(el, false);
+        try { el.style.willChange = ''; } catch {}
+      }
+      activeElementRef.current = null;
+    };
+  }, []);
 
   const cancel = useCallback(() => {
     if (animRef.current) {
@@ -81,15 +109,23 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       }
       
       try { if (a.playState === 'running' && ref.current) a.commitStyles(); } catch(e){}
+      // Cancel the current "main" animation.
       try { a.cancel(); } catch(e){}
+      const wasActive = activeAnimsRef.current.delete(a);
       animRef.current = null;
-      if (ref.current) updateStore(ref.current, false);
+      if (wasActive && ref.current) {
+        bumpStore(ref.current, -1);
+        if (getStore(ref.current).activeCount === 0) {
+          try { ref.current.style.willChange = ''; } catch {}
+        }
+      }
     }
   }, []);
 
   const animate = useCallback((kfs: any, opts: PixonAnimateOptions = {}): Animation | null => {
     const el = ref.current;
     if (!el) return null;
+    activeElementRef.current = el;
 
     // Determine if this should be additive (stacking) or standard (replacing)
     const isAdditive = opts.additive || opts.composite === 'add';
@@ -127,16 +163,16 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       lastInterruption.current.velocity = 0; // Reset after consumption
     }
     
-    updateStore(el, true);
+    const prevMain = (!isAdditive ? animRef.current : null);
     
     const targetProps = Object.keys(finalKfs[0] as Keyframe);
-    const compositorProps = targetProps.filter(p => 
-      ['transform', 'opacity', 'filter', 'backdrop-filter'].includes(p)
-    );
+    const compositorProps = targetProps.filter(p => ['transform', 'opacity', 'filter', 'backdrop-filter'].includes(p));
     
-    if (el instanceof HTMLElement || el instanceof SVGElement) {
+    const styleTarget = el as any;
+    if (styleTarget instanceof HTMLElement || styleTarget instanceof SVGElement) {
       targetProps.forEach(p => {
-        if (isNaN(Number(p)) && p in el.style && (el.style as any)[p] !== '') (el.style as any)[p] = '';
+        const style = styleTarget.style as any;
+        if (isNaN(Number(p)) && p in style && style[p] !== '') style[p] = '';
       });
     }
     
@@ -153,18 +189,37 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     const cached = elementStateRegistry.get(el) || {};
     elementStateRegistry.set(el, { ...cached, ...finalState });
 
-    if (!isAdditive) animRef.current = a;
+    activeAnimsRef.current.add(a);
+    bumpStore(el, +1);
 
-    a.finished.then(() => {
-      if (el.style) el.style.willChange = '';
-      if (opts.onComplete) opts.onComplete();
-      
-      if (animRef.current === a || isAdditive) {
-        updateStore(el, false);
+    // Hint compositor only when needed, and keep it while any animation is running.
+    if (compositorProps.length > 0) {
+      try { el.style.willChange = compositorProps.join(', '); } catch {}
+    }
+
+    if (!isAdditive) {
+      animRef.current = a;
+      // Replace semantics: cancel previous main animation after the new one is created
+      // to avoid piling up running WAAPI instances on hover-in/out storms.
+      if (prevMain && prevMain !== a) {
+        try { if (prevMain.playState === 'running') prevMain.commitStyles(); } catch {}
+        try { prevMain.cancel(); } catch {}
+        if (activeAnimsRef.current.delete(prevMain)) bumpStore(el, -1);
       }
-    }).catch(() => {
-      updateStore(el, false);
-    });
+    }
+
+    const finalize = (completed: boolean) => {
+      if (!activeAnimsRef.current.has(a)) return;
+      activeAnimsRef.current.delete(a);
+      bumpStore(el, -1);
+      if (animRef.current === a) animRef.current = null;
+      if (completed && opts.onComplete) opts.onComplete();
+      if (getStore(el).activeCount === 0) {
+        try { el.style.willChange = ''; } catch {}
+      }
+    };
+
+    a.finished.then(() => finalize(true)).catch(() => finalize(false));
     
     return a;
   }, [cancel]);

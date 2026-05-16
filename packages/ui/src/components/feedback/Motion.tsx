@@ -32,6 +32,7 @@ export interface MotionStyle {
   skewX?: number | string;
   skewY?: number | string;
   blur?: number | string;
+  filter?: string;
   brightness?: number;
   saturate?: number;
   backgroundColor?: string;
@@ -279,6 +280,7 @@ function buildTransform(s: MotionStyle): string {
 /** Build a CSS `filter` string from a MotionStyle */
 function buildFilter(s: MotionStyle): string {
   const parts: string[] = [];
+  if (s.filter) parts.push(s.filter);
   if (s.blur !== undefined) {
     parts.push(`blur(${typeof s.blur === 'number' ? `${s.blur}px` : s.blur})`);
   }

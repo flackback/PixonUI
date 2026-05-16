@@ -46,15 +46,34 @@ const UNIT_MAP: Record<string, string> = {
   skewX: 'deg', skewY: 'deg', perspective: 'px'
 };
 
+const TRANSFORM_SHORTCUTS = new Set([
+  'x', 'y', 'z',
+  'translateX', 'translateY', 'translateZ',
+  'rotate', 'rotateX', 'rotateY', 'rotateZ',
+  'scale', 'scaleX', 'scaleY', 'scaleZ',
+  'skewX', 'skewY',
+  'perspective',
+]);
+
+function withTransformUnit(prop: string, val: any) {
+  if (typeof val !== 'number') return val;
+  if (prop === 'scale' || prop.startsWith('scale')) return val;
+  return `${val}${UNIT_MAP[prop] || ''}`;
+}
+
+function toTransformFunction(prop: string, val: any): string {
+  if (prop === 'x') return `translateX(${withTransformUnit('x', val)})`;
+  if (prop === 'y') return `translateY(${withTransformUnit('y', val)})`;
+  if (prop === 'z') return `translateZ(${withTransformUnit('translateZ', val)})`;
+  return `${prop}(${withTransformUnit(prop, val)})`;
+}
+
 export function sanitizeKeyframeProps(kf: any): Keyframe {
   const sanitized: any = {};
+  const transforms: string[] = [];
   Object.keys(kf).forEach(p => {
     let prop = p;
     let val = kf[p];
-    
-    // Map shorthands
-    if (prop === 'x') prop = 'translateX';
-    if (prop === 'y') prop = 'translateY';
 
     // V4.7 Supreme Clamping: Prevent invalid values that cause browser warnings & main-thread freezing
     if (typeof val === 'number') {
@@ -66,11 +85,22 @@ export function sanitizeKeyframeProps(kf: any): Keyframe {
       if (numeric < 0) val = '0%';
     }
 
+    if (TRANSFORM_SHORTCUTS.has(prop)) {
+      transforms.push(toTransformFunction(prop, val));
+      return;
+    }
+
     if (typeof val === 'number' && UNIT_MAP[prop]) {
       val = `${val}${UNIT_MAP[prop]}`;
     }
     sanitized[prop] = val;
   });
+
+  if (transforms.length > 0) {
+    const existing = typeof sanitized.transform === 'string' ? sanitized.transform : '';
+    sanitized.transform = [existing, transforms.join(' ')].filter(Boolean).join(' ').trim();
+  }
+
   return sanitized;
 }
 
@@ -384,17 +414,15 @@ export function cachedSpringKeyframes(opts: any = {}) {
 export function parseStyleShortcuts(style: Record<string, any>): Record<string, any> {
   const result: any = { ...style };
   const transforms: string[] = [];
-  if (style.x !== undefined) transforms.push(`translateX(${typeof style.x === 'number' ? `${style.x}px` : style.x})`);
-  if (style.y !== undefined) transforms.push(`translateY(${typeof style.y === 'number' ? `${style.y}px` : style.y})`);
-  if (style.scale !== undefined) transforms.push(`scale(${style.scale})`);
-  if (style.rotate !== undefined) transforms.push(`rotate(${typeof style.rotate === 'number' ? `${style.rotate}deg` : style.rotate})`);
+  Object.keys(style).forEach((prop) => {
+    if (TRANSFORM_SHORTCUTS.has(prop)) transforms.push(toTransformFunction(prop, style[prop]));
+  });
 
   if (transforms.length > 0) {
     // Avoid passing non-standard shorthand props (or numeric rotate) to WAAPI.
-    delete result.x;
-    delete result.y;
-    delete result.scale;
-    delete result.rotate;
+    TRANSFORM_SHORTCUTS.forEach((prop) => {
+      delete result[prop];
+    });
 
     // Merge with any explicit transform the user provided.
     const existing = typeof result.transform === 'string' ? result.transform : '';
@@ -475,6 +503,9 @@ export type Transition = {
   damping?: number;
   mass?: number;
   easing?: string;
+  repeat?: number;
+  repeatType?: 'loop' | 'mirror' | 'reverse';
+  repeatDelay?: number;
   staggerChildren?: number;
   delayChildren?: number;
 };
@@ -592,7 +623,7 @@ export function startPixonTransition(
 export interface TimelineTrack {
   target: any;
   keyframes: any;
-  options?: PixonAnimateOptions;
+  options?: TimelineAnimateOptions;
   /** Duration in ms (convenience). */
   duration?: number;
   at?: number | string;
@@ -638,7 +669,7 @@ export function timeline(tracks: TimelineTrack[] = [], options: any = {}) {
   };
 }
 
-export interface PixonAnimateOptions extends KeyframeAnimationOptions {
+export interface TimelineAnimateOptions extends KeyframeAnimationOptions {
   spring?: SpringConfig & { velocity?: number };
   springType?: SpringType;
   additive?: boolean;

@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useCallback, useEffect, useLayoutEffect, useContext } from 'react';
-import { usePixonAnimate } from '../../hooks/usePixonAnimate';
+import { usePixonAnimate, type PixonAnimateOptions } from '../../hooks/usePixonAnimate';
 import { PresenceContext } from './AnimatePresence';
 import { VariantContext } from './VariantContext';
 import { LayoutGroupContext } from './LayoutGroup';
@@ -14,7 +14,7 @@ import {
   elementStateRegistry
 } from '../../utils/motion';
 
-export interface AnimateProps<T extends React.ElementType = 'div'> {
+type AnimateOwnProps<T extends React.ElementType = 'div'> = {
   layoutId?: string; layout?: boolean | 'position' | 'size'; custom?: any;
   variants?: Record<string, any>; initial?: Target; animate?: Target; exit?: Target;
   whileHover?: Target; whileTap?: Target; whileInView?: Target;
@@ -22,9 +22,23 @@ export interface AnimateProps<T extends React.ElementType = 'div'> {
   transition?: Transition; as?: T; onAnimationComplete?: (definition: string) => void;
   children?: React.ReactNode; style?: React.CSSProperties; className?: string;
   id?: string;
-}
+};
+
+export type AnimateProps<T extends React.ElementType = 'div'> =
+  AnimateOwnProps<T> &
+  Omit<React.ComponentPropsWithoutRef<T>, keyof AnimateOwnProps<T> | 'ref'>;
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+const TRANSFORMISH_PROPS = new Set([
+  'transform',
+  'x', 'y', 'z',
+  'translateX', 'translateY', 'translateZ',
+  'rotate', 'rotateX', 'rotateY', 'rotateZ',
+  'scale', 'scaleX', 'scaleY', 'scaleZ',
+  'skewX', 'skewY',
+  'perspective',
+]);
 
 // V4.7 Supreme Singleton Batching System
 const measureQueue = new WeakMap<HTMLElement, (rect: DOMRect) => void>();
@@ -49,7 +63,7 @@ function processLayoutQueues() {
     const rects = elements.map(el => el.getBoundingClientRect());
     elements.forEach((el, i) => {
       const cb = measureQueue.get(el);
-      if (cb) cb(rects[i]);
+      if (cb) cb(rects[i]!);
     });
   } catch (e) {
     console.warn('PixonUI Layout Error:', e);
@@ -109,7 +123,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
   const staggerIdx = vCtx?.index ?? propStaggerIdx ?? 0;
 
-  const trigger = useCallback((propTarget: any, label = 'animate', force = false) => {
+  const trigger = useCallback((propTarget: any, label = 'animate', force: boolean | Partial<Transition> = false) => {
     const el = internalRef.current;
     const target = resolve(propTarget);
     if (!el || !target) return null;
@@ -133,8 +147,12 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     activeLabel.current = label;
 
     const { transition: currentTransition, onAnimationComplete: currentOnComplete } = latestProps.current;
-    const effectiveTransition = (force && typeof force === 'object') ? { ...currentTransition, ...force } : currentTransition;
+    const effectiveTransition = (force && typeof force === 'object')
+      ? { ...(typeof currentTransition === 'object' && currentTransition ? currentTransition : {}), ...force }
+      : currentTransition;
     const targetProps = Object.keys(target);
+    const wantsAdditive = label === 'whileHover' || label === 'whileTap';
+    const allTransformish = targetProps.every((p) => TRANSFORMISH_PROPS.has(p));
     
     // V4.7 Supreme: Intelligent Property Batching
     // Only split if properties have explicit individual transitions
@@ -142,7 +160,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     
     if (sharedTransition) {
       const stag = calculateStagger(staggerIdx, 1, (effectiveTransition as any)?.staggerChildren ? { amount: (effectiveTransition as any).staggerChildren } : {});
-      const opts = { 
+      const opts: PixonAnimateOptions = {
         // Framer-like API: duration/delay are in seconds
         duration: (effectiveTransition?.duration ?? 0.4) * 1000,
         delay: (effectiveTransition?.delay ?? 0) * 1000 + stag,
@@ -151,7 +169,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
         iterations: effectiveTransition?.repeat === Infinity ? Infinity : (effectiveTransition?.repeat || 1),
         direction: effectiveTransition?.repeatType === 'mirror' ? 'alternate' : 'normal',
         endDelay: (effectiveTransition?.repeatDelay ?? 0) * 1000,
-        additive: label === 'whileHover' || label === 'whileTap',
+        additive: wantsAdditive && allTransformish,
       };
       const animations = [pixonAnimate(target, opts)];
       
@@ -170,7 +188,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       const propTrans = (effectiveTransition as any)?.[prop] || effectiveTransition;
       const stag = calculateStagger(staggerIdx, 1, propTrans?.staggerChildren ? { amount: propTrans.staggerChildren } : {});
       
-      const opts = {
+      const opts: PixonAnimateOptions = {
         // Framer-like API: duration/delay are in seconds
         duration: (propTrans?.duration ?? 0.4) * 1000,
         delay: (propTrans?.delay ?? 0) * 1000 + stag,
@@ -179,7 +197,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
         iterations: propTrans?.repeat === Infinity ? Infinity : (propTrans?.repeat || 1),
         direction: propTrans?.repeatType === 'mirror' ? 'alternate' : 'normal',
         endDelay: (propTrans?.repeatDelay ?? 0) * 1000,
-        additive: label === 'whileHover' || label === 'whileTap',
+        additive: wantsAdditive && TRANSFORMISH_PROPS.has(prop),
       };
       
       return pixonAnimate({ [prop]: val }, opts);
@@ -332,7 +350,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     if (!isPresent && exit) {
       const animations = trigger(resolve(exit), 'exit');
       if (animations && Array.isArray(animations)) {
-        Promise.all(animations.map(a => a.finished)).finally(() => {
+        Promise.all(animations.filter(Boolean).map(a => a!.finished)).finally(() => {
           pCtx?.onExitComplete?.();
         });
       } else {
@@ -352,7 +370,12 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       // V4.7 Supreme: Skip layout if currently in an interactive state to prevent jitter
       if (['whileHover', 'whileTap'].includes(activeLabel.current || '')) return;
       
-      const curAbs = { top: cur.top + window.scrollY, left: cur.left + window.scrollX, width: cur.width, height: cur.height };
+      const curAbs = DOMRect.fromRect({
+        x: cur.left + window.scrollX,
+        y: cur.top + window.scrollY,
+        width: cur.width,
+        height: cur.height,
+      });
       const now = performance.now();
 
       if (layoutId && lGrp && !layoutTriggeredRef.current) {
@@ -365,7 +388,8 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
           owner.style.opacity = '0';
           const flip = calcFlip(first, curAbs);
           el.style.transformOrigin = 'top left';
-          const a = trigger({ transform: [flip.transform, 'none'] }, 'layout');
+          const animations = trigger({ transform: [flip.transform, 'none'] }, 'layout');
+          const a = Array.isArray(animations) ? animations.find(Boolean) : null;
           a?.finished.then(() => {
             if (el.isConnected) { el.style.transform = 'none'; el.style.transformOrigin = ''; }
             if (owner.isConnected) owner.style.opacity = originalOpacity;

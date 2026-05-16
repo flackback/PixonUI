@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { cn } from '../../utils/cn';
 import { usePixonAnimate } from '../../hooks/usePixonAnimate';
 
-export interface MagneticProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface MagneticEffectProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   /** Max translation in px. */
   strength?: number;
 }
 
-export function MagneticEffect({ children, strength = 10, className, ...props }: MagneticProps) {
+export function MagneticEffect({ children, strength = 10, className, ...props }: MagneticEffectProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const { ref, animate, cancel } = usePixonAnimate<HTMLDivElement>();
   const rafRef = useRef<number | null>(null);

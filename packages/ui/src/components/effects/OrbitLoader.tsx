@@ -71,7 +71,9 @@ export function OrbitLoader({
               transform: `translate3d(${x}px, ${y}px, 0)`,
               willChange: 'transform, opacity',
             }}
-          />
+          >
+            {null}
+          </Motion>
         );
       })}
     </Motion>
@@ -79,4 +81,3 @@ export function OrbitLoader({
 }
 
 export default OrbitLoader;
-

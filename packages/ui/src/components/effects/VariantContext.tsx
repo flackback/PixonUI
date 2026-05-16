@@ -20,6 +20,7 @@ interface VariantProviderProps {
   initial?: string | Record<string, any>;
   animate?: string | Record<string, any>;
   exit?: string | Record<string, any>;
+  interactive?: string | null;
   staggerChildren?: number;
   delayChildren?: number;
 }
