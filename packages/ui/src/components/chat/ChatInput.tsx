@@ -33,6 +33,7 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem 
 } from '../overlay/DropdownMenu';
+import { applyChatFormatting, chatMarkupToHtml, htmlToChatMarkup } from './richText';
 
 interface ChatInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onChange'> {
   value?: string;
@@ -102,7 +103,7 @@ export const ChatInput = React.memo(function ChatInput({
   const [isDragOver, setIsDragOver] = useState(false);
   const activePlaceholder = placeholder || translations?.typeMessage || (locale === 'pt' ? "Digite uma mensagem..." : "Type a message...");
   
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const content = value !== undefined ? value : internalContent;
@@ -129,90 +130,68 @@ export const ChatInput = React.memo(function ChatInput({
     ).slice(0, 5);
   }, [users, mentionSearch]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (disabled) return;
-    const value = e.target.value;
-    if (maxLength && value.length > maxLength) return;
-    
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || document.activeElement === editor) return;
+    const nextHtml = chatMarkupToHtml(content);
+    if (editor.innerHTML !== nextHtml) editor.innerHTML = nextHtml;
+  }, [content]);
+
+  const syncEditorContent = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const value = htmlToChatMarkup(editor);
+    if (maxLength && value.length > maxLength) {
+      editor.innerHTML = chatMarkupToHtml(content);
+      return;
+    }
+
     setContent(value);
     onChange?.(value);
-    
-    // Mention logic
-    const lastChar = value[e.target.selectionStart - 1];
-    const textBeforeCursor = value.slice(0, e.target.selectionStart);
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
 
+    const textBeforeCursor = editor.textContent || '';
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
     if (mentionMatch) {
       setMentionSearch(mentionMatch[1] || "");
       setMentionIndex(0);
     } else {
       setMentionSearch(null);
     }
-
-    // Auto-resize
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
-    }
   };
 
-  const insertFormatting = (prefix: string, suffix: string = prefix) => {
-    if (!textareaRef.current) return;
-    const start = textareaRef.current.selectionStart;
-    const end = textareaRef.current.selectionEnd;
-    const selectedText = content.slice(start, end);
-    const textBefore = content.slice(0, start);
-    const textAfter = content.slice(end);
+  const handleInput = () => {
+    if (disabled) return;
+    syncEditorContent();
+  };
 
-    const newContent = textBefore + prefix + selectedText + suffix + textAfter;
-    setContent(newContent);
-    
-    // Reset height after content change
-    setTimeout(() => {
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
-      }
-    }, 0);
-
+  const insertFormatting = (format: 'bold' | 'italic' | 'strike' | 'code') => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    applyChatFormatting(format);
+    syncEditorContent();
   };
 
   const insertText = (textToInsert: string) => {
-    if (!textareaRef.current) {
+    const editor = editorRef.current;
+    if (!editor) {
       setContent(content + textToInsert);
       onValueChange?.(content + textToInsert);
       onChange?.(content + textToInsert);
       return;
     }
-    const start = textareaRef.current.selectionStart;
-    const end = textareaRef.current.selectionEnd;
-    const textBefore = content.slice(0, start);
-    const textAfter = content.slice(end);
-
-    const newContent = textBefore + textToInsert + textAfter;
-    setContent(newContent);
-    onValueChange?.(newContent);
-    onChange?.(newContent);
-    
-    const newCursorPos = start + textToInsert.length;
-    setTimeout(() => {
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-        textareaRef.current.style.height = 'auto';
-        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
-      }
-    }, 0);
+    editor.focus();
+    document.execCommand('insertText', false, textToInsert);
+    syncEditorContent();
   };
 
   const insertMention = (user: User) => {
-    if (!textareaRef.current) return;
-    const start = textareaRef.current.selectionStart;
-    const textBefore = content.slice(0, start).replace(/@\w*$/, `@${user.name} `);
-    const textAfter = content.slice(start);
-    setContent(textBefore + textAfter);
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    document.execCommand('insertText', false, `@${user.name} `);
+    syncEditorContent();
     setMentionSearch(null);
-    textareaRef.current.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -248,9 +227,7 @@ export const ChatInput = React.memo(function ChatInput({
     onSend?.(content, selectedFiles);
     setContent("");
     setSelectedFiles([]);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    if (editorRef.current) editorRef.current.innerHTML = '';
   };
 
   // Pasting file attachments (WhatsApp style)
@@ -501,16 +478,16 @@ export const ChatInput = React.memo(function ChatInput({
                 onCancel={() => onCancelReply?.()}
               />
             ) : (
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={handleInput}
+              <div
+                ref={editorRef}
+                contentEditable={!disabled}
+                role="textbox"
+                aria-multiline="true"
+                data-placeholder={activePlaceholder}
+                onInput={handleInput}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
-                placeholder={activePlaceholder}
-                disabled={disabled}
-                rows={1}
-                className="w-full p-3 min-h-[48px] max-h-[300px] rounded-2xl bg-transparent border border-transparent text-sm resize-none transition-all outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/30 font-medium"
+                className="w-full p-3 min-h-[48px] max-h-[300px] overflow-y-auto rounded-2xl bg-transparent border border-transparent text-sm transition-all outline-none text-gray-900 dark:text-white font-medium empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 dark:empty:before:text-white/30"
               />
             )}
           </div>
@@ -567,28 +544,28 @@ export const ChatInput = React.memo(function ChatInput({
             </DropdownMenu>
             <div className="w-px h-3 bg-gray-200 dark:bg-white/10 mx-1" />
             <button 
-              onClick={() => insertFormatting('*')}
+              onClick={() => insertFormatting('bold')}
               className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-blue-500 transition-colors"
               title="Bold"
             >
               <Bold className="h-4 w-4 animate-out" />
             </button>
             <button 
-              onClick={() => insertFormatting('_')}
+              onClick={() => insertFormatting('italic')}
               className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-blue-500 transition-colors"
               title="Italic"
             >
               <Italic className="h-4 w-4" />
             </button>
             <button 
-              onClick={() => insertFormatting('~')}
+              onClick={() => insertFormatting('strike')}
               className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-blue-500 transition-colors"
               title="Strikethrough"
             >
               <Strikethrough className="h-4 w-4" />
             </button>
             <button 
-              onClick={() => insertFormatting('`', '`')}
+              onClick={() => insertFormatting('code')}
               className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-blue-500 transition-colors"
               title="Monospace"
             >

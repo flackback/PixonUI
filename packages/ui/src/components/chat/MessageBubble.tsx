@@ -17,6 +17,7 @@ import { LinkPreview } from './LinkPreview';
 import { Avatar } from '../data-display/Avatar';
 import { InteractiveMessage } from './InteractiveMessage';
 import { CarouselMessage } from './CarouselMessage';
+import { renderChatFormattedText } from './richText';
 
 interface MessageBubbleProps {
   message: Message;
@@ -93,50 +94,7 @@ export const MessageBubble = React.memo(
       return <ReadReceipt status={message.status || 'sent'} className="ml-1" />;
     };
 
-    // Rich Text Markdown Style Text Formatting Parser (WhatsApp Style)
-    const renderFormattedText = (text: string) => {
-      if (!text) return "";
-      
-      const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|__[^_]+__|_[^_]+_|~~[^~]+~~|~[^~]+~|`[^`]+`)/g;
-      const parts = text.split(regex);
-      
-      return parts.map((part, index) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={index} className="font-bold">{part.slice(2, -2)}</strong>;
-        }
-        if (part.startsWith('*') && part.endsWith('*')) {
-          return <strong key={index} className="font-bold">{part.slice(1, -1)}</strong>;
-        }
-        if (part.startsWith('__') && part.endsWith('__')) {
-          return <em key={index} className="italic">{part.slice(2, -2)}</em>;
-        }
-        if (part.startsWith('_') && part.endsWith('_')) {
-          return <em key={index} className="italic">{part.slice(1, -1)}</em>;
-        }
-        if (part.startsWith('~~') && part.endsWith('~~')) {
-          return <span key={index} className="line-through opacity-70">{part.slice(2, -2)}</span>;
-        }
-        if (part.startsWith('~') && part.endsWith('~')) {
-          return <span key={index} className="line-through opacity-70">{part.slice(1, -1)}</span>;
-        }
-        if (part.startsWith('`') && part.endsWith('`')) {
-          return (
-            <code 
-              key={index} 
-              className={cn(
-                "px-1.5 py-0.5 rounded font-mono text-xs",
-                isOwn 
-                  ? "bg-black/20 text-white font-semibold" 
-                  : "bg-black/10 dark:bg-black/30 text-rose-600 dark:text-rose-400"
-              )}
-            >
-              {part.slice(1, -1)}
-            </code>
-          );
-        }
-        return part;
-      });
-    };
+    const renderFormattedText = (text: string) => renderChatFormattedText(text, isOwn);
 
     const renderContent = () => {
       if (message.type === 'revoked') {
