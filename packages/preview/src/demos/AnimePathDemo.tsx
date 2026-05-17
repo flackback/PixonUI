@@ -200,21 +200,22 @@ function FluidSynth() {
           key={i}
           initial={{ scaleY: 0.35, opacity: 0.35 }}
           animate={{
-            scaleY: [0.35, 0.92, 0.52, 0.78, 0.44, 0.35],
-            opacity: [0.28, 0.95, 0.48, 0.82, 0.52, 0.28],
+            scaleY: [0.35, 0.45, 0.78, 0.98, 0.7, 0.48, 0.35],
+            opacity: [0.22, 0.32, 0.58, 0.9, 0.62, 0.34, 0.22],
           }}
           transition={{
-            duration: 3.2 + ((i % 7) * 0.12),
-            delay: i * 0.055,
+            duration: 6.5 + ((i % 7) * 0.22),
+            delay: i * 0.09,
             repeat: Infinity,
             repeatType: 'loop',
+            repeatDelay: 1.1 + ((i % 5) * 0.08),
             easing: 'ease-in-out',
           }}
           whileHover={{
             scaleY: 1.2,
             scaleX: 1.18,
             opacity: 1,
-            transition: { type: 'spring', stiffness: 220, damping: 24 }
+            transition: { type: 'spring', stiffness: 180, damping: 28 }
           }}
           className="flex-1 min-w-[8px] max-w-[20px] rounded-full border border-white/10 bg-white/10 origin-bottom"
           style={{
