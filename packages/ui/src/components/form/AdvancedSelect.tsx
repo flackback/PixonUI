@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useImperativeHandle } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../utils/cn';
 import { Label } from './Label';
 import { Search, X, Check, ChevronDown } from 'lucide-react';
 import { Badge } from '../../primitives/Badge';
+import { useAnchoredPopover, type AnchoredPopoverAnimation } from '../../hooks/useAnchoredPopover';
 
 export interface AdvancedSelectOption {
   label: string;
@@ -32,6 +34,7 @@ export interface AdvancedSelectProps {
   clearable?: boolean;
   variant?: 'default' | 'ghost' | 'glass' | 'cyber';
   size?: 'sm' | 'md' | 'lg';
+  menuAnimation?: AnchoredPopoverAnimation;
 }
 
 /**
@@ -55,7 +58,8 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
     searchable = true,
     clearable = true,
     variant = 'default',
-    size = 'md'
+    size = 'md',
+    menuAnimation = 'scale'
   }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [internalValue, setInternalValue] = useState<string | string[]>(
@@ -65,9 +69,12 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
     const [activeIndex, setActiveIndex] = useState(0);
 
     const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const listboxRef = useRef<HTMLUListElement>(null);
     const id = React.useId();
+    const menuState = useAnchoredPopover(triggerRef, contentRef, { isOpen });
 
     const isControlled = value !== undefined;
     const currentValues = useMemo<string[]>(() => {
@@ -106,7 +113,12 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
     // Handle clicking outside to close
     useEffect(() => {
       const clickOutside = (e: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(e.target as Node) &&
+          contentRef.current &&
+          !contentRef.current.contains(e.target as Node)
+        ) {
           setIsOpen(false);
         }
       };
@@ -205,6 +217,15 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
       }
     };
 
+    useImperativeHandle(ref, () => triggerRef.current as HTMLDivElement);
+
+    const menuAnimationClasses = {
+      none: '',
+      fade: 'animate-in fade-in duration-150',
+      scale: 'animate-in fade-in zoom-in-95 duration-160',
+      slide: 'animate-in fade-in slide-in-from-top-1 duration-180',
+    } as const;
+
     const sizeClasses = {
       sm: 'min-h-[2.25rem] px-3 py-1.5 rounded-xl text-xs gap-1.5',
       md: 'min-h-[3rem] px-4 py-2 text-sm rounded-2xl gap-2',
@@ -259,7 +280,7 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
 
         {/* Input Header Button box */}
         <div
-          ref={ref}
+          ref={triggerRef}
           id={id}
           role="combobox"
           aria-expanded={isOpen}
@@ -338,109 +359,123 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
 
         {/* Floating Dropdown Listbox */}
         {isOpen && (
-          <div className={cn(
-            "absolute top-full left-0 z-[120] mt-1.5 w-full overflow-hidden rounded-2xl",
-            "border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 shadow-xl",
-            "animate-in fade-in slide-in-from-top-1 duration-150 p-1.5"
-          )}>
-            {/* Search Input Filter */}
-            {searchable && (
-              <div className="relative flex items-center border-b border-zinc-100 dark:border-white/5 pb-1.5 mb-1.5">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Pesquisar..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={cn(
-                    "w-full bg-transparent pl-9 pr-4 py-2 text-sm outline-none text-zinc-800 dark:text-white placeholder-zinc-400"
-                  )}
-                />
-              </div>
-            )}
-
-            {/* Scrolling Options UL */}
-            <ul
-              ref={listboxRef}
-              id={`${id}-listbox`}
-              role="listbox"
-              className="max-h-60 overflow-y-auto flex flex-col gap-0.5"
-            >
-              {filteredOptions.length === 0 ? (
-                <div className="py-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
-                  Nenhum resultado encontrado
-                </div>
-              ) : (
-                filteredOptions.map((option, index) => {
-                  const showGroupHeader = option.group && (index === 0 || filteredOptions[index - 1]?.group !== option.group);
-                  const isSelected = currentValues.includes(option.value);
-                  const isActive = activeIndex === index;
-
-                  return (
-                    <React.Fragment key={option.value}>
-                      {showGroupHeader && (
-                        <li className="px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mt-1 mb-0.5 select-none">
-                          {option.group}
-                        </li>
-                      )}
-                      <li
-                        id={`${id}-option-${index}`}
-                        role="option"
-                        aria-selected={isSelected}
-                        onClick={() => handleSelectOption(option.value)}
-                        onMouseEnter={() => setActiveIndex(index)}
-                        className={cn(
-                          'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3',
-                          isSelected 
-                            ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
-                            : 'text-zinc-700 dark:text-zinc-300',
-                          isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
-                        )}
-                      >
-                        {/* Avatar/Thumbnail */}
-                        {option.avatar && (
-                          <img 
-                            src={option.avatar} 
-                            alt={option.label} 
-                            className="h-7 w-7 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-white/10" 
-                          />
-                        )}
-
-                        {/* Icon */}
-                        {option.icon && (
-                          <div className={cn(
-                            "flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/[0.04]",
-                            isSelected && "text-purple-500 bg-purple-100/50 dark:bg-purple-500/20"
-                          )}>
-                            {option.icon}
-                          </div>
-                        )}
-
-                        {/* Content block */}
-                        <div className="flex-1 min-w-0 flex flex-col">
-                          <span className="text-sm truncate">{option.label}</span>
-                          {option.description && (
-                            <span className={cn(
-                              "text-[10px] truncate leading-tight mt-0.5",
-                              isSelected ? "text-purple-400/80" : "text-zinc-400 dark:text-zinc-500"
-                            )}>
-                              {option.description}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Check icon status indicator */}
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
-                        )}
-                      </li>
-                    </React.Fragment>
-                  );
-                })
+          typeof document !== 'undefined' ? createPortal(
+            <div
+              ref={contentRef}
+              role="presentation"
+              style={{
+                top: menuState.top,
+                left: menuState.left,
+                width: menuState.width,
+                transformOrigin: menuState.transformOrigin,
+              }}
+              className={cn(
+                "fixed z-[140] overflow-hidden rounded-2xl",
+                "border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 shadow-xl p-1.5",
+                menuAnimationClasses[menuAnimation],
+                !menuState.isPositioned && 'opacity-0'
               )}
-            </ul>
-          </div>
+            >
+              {/* Search Input Filter */}
+              {searchable && (
+                <div className="relative flex items-center border-b border-zinc-100 dark:border-white/5 pb-1.5 mb-1.5">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Pesquisar..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={cn(
+                      "w-full bg-transparent pl-9 pr-4 py-2 text-sm outline-none text-zinc-800 dark:text-white placeholder-zinc-400"
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Scrolling Options UL */}
+              <ul
+                ref={listboxRef}
+                id={`${id}-listbox`}
+                role="listbox"
+                className="max-h-60 overflow-y-auto flex flex-col gap-0.5"
+              >
+                {filteredOptions.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                    Nenhum resultado encontrado
+                  </div>
+                ) : (
+                  filteredOptions.map((option, index) => {
+                    const showGroupHeader = option.group && (index === 0 || filteredOptions[index - 1]?.group !== option.group);
+                    const isSelected = currentValues.includes(option.value);
+                    const isActive = activeIndex === index;
+
+                    return (
+                      <React.Fragment key={option.value}>
+                        {showGroupHeader && (
+                          <li className="px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mt-1 mb-0.5 select-none">
+                            {option.group}
+                          </li>
+                        )}
+                        <li
+                          id={`${id}-option-${index}`}
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => handleSelectOption(option.value)}
+                          onMouseEnter={() => setActiveIndex(index)}
+                          className={cn(
+                            'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3',
+                            isSelected 
+                              ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
+                              : 'text-zinc-700 dark:text-zinc-300',
+                            isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
+                          )}
+                        >
+                          {/* Avatar/Thumbnail */}
+                          {option.avatar && (
+                            <img 
+                              src={option.avatar} 
+                              alt={option.label} 
+                              className="h-7 w-7 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-white/10" 
+                            />
+                          )}
+
+                          {/* Icon */}
+                          {option.icon && (
+                            <div className={cn(
+                              "flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/[0.04]",
+                              isSelected && "text-purple-500 bg-purple-100/50 dark:bg-purple-500/20"
+                            )}>
+                              {option.icon}
+                            </div>
+                          )}
+
+                          {/* Content block */}
+                          <div className="flex-1 min-w-0 flex flex-col">
+                            <span className="text-sm truncate">{option.label}</span>
+                            {option.description && (
+                              <span className={cn(
+                                "text-[10px] truncate leading-tight mt-0.5",
+                                isSelected ? "text-purple-400/80" : "text-zinc-400 dark:text-zinc-500"
+                              )}>
+                                {option.description}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Check icon status indicator */}
+                          {isSelected && (
+                            <Check className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                          )}
+                        </li>
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </ul>
+            </div>,
+            document.body
+          ) : null
         )}
 
         {error && (

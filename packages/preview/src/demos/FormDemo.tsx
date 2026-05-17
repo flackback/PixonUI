@@ -201,6 +201,7 @@ export function FormDemo() {
                             { value: "cto", label: "Diretor de Tecnologia" },
                         ]}
                         placeholder="Selecione um cargo"
+                        menuAnimation="slide"
                       />
                     </FormControl>
                     <FormMessage>{fieldState.error?.message}</FormMessage>
@@ -315,6 +316,7 @@ export function FormDemo() {
                         { value: "cto", label: "Diretor de Tecnologia" },
                     ]}
                     placeholder="Selecione um cargo nativo"
+                    menuAnimation="fade"
                   />
                 </FormControl>
                 <FormMessage>{nativeForm.errors.role}</FormMessage>
