@@ -85,6 +85,7 @@ import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
 import AnimePathDemo from './demos/AnimePathDemo';
 import AnimePenReplicasDemo from './demos/AnimePenReplicasDemo';
+import TimelineScrollPresetDemo from './demos/TimelineScrollPresetDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
 import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
 import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
@@ -1490,6 +1491,29 @@ tl
 
 // Código completo da réplica fica logo abaixo do orbe no demo`,
     demo: <AnimePenReplicasDemo />
+  },
+  {
+    id: 'timeline-scroll-preset',
+    title: 'Timeline Scroll Preset',
+    category: 'Feedback',
+    description: 'Preset unificado com scrollTimelinePreset + useTimelineScope para timeline scrub em container com stagger declarativo.',
+    code: `import { timeline, scrollTimelinePreset, useScrubOnScroll, useTimelineScope } from '@pixonui/react';
+
+const flow = scrollTimelinePreset('staggerSection', {
+  duration: 620,
+  stagger: 90,
+  from: 0.08,
+  to: 0.94,
+});
+
+const { ref, createTimeline } = useTimelineScope<HTMLDivElement>();
+const ctrl = createTimeline({ scrub: true, autoplay: false })
+  .set('.tl-card', { opacity: 0, transform: 'translate3d(0, 26px, 0) scale(0.97)' }, 0)
+  .add('.tl-card', flow.timeline.keyframes, { ...flow.timeline.options, at: 0 })
+  .play();
+
+useScrubOnScroll(ctrl, { ...flow.scrub, container: scrollRef, axis: 'y' });`,
+    demo: <TimelineScrollPresetDemo />
   },
 ];
 
