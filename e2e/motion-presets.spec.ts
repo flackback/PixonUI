@@ -66,4 +66,53 @@ test.describe('Motion presets (vNext)', () => {
     expect(afterTransform !== beforeTransform || afterProgress !== beforeProgress).toBe(true);
     expect(criticalLogs).toEqual([]);
   });
+
+  test('reveal cards do not flicker back to hidden after first in-view', async ({ page }) => {
+    await page.goto('/');
+
+    const loader = page.locator('text=INITIALIZING PIXONUI...');
+    if (await loader.isVisible().catch(() => false)) {
+      await loader.waitFor({ state: 'detached', timeout: 10000 });
+    }
+
+    const card = page.getByTestId('parallax-card');
+    let initialOpacity = 0;
+    let becameVisible = false;
+    for (let i = 0; i < 24; i += 1) {
+      await page.mouse.wheel(0, 220);
+      await page.waitForTimeout(70);
+      initialOpacity = await card.evaluate((el) => Number.parseFloat(getComputedStyle(el).opacity || '0'));
+      if (initialOpacity > 0.9) {
+        becameVisible = true;
+        break;
+      }
+    }
+    expect(becameVisible).toBe(true);
+    expect(initialOpacity).toBeGreaterThan(0.9);
+
+    const minOpacityDuringCycles = await page.evaluate(async () => {
+      const node = document.querySelector('[data-testid="parallax-card"]') as HTMLElement | null;
+      if (!node) return 0;
+      let minOpacity = Number.POSITIVE_INFINITY;
+      const sample = () => {
+        const v = Number.parseFloat(getComputedStyle(node).opacity || '0');
+        if (Number.isFinite(v)) minOpacity = Math.min(minOpacity, v);
+      };
+
+      for (let i = 0; i < 8; i += 1) {
+        window.scrollBy({ top: i % 2 === 0 ? 380 : -300, left: 0, behavior: 'auto' });
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        sample();
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        sample();
+      }
+
+      sample();
+      return Number.isFinite(minOpacity) ? minOpacity : 0;
+    });
+
+    const finalOpacity = await card.evaluate((el) => Number.parseFloat(getComputedStyle(el).opacity || '0'));
+    expect(minOpacityDuringCycles).toBeGreaterThan(0.85);
+    expect(finalOpacity).toBeGreaterThan(0.9);
+  });
 });

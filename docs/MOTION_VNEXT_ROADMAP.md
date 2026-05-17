@@ -21,6 +21,9 @@ Make `motion.*` the simplest path for production-grade animation with:
 - **P4 completed**:
   - paridade de `dragConstraints={RefObject}` aplicada também nos componentes legados `Drag` e `ReorderItem`.
   - cobertura unitária para resolver de constraints por ref e integração básica de drag clamp.
+- **P5 completed**:
+  - hardening de `whileInView` com deduplicação de estado de interseção para evitar re-trigger redundante/flicker.
+  - gate único de produção para motion (`pnpm test:motion:production`) com build + E2E + budget de bundle.
 
 ## P0 — Contract and Stability
 ### 1) Time unit unification (breaking)
@@ -59,6 +62,14 @@ Make `motion.*` the simplest path for production-grade animation with:
 ## P4 — Legacy Interaction Parity
 - `Drag` e `ReorderItem` aceitam `dragConstraints` por objeto numérico ou `RefObject`.
 - Resolução de bounds baseada em rect do container e do item no início do gesto.
+
+## P5 — Production Hardening
+- Guard anti-flicker para fluxos `whileInView` (`trigger` somente em transição real de in-view state).
+- Script de gate de release motion com:
+  - testes unit/integration críticos,
+  - build `@pixonui/react` e `@pixonui/preview`,
+  - E2E motion em Chromium,
+  - budget de `packages/ui/dist/index.mjs` (raw/gzip/brotli).
 
 ## Migration Checklist (vNext)
 1. Replace second-based numbers with `ms` in transitions/presets.

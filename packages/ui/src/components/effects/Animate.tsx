@@ -160,6 +160,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   const layoutTriggeredRef = useRef(false);
   const lastTargetKey = useRef<string>('');
   const hasInViewTriggered = useRef(false);
+  const inViewStateRef = useRef<boolean | null>(null);
   const styleCleanupRef = useRef<null | (() => void)>(null);
   const inheritedIndexRef = useRef<number | null>(null);
   const localChildCounterRef = useRef(0);
@@ -810,7 +811,11 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   useEffect(() => {
     if (!resolvedWhileInView || !internalRef.current || hasInViewTriggered.current) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry?.isIntersecting) {
+      const isInView = !!entry?.isIntersecting;
+      if (inViewStateRef.current === isInView) return;
+      inViewStateRef.current = isInView;
+
+      if (isInView) {
         trigger(resolve(resolvedWhileInView), 'whileInView');
         if (resolvedViewport?.once) {
           hasInViewTriggered.current = true;
@@ -826,7 +831,10 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     });
 
     observer.observe(internalRef.current);
-    return () => observer.disconnect();
+    return () => {
+      inViewStateRef.current = null;
+      observer.disconnect();
+    };
   }, [resolvedWhileInView, resolvedViewport, trigger, resolvedInitial, vCtx?.initial]);
 
   // Exit Animation
