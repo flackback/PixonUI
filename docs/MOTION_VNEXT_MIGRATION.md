@@ -41,6 +41,9 @@ const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
   - `dragConstraints={{ left, right, top, bottom }}`
   - `dragConstraints={boundsRef}`
 - A variante por `RefObject` calcula limites no `pointerdown` e compõe no canal `drag` (`--px-*-d`) sem conflito com base/hover/scroll.
+- Paridade aplicada também nos componentes legados:
+  - `Drag` (`components/interactions/Drag.tsx`)
+  - `ReorderItem` (`components/interactions/Reorder.tsx`)
 
 ## 4) Timeline vNext (API curta)
 

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useRef, useLayoutEffect, useEffect } 
 import { Motion } from '../feedback/Motion';
 import { useDrag } from '../../hooks/useDrag';
 import { cn } from '../../utils/cn';
+import { DragConstraintInput, resolveDragConstraintBounds } from './dragConstraints';
 
 interface ReorderContextValue {
   axis: 'x' | 'y';
@@ -49,7 +50,7 @@ export interface ReorderItemProps {
   value: any;
   className?: string;
   children: React.ReactNode;
-  dragConstraints?: { top?: number; bottom?: number; left?: number; right?: number };
+  dragConstraints?: DragConstraintInput;
 }
 
 export function ReorderItem({ value, className, children, dragConstraints }: ReorderItemProps) {
@@ -58,6 +59,7 @@ export function ReorderItem({ value, className, children, dragConstraints }: Reo
 
   const ref = useRef<HTMLDivElement>(null);
   const layoutRect = useRef<DOMRect | null>(null);
+  const runtimeConstraintsRef = useRef<DragConstraintInput | null>(null);
 
   // Read DOM siblings to find current index and collisions
   const getSiblings = () => Array.from(ref.current?.parentElement?.children || []) as HTMLElement[];
@@ -68,18 +70,23 @@ export function ReorderItem({ value, className, children, dragConstraints }: Reo
     if (context.axis === 'y') x = 0;
     if (context.axis === 'x') y = 0;
     
-    if (dragConstraints) {
-      if (dragConstraints.top !== undefined && y < dragConstraints.top) y = dragConstraints.top;
-      if (dragConstraints.bottom !== undefined && y > dragConstraints.bottom) y = dragConstraints.bottom;
-      if (dragConstraints.left !== undefined && x < dragConstraints.left) x = dragConstraints.left;
-      if (dragConstraints.right !== undefined && x > dragConstraints.right) x = dragConstraints.right;
+    const bounds = resolveDragConstraintBounds(runtimeConstraintsRef.current ?? dragConstraints, ref.current, x, y);
+    if (bounds) {
+      if (bounds.top !== undefined && y < bounds.top) y = bounds.top;
+      if (bounds.bottom !== undefined && y > bounds.bottom) y = bounds.bottom;
+      if (bounds.left !== undefined && x < bounds.left) x = bounds.left;
+      if (bounds.right !== undefined && x > bounds.right) x = bounds.right;
     }
     return { x, y };
   };
 
   const { isDragging, offset, setOffset, dragProps } = useDrag(
     (state) => {
-      if (!ref.current || !state.isDragging) return;
+      if (!state.isDragging) {
+        runtimeConstraintsRef.current = null;
+        return;
+      }
+      if (!ref.current) return;
       
       const rect = ref.current.getBoundingClientRect();
       const currentY = rect.top + state.offset.y + rect.height / 2;
@@ -117,7 +124,7 @@ export function ReorderItem({ value, className, children, dragConstraints }: Reo
     { inertia: false }
   );
 
-  const { style: dragStyle, ...restDragProps } = dragProps;
+  const { style: dragStyle, onMouseDown, onTouchStart, ...restDragProps } = dragProps;
 
   // Compensate for DOM layout shifts during drag
   useLayoutEffect(() => {
@@ -146,6 +153,14 @@ export function ReorderItem({ value, className, children, dragConstraints }: Reo
         zIndex: isDragging ? 50 : 1,
         willChange: isDragging ? 'transform' : 'auto',
         ...dragStyle,
+      }}
+      onMouseDown={(event: React.MouseEvent<HTMLDivElement>) => {
+        runtimeConstraintsRef.current = resolveDragConstraintBounds(dragConstraints, ref.current, offset.x, offset.y);
+        onMouseDown?.(event as any);
+      }}
+      onTouchStart={(event: React.TouchEvent<HTMLDivElement>) => {
+        runtimeConstraintsRef.current = resolveDragConstraintBounds(dragConstraints, ref.current, offset.x, offset.y);
+        onTouchStart?.(event as any);
       }}
       {...restDragProps}
     >

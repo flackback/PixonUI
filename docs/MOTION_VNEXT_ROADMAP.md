@@ -18,6 +18,9 @@ Make `motion.*` the simplest path for production-grade animation with:
   - preset unificado `scrollTimelinePreset` (timeline + scrub) para reduzir boilerplate em scroll-driven scenes.
   - demo dedicado na galeria usando `scrollTimelinePreset` + `useTimelineScope`.
   - E2E dedicado de container parallax + ref drag constraints em Firefox/WebKit.
+- **P4 completed**:
+  - paridade de `dragConstraints={RefObject}` aplicada também nos componentes legados `Drag` e `ReorderItem`.
+  - cobertura unitária para resolver de constraints por ref e integração básica de drag clamp.
 
 ## P0 — Contract and Stability
 ### 1) Time unit unification (breaking)
@@ -52,6 +55,10 @@ Make `motion.*` the simplest path for production-grade animation with:
 ## P3 — Scroll Timeline DX
 - `scrollTimelinePreset(name, options)` para entregar `timeline + scrub` no mesmo contrato.
 - Cobertura E2E cross-engine (Firefox/WebKit) para interações de container scroll + drag constraints por ref.
+
+## P4 — Legacy Interaction Parity
+- `Drag` e `ReorderItem` aceitam `dragConstraints` por objeto numérico ou `RefObject`.
+- Resolução de bounds baseada em rect do container e do item no início do gesto.
 
 ## Migration Checklist (vNext)
 1. Replace second-based numbers with `ms` in transitions/presets.

@@ -1,13 +1,14 @@
-import React, { forwardRef } from 'react';
-import { useDrag, DragOptions, DragState } from '../../hooks/useDrag';
+import React, { forwardRef, useCallback, useRef } from 'react';
+import { useDrag, DragState } from '../../hooks/useDrag';
 import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
+import { DragConstraintInput, resolveDragConstraintBounds } from './dragConstraints';
 
 export interface DragProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd'> {
   children: React.ReactNode;
   asChild?: boolean;
   drag?: boolean | 'x' | 'y';
-  dragConstraints?: { top?: number; bottom?: number; left?: number; right?: number };
+  dragConstraints?: DragConstraintInput;
   dragElastic?: number;
   dragInertia?: boolean;
   onDragStart?: () => void;
@@ -29,24 +30,34 @@ export const Drag = forwardRef<HTMLDivElement, DragProps>(({
   style,
   ...props
 }, ref) => {
+  const nodeRef = useRef<HTMLElement | null>(null);
+  const runtimeConstraintsRef = useRef<DragConstraintInput | null>(null);
+
+  const setRefs = useCallback((node: HTMLElement | null) => {
+    nodeRef.current = node;
+    if (typeof ref === 'function') ref(node as any);
+    else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node as HTMLDivElement | null;
+  }, [ref]);
+
   const constrain = (offset: { x: number; y: number }) => {
     let { x, y } = offset;
 
     if (drag === 'y') x = 0;
     if (drag === 'x') y = 0;
 
-    if (dragConstraints) {
-      if (dragConstraints.left !== undefined && x < dragConstraints.left) {
-        x = dragConstraints.left + (x - dragConstraints.left) * dragElastic;
+    const bounds = resolveDragConstraintBounds(runtimeConstraintsRef.current ?? dragConstraints, nodeRef.current, x, y);
+    if (bounds) {
+      if (bounds.left !== undefined && x < bounds.left) {
+        x = bounds.left + (x - bounds.left) * dragElastic;
       }
-      if (dragConstraints.right !== undefined && x > dragConstraints.right) {
-        x = dragConstraints.right + (x - dragConstraints.right) * dragElastic;
+      if (bounds.right !== undefined && x > bounds.right) {
+        x = bounds.right + (x - bounds.right) * dragElastic;
       }
-      if (dragConstraints.top !== undefined && y < dragConstraints.top) {
-        y = dragConstraints.top + (y - dragConstraints.top) * dragElastic;
+      if (bounds.top !== undefined && y < bounds.top) {
+        y = bounds.top + (y - bounds.top) * dragElastic;
       }
-      if (dragConstraints.bottom !== undefined && y > dragConstraints.bottom) {
-        y = dragConstraints.bottom + (y - dragConstraints.bottom) * dragElastic;
+      if (bounds.bottom !== undefined && y > bounds.bottom) {
+        y = bounds.bottom + (y - bounds.bottom) * dragElastic;
       }
     }
 
@@ -58,32 +69,38 @@ export const Drag = forwardRef<HTMLDivElement, DragProps>(({
     if (!state.isDragging && onDragEnd) {
       onDragEnd(state);
     }
+    if (!state.isDragging) {
+      runtimeConstraintsRef.current = null;
+    }
   };
 
   const { dragProps, offset, isDragging } = useDrag(handleDrag, constrain, {
     inertia: dragInertia
   });
+  const { style: dragInlineStyle, onMouseDown: dragMouseDown, onTouchStart: dragTouchStart, ...dragRestProps } = dragProps;
 
   const Comp = asChild ? Slot : 'div';
 
   const mergedProps = drag ? {
     ...props,
-    ...dragProps,
+    ...dragRestProps,
     onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+      runtimeConstraintsRef.current = resolveDragConstraintBounds(dragConstraints, nodeRef.current, offset.x, offset.y);
       if (onDragStart) onDragStart();
-      dragProps.onMouseDown(e as any);
+      dragMouseDown?.(e as any);
       if (props.onMouseDown) props.onMouseDown(e);
     },
     onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => {
+      runtimeConstraintsRef.current = resolveDragConstraintBounds(dragConstraints, nodeRef.current, offset.x, offset.y);
       if (onDragStart) onDragStart();
-      dragProps.onTouchStart(e as any);
+      dragTouchStart?.(e as any);
       if (props.onTouchStart) props.onTouchStart(e);
     }
   } : props;
 
   return (
     <Comp
-      ref={ref}
+      ref={setRefs as any}
       className={cn(className)}
       style={{
         ...style,
@@ -91,7 +108,7 @@ export const Drag = forwardRef<HTMLDivElement, DragProps>(({
           transform: `translate3d(${offset.x}px, ${offset.y}px, 0)`,
           willChange: isDragging ? 'transform' : 'auto',
           zIndex: isDragging ? 50 : undefined,
-          ...dragProps.style,
+          ...dragInlineStyle,
         } : {})
       }}
       {...mergedProps}
