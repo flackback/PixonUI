@@ -311,6 +311,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
                 <motion.div
                   key={item.label}
                   data-testid={`metric-card-${index}`}
+                  initial={{ opacity: 1, y: 0, scale: 1 }}
                   revealOnScroll={{ delay: index * 80, amount: 0.35, distance: 32, scale: 0.96 }}
                   transition={{ type: 'spring', stiffness: 140, damping: 18 }}
                 >
@@ -346,6 +347,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
                   <motion.div
                     key={feature.title}
                     data-testid={`feature-card-${index}`}
+                    initial={{ opacity: 1, y: 0, scale: 1 }}
                     revealOnScroll={{ delay: index * 100, amount: 0.28, distance: 36, scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 130, damping: 18 }}
                   >
@@ -377,6 +379,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
             <Grid className="gap-6 md:grid-cols-2">
               <motion.div
                 data-testid="scroll-scene-card"
+                initial={{ opacity: 1, y: 0, scale: 1 }}
                 revealOnScroll={{ amount: 0.25, distance: 48, scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 120, damping: 18 }}
               >
@@ -403,6 +406,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
 
               <motion.div
                 data-testid="parallax-card"
+                initial={{ opacity: 1, y: 0, scale: 1 }}
                 revealOnScroll={{ delay: 80, amount: 0.25, distance: 48, scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 120, damping: 18 }}
               >
