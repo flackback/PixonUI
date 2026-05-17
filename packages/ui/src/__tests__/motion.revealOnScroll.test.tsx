@@ -49,6 +49,19 @@ describe('motion revealOnScroll preset', () => {
     expect(node.getAttribute('revealonscroll')).toBeNull();
   });
 
+  it('accepts DOM refs in motion config without circular JSON crashes', () => {
+    const container = document.createElement('div');
+
+    expect(() => render(
+      <motion.div
+        data-testid="parallax-node"
+        parallax={{ source: 'container', container: { current: container } }}
+      >
+        Parallax
+      </motion.div>
+    )).not.toThrow();
+  });
+
   it('keeps reveal spring as a single batched animation', async () => {
     render(
       <motion.div

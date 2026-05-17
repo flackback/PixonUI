@@ -89,6 +89,31 @@ function stripTransformishStyle(style?: React.CSSProperties | undefined) {
   return out as React.CSSProperties;
 }
 
+function stableMotionKey(value: unknown): string {
+  const seen = new WeakSet<object>();
+
+  try {
+    return JSON.stringify(value ?? null, (_key, entry) => {
+      if (typeof entry === 'function') return `[function:${entry.name || 'anonymous'}]`;
+      if (typeof entry === 'symbol') return entry.toString();
+
+      if (entry && typeof entry === 'object') {
+        const ElementCtor = typeof Element === 'undefined' ? null : Element;
+        if (ElementCtor && entry instanceof ElementCtor) {
+          return `[element:${entry.tagName.toLowerCase()}]`;
+        }
+
+        if (seen.has(entry)) return '[circular]';
+        seen.add(entry);
+      }
+
+      return entry;
+    }) ?? 'null';
+  } catch {
+    return String(value);
+  }
+}
+
 function isDragConstraintRef(
   value: AnimateOwnProps['dragConstraints']
 ): value is React.RefObject<HTMLElement | null> {
@@ -194,19 +219,19 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     prevAnimateRef.current = contextAnimate;
   }
 
-  const revealCfgKey = useMemo(() => JSON.stringify(revealOnScroll ?? null), [revealOnScroll]);
+  const revealCfgKey = useMemo(() => stableMotionKey(revealOnScroll), [revealOnScroll]);
   const revealCfg = useMemo(() => {
     if (!revealOnScroll) return null;
     return createRevealOnScrollPreset(typeof revealOnScroll === 'object' ? revealOnScroll : {});
   }, [revealCfgKey]);
 
-  const staggerPresetKey = useMemo(() => JSON.stringify(staggerChildren ?? null), [staggerChildren]);
+  const staggerPresetKey = useMemo(() => stableMotionKey(staggerChildren), [staggerChildren]);
   const staggerPreset = useMemo(() => {
     if (!staggerChildren) return null;
     return createStaggerChildrenPreset(typeof staggerChildren === 'object' ? staggerChildren : {});
   }, [staggerPresetKey]);
 
-  const parallaxCfgKey = useMemo(() => JSON.stringify(parallax ?? null), [parallax]);
+  const parallaxCfgKey = useMemo(() => stableMotionKey(parallax), [parallax]);
   const parallaxCfg = useMemo(() => {
     if (!parallax) return null;
     return createParallaxPreset(typeof parallax === 'object' ? parallax : {});
@@ -273,8 +298,8 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   }, [transition, revealCfg, staggerPreset]);
 
   // V4.7 Supreme: Prop & Callback Stabilization
-  const stableTransition = useMemo(() => JSON.stringify(resolvedTransition), [resolvedTransition]);
-  const stableTarget = useMemo(() => JSON.stringify(targetAnimate), [targetAnimate]);
+  const stableTransition = useMemo(() => stableMotionKey(resolvedTransition), [resolvedTransition]);
+  const stableTarget = useMemo(() => stableMotionKey(targetAnimate), [targetAnimate]);
   const latestProps = useRef({ onAnimationComplete, variants, transition });
   latestProps.current = { onAnimationComplete, variants, transition: resolvedTransition };
 
@@ -319,7 +344,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
         : resolved;
     if (!target || (typeof target === 'object' && Object.keys(target).length === 0)) return null;
 
-    const targetKey = (typeof target === 'string' ? target : (target._variantName || JSON.stringify(target))) + label;
+    const targetKey = (typeof target === 'string' ? target : (target._variantName || stableMotionKey(target))) + label;
     
     // V4.7 Supreme Gate: Intelligent Filtering
     const isInteractive = ['whileHover', 'whileTap', 'whileInView'].includes(label);
