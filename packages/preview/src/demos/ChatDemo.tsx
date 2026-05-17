@@ -101,44 +101,102 @@ export function ChatDemo() {
   const activeUser = USERS[activeId] || USERS['1']!;
 
   return (
-    <ChatLayout className="h-[700px]">
-      <ChatSidebar 
-        conversations={conversations} 
-        activeId={activeId} 
-        onSelect={handleSelectChat}
-        isLoading={isLoadingChats}
-        className="hidden md:flex"
-      />
-      
-      <div className="flex-1 flex flex-col min-w-0 bg-white/50 dark:bg-black/20">
-        <ChatHeader 
-          user={activeUser} 
-          onInfo={() => setShowProfile(!showProfile)}
+    <div className="space-y-6">
+      <ChatLayout className="h-[700px]">
+        <ChatSidebar 
+          conversations={conversations} 
+          activeId={activeId} 
+          onSelect={handleSelectChat}
+          isLoading={isLoadingChats}
+          className="hidden md:flex"
         />
         
-        <MessageList 
-          messages={messages} 
-          currentUserId={CURRENT_USER_ID} 
-          isLoading={isLoadingMessages}
-          onReply={handleReply}
-          onReact={handleReact}
-          onDelete={(id) => console.log('Delete:', id)}
-        />
-        
-        <ChatInput 
-          onSend={handleSend} 
-          onAttach={() => console.log('Attach')} 
-          users={Object.values(USERS)}
-        />
-      </div>
+        <div className="flex-1 flex flex-col min-w-0 bg-white/50 dark:bg-black/20">
+          <ChatHeader 
+            user={activeUser} 
+            onInfo={() => setShowProfile(!showProfile)}
+          />
+          
+          <MessageList 
+            messages={messages} 
+            currentUserId={CURRENT_USER_ID} 
+            isLoading={isLoadingMessages}
+            onReply={handleReply}
+            onReact={handleReact}
+            onDelete={(id) => console.log('Delete:', id)}
+          />
+          
+          <ChatInput 
+            onSend={handleSend} 
+            onAttach={() => console.log('Attach')} 
+            users={Object.values(USERS)}
+          />
+        </div>
 
-      {showProfile && (
-        <ChatProfile 
-          user={activeUser} 
-          onClose={() => setShowProfile(false)} 
-          className="hidden lg:flex"
-        />
-      )}
-    </ChatLayout>
+        {showProfile && (
+          <ChatProfile 
+            user={activeUser} 
+            onClose={() => setShowProfile(false)} 
+            className="hidden lg:flex"
+          />
+        )}
+      </ChatLayout>
+
+      <div className="rounded-3xl border border-white/10 bg-zinc-950/70 p-6 text-sm text-zinc-300">
+        <h3 className="text-xl font-black text-white">Chat API de produção</h3>
+        <p className="mt-2 text-zinc-400">
+          O Pixon mantém a UI simples e delega busca/filtros pesados ao backend, no mesmo modelo eficiente do Chatwoot.
+        </p>
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100"><code>{`const chat = useChatController({
+  chatId,
+  currentUserId,
+  adapter: {
+    fetchMessages,
+    searchMessages,
+    filterConversations,
+    sendMessage,
+    subscribe,
+  },
+});
+
+<MessageList messages={chat.messages} virtualized />
+<ChatInput onSend={chat.sendMessage} />`}</code></pre>
+          <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100"><code>{`const search = useChatSearchController({
+  chatId,
+  adapter,
+  filters: {
+    combinator: 'and',
+    rules: [
+      { field: 'senderId', operator: 'eq', value: 'user-1' },
+      { field: 'timestamp', operator: 'between', value: [from, to] },
+    ],
+  },
+});
+
+<MessageSearch
+  onSearch={search.setQuery}
+  results={search.results}
+  isLoading={search.isSearching}
+  hasMore={search.hasMore}
+  onLoadMore={search.loadMore}
+/>`}</code></pre>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 p-4">
+            <strong className="text-white">Hooks</strong>
+            <p className="mt-2 text-zinc-400">useChatController, useChatSearchController, useConversationFilters, useChatDrafts.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 p-4">
+            <strong className="text-white">Props</strong>
+            <p className="mt-2 text-zinc-400">MessageList virtualized, itemHeight, onLoadMore, hasMore; MessageSearch isLoading, hasMore, onLoadMore.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 p-4">
+            <strong className="text-white">Helpers</strong>
+            <p className="mt-2 text-zinc-400">buildOptimisticMessage, upsertMessages, groupMessagesByDate, preserveScrollAnchor, sortMessages.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

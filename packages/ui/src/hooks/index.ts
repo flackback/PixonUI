@@ -56,6 +56,8 @@ export * from './useNetworkStatus';
 export * from './useFocusTrap';
 export * from './useChatDrafts';
 export * from './useChatController';
+export * from './useChatSearchController';
+export * from './useConversationFilters';
 export * from './useVoiceToText';
 export * from './useVirtualScrollRestoration';
 export { usePixonScroll, type UseScrollOptions } from './usePixonScroll';

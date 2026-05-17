@@ -8,6 +8,9 @@ interface MessageSearchProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 
   results: Message[];
   onResultClick: (message: Message) => void;
   onClose: () => void;
+  isLoading?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export function MessageSearch({ 
@@ -15,6 +18,9 @@ export function MessageSearch({
   results, 
   onResultClick, 
   onClose, 
+  isLoading = false,
+  hasMore = false,
+  onLoadMore,
   className, 
   ...props 
 }: MessageSearchProps) {
@@ -56,7 +62,7 @@ export function MessageSearch({
       </div>
 
       <div className="flex-1 overflow-y-auto p-2">
-        {query && results.length === 0 ? (
+        {query && results.length === 0 && !isLoading ? (
           <div className="p-8 text-center text-gray-500 dark:text-white/30">
             <p className="text-sm">No messages found for "{query}"</p>
           </div>
@@ -81,6 +87,17 @@ export function MessageSearch({
                 </p>
               </button>
             ))}
+            {isLoading && (
+              <div className="p-4 text-center text-xs text-gray-500 dark:text-white/40">Searching...</div>
+            )}
+            {hasMore && !isLoading && (
+              <button
+                onClick={onLoadMore}
+                className="w-full rounded-xl px-3 py-2 text-xs font-bold text-blue-500 hover:bg-blue-500/10"
+              >
+                Load more results
+              </button>
+            )}
           </div>
         )}
       </div>
