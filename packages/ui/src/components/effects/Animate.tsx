@@ -28,6 +28,13 @@ type AnimateOwnProps<T extends React.ElementType = 'div'> = {
   layoutId?: string; layout?: boolean | 'position' | 'size'; custom?: any;
   variants?: Record<string, any>; initial?: Target; animate?: Target; exit?: Target;
   whileHover?: Target; whileTap?: Target; whileInView?: Target;
+  drag?: boolean | 'x' | 'y';
+  dragConstraints?: { top?: number; right?: number; bottom?: number; left?: number };
+  dragElastic?: number;
+  dragMomentum?: boolean;
+  onDragStart?: (offset: { x: number; y: number }) => void;
+  onDrag?: (state: { x: number; y: number; velocityX: number; velocityY: number; isDragging: boolean }) => void;
+  onDragEnd?: (state: { x: number; y: number; velocityX: number; velocityY: number; isDragging: boolean }) => void;
   revealOnScroll?: boolean | RevealOnScrollOptions;
   parallax?: boolean | ParallaxOptions;
   staggerChildren?: boolean | StaggerChildrenOptions;
@@ -36,6 +43,23 @@ type AnimateOwnProps<T extends React.ElementType = 'div'> = {
   children?: React.ReactNode; style?: Record<string, any>; className?: string;
   id?: string;
   staggerIdx?: number;
+};
+
+type DragMotionState = {
+  active: boolean;
+  pointerId: number | null;
+  originPointerX: number;
+  originPointerY: number;
+  originOffsetX: number;
+  originOffsetY: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  lastX: number;
+  lastY: number;
+  lastTs: number;
+  raf: number | null;
 };
 
 export type AnimateProps<T extends React.ElementType = 'div'> =
@@ -109,10 +133,10 @@ function requestLayoutProcess() {
  */
 /**
  * @deprecated Use `motion.*` (ex: `motion.div`) as the primary API.
- * This wrapper will be removed after the next major release.
+ * Planned removal date: after 2026-09-30.
  */
 export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'>(
-  { as, children, initial, animate: targetAnimate, exit, variants, transition, whileHover, whileTap, whileInView, revealOnScroll, parallax, staggerChildren, viewport, layout, layoutId, onAnimationComplete, staggerIdx: propStaggerIdx, ...props }: AnimateProps<T> & { staggerIdx?: number },
+  { as, children, initial, animate: targetAnimate, exit, variants, transition, whileHover, whileTap, whileInView, drag, dragConstraints, dragElastic = 0.5, dragMomentum = true, onDragStart, onDrag, onDragEnd, revealOnScroll, parallax, staggerChildren, viewport, layout, layoutId, onAnimationComplete, staggerIdx: propStaggerIdx, ...props }: AnimateProps<T> & { staggerIdx?: number },
   externalRef: React.ForwardedRef<any>
 ) => {
   const Component = (as || 'div') as any;
@@ -132,6 +156,22 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   const inheritedIndexRef = useRef<number | null>(null);
   const localChildCounterRef = useRef(0);
   const prevAnimateRef = useRef<any>(targetAnimate || vCtx?.animate);
+  const dragStateRef = useRef<DragMotionState>({
+    active: false,
+    pointerId: null,
+    originPointerX: 0,
+    originPointerY: 0,
+    originOffsetX: 0,
+    originOffsetY: 0,
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    lastX: 0,
+    lastY: 0,
+    lastTs: 0,
+    raf: null,
+  });
 
   if (inheritedIndexRef.current === null) {
     inheritedIndexRef.current = vCtx?.registerChild ? vCtx.registerChild() : 0;
@@ -161,7 +201,8 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     return createParallaxPreset(typeof parallax === 'object' ? parallax : {});
   }, [parallaxCfgKey]);
 
-  const { scrollXProgress, scrollYProgress } = useScroll({ enabled: !!parallaxCfg });
+  const parallaxContainerRef = parallaxCfg?.source === 'container' ? parallaxCfg.container : undefined;
+  const { scrollXProgress, scrollYProgress } = useScroll({ enabled: !!parallaxCfg, container: parallaxContainerRef });
   const parallaxRange = useMemo<[number, number]>(() => {
     if (!parallaxCfg) return [0, 0];
     return [parallaxCfg.range[0], parallaxCfg.range[1]];
@@ -179,13 +220,6 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     if (!parallaxCfg) return null;
     return parallaxCfg.axis === 'x' ? ({ x: parallaxMv } as const) : ({ y: parallaxMv } as const);
   }, [parallaxCfg, parallaxMv]);
-
-  useEffect(() => {
-    if (!parallaxCfg) return;
-    if (parallaxCfg.source === 'container') {
-      console.warn('[Pixon Motion] `parallax.source: "container"` currently falls back to page scroll in `motion.*`.');
-    }
-  }, [parallaxCfg]);
 
   const resolvedInitial = useMemo<Target | undefined>(() => {
     if (initial !== undefined) return initial;
@@ -327,12 +361,14 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const wantsAdditive = label === 'whileHover' || label === 'whileTap';
     const channel: PixonAnimateOptions['channel'] =
       label === 'layout' ? 'layout' : wantsAdditive ? 'gesture' : 'base';
+    const hasOpacityTarget = targetProps.some((prop) => prop === 'opacity');
     
     // V4.7 Supreme: Intelligent Property Batching
     // Only split if properties have explicit individual transitions
     const sharedTransition = typeof effectiveTransition === 'object' && Object.keys(effectiveTransition).every(k => !targetProps.includes(k));
+    const forcePerPropertyForOpacity = effectiveTransition?.type === 'spring' && hasOpacityTarget;
     
-    if (sharedTransition) {
+    if (sharedTransition && !forcePerPropertyForOpacity) {
       const stag = resolveStaggerMs(effectiveTransition);
       const opts: PixonAnimateOptions = {
         duration: normalizeTimeMs(effectiveTransition?.duration ?? 400, 400, { prop: 'duration', source: 'motion.transition' }),
@@ -364,12 +400,13 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const triggerProperty = (prop: string, val: any) => {
       const propTrans = (effectiveTransition as any)?.[prop] || effectiveTransition;
       const stag = resolveStaggerMs(propTrans);
+      const useSpring = propTrans?.type === 'spring' && prop !== 'opacity';
       
       const opts: PixonAnimateOptions = {
         duration: normalizeTimeMs(propTrans?.duration ?? 400, 400, { prop: `${prop}.duration`, source: 'motion.transition' }),
         delay: resolveDelayMs(propTrans?.delay, `${prop}.delay`) + stag,
         easing: propTrans?.easing || effectiveTransition?.easing || 'elite-out',
-        spring: propTrans?.type === 'spring'
+        spring: useSpring
           ? { stiffness: propTrans.stiffness, damping: propTrans.damping, mass: propTrans.mass, velocity: (propTrans as any).velocity }
           : undefined,
         iterations: propTrans?.repeat === Infinity ? Infinity : (propTrans?.repeat || 1),
@@ -421,6 +458,48 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
   // Initial styles: avoid passing transform shorthands to React `style`.
   const initialStyles = useMemo(() => stripTransformishStyle(props.style as any), [props.style]);
+
+  const resolveDragOffset = useCallback((offsetX: number, offsetY: number, withElastic: boolean) => {
+    let x = offsetX;
+    let y = offsetY;
+
+    if (drag === 'x') y = 0;
+    if (drag === 'y') x = 0;
+
+    const elastic = Math.max(0, Math.min(1, dragElastic));
+    if (dragConstraints) {
+      if (dragConstraints.left !== undefined && x < dragConstraints.left) {
+        x = withElastic
+          ? dragConstraints.left + (x - dragConstraints.left) * elastic
+          : dragConstraints.left;
+      }
+      if (dragConstraints.right !== undefined && x > dragConstraints.right) {
+        x = withElastic
+          ? dragConstraints.right + (x - dragConstraints.right) * elastic
+          : dragConstraints.right;
+      }
+      if (dragConstraints.top !== undefined && y < dragConstraints.top) {
+        y = withElastic
+          ? dragConstraints.top + (y - dragConstraints.top) * elastic
+          : dragConstraints.top;
+      }
+      if (dragConstraints.bottom !== undefined && y > dragConstraints.bottom) {
+        y = withElastic
+          ? dragConstraints.bottom + (y - dragConstraints.bottom) * elastic
+          : dragConstraints.bottom;
+      }
+    }
+
+    return { x, y };
+  }, [drag, dragConstraints, dragElastic]);
+
+  const writeDragOffset = useCallback((nextX: number, nextY: number) => {
+    const el = internalRef.current as HTMLElement | null;
+    if (!el) return;
+    el.classList.add('px-transform');
+    el.style.setProperty('--px-xd', `${nextX}px`);
+    el.style.setProperty('--px-yd', `${nextY}px`);
+  }, []);
 
   // Apply transform-channel styles (MotionValues + shorthands) without React re-renders.
   useIsomorphicLayoutEffect(() => {
@@ -533,6 +612,169 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       window.removeEventListener('mouseup', onUp);
     };
   }, [whileHover, whileTap, trigger, resolve, targetAnimate, vCtx?.animate, resolvedInitial, vCtx?.initial]);
+
+  // Drag / inertia primitive (channel: drag).
+  useEffect(() => {
+    const el = internalRef.current as HTMLElement | null;
+    if (!el || !drag) return;
+
+    const state = dragStateRef.current;
+    const momentum = dragMomentum;
+    const bounce = 0.35;
+    const friction = 0.92;
+
+    const stopInertia = () => {
+      if (state.raf !== null) {
+        cancelAnimationFrame(state.raf);
+        state.raf = null;
+      }
+    };
+
+    const emit = (isDragging: boolean) => {
+      onDrag?.({
+        x: state.x,
+        y: state.y,
+        velocityX: state.vx,
+        velocityY: state.vy,
+        isDragging,
+      });
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      stopInertia();
+      state.active = true;
+      state.pointerId = event.pointerId;
+      state.originPointerX = event.clientX;
+      state.originPointerY = event.clientY;
+      state.originOffsetX = state.x;
+      state.originOffsetY = state.y;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      state.lastTs = performance.now();
+      state.vx = 0;
+      state.vy = 0;
+      activeInteractionRef.current = 'drag';
+      el.style.cursor = 'grabbing';
+      el.style.willChange = 'transform';
+      try { el.setPointerCapture(event.pointerId); } catch {}
+      onDragStart?.({ x: state.x, y: state.y });
+      emit(true);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!state.active || state.pointerId !== event.pointerId) return;
+      const now = performance.now();
+      const dt = Math.max(1, now - state.lastTs);
+
+      const desiredX = state.originOffsetX + (event.clientX - state.originPointerX);
+      const desiredY = state.originOffsetY + (event.clientY - state.originPointerY);
+      const constrained = resolveDragOffset(desiredX, desiredY, true);
+
+      state.vx = (event.clientX - state.lastX) / dt;
+      state.vy = (event.clientY - state.lastY) / dt;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      state.lastTs = now;
+      state.x = constrained.x;
+      state.y = constrained.y;
+      writeDragOffset(state.x, state.y);
+      emit(true);
+    };
+
+    const release = () => {
+      state.active = false;
+      state.pointerId = null;
+      activeInteractionRef.current = null;
+      el.style.cursor = 'grab';
+
+      const runInertia = momentum && (Math.abs(state.vx) > 0.05 || Math.abs(state.vy) > 0.05);
+      if (!runInertia) {
+        onDragEnd?.({
+          x: state.x,
+          y: state.y,
+          velocityX: state.vx,
+          velocityY: state.vy,
+          isDragging: false,
+        });
+        return;
+      }
+
+      let lastFrame = performance.now();
+      const loop = () => {
+        const now = performance.now();
+        const dt = Math.min(32, Math.max(1, now - lastFrame));
+        lastFrame = now;
+
+        state.vx *= Math.pow(friction, dt / 16);
+        state.vy *= Math.pow(friction, dt / 16);
+
+        let nextX = state.x + state.vx * dt;
+        let nextY = state.y + state.vy * dt;
+        const constrained = resolveDragOffset(nextX, nextY, false);
+        if (constrained.x !== nextX) state.vx *= -bounce;
+        if (constrained.y !== nextY) state.vy *= -bounce;
+
+        state.x = constrained.x;
+        state.y = constrained.y;
+        writeDragOffset(state.x, state.y);
+        emit(false);
+
+        if (Math.abs(state.vx) <= 0.01 && Math.abs(state.vy) <= 0.01) {
+          state.raf = null;
+          el.style.willChange = '';
+          onDragEnd?.({
+            x: state.x,
+            y: state.y,
+            velocityX: state.vx,
+            velocityY: state.vy,
+            isDragging: false,
+          });
+          return;
+        }
+        state.raf = requestAnimationFrame(loop);
+      };
+
+      state.raf = requestAnimationFrame(loop);
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (!state.active || state.pointerId !== event.pointerId) return;
+      release();
+    };
+
+    const onPointerCancel = (event: PointerEvent) => {
+      if (!state.active || state.pointerId !== event.pointerId) return;
+      release();
+    };
+
+    el.style.cursor = 'grab';
+    el.style.touchAction = 'none';
+    writeDragOffset(state.x, state.y);
+    el.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerup', onPointerUp, { passive: true });
+    window.addEventListener('pointercancel', onPointerCancel, { passive: true });
+
+    return () => {
+      stopInertia();
+      el.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove as any);
+      window.removeEventListener('pointerup', onPointerUp as any);
+      window.removeEventListener('pointercancel', onPointerCancel as any);
+      el.style.willChange = '';
+      if (!props.style || !(props.style as any).cursor) {
+        el.style.cursor = '';
+      }
+      if (!props.style || !(props.style as any).touchAction) {
+        el.style.touchAction = '';
+      }
+      if (!drag) {
+        el.style.setProperty('--px-xd', '0px');
+        el.style.setProperty('--px-yd', '0px');
+      }
+    };
+  }, [drag, dragMomentum, onDragStart, onDrag, onDragEnd, resolveDragOffset, writeDragOffset, props.style]);
 
   // Interaction: InView (Lazy)
   useEffect(() => {

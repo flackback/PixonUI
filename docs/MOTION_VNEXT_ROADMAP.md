@@ -7,8 +7,13 @@ Make `motion.*` the simplest path for production-grade animation with:
 - stable presets for scroll/reveal/stagger
 
 ## Status
-- **P0 in progress**: time unification already applied in `motion.*`, timeline and `usePixonAnimate` runtime normalization.
+- **P0 completed**: time unification applied in `motion.*`, timeline and `usePixonAnimate` runtime normalization.
+- **P1 completed**: timeline labels/callbacks, composition and motion E2E gate active.
 - `usePixonScroll` already returns MotionValues (`useScroll` adapter), no `useState` loop per frame.
+- **P2 in progress**:
+  - drag/inertia primitive disponível em `motion.*` via `drag`, `dragConstraints`, `dragMomentum`.
+  - `parallax.source='container'` com `container` ref sem fallback silencioso para page.
+  - canal adicional `drag` nos transform channels (`--px-*-d`) para composição aditiva sem conflito.
 
 ## P0 — Contract and Stability
 ### 1) Time unit unification (breaking)

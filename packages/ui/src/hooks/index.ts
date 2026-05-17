@@ -57,4 +57,7 @@ export * from './useFocusTrap';
 export * from './useChatDrafts';
 export * from './useVoiceToText';
 export * from './useVirtualScrollRestoration';
-export * from './usePixonScroll';
+export { usePixonScroll, type UseScrollOptions } from './usePixonScroll';
+export * from './useTimelineScope';
+export * from './useTimelineScrub';
+export * from './useScrubOnScroll';

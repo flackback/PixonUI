@@ -45,7 +45,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run preview -w packages/preview -- --port 5173 --strictPort',
+    command: 'pnpm -C packages/preview exec vite preview --port 5173 --strictPort',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

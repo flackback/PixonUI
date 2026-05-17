@@ -149,7 +149,7 @@ export { useMotionValue, useMotionValueEvent, useMotionValueValue, MotionValue }
 export { useSpring } from './hooks/useSpring';
 export { useTransform } from './hooks/useTransform';
 export { useScroll } from './hooks/useScroll';
-export { usePixonScroll, usePixonTransform } from './hooks/usePixonScroll';
+export { usePixonScroll } from './hooks/usePixonScroll';
 export { cn } from './utils/cn';
 export * from './utils/format';
 export * from './utils/string';
@@ -183,6 +183,7 @@ export { useScrollSpy } from './hooks/useScrollSpy';
 export * from './components/chat/WaveformVisualizer';
 export * from './utils/motion';
 export * from './motion/presets';
+export * from './motion/vnext-api';
 export * from './components/data-display/VideoPlayer';
 export * from './hooks/usePixonVideoPlayer';
 

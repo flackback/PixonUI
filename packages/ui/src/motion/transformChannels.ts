@@ -5,7 +5,7 @@ type CssRegisterProperty = (definition: {
   initialValue: string;
 }) => void;
 
-const CHANNELS = ['', 'g', 's', 'l'] as const; // base, gesture, scroll, layout
+const CHANNELS = ['', 'g', 'd', 's', 'l'] as const; // base, gesture, drag, scroll, layout
 let channelsRegistered = false;
 let templateInjected = false;
 
@@ -63,6 +63,7 @@ export function ensureTransformChannels() {
       transform:
         translate3d(var(--px-x, 0px), var(--px-y, 0px), var(--px-z, 0px))
         translate3d(var(--px-xg, 0px), var(--px-yg, 0px), var(--px-zg, 0px))
+        translate3d(var(--px-xd, 0px), var(--px-yd, 0px), var(--px-zd, 0px))
         translate3d(var(--px-xs, 0px), var(--px-ys, 0px), var(--px-zs, 0px))
         translate3d(var(--px-xl, 0px), var(--px-yl, 0px), var(--px-zl, 0px))
 
@@ -75,6 +76,11 @@ export function ensureTransformChannels() {
         rotateX(var(--px-rotateXg, 0deg))
         rotateY(var(--px-rotateYg, 0deg))
         rotateZ(var(--px-rotateZg, 0deg))
+
+        rotate(var(--px-rotated, 0deg))
+        rotateX(var(--px-rotateXd, 0deg))
+        rotateY(var(--px-rotateYd, 0deg))
+        rotateZ(var(--px-rotateZd, 0deg))
 
         rotate(var(--px-rotates, 0deg))
         rotateX(var(--px-rotateXs, 0deg))
@@ -90,6 +96,8 @@ export function ensureTransformChannels() {
         skewY(var(--px-skewY, 0deg))
         skewX(var(--px-skewXg, 0deg))
         skewY(var(--px-skewYg, 0deg))
+        skewX(var(--px-skewXd, 0deg))
+        skewY(var(--px-skewYd, 0deg))
         skewX(var(--px-skewXs, 0deg))
         skewY(var(--px-skewYs, 0deg))
         skewX(var(--px-skewXl, 0deg))
@@ -97,6 +105,7 @@ export function ensureTransformChannels() {
 
         scaleX(var(--px-scaleX, 1)) scaleY(var(--px-scaleY, 1)) scale(var(--px-scale, 1))
         scaleX(var(--px-scaleXg, 1)) scaleY(var(--px-scaleYg, 1)) scale(var(--px-scaleg, 1))
+        scaleX(var(--px-scaleXd, 1)) scaleY(var(--px-scaleYd, 1)) scale(var(--px-scaled, 1))
         scaleX(var(--px-scaleXs, 1)) scaleY(var(--px-scaleYs, 1)) scale(var(--px-scales, 1))
         scaleX(var(--px-scaleXl, 1)) scaleY(var(--px-scaleYl, 1)) scale(var(--px-scalel, 1))
 
@@ -116,11 +125,12 @@ export function supportsTypedCustomProperties(): boolean {
   return typeof cssAny?.registerProperty === 'function';
 }
 
-export type TransformChannel = 'base' | 'gesture' | 'scroll' | 'layout';
+export type TransformChannel = 'base' | 'gesture' | 'drag' | 'scroll' | 'layout';
 
-const CHANNEL_SUFFIX: Record<TransformChannel, '' | 'g' | 's' | 'l'> = {
+const CHANNEL_SUFFIX: Record<TransformChannel, '' | 'g' | 'd' | 's' | 'l'> = {
   base: '',
   gesture: 'g',
+  drag: 'd',
   scroll: 's',
   layout: 'l',
 };

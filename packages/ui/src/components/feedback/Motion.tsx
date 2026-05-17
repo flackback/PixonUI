@@ -1,6 +1,18 @@
 import React, { useEffect, useState, useId, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+const canUseLayoutEffect = (() => {
+  const isNodeRuntime =
+    typeof process !== 'undefined' &&
+    typeof process.versions !== 'undefined' &&
+    !!process.versions.node;
+  if (isNodeRuntime) return false;
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+  if (/jsdom/i.test(ua)) return false;
+  return true;
+})();
+
+const useIsomorphicLayoutEffect = canUseLayoutEffect ? useLayoutEffect : useEffect;
 import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
@@ -380,10 +392,10 @@ function buildKeyframesCSS(name: string, steps: any[]): string {
 // Shared Layout Registry for Page-wide elements matching layoutId
 const sharedLayoutRegistry = new Map<string, { rect: DOMRect; timestamp: number }>();
 
-/**
- * @deprecated Prefer `motion.*` (ex: `motion.div`) for the unified Motion VNext API.
- * This component will be removed after the next major release.
- */
+  /**
+   * @deprecated Prefer `motion.*` (ex: `motion.div`) for the unified Motion VNext API.
+   * Planned removal date: after 2026-09-30.
+   */
 export function Motion({
   children,
   // Preset

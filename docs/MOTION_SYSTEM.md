@@ -1,5 +1,10 @@
 # PixonUI Native-First Motion System
 
+> Canonical docs vNext:
+> - `C:\PROJETOS\PixonUI\docs\MOTION_VNEXT_QUICKSTART.md`
+> - `C:\PROJETOS\PixonUI\docs\MOTION_VNEXT_MIGRATION.md`
+> - `C:\PROJETOS\PixonUI\docs\MOTION_VNEXT_RECIPES.md`
+
 PixonUI introduces a breakthrough, zero-dependency, high-performance animation engine that merges the physical precision of spring mechanics with the hardware-accelerated rendering performance of the browser's Web Animations API (WAAPI).
 
 By pre-calculating physical spring curves on initiation and feeding them directly into standard `@keyframes` rules or browser `.animate()` methods, PixonUI offloads animation computations completely to the **Compositor Thread (GPU)**. This ensures standard animations run at a buttery-smooth 120fps even if the JavaScript main thread blocks completely.
@@ -21,10 +26,13 @@ By pre-calculating physical spring curves on initiation and feeding them directl
 
 ### Unit conventions (important)
 - Canonical numeric timing unit is **milliseconds (ms)** across motion APIs.
+- vNext is **strict ms-only** (no silent seconds conversion).
 - `motion.*` transitions: `duration`, `delay`, `repeatDelay`, `staggerChildren`, `delayChildren` in **ms**.
 - `usePixonAnimate` options: `duration` / `delay` in **ms**.
 - `timeline()` track/add options: `duration`, `delay`, `offset`, `stagger` in **ms**.
 - `SSRAnimate` / `SSRStagger` transition `duration` / `delay` / `stagger` in **ms**.
+
+Migration guide: `docs/MOTION_VNEXT_MIGRATION.md`
 
 ### `revealOnScroll` preset (Framer-like one-liner)
 
@@ -54,6 +62,7 @@ Important behavior:
 - `revealOnScroll(options?)`
 - `parallax(options?)`
 - `staggerChildren(options?)`
+- `scrubOnScroll(options?)`
 
 Example:
 ```tsx
@@ -185,59 +194,173 @@ export default function CardReveal() {
 
 ## Chronological WAAPI Timelines (`timeline`)
 
-The PixonUI timeline scheduler allows you to orchestrate sequences of complex, multi-target, staggered animations with ease. It supports absolute offsets, delays, relative overrides (`+=`, `-=`), and spring curves.
+The PixonUI timeline scheduler orchestrates multi-target sequences with labels, relative positions, callbacks and stagger in ms.
 
-### 1. Basic Chained Sequence
-Animations execute in order, starting instantly as soon as the previous element completes:
+### 1. Builder mode with labels and callbacks
 
 ```typescript
 import { timeline } from '@pixonui/react';
 
-timeline()
-  .add({
-    target: '#hero-title',
-    keyframes: [
-      { opacity: 0, transform: 'scale(0.95)' },
-      { opacity: 1, transform: 'scale(1)' }
-    ],
-    duration: 600,
-    easing: 'apple'
-  })
-  .add({
-    target: '#hero-sub',
-    keyframes: [
-      { opacity: 0, transform: 'translate3d(0, 16px, 0)' },
-      { opacity: 1, transform: 'translate3d(0, 0, 0)' }
-    ],
-    duration: 400
-  })
+const tl = timeline({ easing: 'ease-out' });
+
+tl
+  .label('intro', 120)
+  .add('#hero-title', [
+    { opacity: 0, transform: 'scale(0.95)' },
+    { opacity: 1, transform: 'scale(1)' }
+  ], { duration: 600, at: 'intro' })
+  .add('#hero-sub', [
+    { opacity: 0, transform: 'translate3d(0, 16px, 0)' },
+    { opacity: 1, transform: 'translate3d(0, 0, 0)' }
+  ], { duration: 420, at: 'intro+=240' })
+  .call(() => console.log('intro complete'), 'intro+=700')
   .play();
 ```
 
-### 2. Physical Spring Sequence & Overlap Offsets
-Combine custom physical springs and relative offsets (`-=200` to start 200ms before the previous one ends) for cinematic entries:
+Builder aliases disponíveis:
+- `.to(target, keyframes, opts)` → alias de `.add(...)`
+- `.from(target, keyframes, opts)` → alias de `.add(...)`
+- `.fromTo(target, from, to, opts)` → cria keyframes `[from, to]`
+- `.addTimeline(child, opts)` / `.nest((tl) => ..., opts)` → compõe timeline aninhada
+- `.set(target, keyframes, at?)` → aplica estado com `duration: 0`
+- `.scope(root)` → limita seletores string ao container informado
+- `.sync(at?)` → reposiciona o cursor para sincronizar próximos segmentos
+- `.then(callback, at?)` → alias semântico de callback temporal
+- `.chain((tl) => ...)` → compõe trechos reutilizáveis sem quebrar fluência
+
+Controle de playback retornado por `.play()`:
+- `.pause()` / `.resume()` / `.play()`
+- `.seek(ms)` e `.finish()`
+- `.reverse()` e `.cancel()`
+- `.setTimeScale(rate)` / `.getTimeScale()`
+- `.scrub(progress)` (0..1) para dirigir a timeline manualmente
+- `.bindScrub(motionValue, opts?)` para conectar progresso externo (scroll/MotionValue)
+- `.getDuration()` para duração total resolvida
+- `.getAnimations()` (WAAPI handles nativos)
+- `.finished` (Promise) e `.then(...)` para encadear pós-timeline sem polling
+
+Opções de fábrica da timeline:
+- `timeScale` (default `1`) para acelerar/reduzir playback
+- `scrub` (default `false`) para iniciar pausada em `0` (uso típico com scroll)
+- `autoplay` (default `true`, ou `false` quando `scrub: true`)
 
 ```typescript
 timeline()
-  .add({
-    target: '.sidebar-item',
-    keyframes: [
-      { transform: 'translate3d(-50px, 0, 0)', opacity: 0 },
-      { transform: 'translate3d(0px, 0, 0)', opacity: 1 }
-    ],
-    spring: { stiffness: 250, damping: 15 },
-    delay: 50 // Staggers each element matched by selector by 50ms
-  })
-  .add({
-    target: '.main-content-card',
-    keyframes: [
-      { transform: 'scale(0.8)', opacity: 0 },
-      { transform: 'scale(1)', opacity: 1 }
-    ],
-    spring: { stiffness: 300, damping: 12 },
-    offset: '-=400' // High overlapping transition
-  })
+  .label('intro', 100)
+  .timeScale(1.25)
+  .scope('#hero')
+  .add('.title', [{ opacity: 0 }, { opacity: 1 }], { duration: 320, at: 'intro' })
+  .sync('intro')
+  .to('.badge', [{ scale: 0.8 }, { scale: 1 }], { duration: 260, delay: 40 })
+  .to('.cta', [{ y: 20, opacity: 0 }, { y: 0, opacity: 1 }], { duration: 320, scope: '#hero-actions' })
+  .set('.chip', { opacity: 1 }, 'intro+=20')
+  .call(() => console.log('sync point reached'), 'intro+=160')
   .play();
+```
+
+### 4. Nested timelines (composição real)
+
+```typescript
+const child = timeline()
+  .to('.chip', [{ opacity: 0 }, { opacity: 1 }], { duration: 300, at: 80 })
+  .to('.chip', [{ y: 16 }, { y: 0 }], { duration: 220, at: '+=40' });
+
+timeline()
+  .addTimeline(child, { at: 120, timeScale: 1.5 })
+  .play();
+```
+
+### 5. Preset pronto para timeline (`timelinePreset`)
+
+```typescript
+import { timeline, timelinePreset } from '@pixonui/react';
+
+const cardIn = timelinePreset('staggerFadeUp', { duration: 560, stagger: 70 });
+
+timeline()
+  .label('intro', 120)
+  .add('.card', cardIn.keyframes, { ...cardIn.options, at: 'intro' })
+  .then(() => console.log('cards ready'), 'intro+=700')
+  .play();
+```
+
+### 6. Scope automático em React (`useTimelineScope`)
+
+```tsx
+import { useTimelineScope } from '@pixonui/react';
+
+function Hero() {
+  const { ref, createTimeline } = useTimelineScope<HTMLDivElement>();
+
+  useEffect(() => {
+    const run = createTimeline()
+      .to('.title', [{ opacity: 0 }, { opacity: 1 }], { duration: 520 })
+      .to('.cta', [{ y: 20, opacity: 0 }, { y: 0, opacity: 1 }], { at: '-=240', duration: 420 })
+      .play();
+    return () => run.cancel();
+  }, [createTimeline]);
+
+  return <section ref={ref}>{/* .title / .cta */}</section>;
+}
+```
+
+### 7. Composer por domínio (`createTimelineComposer`)
+
+```tsx
+import { createTimelineComposer } from '@pixonui/react';
+
+const motion = createTimelineComposer({ easing: 'elite-out' });
+const hero = motion.hero();
+const cards = motion.cards({ stagger: 90 });
+```
+
+### 8. Scrub por MotionValue (scroll-driven sem re-render)
+
+```tsx
+const progress = useMotionValue(0);
+const ctrl = timeline({ scrub: true })
+  .add('.hero', [{ opacity: 0 }, { opacity: 1 }], { duration: 700 })
+  .play();
+
+const stop = ctrl.bindScrub(progress, { from: 0, to: 1, clamp: true });
+```
+
+Hook React dedicado:
+
+```tsx
+useTimelineScrub(ctrl, scrollYProgress, { from: 0.1, to: 0.85 });
+```
+
+### 9. Devtools opcional de timeline
+
+```ts
+const ctrl = timeline().to('.hero', [{ opacity: 0 }, { opacity: 1 }], { duration: 600 }).play();
+const detach = attachTimelineDevtools(ctrl, { title: 'Hero TL' });
+```
+
+### 2. Stagger + overlap
+
+```typescript
+timeline()
+  .add('.sidebar-item', [
+    { transform: 'translate3d(-50px, 0, 0)', opacity: 0 },
+    { transform: 'translate3d(0px, 0, 0)', opacity: 1 }
+  ], { duration: 560, stagger: 50 })
+  .add('.main-content-card', [
+    { transform: 'scale(0.8)', opacity: 0 },
+    { transform: 'scale(1)', opacity: 1 }
+  ], { duration: 520, at: '-=400' })
+  .play();
+```
+
+### 3. Factory mode (`timeline(tracks)`) with labels
+
+```typescript
+timeline([
+  { target: '#title', keyframes: [{ opacity: 0 }, { opacity: 1 }], duration: 320, label: 'intro', at: 120 },
+  { target: '#subtitle', keyframes: [{ y: 20 }, { y: 0 }], duration: 280, at: 'intro+=140' },
+  { target: '#cta', keyframes: [{ scale: 0.9 }, { scale: 1 }], duration: 260, atLabel: 'intro', at: '+=220' }
+]).play();
 ```
 
 ---

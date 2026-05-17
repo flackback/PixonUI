@@ -14,6 +14,23 @@ import { ensureTransformChannels, supportsTypedCustomProperties, type TransformC
 import { prepareChannelKeyframes } from '../motion/keyframes';
 import { tweenCustomProperties } from '../motion/varTween';
 
+const STYLE_RESET_SKIP_PROPS = new Set(['transform', 'filter', 'backdropFilter', 'backdrop-filter']);
+
+function sanitizeRuntimeKeyframe(kf: Keyframe): Keyframe {
+  const out: Record<string, any> = {};
+  for (const key of Object.keys(kf || {})) {
+    const value = (kf as any)[key];
+    if (value === undefined || value === null) continue;
+    if (key === 'transform' || key === 'filter' || key === 'backdropFilter' || key === 'backdrop-filter') {
+      const text = typeof value === 'string' ? value.trim() : String(value).trim();
+      out[key] = text === '' ? 'none' : text;
+      continue;
+    }
+    out[key] = value;
+  }
+  return out as Keyframe;
+}
+
 export interface PixonAnimateOptions extends Omit<KeyframeAnimationOptions, 'easing'> {
   /** Accepts WAAPI easing strings or a cubic-bezier tuple `[x1,y1,x2,y2]` (Framer-like). */
   easing?: string | number[];
@@ -183,6 +200,8 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     if (finalKfs.length === 1 && !isAdditive) {
       finalKfs = [captureElementState(el, Object.keys(finalKfs[0] as Keyframe)), finalKfs[0] as Keyframe];
     }
+
+    finalKfs = finalKfs.map((kf) => sanitizeRuntimeKeyframe(kf as Keyframe));
     
     // Apply Momentum-Aware Spring Physics
     if (spring && finalKfs.length >= 2) {
@@ -210,6 +229,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     const styleTarget = el as any;
     if (styleTarget instanceof HTMLElement || styleTarget instanceof SVGElement) {
       targetProps.forEach(p => {
+        if (STYLE_RESET_SKIP_PROPS.has(p)) return;
         const style = styleTarget.style as any;
         if (isNaN(Number(p)) && p in style && style[p] !== '') style[p] = '';
       });

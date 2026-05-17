@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'vitest';
-import { generateSpringTrajectory as generateSpringKeyframes } from "../utils/motion";
+import { compileSpringKeyframes, generateSpringTrajectory as generateSpringKeyframes } from "../utils/motion";
 
 describe('generateSpringKeyframes', () => {
   test('generates valid keyframes starting at 0 and ending at 1', () => {
@@ -19,5 +19,15 @@ describe('generateSpringKeyframes', () => {
     const criticallyDamped = generateSpringKeyframes(0, 1, { stiffness: 100, damping: 20 });
 
     expect(criticallyDamped.duration).toBeLessThan(underdamped.duration);
+  });
+
+  test('clamps spring opacity keyframes between 0 and 1', () => {
+    const compiled = compileSpringKeyframes(
+      { opacity: 0 } as any,
+      { opacity: 1 } as any,
+      { stiffness: 80, damping: 6 }
+    );
+    const opacities = compiled.keyframes.map((kf) => Number((kf as any).opacity ?? 0));
+    expect(opacities.every((v) => v >= 0 && v <= 1)).toBe(true);
   });
 });

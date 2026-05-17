@@ -13,6 +13,15 @@ describe('transform channels', () => {
     });
   });
 
+  it('supports dedicated drag channel vars', () => {
+    const vars = toChannelVars({ x: 18, y: -12, scale: 1.05 }, 'drag');
+    expect(vars).toMatchObject({
+      '--px-xd': '18px',
+      '--px-yd': '-12px',
+      '--px-scaled': '1.05',
+    });
+  });
+
   it('converts keyframes to channel vars and strips transform shorthands', () => {
     const kfs = prepareChannelKeyframes({ x: [0, 10], rotate: [0, 90] }, 'scroll');
     expect(Array.isArray(kfs)).toBe(true);
@@ -23,4 +32,3 @@ describe('transform channels', () => {
     expect(kfs[1]).toMatchObject({ '--px-xs': '10px', '--px-rotates': '90deg' });
   });
 });
-

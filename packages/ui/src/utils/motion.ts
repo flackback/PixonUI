@@ -23,6 +23,7 @@ export type StaggerConfig = {
 };
 
 const warnedTimeKeys = new Set<string>();
+const warnedRateKeys = new Set<string>();
 
 function isDevRuntime() {
   try {
@@ -35,7 +36,7 @@ function isDevRuntime() {
 /**
  * VNext time normalizer.
  * Canonical unit is milliseconds (ms) for all numeric motion/timeline APIs.
- * If a legacy "seconds-like" value is detected, it is converted with an explicit warning.
+ * Legacy seconds-like values are no longer auto-converted in vNext (breaking).
  */
 export function normalizeTimeMs(
   value: unknown,
@@ -56,11 +57,29 @@ export function normalizeTimeMs(
     warnedTimeKeys.add(key);
     console.warn(
       `[Pixon Motion vNext] "${ctx.prop || 'time'}" now expects milliseconds. ` +
-      `Received legacy seconds-like value ${raw}; auto-converting to ${raw * 1000}ms. ` +
-      `Please migrate to ${raw * 1000}.`
+      `Received legacy seconds-like value ${raw}. ` +
+      `Auto-conversion is removed; pass milliseconds explicitly (example: ${raw} -> ${raw * 1000}).`
     );
   }
-  return raw * 1000;
+  return raw;
+}
+
+function normalizeTimeScale(
+  value: unknown,
+  fallback = 1,
+  ctx: { prop?: string; source?: string } = {}
+): number {
+  const raw = Number(value);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  const key = `${ctx.source || 'motion'}:${ctx.prop || 'timeScale'}`;
+  if (isDevRuntime() && !warnedRateKeys.has(key)) {
+    warnedRateKeys.add(key);
+    console.warn(
+      `[Pixon Motion vNext] "${ctx.prop || 'timeScale'}" must be a positive number. ` +
+      `Received ${String(value)}. Using fallback ${fallback}.`
+    );
+  }
+  return fallback;
 }
 
 const trajectoryCache = new Map<string, { progress: number[]; keyframes: number[]; duration: number }>();
@@ -414,6 +433,12 @@ export function captureElementState(el: Element, props: string[]): Keyframe {
   if (missing.length > 0) {
     const s = getComputedStyle(el);
     missing.forEach(p => {
+      if (p === 'transform' || p === 'filter' || p === 'backdropFilter' || p === 'backdrop-filter') {
+        const rawTransform = (s as any)[p] ?? s.getPropertyValue(p);
+        const transformValue = String(rawTransform ?? '').trim();
+        state[p] = transformValue === '' ? 'none' : transformValue;
+        return;
+      }
       const val = s.getPropertyValue(p) || (s as any)[p] || (el as any).getAttribute?.(p);
       // CSS custom properties must preserve units as strings (WAAPI expects strings).
       if (typeof val === 'string' && p.startsWith('--')) {
@@ -436,6 +461,7 @@ export function captureElementState(el: Element, props: string[]): Keyframe {
 export function compileSpringKeyframes(first: Keyframe, last: Keyframe, spring: SpringConfig & { velocity?: number }, type: SpringType = 'standard') {
   const { progress, duration } = type === 'impulse' ? generateSpringImpulseTrajectory(spring) : generateSpringTrajectory(0, 1, spring);
   const sT = parseComplexTransform(first.transform as string || ''), eT = parseComplexTransform(last.transform as string || '');
+  const hasTransformKey = first.transform !== undefined || last.transform !== undefined;
   
   // Ensure numeric props are actually numbers to avoid string concatenation NaN
   const numeric = Object.keys(last).filter(k => {
@@ -453,11 +479,18 @@ export function compileSpringKeyframes(first: Keyframe, last: Keyframe, spring: 
         const s = typeof first[prop] === 'string' ? parseFloat(first[prop] as string) || 0 : (first[prop] as number) || 0;
         const e = last[prop] as number;
         let val = s + (e - s) * p;
-        if (['opacity', 'scale', 'borderRadius', 'borderWidth'].some(x => prop.includes(x))) val = Math.max(0.0001, val);
+        if (prop.includes('opacity')) {
+          val = Math.max(0, Math.min(1, val));
+        } else if (['scale', 'borderRadius', 'borderWidth'].some(x => prop.includes(x))) {
+          val = Math.max(0.0001, val);
+        }
         k[prop] = val;
       });
       morph.forEach(prop => k[prop] = interpolateString(first[prop], last[prop], p, prop));
-      k.transform = buildComplexTransform(sT, eT, p);
+      if (hasTransformKey) {
+        const transformValue = buildComplexTransform(sT, eT, p);
+        k.transform = transformValue === '' ? 'none' : transformValue;
+      }
       return k;
     })
   };
@@ -700,35 +733,154 @@ export interface TimelineTrack {
   options?: TimelineAnimateOptions;
   /** Duration in ms (convenience). */
   duration?: number;
+  /** Time position (number or expression like `+=200`, `label`, `label-=120`). */
   at?: number | string;
+  /** Optional label anchor used as base for `at`. */
+  atLabel?: string;
+  /** Register a label at this track start. */
+  label?: string;
 }
 
 export interface TimelineFactoryOptions {
   easing?: any;
+  /** Playback rate multiplier (1 = normal speed). */
+  timeScale?: number;
+  /** Scrub-friendly mode (starts paused at 0 unless autoplay=true). */
+  scrub?: boolean;
+  /** Auto-start playback when play() is created (default true, false when scrub=true). */
+  autoplay?: boolean;
 }
 
-type TimelineController = {
+export type TimelineController = {
   getAnimations: () => Animation[];
+  getDuration: () => number;
+  getTimeScale: () => number;
+  setTimeScale: (rate: number) => void;
+  scrub: (progress: number) => void;
+  bindScrub: (
+    source: { get: () => number; on: (event: 'change', cb: (latest: number) => void) => () => void },
+    options?: { from?: number; to?: number; clamp?: boolean; immediate?: boolean }
+  ) => () => void;
   seek: (t: number) => void;
+  getDebugSnapshot: () => {
+    cursor: number;
+    duration: number;
+    timeScale: number;
+    labels: string[];
+    segmentCount: number;
+    callbackCount: number;
+    animationCount: number;
+    paused: boolean;
+    scrub: boolean;
+  };
+  play: () => void;
+  pause: () => void;
+  resume: () => void;
+  reverse: () => void;
+  finish: () => void;
+  finished: Promise<void>;
+  then: <TResult1 = void, TResult2 = never>(
+    onfulfilled?: ((value: void) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
+  ) => Promise<TResult1 | TResult2>;
   cancel: () => void;
 };
 
-type TimelineAddOptions = TimelineAnimateOptions & {
+export type TimelineAddOptions = TimelineAnimateOptions & {
   /** Duration in ms. */
   duration?: number;
   /** Absolute start offset in ms (timeline position). */
   offset?: number;
+  /** Time position (number or expression like `+=200`, `label`, `label-=120`). */
+  at?: number | string;
+  /** Optional label anchor used as base for `at`/`offset`. */
+  atLabel?: string;
+  /** Register a label at this segment start. */
+  label?: string;
   /** Stagger per-target delay in ms. */
   stagger?: number;
+  /** Optional scope root for string selectors in this segment. */
+  scope?: Element | Document | string | null;
 };
 
-export function timeline(tracks: TimelineTrack[], options?: TimelineFactoryOptions): { play(): TimelineController };
-export function timeline(options?: TimelineFactoryOptions): {
+export type TimelineBuilder = {
   add: (target: any, keyframes: any, segOpts?: TimelineAddOptions) => any;
+  to: (target: any, keyframes: any, segOpts?: TimelineAddOptions) => any;
+  from: (target: any, keyframes: any, segOpts?: TimelineAddOptions) => any;
+  fromTo: (target: any, fromKeyframes: any, toKeyframes: any, segOpts?: TimelineAddOptions) => any;
+  addTimeline: (
+    child: TimelineBuilder | ((tl: TimelineBuilder) => void),
+    options?: TimelineNestOptions
+  ) => any;
+  nest: (
+    child: TimelineBuilder | ((tl: TimelineBuilder) => void),
+    options?: TimelineNestOptions
+  ) => any;
+  set: (target: any, keyframes: any, at?: number | string) => any;
+  timeScale: (rate: number) => any;
+  scrub: (enabled?: boolean) => any;
+  autoplay: (enabled?: boolean) => any;
+  scope: (root: Element | Document | string | null) => any;
+  label: (name: string, at?: number | string) => any;
+  sync: (at?: number | string) => any;
+  call: (callback: () => void, at?: number | string) => any;
+  then: (callback: () => void, at?: number | string) => any;
+  chain: (compose: (tl: TimelineBuilder) => void) => any;
   play: () => TimelineController;
   cancel: () => void;
 };
+
+export type TimelineNestOptions = {
+  at?: number | string;
+  atLabel?: string;
+  label?: string;
+  offset?: number;
+  /** 2 = nested timeline runs 2x faster (effective duration is divided by 2). */
+  timeScale?: number;
+  /** Expose child labels into parent timeline namespace. */
+  propagateLabels?: boolean;
+  /** Optional prefix for propagated labels (ex: "hero."). */
+  labelPrefix?: string;
+};
+export function timeline(tracks: TimelineTrack[], options?: TimelineFactoryOptions): { play(): TimelineController };
+export function timeline(options?: TimelineFactoryOptions): TimelineBuilder;
 export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, options?: TimelineFactoryOptions) {
+  const internalKey = '__pxTimelineInternals';
+  const parsePosition = (
+    raw: number | string | undefined,
+    fallback: number,
+    labels: Map<string, number>,
+    ctx: { prop: string; source: string }
+  ): number => {
+    if (raw == null) return fallback;
+    if (typeof raw === 'number') return normalizeTimeMs(raw, fallback, ctx);
+
+    const text = String(raw).trim();
+    if (!text) return fallback;
+
+    const relative = text.match(/^([+-])=\s*(-?\d*\.?\d+)$/);
+    if (relative) {
+      const sign = relative[1] === '-' ? -1 : 1;
+      const delta = normalizeTimeMs(Number(relative[2] || 0), 0, ctx);
+      return Math.max(0, fallback + sign * delta);
+    }
+
+    if (labels.has(text)) return labels.get(text)!;
+
+    const labelExpr = text.match(/^([A-Za-z_][\w.-]*)(?:\s*([+-])=\s*(-?\d*\.?\d+))?$/);
+    if (labelExpr) {
+      const base = labels.get(labelExpr[1]!) ?? fallback;
+      if (!labelExpr[2]) return base;
+      const sign = labelExpr[2] === '-' ? -1 : 1;
+      const delta = normalizeTimeMs(Number(labelExpr[3] || 0), 0, ctx);
+      return Math.max(0, base + sign * delta);
+    }
+
+    const asNumber = Number(text);
+    if (Number.isFinite(asNumber)) return normalizeTimeMs(asNumber, fallback, ctx);
+    return fallback;
+  };
+
   // 1) Back-compat mode: timeline(tracks[]).play()
   if (Array.isArray(tracks)) {
     const resolvedTracks = [...tracks];
@@ -736,6 +888,12 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
     return {
       play(): TimelineController {
         const animations: Animation[] = [];
+        const labels = new Map<string, number>([['start', 0]]);
+        let totalDuration = 0;
+        let cursor = 0;
+        let playbackRate = normalizeTimeScale(options?.timeScale ?? 1, 1, { prop: 'timeScale', source: 'timeline(tracks)' });
+        const scrubMode = !!options?.scrub;
+        const autoplay = options?.autoplay ?? !scrubMode;
 
         resolvedTracks.forEach((track) => {
           const el = typeof track.target === 'string' ? document.querySelector(track.target) : track.target;
@@ -748,22 +906,130 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           if (typeof track.duration === 'number') {
             opts.duration = normalizeTimeMs(track.duration, 400, { prop: 'duration', source: 'timeline(tracks)' });
           }
-          if (typeof track.at === 'number') {
-            const curDelay = normalizeTimeMs(opts.delay ?? 0, 0, { prop: 'delay', source: 'timeline(tracks)' });
-            opts.delay = curDelay + normalizeTimeMs(track.at, 0, { prop: 'at', source: 'timeline(tracks)' });
+          const base = typeof track.atLabel === 'string' && labels.has(track.atLabel)
+            ? labels.get(track.atLabel)!
+            : cursor;
+          const offset = parsePosition(track.at, base, labels, { prop: 'at', source: 'timeline(tracks)' });
+          const curDelay = normalizeTimeMs(opts.delay ?? 0, 0, { prop: 'delay', source: 'timeline(tracks)' });
+          opts.delay = curDelay + offset;
+          if (typeof track.label === 'string' && track.label.trim()) {
+            labels.set(track.label.trim(), offset);
           }
+          const resolvedDuration = normalizeTimeMs(opts.duration ?? 400, 400, { prop: 'duration', source: 'timeline(tracks)' });
+          totalDuration = Math.max(totalDuration, (Number(opts.delay) || 0) + resolvedDuration);
+          cursor = Math.max(cursor, offset + resolvedDuration);
 
           const anim = (el as any).animate(track.keyframes, opts);
-          if (anim) animations.push(anim);
+          if (anim) {
+            try { (anim as any).playbackRate = playbackRate; } catch {}
+            animations.push(anim);
+          }
         });
+
+        if (!autoplay) {
+          animations.forEach((a) => {
+            try { a.pause(); } catch {}
+            try { (a as any).currentTime = 0; } catch {}
+          });
+        }
+
+        const finished = Promise.allSettled(
+          animations.map((a) => {
+            const p = (a as any)?.finished;
+            return p && typeof p.then === 'function' ? p : Promise.resolve();
+          })
+        ).then(() => undefined);
 
         return {
           getAnimations: () => animations,
+          getDuration: () => totalDuration,
+          getTimeScale: () => playbackRate,
+          setTimeScale: (rate: number) => {
+            playbackRate = normalizeTimeScale(rate, playbackRate, { prop: 'timeScale', source: 'timeline(tracks).controller' });
+            animations.forEach((a) => {
+              try { (a as any).playbackRate = playbackRate; } catch {}
+            });
+          },
+          scrub: (progress: number) => {
+            const normalized = Math.max(0, Math.min(1, Number(progress) || 0));
+            const time = totalDuration * normalized;
+            animations.forEach((a) => {
+              try { (a as any).currentTime = time; } catch {}
+            });
+          },
+          bindScrub: (source, bindOptions) => {
+            const from = Number(bindOptions?.from ?? 0);
+            const to = Number(bindOptions?.to ?? 1);
+            const clamp = bindOptions?.clamp ?? true;
+            const mapToProgress = (latest: number) => {
+              const span = to - from;
+              if (!Number.isFinite(span) || Math.abs(span) < 1e-9) return 0;
+              let progress = (latest - from) / span;
+              if (clamp) progress = Math.max(0, Math.min(1, progress));
+              return progress;
+            };
+            const apply = (latest: number) => {
+              const progress = mapToProgress(Number(latest) || 0);
+              const time = totalDuration * progress;
+              animations.forEach((a) => {
+                try { (a as any).currentTime = time; } catch {}
+              });
+            };
+            if (bindOptions?.immediate !== false) {
+              try { apply(Number(source.get()) || 0); } catch {}
+            }
+            return source.on('change', (latest) => apply(Number(latest) || 0));
+          },
           seek: (t: number) => {
             animations.forEach((a) => {
               try { (a as any).currentTime = t; } catch {}
             });
           },
+          getDebugSnapshot: () => {
+            const first = animations[0] as any;
+            const cursor = typeof first?.currentTime === 'number' && Number.isFinite(first.currentTime)
+              ? Math.max(0, first.currentTime)
+              : 0;
+            const playState = String(first?.playState ?? '').toLowerCase();
+            return {
+              cursor,
+              duration: totalDuration,
+              timeScale: playbackRate,
+              labels: Array.from(labels.keys()),
+              segmentCount: resolvedTracks.length,
+              callbackCount: 0,
+              animationCount: animations.length,
+              paused: playState === 'paused',
+              scrub: scrubMode,
+            };
+          },
+          play: () => {
+            animations.forEach((a) => {
+              try { a.play(); } catch {}
+            });
+          },
+          pause: () => {
+            animations.forEach((a) => {
+              try { a.pause(); } catch {}
+            });
+          },
+          resume: () => {
+            animations.forEach((a) => {
+              try { a.play(); } catch {}
+            });
+          },
+          reverse: () => {
+            animations.forEach((a) => {
+              try { a.reverse(); } catch {}
+            });
+          },
+          finish: () => {
+            animations.forEach((a) => {
+              try { a.finish(); } catch {}
+            });
+          },
+          finished,
+          then: (onfulfilled?: any, onrejected?: any) => finished.then(onfulfilled, onrejected),
           cancel: () => {
             animations.forEach((a) => {
               try { a.cancel(); } catch {}
@@ -777,31 +1043,257 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
 
   // 2) Builder mode: timeline({ easing }).add(...).play()
   const defaults = (tracks || options || {}) as TimelineFactoryOptions;
+  let defaultTimeScale = normalizeTimeScale(defaults.timeScale ?? 1, 1, { prop: 'timeScale', source: 'timeline()' });
+  let defaultScrub = !!defaults.scrub;
+  let defaultAutoplay = defaults.autoplay ?? !defaultScrub;
   const segments: Array<{ target: any; keyframes: any; options: TimelineAddOptions }> = [];
+  const callbacks: Array<{ fn: () => void; at: number }> = [];
+  const labels = new Map<string, number>([['start', 0]]);
   let cursor = 0;
   let active: TimelineController | null = null;
+  let timerIds: number[] = [];
+  let activeScope: Element | Document | null = null;
+
+  const readBuilderSnapshot = (candidate: any): {
+    segments: Array<{ target: any; keyframes: any; options: TimelineAddOptions }>;
+    callbacks: Array<{ fn: () => void; at: number }>;
+    labels: Map<string, number>;
+    cursor: number;
+  } | null => {
+    const bag = candidate?.[internalKey];
+    if (!bag || typeof bag.getSnapshot !== 'function') return null;
+    try {
+      const snapshot = bag.getSnapshot();
+      if (!snapshot) return null;
+      return {
+        segments: Array.isArray(snapshot.segments) ? [...snapshot.segments] : [],
+        callbacks: Array.isArray(snapshot.callbacks) ? [...snapshot.callbacks] : [],
+        labels: snapshot.labels instanceof Map ? new Map(snapshot.labels) : new Map<string, number>(),
+        cursor: Number(snapshot.cursor) || 0,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const resolveScopeRoot = (root: Element | Document | string | null | undefined): Element | Document | null => {
+    if (!root) return null;
+    if (typeof root !== 'string') return root;
+    if (typeof document === 'undefined') return null;
+    const scoped = document.querySelector(root);
+    return scoped ?? null;
+  };
+
+  const resolveNodes = (target: any, scopeRoot: Element | Document | null): any[] => {
+    if (typeof target === 'string') {
+      const base = scopeRoot ?? (typeof document !== 'undefined' ? document : null);
+      if (!base || typeof (base as any).querySelectorAll !== 'function') return [];
+      return Array.from((base as any).querySelectorAll(target));
+    }
+    if (Array.isArray(target)) return target;
+    if (target && typeof (target as any).length === 'number' && !(target as any).animate) return Array.from(target as any);
+    return [target];
+  };
 
   const api = {
     add(target: any, keyframes: any, segOpts: TimelineAddOptions = {}) {
-      const offset = typeof segOpts.offset === 'number'
-        ? normalizeTimeMs(segOpts.offset, 0, { prop: 'offset', source: 'timeline().add' })
+      const base = typeof segOpts.atLabel === 'string' && labels.has(segOpts.atLabel)
+        ? labels.get(segOpts.atLabel)!
         : cursor;
+      const atOrOffset = segOpts.at ?? segOpts.offset;
+      const offset = parsePosition(atOrOffset as any, base, labels, { prop: 'at', source: 'timeline().add' });
       const duration = typeof segOpts.duration === 'number'
         ? normalizeTimeMs(segOpts.duration, 400, { prop: 'duration', source: 'timeline().add' })
         : (typeof (segOpts as any).duration === 'number'
           ? normalizeTimeMs((segOpts as any).duration, 400, { prop: 'duration', source: 'timeline().add' })
           : 400);
-      segments.push({ target, keyframes, options: { ...segOpts, offset, duration } });
+      if (typeof segOpts.label === 'string' && segOpts.label.trim()) {
+        labels.set(segOpts.label.trim(), offset);
+      }
+      const segScope = resolveScopeRoot(segOpts.scope) ?? activeScope;
+      segments.push({ target, keyframes, options: { ...segOpts, offset, duration, scope: segScope } });
       cursor = Math.max(cursor, offset + duration);
+      return api;
+    },
+    to(target: any, keyframes: any, segOpts: TimelineAddOptions = {}) {
+      return api.add(target, keyframes, segOpts);
+    },
+    from(target: any, keyframes: any, segOpts: TimelineAddOptions = {}) {
+      return api.add(target, keyframes, segOpts);
+    },
+    fromTo(target: any, fromKeyframes: any, toKeyframes: any, segOpts: TimelineAddOptions = {}) {
+      const fromPrepared = prepareKeyframes(fromKeyframes);
+      const toPrepared = prepareKeyframes(toKeyframes);
+      const fromFrame = fromPrepared[fromPrepared.length - 1] ?? fromPrepared[0] ?? {};
+      const toFrame = toPrepared[toPrepared.length - 1] ?? toPrepared[0] ?? {};
+      return api.add(target, [fromFrame, toFrame], segOpts);
+    },
+    addTimeline(child: TimelineBuilder | ((tl: TimelineBuilder) => void), nestOpts: TimelineNestOptions = {}) {
+      const nestedBuilder = typeof child === 'function'
+        ? (() => {
+            const nested = timeline({
+              easing: defaults.easing,
+              timeScale: 1,
+              scrub: false,
+              autoplay: true,
+            });
+            try {
+              if (activeScope) (nested as any).scope(activeScope);
+              (child as (tl: TimelineBuilder) => void)(nested as TimelineBuilder);
+            } catch {}
+            return nested as TimelineBuilder;
+          })()
+        : child;
+
+      const snapshot = readBuilderSnapshot(nestedBuilder);
+      if (!snapshot) return api;
+
+      const base = typeof nestOpts.atLabel === 'string' && labels.has(nestOpts.atLabel)
+        ? labels.get(nestOpts.atLabel)!
+        : cursor;
+      const atOrOffset = nestOpts.at ?? nestOpts.offset;
+      const nestOffset = parsePosition(atOrOffset as any, base, labels, { prop: 'at', source: 'timeline().addTimeline' });
+      const nestRate = normalizeTimeScale(nestOpts.timeScale ?? 1, 1, { prop: 'timeScale', source: 'timeline().addTimeline' });
+      const invRate = 1 / nestRate;
+      const shouldPropagateLabels = nestOpts.propagateLabels ?? true;
+      const prefix = nestOpts.labelPrefix ?? (typeof nestOpts.label === 'string' && nestOpts.label.trim() ? `${nestOpts.label.trim()}.` : '');
+
+      if (typeof nestOpts.label === 'string' && nestOpts.label.trim()) {
+        labels.set(nestOpts.label.trim(), nestOffset);
+      }
+
+      snapshot.segments.forEach((seg) => {
+        const segOffset = normalizeTimeMs((seg.options as any)?.offset ?? 0, 0, { prop: 'offset', source: 'timeline().addTimeline' }) * invRate;
+        const segDuration = normalizeTimeMs(seg.options.duration ?? 400, 400, { prop: 'duration', source: 'timeline().addTimeline' }) * invRate;
+        const segDelay = normalizeTimeMs(seg.options.delay ?? 0, 0, { prop: 'delay', source: 'timeline().addTimeline' }) * invRate;
+        const segStagger = normalizeTimeMs(seg.options.stagger ?? 0, 0, { prop: 'stagger', source: 'timeline().addTimeline' }) * invRate;
+
+        segments.push({
+          target: seg.target,
+          keyframes: seg.keyframes,
+          options: {
+            ...seg.options,
+            offset: nestOffset + segOffset,
+            duration: segDuration,
+            delay: segDelay,
+            stagger: segStagger,
+          },
+        });
+      });
+
+      snapshot.callbacks.forEach((cb) => {
+        callbacks.push({
+          fn: cb.fn,
+          at: nestOffset + Math.max(0, Number(cb.at) || 0) * invRate,
+        });
+      });
+
+      if (shouldPropagateLabels) {
+        snapshot.labels.forEach((at, name) => {
+          const clean = String(name || '').trim();
+          if (!clean) return;
+          const merged = `${prefix}${clean}`;
+          labels.set(merged, nestOffset + Math.max(0, Number(at) || 0) * invRate);
+        });
+      }
+
+      cursor = Math.max(cursor, nestOffset + Math.max(0, snapshot.cursor) * invRate);
+      return api;
+    },
+    nest(child: TimelineBuilder | ((tl: TimelineBuilder) => void), options?: TimelineNestOptions) {
+      return api.addTimeline(child, options);
+    },
+    set(target: any, keyframes: any, at?: number | string) {
+      return api.add(target, keyframes, { duration: 0, at, fill: 'both' });
+    },
+    timeScale(rate: number) {
+      defaultTimeScale = normalizeTimeScale(rate, defaultTimeScale, { prop: 'timeScale', source: 'timeline().timeScale' });
+      return api;
+    },
+    scrub(enabled = true) {
+      defaultScrub = !!enabled;
+      if (enabled && defaults.autoplay == null) defaultAutoplay = false;
+      return api;
+    },
+    autoplay(enabled = true) {
+      defaultAutoplay = !!enabled;
+      return api;
+    },
+    scope(root: Element | Document | string | null) {
+      activeScope = resolveScopeRoot(root);
+      return api;
+    },
+    label(name: string, at?: number | string) {
+      const trimmed = String(name || '').trim();
+      if (!trimmed) return api;
+      const resolved = parsePosition(at, cursor, labels, { prop: 'label', source: 'timeline().label' });
+      labels.set(trimmed, resolved);
+      cursor = Math.max(cursor, resolved);
+      return api;
+    },
+    sync(at?: number | string) {
+      cursor = parsePosition(at, cursor, labels, { prop: 'sync', source: 'timeline().sync' });
+      return api;
+    },
+    call(callback: () => void, at?: number | string) {
+      const resolved = parsePosition(at, cursor, labels, { prop: 'call', source: 'timeline().call' });
+      callbacks.push({ fn: callback, at: resolved });
+      cursor = Math.max(cursor, resolved);
+      return api;
+    },
+    then(callback: () => void, at?: number | string) {
+      return api.call(callback, at);
+    },
+    chain(compose: (tl: TimelineBuilder) => void) {
+      try {
+        compose(api as TimelineBuilder);
+      } catch {}
       return api;
     },
     play(): TimelineController {
       // Cancel previous run
       active?.cancel?.();
       const animations: Animation[] = [];
+      timerIds.forEach((id) => clearTimeout(id));
+      timerIds = [];
 
       const globalEasing = defaults.easing;
+      const scrubMode = defaultScrub;
+      const autoplay = defaultAutoplay;
       const nowSegments = [...segments];
+      const nowCallbacks = [...callbacks];
+      const callbackQueue = nowCallbacks.map((cb) => ({
+        at: Math.max(0, cb.at),
+        fn: cb.fn,
+        fired: false,
+      }));
+      let resolveCallbacksDone: () => void = () => {};
+      const callbacksDone = new Promise<void>((resolve) => {
+        resolveCallbacksDone = resolve;
+      });
+      if (callbackQueue.length === 0) resolveCallbacksDone();
+      let callbackCursor = 0;
+      let callbackPaused = false;
+      let callbackRate = defaultTimeScale;
+      let callbackAnchorTimeline = 0;
+      let callbackAnchorNow = 0;
+      let totalDuration = 0;
+
+      const nowMs = () => {
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function') return performance.now();
+        return Date.now();
+      };
+
+      const syncCallbackAnchor = (timelineMs: number) => {
+        callbackCursor = Math.max(0, timelineMs);
+        callbackAnchorTimeline = callbackCursor;
+        callbackAnchorNow = nowMs();
+      };
+
+      const getCurrentCallbackTime = () => {
+        if (callbackPaused) return callbackCursor;
+        return Math.max(0, callbackAnchorTimeline + (nowMs() - callbackAnchorNow) * callbackRate);
+      };
 
       nowSegments.forEach((seg) => {
         const { target, keyframes, options: segOpts } = seg;
@@ -811,14 +1303,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
         const easing = (segOpts.easing ?? globalEasing) as any;
         const stagger = normalizeTimeMs(segOpts.stagger ?? 0, 0, { prop: 'stagger', source: 'timeline().play' });
 
-        const nodes: any[] =
-          typeof target === 'string'
-            ? Array.from(document.querySelectorAll(target))
-            : Array.isArray(target)
-              ? target
-              : target && typeof (target as any).length === 'number' && !(target as any).animate
-                ? Array.from(target as any)
-                : [target];
+        const nodes = resolveNodes(target, resolveScopeRoot((segOpts as any).scope));
 
         nodes.forEach((node, idx) => {
           if (!node || typeof (node as any).animate !== 'function') return;
@@ -829,25 +1314,206 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
             delay: delay + idx * stagger,
             easing: easing != null ? sanitizeEasing(easing) : undefined,
           };
+          totalDuration = Math.max(totalDuration, (Number(opts.delay) || 0) + duration);
           delete (opts as any).offset;
+          delete (opts as any).at;
+          delete (opts as any).atLabel;
+          delete (opts as any).label;
           delete (opts as any).stagger;
 
           const anim = (node as any).animate(keyframes, opts);
-          if (anim) animations.push(anim);
+          if (anim) {
+            try { (anim as any).playbackRate = callbackRate; } catch {}
+            animations.push(anim);
+          }
         });
       });
+      callbackQueue.forEach((cb) => {
+        totalDuration = Math.max(totalDuration, cb.at);
+      });
+
+      const clearCallbackTimers = () => {
+        timerIds.forEach((id) => clearTimeout(id));
+        timerIds = [];
+      };
+
+      const fireCallback = (cb: { fn: () => void; fired: boolean }) => {
+        if (cb.fired) return;
+        cb.fired = true;
+        try { cb.fn(); } catch {}
+        if (callbackQueue.every((entry) => entry.fired)) {
+          resolveCallbacksDone();
+        }
+      };
+
+      const runCallbacksUntil = (timeMs: number) => {
+        callbackCursor = Math.max(0, timeMs);
+        callbackQueue.forEach((cb) => {
+          if (!cb.fired && cb.at <= callbackCursor) fireCallback(cb);
+        });
+      };
+
+      const scheduleCallbacksFrom = (timeMs: number) => {
+        clearCallbackTimers();
+        syncCallbackAnchor(timeMs);
+        runCallbacksUntil(timeMs);
+        if (callbackPaused || scrubMode || typeof window === 'undefined' || callbackRate <= 0) return;
+        callbackQueue.forEach((cb) => {
+          if (cb.fired) return;
+          const wait = Math.max(0, (cb.at - callbackCursor) / callbackRate);
+          const id = window.setTimeout(() => {
+            fireCallback(cb);
+          }, wait);
+          timerIds.push(id);
+        });
+      };
+
+      callbackPaused = !autoplay;
+      scheduleCallbacksFrom(0);
+      if (!autoplay) {
+        animations.forEach((a) => {
+          try { a.pause(); } catch {}
+          try { (a as any).currentTime = 0; } catch {}
+        });
+      }
+
+      const animationsDone = Promise.allSettled(
+        animations.map((a) => {
+          const p = (a as any)?.finished;
+          return p && typeof p.then === 'function' ? p : Promise.resolve();
+        })
+      ).then(() => undefined);
+      const finished = Promise.all([animationsDone, callbacksDone]).then(() => undefined);
 
       active = {
         getAnimations: () => animations,
-        seek: (t: number) => {
+        getDuration: () => totalDuration,
+        getTimeScale: () => callbackRate,
+        setTimeScale: (rate: number) => {
+          const nextRate = normalizeTimeScale(rate, callbackRate, { prop: 'timeScale', source: 'timeline().controller' });
+          const current = (() => {
+            const waapiTime = (animations[0] as any)?.currentTime;
+            if (typeof waapiTime === 'number' && Number.isFinite(waapiTime)) return Math.max(0, waapiTime);
+            return getCurrentCallbackTime();
+          })();
+          callbackRate = nextRate;
           animations.forEach((a) => {
-            try { (a as any).currentTime = t; } catch {}
+            try { (a as any).playbackRate = nextRate; } catch {}
+          });
+          if (callbackPaused) {
+            syncCallbackAnchor(current);
+          } else {
+            scheduleCallbacksFrom(current);
+          }
+        },
+        scrub: (progress: number) => {
+          const normalized = Math.max(0, Math.min(1, Number(progress) || 0));
+          const time = totalDuration * normalized;
+          animations.forEach((a) => {
+            try { (a as any).currentTime = time; } catch {}
+          });
+          scheduleCallbacksFrom(time);
+        },
+        bindScrub: (source, bindOptions) => {
+          const from = Number(bindOptions?.from ?? 0);
+          const to = Number(bindOptions?.to ?? 1);
+          const clamp = bindOptions?.clamp ?? true;
+          const mapToProgress = (latest: number) => {
+            const span = to - from;
+            if (!Number.isFinite(span) || Math.abs(span) < 1e-9) return 0;
+            let progress = (latest - from) / span;
+            if (clamp) progress = Math.max(0, Math.min(1, progress));
+            return progress;
+          };
+          const apply = (latest: number) => {
+            const progress = mapToProgress(Number(latest) || 0);
+            const time = totalDuration * progress;
+            animations.forEach((a) => {
+              try { (a as any).currentTime = time; } catch {}
+            });
+            scheduleCallbacksFrom(time);
+          };
+          if (bindOptions?.immediate !== false) {
+            try { apply(Number(source.get()) || 0); } catch {}
+          }
+          return source.on('change', (latest) => apply(Number(latest) || 0));
+        },
+        seek: (t: number) => {
+          const seekMs = Math.max(0, Number(t) || 0);
+          animations.forEach((a) => {
+            try { (a as any).currentTime = seekMs; } catch {}
+          });
+          scheduleCallbacksFrom(seekMs);
+        },
+        getDebugSnapshot: () => ({
+          cursor: Math.max(0, callbackCursor),
+          duration: totalDuration,
+          timeScale: callbackRate,
+          labels: Array.from(labels.keys()),
+          segmentCount: nowSegments.length,
+          callbackCount: nowCallbacks.length,
+          animationCount: animations.length,
+          paused: callbackPaused,
+          scrub: scrubMode,
+        }),
+        play: () => {
+          callbackPaused = false;
+          const current = (animations[0] as any)?.currentTime;
+          if (typeof current === 'number' && Number.isFinite(current)) {
+            callbackCursor = Math.max(0, current);
+          }
+          scheduleCallbacksFrom(callbackCursor);
+          animations.forEach((a) => {
+            try { a.play(); } catch {}
           });
         },
+        pause: () => {
+          callbackPaused = true;
+          const current = (animations[0] as any)?.currentTime;
+          if (typeof current === 'number' && Number.isFinite(current)) {
+            callbackCursor = Math.max(0, current);
+          }
+          clearCallbackTimers();
+          syncCallbackAnchor(callbackCursor);
+          animations.forEach((a) => {
+            try { a.pause(); } catch {}
+          });
+        },
+        resume: () => {
+          callbackPaused = false;
+          const current = (animations[0] as any)?.currentTime;
+          if (typeof current === 'number' && Number.isFinite(current)) {
+            callbackCursor = Math.max(0, current);
+          }
+          scheduleCallbacksFrom(callbackCursor);
+          animations.forEach((a) => {
+            try { a.play(); } catch {}
+          });
+        },
+        reverse: () => {
+          callbackPaused = true;
+          clearCallbackTimers();
+          syncCallbackAnchor(callbackCursor);
+          animations.forEach((a) => {
+            try { a.reverse(); } catch {}
+          });
+        },
+        finish: () => {
+          clearCallbackTimers();
+          callbackQueue.forEach((cb) => fireCallback(cb));
+          resolveCallbacksDone();
+          animations.forEach((a) => {
+            try { a.finish(); } catch {}
+          });
+        },
+        finished,
+        then: (onfulfilled?: any, onrejected?: any) => finished.then(onfulfilled, onrejected),
         cancel: () => {
           animations.forEach((a) => {
             try { a.cancel(); } catch {}
           });
+          resolveCallbacksDone();
+          clearCallbackTimers();
           animations.length = 0;
         },
       };
@@ -860,7 +1526,101 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
     },
   };
 
+  Object.defineProperty(api, internalKey, {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: {
+      getSnapshot: () => ({
+        segments: [...segments],
+        callbacks: [...callbacks],
+        labels: new Map(labels),
+        cursor,
+      }),
+    },
+  });
+
   return api;
+}
+
+export function timelineScoped(
+  scope: Element | Document | string | null,
+  options?: TimelineFactoryOptions
+): TimelineBuilder {
+  return timeline(options).scope(scope);
+}
+
+export interface TimelineDevtoolsOptions {
+  title?: string;
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  zIndex?: number;
+}
+
+/**
+ * Optional runtime overlay for timeline debugging.
+ * Shows cursor, labels, segment/callback counts and playback state.
+ */
+export function attachTimelineDevtools(
+  controller: TimelineController,
+  options: TimelineDevtoolsOptions = {}
+): () => void {
+  if (typeof document === 'undefined' || !controller) return () => {};
+
+  const panel = document.createElement('div');
+  const pre = document.createElement('pre');
+  const pos = options.position ?? 'bottom-right';
+  const posStyle: Record<string, string> = {
+    top: pos.startsWith('top') ? '12px' : 'auto',
+    bottom: pos.startsWith('bottom') ? '12px' : 'auto',
+    left: pos.endsWith('left') ? '12px' : 'auto',
+    right: pos.endsWith('right') ? '12px' : 'auto',
+  };
+
+  Object.assign(panel.style, {
+    position: 'fixed',
+    padding: '10px 12px',
+    borderRadius: '10px',
+    background: 'rgba(4,8,22,0.86)',
+    border: '1px solid rgba(133,214,255,0.35)',
+    color: '#d9f4ff',
+    font: '12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    whiteSpace: 'pre',
+    pointerEvents: 'none',
+    zIndex: String(options.zIndex ?? 2147483600),
+    boxShadow: '0 10px 32px rgba(0,0,0,0.35)',
+    ...posStyle,
+  } as CSSStyleDeclaration);
+
+  pre.style.margin = '0';
+  panel.appendChild(pre);
+  document.body.appendChild(panel);
+
+  let rafId = 0;
+  const renderText = () => {
+    try {
+      const d = controller.getDebugSnapshot();
+      pre.textContent = [
+        `${options.title ?? 'Pixon Timeline Devtools'}`,
+        `time: ${Math.round(d.cursor)}ms / ${Math.round(d.duration)}ms`,
+        `rate: ${d.timeScale.toFixed(2)}x  paused: ${d.paused ? 'yes' : 'no'}  scrub: ${d.scrub ? 'yes' : 'no'}`,
+        `segments: ${d.segmentCount}  callbacks: ${d.callbackCount}  animations: ${d.animationCount}`,
+        `labels: ${d.labels.join(', ') || '(none)'}`,
+      ].join('\n');
+    } catch {
+      pre.textContent = `${options.title ?? 'Pixon Timeline Devtools'}\n(unavailable)`;
+    }
+  };
+  const update = () => {
+    renderText();
+    rafId = requestAnimationFrame(update);
+  };
+
+  renderText();
+  rafId = requestAnimationFrame(update);
+  return () => {
+    try { cancelAnimationFrame(rafId); } catch {}
+    try { panel.remove(); } catch {}
+  };
 }
 
 export interface TimelineAnimateOptions extends KeyframeAnimationOptions {

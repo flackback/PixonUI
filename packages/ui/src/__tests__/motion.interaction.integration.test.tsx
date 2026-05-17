@@ -58,4 +58,20 @@ describe('motion interactions integration', () => {
     expect(node.getAttribute('parallax')).toBeNull();
     expect(node.getAttribute('staggerchildren')).toBeNull();
   });
+
+  it('writes drag gesture into dedicated drag channel without rerender loop', () => {
+    render(
+      <motion.div data-testid="drag-node" drag dragMomentum={false}>
+        Drag me
+      </motion.div>
+    );
+
+    const node = screen.getByTestId('drag-node');
+    fireEvent.pointerDown(node, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 132, clientY: 126 });
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 132, clientY: 126 });
+
+    expect(node.style.getPropertyValue('--px-xd')).toBe('32px');
+    expect(node.style.getPropertyValue('--px-yd')).toBe('26px');
+  });
 });

@@ -10,7 +10,9 @@
     "typecheck": "tsc -b",
     "check": "npm run lint && npm run typecheck",
     "test": "npm run test -w packages/ui",
+    "test:ui": "pnpm -C packages/ui exec vitest run",
     "test:e2e": "playwright test",
+    "test:motion:gate": "pnpm -C packages/ui exec vitest run && pnpm exec playwright test e2e/motion-presets.spec.ts e2e/timeline-scope-composer.spec.ts e2e/console-clean.spec.ts && pnpm exec playwright test e2e/motion-performance-budget.spec.ts --project=chromium --workers=1",
     "mcp:build": "npm run build -w @pixonui/mcp",
     "mcp:start": "npm run start -w @pixonui/mcp",
     "context:generate": "node scripts/generate-llm-context.mjs"

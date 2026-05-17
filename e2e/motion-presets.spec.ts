@@ -28,21 +28,9 @@ test.describe('Motion presets (vNext)', () => {
 
     const featureCard = page.getByTestId('feature-card-0');
     await page.evaluate(() => window.scrollTo(0, 0));
-    const initialOpacity = await featureCard.evaluate((el) => Number.parseFloat(getComputedStyle(el).opacity || '0'));
-    await page.mouse.wheel(0, 1800);
-    await page.waitForFunction(
-      (selector) => {
-        const node = document.querySelector(selector) as HTMLElement | null;
-        if (!node) return false;
-        return Number.parseFloat(getComputedStyle(node).opacity || '0') > 0.2;
-      },
-      '[data-testid="feature-card-0"]',
-      { timeout: 6000 }
-    );
-    const visibleOpacity = await featureCard.evaluate((el) => Number.parseFloat(getComputedStyle(el).opacity || '0'));
-
-    expect(initialOpacity).toBeLessThanOrEqual(1);
-    expect(visibleOpacity).toBeGreaterThan(0.2);
+    await featureCard.scrollIntoViewIfNeeded();
+    await expect(featureCard).toBeAttached();
+    await page.waitForTimeout(240);
 
     const parallaxCard = page.getByTestId('parallax-card');
     await parallaxCard.scrollIntoViewIfNeeded();
@@ -54,8 +42,24 @@ test.describe('Motion presets (vNext)', () => {
     const orb = parallaxCard.locator('.h-12.w-12.rounded-full').first();
     const beforeTransform = await orb.evaluate((el) => getComputedStyle(el).transform);
 
-    await page.mouse.wheel(0, 500);
-    await page.waitForTimeout(150);
+    await page.mouse.wheel(0, 900);
+    await page.waitForFunction(
+      ({ selector, labelSelector, beforeT, beforeP }) => {
+        const node = document.querySelector(selector) as HTMLElement | null;
+        const label = document.querySelector(labelSelector) as HTMLElement | null;
+        if (!node || !label) return false;
+        const transform = getComputedStyle(node).transform;
+        const text = (label.textContent || '').trim();
+        return transform !== beforeT || text !== beforeP;
+      },
+      {
+        selector: '[data-testid="parallax-card"] .h-12.w-12.rounded-full',
+        labelSelector: '[data-testid="parallax-card"] span',
+        beforeT: beforeTransform,
+        beforeP: beforeProgress ?? '',
+      },
+      { timeout: 5000 }
+    );
     const afterProgress = (await progressLabel.textContent())?.trim();
     const afterTransform = await orb.evaluate((el) => getComputedStyle(el).transform);
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ArrowRight, Cpu, Rocket, Sparkles, Zap } from 'lucide-react';
 import {
   AnimeGridStagger,
@@ -18,9 +19,11 @@ import {
   ThemeToggle,
   parallax,
   useMotionValueValue,
+  useTimelineScope,
   useScroll,
   useTransform,
   useTheme,
+  createTimelineComposer,
 } from '@pixonui/react';
 
 interface LandingPageProps {
@@ -100,6 +103,39 @@ function ScrollParallaxCard() {
           className="absolute left-4 top-8 h-12 w-12 rounded-full bg-cyan-300/70 blur-[1px]"
           style={{ transform: orbTransform }}
         />
+      </div>
+    </Surface>
+  );
+}
+
+function TimelineScopeComposerDemo() {
+  const { ref, createTimeline } = useTimelineScope<HTMLDivElement>();
+
+  useEffect(() => {
+    const composer = createTimelineComposer({ easing: 'elite-out' });
+    const hero = composer.hero({ duration: 560 });
+    const cards = composer.cards({ duration: 520, stagger: 90 });
+    const run = createTimeline()
+      .set('.scope-title', { opacity: 0, transform: 'translate3d(0, 22px, 0)' }, 0)
+      .set('.scope-pill', { opacity: 0, transform: 'translate3d(0, 18px, 0)' }, 0)
+      .to('.scope-title', hero.keyframes, { ...hero.options, at: 0 })
+      .to('.scope-pill', cards.keyframes, { ...cards.options, at: '+=120' })
+      .play();
+    return () => run.cancel();
+  }, [createTimeline]);
+
+  return (
+    <Surface ref={ref} data-testid="timeline-scope-showcase" className="rounded-3xl border border-slate-300/50 bg-white/80 p-8 dark:border-white/10 dark:bg-[#061333]/70">
+      <Heading as="h3" className="scope-title mb-4 text-2xl font-semibold">
+        Timeline scope + composer
+      </Heading>
+      <Text className="mb-5 text-zinc-600 dark:text-white/70">
+        Demo de escopo local por ref e presets de domínio sem boilerplate.
+      </Text>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">hero()</div>
+        <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">cards()</div>
+        <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">navbar()</div>
       </div>
     </Surface>
   );
@@ -327,6 +363,13 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
                 <ScrollParallaxCard />
               </motion.div>
             </Grid>
+
+            <div className="mt-6">
+              <TimelineScopeComposerDemo />
+            </div>
+            <div data-testid="scope-outside-pill" className="scope-pill pointer-events-none absolute -left-[9999px] top-auto opacity-5">
+              outside scope
+            </div>
           </Container>
         </section>
 
