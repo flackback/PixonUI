@@ -4,7 +4,7 @@ import { PixonMotion } from '../effects/Animate';
 
 export type AnimeTextEffect = 'bounce' | 'fade-up' | 'rotate' | 'slide-left';
 
-export interface AnimeTextProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'color'> {
+export interface AnimeTextProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'color' | 'onDragStart' | 'onDrag' | 'onDragEnd'> {
   /**
    * O texto a ser animado, letra por letra.
    */

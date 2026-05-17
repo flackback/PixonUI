@@ -29,7 +29,7 @@ type AnimateOwnProps<T extends React.ElementType = 'div'> = {
   variants?: Record<string, any>; initial?: Target; animate?: Target; exit?: Target;
   whileHover?: Target; whileTap?: Target; whileInView?: Target;
   drag?: boolean | 'x' | 'y';
-  dragConstraints?: { top?: number; right?: number; bottom?: number; left?: number };
+  dragConstraints?: { top?: number; right?: number; bottom?: number; left?: number } | React.RefObject<HTMLElement | null>;
   dragElastic?: number;
   dragMomentum?: boolean;
   onDragStart?: (offset: { x: number; y: number }) => void;
@@ -62,6 +62,8 @@ type DragMotionState = {
   raf: number | null;
 };
 
+type DragBounds = { top?: number; right?: number; bottom?: number; left?: number };
+
 export type AnimateProps<T extends React.ElementType = 'div'> =
   AnimateOwnProps<T> &
   Omit<React.ComponentPropsWithoutRef<T>, keyof AnimateOwnProps<T> | 'ref'>;
@@ -85,6 +87,12 @@ function stripTransformishStyle(style?: React.CSSProperties | undefined) {
     if (!TRANSFORMISH_PROPS.has(k)) out[k] = (style as any)[k];
   }
   return out as React.CSSProperties;
+}
+
+function isDragConstraintRef(
+  value: AnimateOwnProps['dragConstraints']
+): value is React.RefObject<HTMLElement | null> {
+  return !!value && typeof value === 'object' && 'current' in value;
 }
 
 // V4.7 Supreme Singleton Batching System
@@ -172,6 +180,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     lastTs: 0,
     raf: null,
   });
+  const dragBoundsRef = useRef<DragBounds | null>(null);
 
   if (inheritedIndexRef.current === null) {
     inheritedIndexRef.current = vCtx?.registerChild ? vCtx.registerChild() : 0;
@@ -467,26 +476,27 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     if (drag === 'y') x = 0;
 
     const elastic = Math.max(0, Math.min(1, dragElastic));
-    if (dragConstraints) {
-      if (dragConstraints.left !== undefined && x < dragConstraints.left) {
+    const bounds = dragBoundsRef.current;
+    if (bounds) {
+      if (bounds.left !== undefined && x < bounds.left) {
         x = withElastic
-          ? dragConstraints.left + (x - dragConstraints.left) * elastic
-          : dragConstraints.left;
+          ? bounds.left + (x - bounds.left) * elastic
+          : bounds.left;
       }
-      if (dragConstraints.right !== undefined && x > dragConstraints.right) {
+      if (bounds.right !== undefined && x > bounds.right) {
         x = withElastic
-          ? dragConstraints.right + (x - dragConstraints.right) * elastic
-          : dragConstraints.right;
+          ? bounds.right + (x - bounds.right) * elastic
+          : bounds.right;
       }
-      if (dragConstraints.top !== undefined && y < dragConstraints.top) {
+      if (bounds.top !== undefined && y < bounds.top) {
         y = withElastic
-          ? dragConstraints.top + (y - dragConstraints.top) * elastic
-          : dragConstraints.top;
+          ? bounds.top + (y - bounds.top) * elastic
+          : bounds.top;
       }
-      if (dragConstraints.bottom !== undefined && y > dragConstraints.bottom) {
+      if (bounds.bottom !== undefined && y > bounds.bottom) {
         y = withElastic
-          ? dragConstraints.bottom + (y - dragConstraints.bottom) * elastic
-          : dragConstraints.bottom;
+          ? bounds.bottom + (y - bounds.bottom) * elastic
+          : bounds.bottom;
       }
     }
 
@@ -500,6 +510,24 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     el.style.setProperty('--px-xd', `${nextX}px`);
     el.style.setProperty('--px-yd', `${nextY}px`);
   }, []);
+
+  const computeDragBounds = useCallback((el: HTMLElement, currentX: number, currentY: number): DragBounds | null => {
+    if (!dragConstraints) return null;
+    if (!isDragConstraintRef(dragConstraints)) {
+      return dragConstraints;
+    }
+    const containerEl = dragConstraints.current;
+    if (!containerEl) return null;
+
+    const containerRect = containerEl.getBoundingClientRect();
+    const nodeRect = el.getBoundingClientRect();
+    return {
+      left: currentX + (containerRect.left - nodeRect.left),
+      right: currentX + (containerRect.right - nodeRect.right),
+      top: currentY + (containerRect.top - nodeRect.top),
+      bottom: currentY + (containerRect.bottom - nodeRect.bottom),
+    };
+  }, [dragConstraints]);
 
   // Apply transform-channel styles (MotionValues + shorthands) without React re-renders.
   useIsomorphicLayoutEffect(() => {
@@ -654,6 +682,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       state.lastTs = performance.now();
       state.vx = 0;
       state.vy = 0;
+      dragBoundsRef.current = computeDragBounds(el, state.x, state.y);
       activeInteractionRef.current = 'drag';
       el.style.cursor = 'grabbing';
       el.style.willChange = 'transform';
@@ -758,6 +787,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
     return () => {
       stopInertia();
+      dragBoundsRef.current = null;
       el.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove as any);
       window.removeEventListener('pointerup', onPointerUp as any);

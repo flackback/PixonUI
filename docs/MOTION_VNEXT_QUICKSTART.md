@@ -34,6 +34,19 @@ useScrubOnScroll(ctrl, { from: 0.1, to: 0.9 });
 />
 ```
 
+```tsx
+const boundsRef = useRef<HTMLDivElement>(null);
+
+<div ref={boundsRef} className="relative h-72 overflow-hidden">
+  <motion.div
+    drag
+    dragConstraints={boundsRef}
+    dragElastic={0.2}
+    dragMomentum
+  />
+</div>
+```
+
 ## 7) Parallax com container
 ```tsx
 const containerRef = useRef<HTMLDivElement>(null);

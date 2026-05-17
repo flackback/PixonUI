@@ -1,5 +1,6 @@
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useRef } from 'react';
 import { motion } from '../components/effects/Animate';
 
 describe('motion interactions integration', () => {
@@ -73,5 +74,36 @@ describe('motion interactions integration', () => {
 
     expect(node.style.getPropertyValue('--px-xd')).toBe('32px');
     expect(node.style.getPropertyValue('--px-yd')).toBe('26px');
+  });
+
+  it('supports dragConstraints via ref container (Framer-like)', () => {
+    function Demo() {
+      const constraintsRef = useRef<HTMLDivElement>(null);
+      return (
+        <div ref={constraintsRef} data-testid="constraints-root">
+          <motion.div data-testid="drag-node-ref" drag dragElastic={0} dragMomentum={false} dragConstraints={constraintsRef}>
+            Drag me
+          </motion.div>
+        </div>
+      );
+    }
+
+    render(<Demo />);
+    const root = screen.getByTestId('constraints-root') as HTMLDivElement;
+    const node = screen.getByTestId('drag-node-ref') as HTMLDivElement;
+
+    root.getBoundingClientRect = vi.fn(
+      () => ({ left: 0, top: 0, right: 200, bottom: 200, width: 200, height: 200, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect
+    );
+    node.getBoundingClientRect = vi.fn(
+      () => ({ left: 50, top: 50, right: 150, bottom: 150, width: 100, height: 100, x: 50, y: 50, toJSON: () => ({}) }) as DOMRect
+    );
+
+    fireEvent.pointerDown(node, { pointerId: 7, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 7, clientX: 320, clientY: 340 });
+    fireEvent.pointerUp(window, { pointerId: 7, clientX: 320, clientY: 340 });
+
+    expect(node.style.getPropertyValue('--px-xd')).toBe('50px');
+    expect(node.style.getPropertyValue('--px-yd')).toBe('50px');
   });
 });
