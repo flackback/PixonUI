@@ -193,11 +193,32 @@ export function ChatDemo() {
   hasMore={search.hasMore}
   onLoadMore={search.loadMore}
 />`}</code></pre>
+          <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100 lg:col-span-2"><code>{`const stream = useStreamingMessage({ chat, defaultSenderId: 'assistant' });
+const tools = useToolCalls();
+const typing = useAssistantTyping();
+
+await stream.start({
+  onStream: async ({ append }) => {
+    typing.setThinking();
+    for await (const event of agent.run({ chatId, message })) {
+      if (event.type === 'tool_start') {
+        tools.start({ id: event.id, name: event.name, input: event.input });
+        typing.setToolRunning(event.name);
+      }
+      if (event.type === 'tool_done') tools.complete(event.id, event.result);
+      if (event.type === 'text_delta') {
+        typing.setStreaming();
+        append(event.text);
+      }
+    }
+    typing.stop();
+  },
+});`}</code></pre>
         </div>
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           <div className="rounded-2xl border border-white/10 p-4">
             <strong className="text-white">Hooks</strong>
-            <p className="mt-2 text-zinc-400">useChatController, useChatContext, useChatNotifications, useChatSearchController, useConversationFilters, useChatDrafts.</p>
+            <p className="mt-2 text-zinc-400">useChatController, useStreamingMessage, useToolCalls, useAssistantTyping, useChatNotifications, useChatSearchController.</p>
           </div>
           <div className="rounded-2xl border border-white/10 p-4">
             <strong className="text-white">Props</strong>

@@ -250,6 +250,10 @@ export function useChatController({
 
   const groupedMessages = useMemo(() => groupMessagesByDate(state.messages), [state.messages]);
 
+  const appendMessage = useCallback((message: Message) => {
+    dispatch({ type: 'message:add', message });
+  }, []);
+
   return {
     ...state,
     groupedMessages,
@@ -261,5 +265,6 @@ export function useChatController({
     deleteMessage,
     reactToMessage,
     markAsRead,
+    appendMessage,
   };
 }
