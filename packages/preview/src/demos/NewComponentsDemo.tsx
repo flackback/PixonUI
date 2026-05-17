@@ -223,6 +223,7 @@ export function NewComponentsDemo() {
                 onChange={setSingleFramework}
                 searchable={true}
                 placeholder="Escolha um framework"
+                menuAnimation="slide"
               />
 
               <AdvancedSelect
@@ -234,6 +235,7 @@ export function NewComponentsDemo() {
                 searchable={true}
                 clearable={true}
                 placeholder="Atribuir equipe..."
+                menuAnimation="slide"
               />
             </div>
 
@@ -371,6 +373,7 @@ export function NewComponentsDemo() {
                   onChange={setGroupedSelection}
                   size={sizeVal}
                   variant={variantVal}
+                  menuAnimation="slide"
                 />
 
                 <AdvancedSelect
@@ -382,6 +385,7 @@ export function NewComponentsDemo() {
                   variant={variantVal}
                   searchable={true}
                   clearable={true}
+                  menuAnimation="slide"
                 />
               </div>
             </div>

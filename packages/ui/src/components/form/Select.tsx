@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../utils/cn';
 import { Label } from './Label';
+import { ScrollArea } from '../data-display/ScrollArea';
 import { useAnchoredPopover, type AnchoredPopoverAnimation } from '../../hooks/useAnchoredPopover';
 
 export interface SelectOption {
@@ -131,9 +132,9 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
     const menuAnimationClasses = {
       none: '',
-      fade: 'animate-in fade-in duration-150',
-      scale: 'animate-in fade-in zoom-in-95 duration-160',
-      slide: 'animate-in fade-in slide-in-from-top-1 duration-180',
+      fade: 'animate-in fade-in duration-220 ease-out',
+      scale: 'animate-in fade-in zoom-in-95 duration-220 ease-out',
+      slide: 'animate-in fade-in slide-in-from-top-2 zoom-in-95 duration-250 ease-out',
     } as const;
 
     const sizeClasses = {
@@ -245,12 +246,17 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                 !menuState.isPositioned && 'opacity-0'
               )}
             >
-              <ul
-                id={`${id}-listbox`}
-                role="listbox"
-                aria-activedescendant={activeIndex !== -1 ? `${id}-option-${activeIndex}` : undefined}
-                className="max-h-60 overflow-auto flex flex-col gap-0.5"
+              <ScrollArea
+                orientation="vertical"
+                scrollbarSize="sm"
+                className="max-h-60 pr-1"
               >
+                <ul
+                  id={`${id}-listbox`}
+                  role="listbox"
+                  aria-activedescendant={activeIndex !== -1 ? `${id}-option-${activeIndex}` : undefined}
+                  className="flex flex-col gap-0.5"
+                >
                 {options.map((option, index) => {
                   const showGroupHeader = option.group && (index === 0 || options[index - 1]?.group !== option.group);
                   const isSelected = currentValue === option.value;
@@ -270,12 +276,13 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                         onClick={() => handleSelect(option.value)}
                         onMouseEnter={() => setActiveIndex(index)}
                         className={cn(
-                          'w-full rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 cursor-pointer',
+                          'w-full rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 cursor-pointer animate-in fade-in slide-in-from-top-1',
                           isSelected 
                             ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
                             : 'text-zinc-700 dark:text-zinc-300',
                           isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
                         )}
+                        style={{ animationDelay: `${Math.min(index, 8) * 18}ms` }}
                       >
                         <div className="flex items-center justify-between gap-3">
                           <span className="flex-1 truncate">{option.label}</span>
@@ -300,7 +307,8 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                     </React.Fragment>
                   );
                 })}
-              </ul>
+                </ul>
+              </ScrollArea>
             </div>,
             document.body
           ) : null

@@ -4,6 +4,7 @@ import { cn } from '../../utils/cn';
 import { Label } from './Label';
 import { Search, X, Check, ChevronDown } from 'lucide-react';
 import { Badge } from '../../primitives/Badge';
+import { ScrollArea } from '../data-display/ScrollArea';
 import { useAnchoredPopover, type AnchoredPopoverAnimation } from '../../hooks/useAnchoredPopover';
 
 export interface AdvancedSelectOption {
@@ -221,9 +222,9 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
 
     const menuAnimationClasses = {
       none: '',
-      fade: 'animate-in fade-in duration-150',
-      scale: 'animate-in fade-in zoom-in-95 duration-160',
-      slide: 'animate-in fade-in slide-in-from-top-1 duration-180',
+      fade: 'animate-in fade-in duration-220 ease-out',
+      scale: 'animate-in fade-in zoom-in-95 duration-220 ease-out',
+      slide: 'animate-in fade-in slide-in-from-top-2 zoom-in-95 duration-250 ease-out',
     } as const;
 
     const sizeClasses = {
@@ -394,18 +395,19 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
               )}
 
               {/* Scrolling Options UL */}
-              <ul
-                ref={listboxRef}
-                id={`${id}-listbox`}
-                role="listbox"
-                className="max-h-60 overflow-y-auto flex flex-col gap-0.5"
-              >
-                {filteredOptions.length === 0 ? (
-                  <div className="py-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
-                    Nenhum resultado encontrado
-                  </div>
-                ) : (
-                  filteredOptions.map((option, index) => {
+              <ScrollArea orientation="vertical" scrollbarSize="sm" className="max-h-60 pr-1">
+                <ul
+                  ref={listboxRef}
+                  id={`${id}-listbox`}
+                  role="listbox"
+                  className="flex flex-col gap-0.5"
+                >
+                  {filteredOptions.length === 0 ? (
+                    <div className="py-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                      Nenhum resultado encontrado
+                    </div>
+                  ) : (
+                    filteredOptions.map((option, index) => {
                     const showGroupHeader = option.group && (index === 0 || filteredOptions[index - 1]?.group !== option.group);
                     const isSelected = currentValues.includes(option.value);
                     const isActive = activeIndex === index;
@@ -424,12 +426,13 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
                           onClick={() => handleSelectOption(option.value)}
                           onMouseEnter={() => setActiveIndex(index)}
                           className={cn(
-                            'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3',
+                            'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3 animate-in fade-in slide-in-from-top-1',
                             isSelected 
                               ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
                               : 'text-zinc-700 dark:text-zinc-300',
                             isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
                           )}
+                          style={{ animationDelay: `${Math.min(index, 8) * 18}ms` }}
                         >
                           {/* Avatar/Thumbnail */}
                           {option.avatar && (
@@ -468,11 +471,12 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
                             <Check className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
                           )}
                         </li>
-                      </React.Fragment>
-                    );
-                  })
-                )}
-              </ul>
+                    </React.Fragment>
+                  );
+                })
+              )}
+                </ul>
+              </ScrollArea>
             </div>,
             document.body
           ) : null
