@@ -1,6 +1,6 @@
 ---
 name: pixon-surgical
-description: Use quando o usuário quer mudanças cirúrgicas no PixonUI com máxima eficiência de tokens: diffs mínimos, leitura seletiva de arquivos, validação focada e comunicação objetiva.
+description: Use quando o usuário quer mudanças cirúrgicas no PixonUI com máxima economia de tokens, diffs mínimos, leitura seletiva, validação focada e resposta objetiva sem contexto redundante.
 ---
 
 # Pixon Surgical (Token Efficient)
@@ -9,24 +9,43 @@ description: Use quando o usuário quer mudanças cirúrgicas no PixonUI com má
 
 Fazer mudanças **mínimas e corretas** no código do PixonUI, com **baixa verbosidade** e foco em **estabilidade/performance**.
 
-## Regras de execução (sempre)
+## Regras de execução (sempre, em ordem)
 
-- **Não reescreva** componentes/arquivos inteiros; preferir patches pequenos.
-- **Preferir confirmação por evidência local**: `rg` antes de abrir arquivos grandes.
-- **Leia só o necessário**: `Get-Content ... | Select-Object -Skip/-First` (janelas pequenas).
-- **Evite contexto repetido**: não cole trechos longos; referencie `path:line`.
-- **Sem “gold plating”**: não corrigir coisas não relacionadas ao pedido.
-- **Saída curta**: no final, 3–6 bullets com o que mudou + paths.
+1. **Aplicar orçamento fixo** por turno:
+   - leitura: no máximo 6 arquivos,
+   - comandos: no máximo 8 execuções,
+   - resposta final: no máximo 8 bullets.
+2. **Não reescrever** arquivos inteiros; preferir patch local por símbolo.
+3. **Buscar antes de abrir**:
+   - usar `rg` para localizar,
+   - abrir somente janelas pequenas por trecho.
+4. **Evitar repetição de contexto**:
+   - não repetir stacktrace já enviado pelo usuário,
+   - não repetir planos completos no chat.
+5. **Parar no escopo**:
+   - não mexer em código adjacente sem evidência de causa raiz.
+6. **Validar no menor raio**:
+   - teste de arquivo/suíte específica antes de build amplo.
 
 ## Fluxo recomendado
 
-1. **Narrow scope**: identificar o arquivo/símbolo responsável via `rg`.
-2. **Repro curto** (se aplicável): localizar teste existente; se não houver, criar um teste pequeno.
-3. **Patch cirúrgico**: corrigir causa raiz; evitar efeitos colaterais.
+1. **Narrow scope**: identificar arquivo/símbolo com `rg`.
+2. **Diagnóstico mínimo viável**: abrir só os blocos necessários.
+3. **Patch cirúrgico**: corrigir causa raiz com menor diff possível.
 4. **Validação mínima**:
-   - Preferir `pnpm vitest run <arquivos>` no `packages/ui`.
-   - Se o problema for de build/TS, rodar `pnpm -w -r test` só se necessário.
-5. **Resumo final objetivo**: o que foi alterado e como testar.
+   - preferir `pnpm vitest run <arquivos>` em `packages/ui`,
+   - rodar build apenas se alteração tocar contrato público.
+5. **Resposta compacta**:
+   - mudanças,
+   - validação,
+   - próximo passo único.
+
+## Regras de economia em debug de animação
+
+- **Priorizar provas locais**: logs do console + arquivo exato + linha exata.
+- **Evitar rodada cega**: não aplicar múltiplas mudanças sem hipótese explícita.
+- **Não misturar frentes**: resolver `keyframe/unit` antes de `scroll/flicker`.
+- **Preferir correção estrutural única**: normalizador/sanitizador central em vez de patches duplicados.
 
 ## Padrões específicos do repo
 
