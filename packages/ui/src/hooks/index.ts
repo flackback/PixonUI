@@ -57,6 +57,7 @@ export * from './useFocusTrap';
 export * from './useChatDrafts';
 export * from './useChatController';
 export * from './useChatSearchController';
+export * from './useChatNotifications';
 export * from './useConversationFilters';
 export * from './useVoiceToText';
 export * from './useVirtualScrollRestoration';

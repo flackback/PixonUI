@@ -2,6 +2,8 @@ export * from './types';
 export * from './adapter';
 export * from './helpers';
 export * from './richText';
+export * from './ChatProvider';
+export * from './ChatShell';
 export * from './ChatLayout';
 export * from './ChatSidebar';
 export * from './ChatHeader';

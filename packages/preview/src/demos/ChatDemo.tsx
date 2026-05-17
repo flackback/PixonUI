@@ -148,6 +148,15 @@ export function ChatDemo() {
           O Pixon mantém a UI simples e delega busca/filtros pesados ao backend, no mesmo modelo eficiente do Chatwoot.
         </p>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100"><code>{`<ChatShell
+  chatId={chatId}
+  currentUserId={userId}
+  adapter={adapter}
+  conversations={conversations}
+  features={{ virtualized: true, notifications: true }}
+  slots={{ Header: MyHeader, Composer: MyComposer }}
+  onNotify={(event) => toast(event.description)}
+/>`}</code></pre>
           <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100"><code>{`const chat = useChatController({
   chatId,
   currentUserId,
@@ -162,7 +171,7 @@ export function ChatDemo() {
 
 <MessageList messages={chat.messages} virtualized />
 <ChatInput onSend={chat.sendMessage} />`}</code></pre>
-          <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100"><code>{`const search = useChatSearchController({
+          <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100 lg:col-span-2"><code>{`const search = useChatSearchController({
   chatId,
   adapter,
   filters: {
@@ -182,14 +191,18 @@ export function ChatDemo() {
   onLoadMore={search.loadMore}
 />`}</code></pre>
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="mt-5 grid gap-3 md:grid-cols-4">
           <div className="rounded-2xl border border-white/10 p-4">
             <strong className="text-white">Hooks</strong>
-            <p className="mt-2 text-zinc-400">useChatController, useChatSearchController, useConversationFilters, useChatDrafts.</p>
+            <p className="mt-2 text-zinc-400">useChatController, useChatContext, useChatNotifications, useChatSearchController, useConversationFilters, useChatDrafts.</p>
           </div>
           <div className="rounded-2xl border border-white/10 p-4">
             <strong className="text-white">Props</strong>
-            <p className="mt-2 text-zinc-400">MessageList virtualized, itemHeight, onLoadMore, hasMore; MessageSearch isLoading, hasMore, onLoadMore.</p>
+            <p className="mt-2 text-zinc-400">ChatShell features, preset, slots, onNotify; MessageList virtualized, itemHeight, onLoadMore, hasMore.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 p-4">
+            <strong className="text-white">Slots</strong>
+            <p className="mt-2 text-zinc-400">Layout, Sidebar, Header, MessageList, Composer, Profile, EmptyState e ErrorState sem reescrever o core.</p>
           </div>
           <div className="rounded-2xl border border-white/10 p-4">
             <strong className="text-white">Helpers</strong>
