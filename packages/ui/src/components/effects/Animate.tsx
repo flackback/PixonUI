@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useCallback, useEffect, useLayoutEffect, useContext } from 'react';
+import React, { useRef, useMemo, useCallback, useEffect, useLayoutEffect, useContext, useState } from 'react';
 import { usePixonAnimate, type PixonAnimateOptions } from '../../hooks/usePixonAnimate';
 import { useScroll, useSpring as useMotionSpring, useTransform } from '../../motion/hooks';
 import { PresenceContext } from './AnimatePresence';
@@ -149,6 +149,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 ) => {
   const Component = (as || 'div') as any;
   const { ref: internalRef, animate: pixonAnimate } = usePixonAnimate<any>();
+  const [mountedNode, setMountedNode] = useState<HTMLElement | SVGElement | null>(null);
   const activeInteractionRef = useRef<string | null>(null);
   const vCtx = useContext(VariantContext);
   const pCtx = useContext(PresenceContext);
@@ -290,6 +291,13 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     return target;
   }, []);
 
+  const setRefs = useCallback((node: HTMLElement | SVGElement | null) => {
+    (internalRef as React.MutableRefObject<HTMLElement | SVGElement | null>).current = node;
+    setMountedNode(node);
+    if (typeof externalRef === 'function') externalRef(node);
+    else if (externalRef) externalRef.current = node;
+  }, [externalRef, internalRef]);
+
   // Element-local stagger index must win over inherited context index.
   // Otherwise siblings that pass `staggerIdx` collapse to the same index (usually 0).
   const staggerIdx = propStaggerIdx ?? inheritedIndexRef.current ?? vCtx?.index ?? 0;
@@ -371,14 +379,12 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     const wantsAdditive = label === 'whileHover' || label === 'whileTap';
     const channel: PixonAnimateOptions['channel'] =
       label === 'layout' ? 'layout' : wantsAdditive ? 'gesture' : 'base';
-    const hasOpacityTarget = targetProps.some((prop) => prop === 'opacity');
     
     // V4.7 Supreme: Intelligent Property Batching
     // Only split if properties have explicit individual transitions
     const sharedTransition = typeof effectiveTransition === 'object' && Object.keys(effectiveTransition).every(k => !targetProps.includes(k));
-    const forcePerPropertyForOpacity = effectiveTransition?.type === 'spring' && hasOpacityTarget;
     
-    if (sharedTransition && !forcePerPropertyForOpacity) {
+    if (sharedTransition) {
       const stag = resolveStaggerMs(effectiveTransition);
       const opts: PixonAnimateOptions = {
         duration: normalizeTimeMs(effectiveTransition?.duration ?? 400, 400, { prop: 'duration', source: 'motion.transition' }),
@@ -444,12 +450,6 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
     return animations;
   }, [staggerIdx, pixonAnimate, shouldTrigger]);
-
-  // Sync internal and external refs
-  useIsomorphicLayoutEffect(() => {
-    if (typeof externalRef === 'function') externalRef(internalRef.current);
-    else if (externalRef) externalRef.current = internalRef.current;
-  }, [externalRef, internalRef]);
 
   // V4.7 Supreme: Aggressive State Seeding to eliminate layout thrashing
   useEffect(() => {
@@ -809,33 +809,61 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
 
   // Interaction: InView (Lazy)
   useEffect(() => {
-    if (!resolvedWhileInView || !internalRef.current || hasInViewTriggered.current) return;
+    const node = mountedNode;
+    if (!resolvedWhileInView || !node || hasInViewTriggered.current) return;
+    const threshold = resolvedViewport?.amount === 'all'
+      ? 1
+      : (typeof resolvedViewport?.amount === 'number' ? resolvedViewport.amount : 0.1);
+    const activate = () => {
+      if (inViewStateRef.current === true) return;
+      inViewStateRef.current = true;
+      trigger(resolve(resolvedWhileInView), 'whileInView', true);
+    };
+    const reset = () => {
+      if (resolvedViewport?.once || inViewStateRef.current === false) return;
+      inViewStateRef.current = false;
+      trigger(resolve(resolvedInitial || vCtx?.initial), 'initial', true);
+    };
+
+    const rect = node.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const visibleY = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
+    const ratio = rect.height > 0 ? visibleY / rect.height : 0;
+    if (visibleY > 0 && ratio >= threshold) {
+      activate();
+      if (resolvedViewport?.once) {
+        hasInViewTriggered.current = true;
+        return () => {
+          inViewStateRef.current = null;
+        };
+      }
+    }
+
     const observer = new IntersectionObserver(([entry]) => {
       const isInView = !!entry?.isIntersecting;
       if (inViewStateRef.current === isInView) return;
-      inViewStateRef.current = isInView;
 
       if (isInView) {
-        trigger(resolve(resolvedWhileInView), 'whileInView');
+        activate();
         if (resolvedViewport?.once) {
           hasInViewTriggered.current = true;
           observer.disconnect();
         }
-      } else if (!resolvedViewport?.once) {
-        trigger(resolve(resolvedInitial || vCtx?.initial), 'initial');
+      } else {
+        reset();
       }
     }, {
       root: resolvedViewport?.root,
       rootMargin: resolvedViewport?.rootMargin,
-      threshold: resolvedViewport?.amount === 'all' ? 1 : (typeof resolvedViewport?.amount === 'number' ? resolvedViewport.amount : 0.1),
+      threshold,
     });
 
-    observer.observe(internalRef.current);
+    observer.observe(node);
     return () => {
       inViewStateRef.current = null;
       observer.disconnect();
     };
-  }, [resolvedWhileInView, resolvedViewport, trigger, resolvedInitial, vCtx?.initial]);
+  }, [mountedNode, resolvedWhileInView, resolvedViewport, trigger, resolvedInitial, vCtx?.initial]);
 
   // Exit Animation
   useEffect(() => {
@@ -916,7 +944,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   return (
     <Component
       {...props}
-      ref={internalRef}
+      ref={setRefs}
       style={initialStyles}
     >
       <VariantContext.Provider value={{

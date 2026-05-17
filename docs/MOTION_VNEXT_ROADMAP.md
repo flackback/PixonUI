@@ -24,6 +24,10 @@ Make `motion.*` the simplest path for production-grade animation with:
 - **P5 completed**:
   - hardening de `whileInView` com deduplicação de estado de interseção para evitar re-trigger redundante/flicker.
   - gate único de produção para motion (`pnpm test:motion:production`) com build + E2E + budget de bundle.
+- **P6 completed**:
+  - `revealOnScroll` com spring em batch único para não cancelar `opacity` contra canais de transform.
+  - aplicação inicial de estilos não-transform no DOM para evitar elemento escondido antes da primeira animação.
+  - gate avançado cobrindo réplica SVG/timeline e budget de performance em Chromium.
 
 ## P0 — Contract and Stability
 ### 1) Time unit unification (breaking)
@@ -70,6 +74,12 @@ Make `motion.*` the simplest path for production-grade animation with:
   - build `@pixonui/react` e `@pixonui/preview`,
   - E2E motion em Chromium,
   - budget de `packages/ui/dist/index.mjs` (raw/gzip/brotli).
+
+## P6 — Advanced Production Gate
+- `revealOnScroll + transition.type='spring'` deve gerar animação batched quando o transition é compartilhado.
+- Estilos iniciais de `opacity`, `filter`, `clipPath` e demais props não-transform devem ser aplicados imediatamente.
+- Réplicas SVG/timeline avançadas entram no gate E2E para garantir que animações complexas continuam visíveis e ativas.
+- O gate de produção inclui budget visual/performance dedicado para reduzir regressão de jank.
 
 ## Migration Checklist (vNext)
 1. Replace second-based numbers with `ms` in transitions/presets.

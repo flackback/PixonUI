@@ -67,6 +67,7 @@ export function applyStyleObject(
     }
 
     restStyle[key] = val;
+    try { (el.style as any)[key] = val; } catch {}
   }
 
   const vars = toChannelVars(transformish, channel);

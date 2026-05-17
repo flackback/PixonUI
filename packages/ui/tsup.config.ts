@@ -25,8 +25,5 @@ export default defineConfig({
   external: ['react', 'react-dom'],
   treeshake: true,
   outDir: 'dist',
-  tsconfig: 'tsconfig.build.json',
-  banner: {
-    js: '"use client";',
-  }
+  tsconfig: 'tsconfig.build.json'
 });
