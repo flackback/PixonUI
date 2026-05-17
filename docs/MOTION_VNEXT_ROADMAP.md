@@ -14,6 +14,9 @@ Make `motion.*` the simplest path for production-grade animation with:
   - drag/inertia primitive disponível em `motion.*` via `drag`, `dragConstraints` (objeto e `RefObject`) e `dragMomentum`.
   - `parallax.source='container'` com `container` ref sem fallback silencioso para page.
   - canal adicional `drag` nos transform channels (`--px-*-d`) para composição aditiva sem conflito.
+- **P3 in progress**:
+  - preset unificado `scrollTimelinePreset` (timeline + scrub) para reduzir boilerplate em scroll-driven scenes.
+  - E2E dedicado de container parallax + ref drag constraints em Firefox/WebKit.
 
 ## P0 — Contract and Stability
 ### 1) Time unit unification (breaking)
@@ -44,6 +47,10 @@ Make `motion.*` the simplest path for production-grade animation with:
 - Drag/inertia primitives.
 - Scroll container targeting parity for all preset paths.
 - Extended additive transform channels for gesture/layout/scroll composition.
+
+## P3 — Scroll Timeline DX
+- `scrollTimelinePreset(name, options)` para entregar `timeline + scrub` no mesmo contrato.
+- Cobertura E2E cross-engine (Firefox/WebKit) para interações de container scroll + drag constraints por ref.
 
 ## Migration Checklist (vNext)
 1. Replace second-based numbers with `ms` in transitions/presets.

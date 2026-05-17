@@ -30,3 +30,13 @@ useTimelineScrub(ctrl, scrollYProgress, { from: 0.1, to: 0.85 });
 useScrubOnScroll(ctrl, { from: 0.2, to: 0.9 });
 ```
 
+## Preset unificado (timeline + scrub)
+```tsx
+const flow = scrollTimelinePreset('heroScrub', { from: 0.1, to: 0.85 });
+
+const ctrl = timeline({ scrub: true })
+  .add('.hero-title', flow.timeline.keyframes, flow.timeline.options)
+  .play();
+
+useScrubOnScroll(ctrl, flow.scrub);
+```

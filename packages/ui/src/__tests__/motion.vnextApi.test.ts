@@ -7,6 +7,7 @@ describe('motion vNext API contract', () => {
     expect(Array.isArray(MOTION_VNEXT_PUBLIC_API.declarative)).toBe(true);
     expect(MOTION_VNEXT_PUBLIC_API.declarative).toContain('drag');
     expect(MOTION_VNEXT_PUBLIC_API.presets).toContain('scrubOnScroll');
+    expect(MOTION_VNEXT_PUBLIC_API.timeline).toContain('scrollTimelinePreset');
   });
 
   it('declares deprecation policy with removal date', () => {

@@ -36,6 +36,12 @@ const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
 - Fluxo recomendado:
   - `useScroll` + `useTransform` + bind em `style`.
 
+### `dragConstraints` (paridade Framer)
+- vNext aceita constraints por objeto numérico **e** por `RefObject`:
+  - `dragConstraints={{ left, right, top, bottom }}`
+  - `dragConstraints={boundsRef}`
+- A variante por `RefObject` calcula limites no `pointerdown` e compõe no canal `drag` (`--px-*-d`) sem conflito com base/hover/scroll.
+
 ## 4) Timeline vNext (API curta)
 
 Builder:
@@ -86,4 +92,23 @@ Use `createTimelineComposer`:
 const motion = createTimelineComposer({ easing: 'elite-out' });
 const hero = motion.hero();
 const cards = motion.cards({ stagger: 90 });
+```
+
+## 7) Preset unificado para timeline scroll-driven
+
+Quando quiser contrato curto para timeline + scrub no mesmo objeto:
+
+```tsx
+const flow = scrollTimelinePreset('staggerSection', {
+  duration: 620,
+  stagger: 90,
+  from: 0.15,
+  to: 0.9,
+});
+
+const ctrl = timeline({ scrub: true })
+  .add('.card', flow.timeline.keyframes, flow.timeline.options)
+  .play();
+
+useScrubOnScroll(ctrl, flow.scrub);
 ```

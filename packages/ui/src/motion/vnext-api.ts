@@ -3,7 +3,7 @@ export const MOTION_VNEXT_VERSION = '1.0.0';
 export const MOTION_VNEXT_PUBLIC_API = Object.freeze({
   declarative: ['motion.*', 'initial', 'animate', 'exit', 'variants', 'transition', 'whileHover', 'whileTap', 'whileInView', 'drag', 'dragConstraints', 'dragMomentum'],
   hooks: ['useScroll', 'useTransform', 'useMotionValue', 'useSpring', 'useTimelineScope', 'useTimelineScrub', 'useScrubOnScroll'],
-  timeline: ['timeline', 'timelineScoped', 'timelinePreset', 'createTimelineComposer'],
+  timeline: ['timeline', 'timelineScoped', 'timelinePreset', 'scrollTimelinePreset', 'createTimelineComposer'],
   presets: ['revealOnScroll', 'parallax', 'staggerChildren', 'scrubOnScroll'],
 });
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import type React from 'react';
 import { normalizeTimeMs } from '../utils/motion';
-import { createTimelineComposer, parallax, revealOnScroll, scrubOnScroll, staggerChildren, timelinePreset } from '../motion/presets';
+import { createTimelineComposer, parallax, revealOnScroll, scrubOnScroll, scrollTimelinePreset, staggerChildren, timelinePreset } from '../motion/presets';
 
 describe('motion timing normalizer', () => {
   let warnSpy: ReturnType<typeof vi.spyOn>;
@@ -126,5 +126,19 @@ describe('motion presets', () => {
     expect(composer.cards({ stagger: 90 }).options).toMatchObject({ stagger: 90, duration: 560 });
     expect(composer.navbar({ duration: 300 }).options).toMatchObject({ duration: 300 });
     expect(composer.preset('cards').options).toMatchObject({ stagger: 70 });
+  });
+
+  it('returns unified timeline + scrub presets for scroll-driven scenes', () => {
+    const reveal = scrollTimelinePreset('revealSection');
+    expect(reveal.timeline.options).toMatchObject({ duration: 520, easing: 'elite-out' });
+    expect(reveal.scrub).toMatchObject({ axis: 'y', from: 0, to: 1, clamp: true, immediate: true });
+
+    const stagger = scrollTimelinePreset('staggerSection', { duration: 640, stagger: 90, from: 0.2, to: 0.95 });
+    expect(stagger.timeline.options).toMatchObject({ duration: 640, stagger: 90 });
+    expect(stagger.scrub).toMatchObject({ from: 0.2, to: 0.95 });
+
+    const hero = scrollTimelinePreset('heroScrub', { axis: 'x', from: 0.15, to: 0.85 });
+    expect(hero.timeline.options).toMatchObject({ duration: 720 });
+    expect(hero.scrub).toMatchObject({ axis: 'x', from: 0.15, to: 0.85 });
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ArrowRight, Cpu, Rocket, Sparkles, Zap } from 'lucide-react';
 import {
   AnimeGridStagger,
@@ -136,6 +136,52 @@ function TimelineScopeComposerDemo() {
         <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">hero()</div>
         <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">cards()</div>
         <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">navbar()</div>
+      </div>
+    </Surface>
+  );
+}
+
+function ContainerInteractionCard() {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const dragBoundsRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <Surface data-testid="container-interaction-card" className="rounded-3xl border border-slate-300/50 bg-white/80 p-8 dark:border-white/10 dark:bg-[#061333]/70">
+      <Heading as="h3" className="mb-3 text-xl font-semibold">
+        Container scroll + drag constraints
+      </Heading>
+      <Text className="mb-5 text-sm text-zinc-600 dark:text-white/65">
+        Parallax usando `source=&quot;container&quot;` e drag com constraints por `RefObject`, sem loop de re-render.
+      </Text>
+
+      <div className="relative">
+        <div
+          ref={scrollContainerRef}
+          data-testid="container-scroll-root"
+          className="h-28 overflow-x-auto rounded-2xl border border-slate-300/60 bg-white/50 dark:border-white/10 dark:bg-black/30"
+        >
+          <div className="h-full w-[1200px] bg-[linear-gradient(90deg,rgba(34,211,238,0.16),rgba(59,130,246,0.06),rgba(34,211,238,0.16))]" />
+        </div>
+        <motion.div
+          data-testid="container-parallax-orb"
+          className="pointer-events-none absolute left-4 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-cyan-300/80 blur-[1px]"
+          parallax={{ source: 'container', container: scrollContainerRef, axis: 'x', from: 0, to: 220 }}
+        />
+      </div>
+
+      <div
+        ref={dragBoundsRef}
+        data-testid="drag-bounds-root"
+        className="relative mt-6 h-24 overflow-hidden rounded-2xl border border-slate-300/60 bg-white/50 dark:border-white/10 dark:bg-black/30"
+      >
+        <motion.div
+          data-testid="drag-handle"
+          drag="x"
+          dragElastic={0}
+          dragMomentum={false}
+          dragConstraints={dragBoundsRef}
+          className="absolute left-3 top-1/2 h-9 w-24 -translate-y-1/2 cursor-grab rounded-xl border border-cyan-400/40 bg-cyan-500/20"
+        />
       </div>
     </Surface>
   );
@@ -366,6 +412,9 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
 
             <div className="mt-6">
               <TimelineScopeComposerDemo />
+            </div>
+            <div className="mt-6">
+              <ContainerInteractionCard />
             </div>
             <div data-testid="scope-outside-pill" className="scope-pill pointer-events-none absolute -left-[9999px] top-auto opacity-5">
               outside scope

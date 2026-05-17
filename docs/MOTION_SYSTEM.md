@@ -63,6 +63,7 @@ Important behavior:
 - `parallax(options?)`
 - `staggerChildren(options?)`
 - `scrubOnScroll(options?)`
+- `scrollTimelinePreset(name, options?)`
 
 Example:
 ```tsx

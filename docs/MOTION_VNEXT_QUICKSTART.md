@@ -24,6 +24,7 @@ useScrubOnScroll(ctrl, { from: 0.1, to: 0.9 });
 - `parallax`
 - `staggerChildren`
 - `scrubOnScroll` (config helper)
+- `scrollTimelinePreset` (timeline + scrub no mesmo contrato)
 
 ## 6) Drag / inertia (P2)
 ```tsx
@@ -56,5 +57,21 @@ const containerRef = useRef<HTMLDivElement>(null);
 />
 ```
 
-## 8) Migração
+## 8) Timeline + scrub com preset único
+```tsx
+const flow = scrollTimelinePreset('staggerSection', {
+  duration: 620,
+  stagger: 90,
+  from: 0.15,
+  to: 0.9,
+});
+
+const ctrl = timeline({ scrub: true })
+  .add('.card', flow.timeline.keyframes, flow.timeline.options)
+  .play();
+
+useScrubOnScroll(ctrl, flow.scrub);
+```
+
+## 9) Migração
 - Ver `C:\PROJETOS\PixonUI\docs\MOTION_VNEXT_MIGRATION.md`

@@ -106,6 +106,12 @@ import { motion, timeline, usePixonAnimate } from '@pixonui/react';
 - Official stagger preset:
   - `<motion.div staggerChildren />`
   - Optional tuning: `<motion.div staggerChildren={{ stagger: 90, delayChildren: 40, from: 'center' }} />`
+- Drag constraints com `RefObject` (Framer-like):
+  - `<motion.div drag dragConstraints={boundsRef} dragMomentum />`
+- Preset unificado para timeline + scrub:
+  - `const flow = scrollTimelinePreset('staggerSection', { from: 0.15, to: 0.9 })`
+  - `timeline({ scrub: true }).add('.card', flow.timeline.keyframes, flow.timeline.options).play()`
+  - `useScrubOnScroll(ctrl, flow.scrub)`
 - `timeline()` supports:
   - `timeline(tracks).play()`
   - `timeline().add(...).play()`

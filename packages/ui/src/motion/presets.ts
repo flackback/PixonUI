@@ -60,6 +60,15 @@ export interface TimelinePresetResult {
   options: TimelineAddOptions;
 }
 
+export type ScrollTimelinePresetName = 'revealSection' | 'staggerSection' | 'heroScrub';
+
+export interface ScrollTimelinePresetOptions extends TimelinePresetOptions, ScrubOnScrollOptions {}
+
+export interface ScrollTimelinePresetResult {
+  timeline: TimelinePresetResult;
+  scrub: Required<ScrubOnScrollOptions>;
+}
+
 export type TimelineDomainPresetName = 'hero' | 'cards' | 'navbar';
 
 export interface TimelineDomainComposer {
@@ -175,5 +184,56 @@ export function createTimelineComposer(baseOptions: TimelinePresetOptions = {}):
     hero: (options) => resolve('hero', options),
     cards: (options) => resolve('cards', options),
     navbar: (options) => resolve('navbar', options),
+  };
+}
+
+export function scrollTimelinePreset(
+  name: ScrollTimelinePresetName,
+  options: ScrollTimelinePresetOptions = {}
+): ScrollTimelinePresetResult {
+  const scrub = scrubOnScroll({
+    axis: options.axis,
+    from: options.from,
+    to: options.to,
+    clamp: options.clamp,
+    immediate: options.immediate,
+  });
+
+  if (name === 'heroScrub') {
+    return {
+      timeline: timelinePreset('fadeUp', {
+        distance: 40,
+        duration: options.duration ?? 720,
+        delay: options.delay ?? 0,
+        easing: options.easing ?? 'elite-out',
+        at: options.at,
+      }),
+      scrub,
+    };
+  }
+
+  if (name === 'staggerSection') {
+    return {
+      timeline: timelinePreset('staggerFadeUp', {
+        distance: options.distance ?? 28,
+        duration: options.duration ?? 560,
+        delay: options.delay ?? 0,
+        stagger: options.stagger ?? 70,
+        easing: options.easing ?? 'elite-out',
+        at: options.at,
+      }),
+      scrub,
+    };
+  }
+
+  return {
+    timeline: timelinePreset('fadeUp', {
+      distance: options.distance ?? 32,
+      duration: options.duration ?? 520,
+      delay: options.delay ?? 0,
+      easing: options.easing ?? 'elite-out',
+      at: options.at,
+    }),
+    scrub,
   };
 }
