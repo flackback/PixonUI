@@ -598,7 +598,9 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     }
 
     const rAnim = resolve(targetAnimate || vCtx?.animate);
-    if (rAnim && !resolvedWhileInView) trigger(rAnim, 'animate');
+    // Mount animation must bypass passive gate once; otherwise elements that
+    // start from `initial` can remain hidden when target key caching collides.
+    if (rAnim && !resolvedWhileInView) trigger(rAnim, 'animate', true);
   }, [isPresent, stableTarget, vCtx?.animate, trigger, resolvedWhileInView]);
 
   // Reactive Interaction: Listen to parent
