@@ -1,0 +1,45 @@
+import type { Conversation, Message, PresenceStatus } from './types';
+import type { MessageCursor } from './helpers';
+
+export interface FetchMessagesParams {
+  chatId: string;
+  cursor?: MessageCursor;
+  limit: number;
+  direction?: 'older' | 'newer';
+  signal?: AbortSignal;
+}
+
+export interface FetchMessagesResult {
+  messages: Message[];
+  nextCursor?: MessageCursor;
+  hasMore?: boolean;
+}
+
+export interface SendMessageInput {
+  chatId: string;
+  content: string;
+  senderId: string;
+  type?: Message['type'];
+  attachments?: Message['attachments'];
+  replyToId?: string;
+  replyTo?: Message;
+  clientId?: string;
+}
+
+export interface ChatSubscriptionHandlers {
+  onMessage?: (message: Message) => void;
+  onMessageUpdate?: (messageId: string, update: Partial<Message>) => void;
+  onMessageDelete?: (messageId: string) => void;
+  onPresence?: (userId: string, presence: PresenceStatus) => void;
+  onConversationUpdate?: (conversation: Partial<Conversation> & { id: string }) => void;
+}
+
+export interface ChatBackendAdapter {
+  fetchMessages?: (params: FetchMessagesParams) => Promise<FetchMessagesResult>;
+  sendMessage?: (input: SendMessageInput) => Promise<Message>;
+  updateMessage?: (chatId: string, messageId: string, update: Partial<Message>) => Promise<Message | Partial<Message>>;
+  deleteMessage?: (chatId: string, messageId: string) => Promise<void>;
+  reactToMessage?: (chatId: string, messageId: string, emoji: string, userId: string) => Promise<Message | Partial<Message> | void>;
+  markAsRead?: (chatId: string, messageIds: string[]) => Promise<void>;
+  subscribe?: (chatId: string, handlers: ChatSubscriptionHandlers) => () => void;
+}

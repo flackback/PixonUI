@@ -4,6 +4,7 @@ import type { Message } from './types';
 import { MessageBubble } from './MessageBubble';
 import { StickyDateHeader } from './StickyDateHeader';
 import { MessageSquare, Calendar, ArrowDown } from 'lucide-react';
+import { VirtualizedMessageList } from './VirtualizedMessageList';
 
 interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onCopy' | 'onSelect'> {
   messages: Message[];
@@ -30,6 +31,8 @@ interface MessageListProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   selectedMessages?: string[];
   dateFormat?: string;
   groupByDate?: boolean;
+  virtualized?: boolean;
+  itemHeight?: number | ((index: number) => number);
 }
 
 export function MessageList({ 
@@ -58,6 +61,8 @@ export function MessageList({
   selectedMessages = [],
   dateFormat = 'MMMM d, yyyy',
   groupByDate = true,
+  virtualized = false,
+  itemHeight,
   ...props 
 }: MessageListProps) {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -148,6 +153,20 @@ export function MessageList({
           <p>Start the conversation by sending a message below.</p>
         </div>
       </div>
+    );
+  }
+
+  if (virtualized) {
+    return (
+      <VirtualizedMessageList
+        messages={messages}
+        currentUserId={currentUserId}
+        onReply={onReply}
+        onImageClick={onImageClick}
+        onFileClick={onFileClick}
+        itemHeight={itemHeight}
+        className={className}
+      />
     );
   }
 
