@@ -13,8 +13,8 @@ const makeMessage = (id: string, content = id): Message => ({
   status: 'sent',
 });
 
-function Probe({ adapter }: { adapter: ChatBackendAdapter }) {
-  const chat = useChatController({ chatId: 'c1', currentUserId: 'me', adapter, pageSize: 2 });
+function Probe({ adapter, maxMessages }: { adapter: ChatBackendAdapter; maxMessages?: number }) {
+  const chat = useChatController({ chatId: 'c1', currentUserId: 'me', adapter, pageSize: 2, maxMessages });
 
   useEffect(() => {
     (window as any).__chat = chat;
@@ -72,6 +72,27 @@ describe('useChatController', () => {
       emit?.(makeMessage('2'));
     });
 
-    expect(screen.getByTestId('count').textContent).toContain('2:1-sent|2-sent');
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toContain('2:1-sent|2-sent'));
+  });
+
+  it('keeps a bounded message window for heavy conversations', async () => {
+    let emit: ((message: Message) => void) | undefined;
+    const adapter: ChatBackendAdapter = {
+      fetchMessages: vi.fn().mockResolvedValue({ messages: [makeMessage('1'), makeMessage('2')], hasMore: false }),
+      subscribe: vi.fn((_chatId, handlers) => {
+        emit = handlers.onMessage;
+        return vi.fn();
+      }),
+    };
+
+    render(<Probe adapter={adapter} maxMessages={2} />);
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toContain('2:1-sent|2-sent'));
+
+    act(() => {
+      emit?.(makeMessage('3'));
+      emit?.(makeMessage('4'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toContain('2:3-sent|4-sent'));
   });
 });

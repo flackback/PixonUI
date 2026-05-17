@@ -7,6 +7,7 @@ import {
   mergeMessageUpdate,
   replaceMessage,
   sortMessages,
+  trimMessageWindow,
   upsertMessages,
   type MessageCursor,
 } from '../components/chat/helpers';
@@ -21,6 +22,7 @@ export interface UseChatControllerOptions {
   initialMessages?: Message[];
   pageSize?: number;
   autoLoad?: boolean;
+  maxMessages?: number;
 }
 
 interface ChatControllerState {
@@ -39,22 +41,27 @@ type Action =
   | { type: 'load:success'; messages: Message[]; cursor?: MessageCursor; hasMore?: boolean; mode: 'replace' | 'prepend' }
   | { type: 'load:error'; error: Error }
   | { type: 'message:add'; message: Message }
+  | { type: 'message:addBatch'; messages: Message[] }
   | { type: 'message:update'; messageId: string; update: Partial<Message> }
   | { type: 'message:replace'; optimisticId: string; message: Message }
   | { type: 'message:status'; messageId: string; status: MessageStatus }
   | { type: 'message:delete'; messageId: string }
   | { type: 'sending'; value: boolean };
 
-function reducer(state: ChatControllerState, action: Action): ChatControllerState {
+function reducer(state: ChatControllerState, action: Action, maxMessages?: number): ChatControllerState {
   switch (action.type) {
     case 'reset':
-      return { ...state, messages: sortMessages(action.messages), cursor: undefined, hasMore: true, error: null };
+      return { ...state, messages: trimMessageWindow(sortMessages(action.messages), maxMessages), cursor: undefined, hasMore: true, error: null };
     case 'load:start':
       return { ...state, isLoadingInitial: action.initial, isLoadingOlder: !action.initial, error: null };
     case 'load:success':
       return {
         ...state,
-        messages: action.mode === 'replace' ? sortMessages(action.messages) : upsertMessages(state.messages, action.messages, 'prepend'),
+        messages: trimMessageWindow(
+          action.mode === 'replace' ? sortMessages(action.messages) : upsertMessages(state.messages, action.messages, 'prepend'),
+          maxMessages,
+          action.mode === 'prepend' ? 'newest' : 'oldest'
+        ),
         cursor: action.cursor,
         hasMore: action.hasMore ?? action.messages.length > 0,
         isLoadingInitial: false,
@@ -63,7 +70,9 @@ function reducer(state: ChatControllerState, action: Action): ChatControllerStat
     case 'load:error':
       return { ...state, error: action.error, isLoadingInitial: false, isLoadingOlder: false };
     case 'message:add':
-      return { ...state, messages: upsertMessages(state.messages, action.message, 'append') };
+      return { ...state, messages: trimMessageWindow(upsertMessages(state.messages, action.message, 'append'), maxMessages, 'oldest') };
+    case 'message:addBatch':
+      return { ...state, messages: trimMessageWindow(upsertMessages(state.messages, action.messages, 'append'), maxMessages, 'oldest') };
     case 'message:update':
       return { ...state, messages: state.messages.map((message) => message.id === action.messageId ? mergeMessageUpdate(message, action.update) : message) };
     case 'message:replace':
@@ -88,22 +97,26 @@ export function useChatController({
   initialMessages = EMPTY_MESSAGES,
   pageSize = 50,
   autoLoad = true,
+  maxMessages = 2000,
 }: UseChatControllerOptions) {
   const adapterRef = useRef(adapter);
   adapterRef.current = adapter;
 
-  const [state, dispatch] = useReducer(reducer, {
-    messages: sortMessages(initialMessages),
+  const [state, dispatchBase] = useReducer((state: ChatControllerState, action: Action) => reducer(state, action, maxMessages), {
+    messages: trimMessageWindow(sortMessages(initialMessages), maxMessages),
     hasMore: true,
     isLoadingInitial: false,
     isLoadingOlder: false,
     isSending: false,
     error: null,
   });
+  const dispatch = dispatchBase;
+  const realtimeQueueRef = useRef<Message[]>([]);
+  const realtimeFlushRef = useRef<number | null>(null);
 
   useEffect(() => {
     dispatch({ type: 'reset', messages: initialMessages });
-  }, [chatId, initialMessages]);
+  }, [chatId, initialMessages, maxMessages]);
 
   const loadInitialMessages = useCallback(async () => {
     if (!chatId || !adapterRef.current?.fetchMessages) return;
@@ -135,11 +148,30 @@ export function useChatController({
 
   useEffect(() => {
     if (!chatId || !adapterRef.current?.subscribe) return;
-    return adapterRef.current.subscribe(chatId, {
-      onMessage: (message) => dispatch({ type: 'message:add', message }),
+    const flushRealtime = () => {
+      realtimeFlushRef.current = null;
+      const messages = realtimeQueueRef.current;
+      realtimeQueueRef.current = [];
+      if (messages.length) dispatch({ type: 'message:addBatch', messages });
+    };
+    const scheduleRealtimeFlush = () => {
+      if (realtimeFlushRef.current !== null) return;
+      realtimeFlushRef.current = window.setTimeout(flushRealtime, 0);
+    };
+    const unsubscribe = adapterRef.current.subscribe(chatId, {
+      onMessage: (message) => {
+        realtimeQueueRef.current.push(message);
+        scheduleRealtimeFlush();
+      },
       onMessageUpdate: (messageId, update) => dispatch({ type: 'message:update', messageId, update }),
       onMessageDelete: (messageId) => dispatch({ type: 'message:delete', messageId }),
     });
+    return () => {
+      if (realtimeFlushRef.current !== null) window.clearTimeout(realtimeFlushRef.current);
+      realtimeFlushRef.current = null;
+      realtimeQueueRef.current = [];
+      unsubscribe?.();
+    };
   }, [chatId]);
 
   const sendMessage = useCallback(async (contentOrInput: string | Omit<SendMessageInput, 'chatId' | 'senderId'>) => {

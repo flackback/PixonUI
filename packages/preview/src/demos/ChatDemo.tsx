@@ -160,6 +160,8 @@ export function ChatDemo() {
           <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100"><code>{`const chat = useChatController({
   chatId,
   currentUserId,
+  pageSize: 50,
+  maxMessages: 2000,
   adapter: {
     fetchMessages,
     searchMessages,
@@ -169,6 +171,7 @@ export function ChatDemo() {
   },
 });
 
+<ChatSidebar conversations={conversations} virtualized />
 <MessageList messages={chat.messages} virtualized />
 <ChatInput onSend={chat.sendMessage} />`}</code></pre>
           <pre className="overflow-auto rounded-2xl bg-black/60 p-4 text-xs text-cyan-100 lg:col-span-2"><code>{`const search = useChatSearchController({
@@ -198,7 +201,7 @@ export function ChatDemo() {
           </div>
           <div className="rounded-2xl border border-white/10 p-4">
             <strong className="text-white">Props</strong>
-            <p className="mt-2 text-zinc-400">ChatShell features, preset, slots, onNotify; MessageList virtualized, itemHeight, onLoadMore, hasMore.</p>
+            <p className="mt-2 text-zinc-400">ChatShell features, preset, slots, onNotify; ChatSidebar virtualized; MessageList virtualized; useChatController maxMessages.</p>
           </div>
           <div className="rounded-2xl border border-white/10 p-4">
             <strong className="text-white">Slots</strong>

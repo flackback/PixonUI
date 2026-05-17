@@ -160,6 +160,7 @@ export const ChatShell = React.memo(function ChatShell({
           conversations={conversations}
           activeId={chatId ?? undefined}
           onSelect={onSelectConversation}
+          virtualized={mergedFeatures.virtualized}
           onSearch={mergedFeatures.search ? undefined : undefined}
           className="hidden md:flex"
         />

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ChatProvider, ChatShell, useChatContext } from '../components/chat';
+import { ChatProvider, ChatShell, ChatSidebar, useChatContext } from '../components/chat';
 import { useChatNotifications } from '../hooks/useChatNotifications';
 import type { Message } from '../components/chat/types';
 
@@ -34,6 +34,19 @@ describe('ChatShell', () => {
     expect(screen.getByText('Header custom')).toBeInTheDocument();
     expect(screen.getByText('Mensagem inicial')).toBeInTheDocument();
     expect(screen.getByText('Composer custom')).toBeInTheDocument();
+  });
+
+  it('virtualizes large conversation lists', () => {
+    const conversations = Array.from({ length: 500 }, (_, index) => ({
+      id: `c${index}`,
+      user: { id: `u${index}`, name: `User ${index}` },
+      unreadCount: 0,
+    }));
+
+    render(<ChatSidebar conversations={conversations} virtualized />);
+
+    expect(screen.getByText('User 0')).toBeInTheDocument();
+    expect(screen.queryByText('User 499')).not.toBeInTheDocument();
   });
 
   it('provides controller state through ChatProvider', () => {

@@ -51,6 +51,11 @@ export function upsertMessages(current: Message[], incoming: Message | Message[]
   return sortMessages(Array.from(byId.values()));
 }
 
+export function trimMessageWindow(messages: Message[], maxMessages?: number, trim: 'oldest' | 'newest' = 'oldest'): Message[] {
+  if (!maxMessages || maxMessages <= 0 || messages.length <= maxMessages) return messages;
+  return trim === 'newest' ? messages.slice(0, maxMessages) : messages.slice(messages.length - maxMessages);
+}
+
 export function buildOptimisticMessage(input: BuildOptimisticMessageInput): Message {
   return {
     id: input.id ?? createId(),

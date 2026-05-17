@@ -3,6 +3,7 @@ import { cn } from '../../utils/cn';
 import { Search, Plus, Archive, Pin, BellOff, Trash2, Filter, MoreVertical, MessageSquare } from 'lucide-react';
 import type { Conversation } from './types';
 import { Avatar } from '../data-display/Avatar';
+import { useVirtualList } from '../../hooks/useVirtualList';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -162,6 +163,8 @@ interface ChatSidebarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   sortBy?: 'recent' | 'unread' | 'name';
   hideHeader?: boolean;
   isLoading?: boolean;
+  virtualized?: boolean;
+  conversationItemHeight?: number;
 }
 
 export function ChatSidebar({ 
@@ -181,6 +184,8 @@ export function ChatSidebar({
   sortBy = 'recent',
   hideHeader = false,
   isLoading = false,
+  virtualized,
+  conversationItemHeight = 72,
   className,
   ...props 
 }: ChatSidebarProps) {
@@ -235,6 +240,37 @@ export function ChatSidebar({
     setContextMenu({ x: e.clientX, y: e.clientY, chatId });
   };
 
+  const shouldVirtualize = virtualized ?? filteredConversations.length > 120;
+  const {
+    containerRef,
+    visibleItems,
+    totalHeight,
+    onScroll,
+  } = useVirtualList({
+    itemCount: filteredConversations.length,
+    itemHeight: conversationItemHeight,
+    overscan: 8,
+  });
+
+  const renderConversation = (chat: Conversation) => (
+    <ConversationItem
+      key={chat.id}
+      chat={chat}
+      isActive={activeId === chat.id}
+      isBeingDraggedOver={dragOverChatId === chat.id}
+      onSelect={onSelect}
+      onPin={onPin}
+      onArchive={onArchive}
+      onMute={onMute}
+      onMarkUnread={onMarkUnread}
+      onDelete={onDelete}
+      onContextMenu={handleContextMenu}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    />
+  );
+
   // If children are passed, use them (backward compatibility)
   if (children) {
     return (
@@ -283,10 +319,12 @@ export function ChatSidebar({
         </div>
       )}
 
-      <div 
+      <div
+        ref={shouldVirtualize ? containerRef : undefined}
+        onScroll={shouldVirtualize ? onScroll : undefined}
         className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
       >
-        <div className="flex flex-col p-2 space-y-1">
+        <div className={cn(shouldVirtualize ? 'relative p-2' : 'flex flex-col p-2 space-y-1')} style={shouldVirtualize ? { height: totalHeight + 16 } : undefined}>
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <div 
@@ -309,24 +347,18 @@ export function ChatSidebar({
                 </div>
               </div>
             ))
-          ) : filteredConversations.map((chat) => (
-            <ConversationItem
-              key={chat.id}
-              chat={chat}
-              isActive={activeId === chat.id}
-              isBeingDraggedOver={dragOverChatId === chat.id}
-              onSelect={onSelect}
-              onPin={onPin}
-              onArchive={onArchive}
-              onMute={onMute}
-              onMarkUnread={onMarkUnread}
-              onDelete={onDelete}
-              onContextMenu={handleContextMenu}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            />
-          ))}
+          ) : shouldVirtualize ? (
+            visibleItems.map(({ index, offsetTop, height }) => {
+              const chat = filteredConversations[index];
+              if (!chat) return null;
+
+              return (
+                <div key={chat.id} className="absolute left-2 right-2" style={{ top: offsetTop + 8, height }}>
+                  {renderConversation(chat)}
+                </div>
+              );
+            })
+          ) : filteredConversations.map(renderConversation)}
         </div>
       </div>
 
