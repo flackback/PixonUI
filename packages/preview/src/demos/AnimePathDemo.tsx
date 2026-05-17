@@ -199,10 +199,13 @@ function FluidSynth() {
         <motion.div
           key={i}
           initial={{ scaleY: 0.35, opacity: 0.35 }}
-          animate={{ scaleY: [0.35, 1, 0.45, 0.8, 0.35], opacity: [0.35, 1, 0.45, 0.8, 0.35] }}
+          animate={{
+            scaleY: [0.35, 0.92, 0.52, 0.78, 0.44, 0.35],
+            opacity: [0.28, 0.95, 0.48, 0.82, 0.52, 0.28],
+          }}
           transition={{
-            duration: 1.8 + ((i % 7) * 0.08),
-            delay: i * 0.035,
+            duration: 3.2 + ((i % 7) * 0.12),
+            delay: i * 0.055,
             repeat: Infinity,
             repeatType: 'loop',
             easing: 'ease-in-out',
@@ -211,7 +214,7 @@ function FluidSynth() {
             scaleY: 1.2,
             scaleX: 1.18,
             opacity: 1,
-            transition: { type: 'spring', stiffness: 280, damping: 20 }
+            transition: { type: 'spring', stiffness: 220, damping: 24 }
           }}
           className="flex-1 min-w-[8px] max-w-[20px] rounded-full border border-white/10 bg-white/10 origin-bottom"
           style={{
