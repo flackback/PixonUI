@@ -74,6 +74,7 @@ export function NewComponentsDemo() {
   const [sizeVal, setSizeVal] = useState<'sm' | 'md' | 'lg'>('md');
   const [variantVal, setVariantVal] = useState<'default' | 'ghost' | 'glass' | 'cyber'>('default');
   const [groupedSelection, setGroupedSelection] = useState('react');
+  const [animatedSelectValue, setAnimatedSelectValue] = useState('react');
 
   // Dropdown Checkbox states
   const [showGrid, setShowGrid] = useState(true);
@@ -117,6 +118,15 @@ export function NewComponentsDemo() {
     { label: 'Vue.js', value: 'vue', description: 'Framework progressivo altamente intuitivo' },
     { label: 'Angular', value: 'angular', description: 'Plataforma completa para grandes empresas' },
     { label: 'Svelte', value: 'svelte', description: 'Compilador ágil com zero runtime overhead' },
+  ];
+
+  const animatedFrameworkOptions = [
+    { label: 'React', value: 'react', group: 'Frontend' },
+    { label: 'Vue.js', value: 'vue', group: 'Frontend' },
+    { label: 'Angular', value: 'angular', group: 'Frontend' },
+    { label: 'Svelte', value: 'svelte', group: 'Frontend' },
+    { label: 'Next.js', value: 'next', group: 'Meta Frameworks' },
+    { label: 'Remix', value: 'remix', group: 'Meta Frameworks' },
   ];
 
   const memberOptions = [
@@ -387,6 +397,26 @@ export function NewComponentsDemo() {
                   clearable={true}
                   menuAnimation="slide"
                 />
+
+                <div className="rounded-2xl border border-purple-500/10 bg-purple-500/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-white">Select Animado</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Portal fixo + scroll Pixon + entrada slide.</p>
+                    </div>
+                    <Badge variant="glass" className="text-[10px] uppercase tracking-wider">menuAnimation="slide"</Badge>
+                  </div>
+                  <Select
+                    label="Framework com animação"
+                    options={animatedFrameworkOptions}
+                    value={animatedSelectValue}
+                    onChange={setAnimatedSelectValue}
+                    placeholder="Escolha um framework"
+                    menuAnimation="slide"
+                    size="lg"
+                    variant="glass"
+                  />
+                </div>
               </div>
             </div>
 
