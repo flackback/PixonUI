@@ -83,11 +83,13 @@ import { DashboardDemo } from './demos/DashboardDemo';
 import { CRMAdvancedDemo } from './demos/CRMAdvancedDemo';
 
 import { TaskTimelineDemo } from './demos/TaskTimelineDemo';
+import { AnimationStudioDemo } from './demos/AnimationStudioDemo';
 import AnimePathDemo from './demos/AnimePathDemo';
 import AnimePenReplicasDemo from './demos/AnimePenReplicasDemo';
 import TimelineScrollPresetDemo from './demos/TimelineScrollPresetDemo';
 import TaskTimelineSource from '../../ui/src/components/data-display/TaskTimeline.tsx?raw';
 import useTaskTimelineSource from '../../ui/src/hooks/useTaskTimeline.ts?raw';
+import AnimationStudioSource from '../../ui/src/components/effects/AnimationStudio.tsx?raw';
 import BackgroundSource from '../../ui/src/components/layout/Background.tsx?raw';
 import HeroTextSource from '../../ui/src/components/typography/HeroText.tsx?raw';
 import LetterPullupSource from '../../ui/src/components/typography/LetterPullup.tsx?raw';
@@ -1430,6 +1432,40 @@ const { groups, stats, ...actions } = useTaskTimeline({ initialGroups });
 // useTaskTimeline.ts
 \${useTaskTimelineSource}`,
     demo: <TaskTimelineDemo />
+  },
+
+  {
+    id: 'animation-studio',
+    title: 'Animation Studio (Timeline)',
+    category: 'Effects',
+    description: 'Editor de animações por timeline (estilo Edge Animate) com tracks, keyframes, scrubbing e preview ao vivo usando WAAPI.',
+    code: `import React, { useState } from 'react';
+import { AnimationStudio } from '@pixonui/react';
+
+const initialClip = {
+  durationMs: 2000,
+  tracks: [
+    {
+      id: 't-opacity',
+      label: 'Opacity',
+      channel: 'opacity',
+      keyframes: [
+        { id: 'k0', t: 0, v: 0 },
+        { id: 'k1', t: 300, v: 1 },
+        { id: 'k2', t: 1700, v: 1 },
+        { id: 'k3', t: 2000, v: 0 },
+      ],
+    },
+  ],
+};
+
+export function Demo() {
+  const [clip, setClip] = useState(initialClip);
+  return <AnimationStudio clip={clip} onClipChange={setClip} />;
+}`,
+    componentSource: `// AnimationStudio.tsx
+${AnimationStudioSource}`,
+    demo: <AnimationStudioDemo />
   },
 
 

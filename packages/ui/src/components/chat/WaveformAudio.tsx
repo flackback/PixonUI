@@ -94,7 +94,7 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
     <div 
       className={cn(
         // Keep a nice desktop minimum width, but never overflow its container (chat bubble, Surface, etc).
-        "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-0 max-w-full w-full sm:min-w-[320px] group/audio",
+        "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-0 max-w-full w-full sm:min-w-[320px] group/audio overflow-hidden",
         isMe
           ? "bg-white/10 text-white"
           : "bg-white/80 dark:bg-white/[0.03] text-zinc-900 dark:text-white/90 border border-zinc-200/80 dark:border-white/10",

@@ -5,8 +5,8 @@ export function BackgroundDemo() {
   return (
     <div className="space-y-12">
       <div>
-        <Heading as="h2" className="text-2xl font-bold text-white mb-2">Background Patterns</Heading>
-        <Text className="text-white/60">
+        <Heading as="h2" className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Background Patterns</Heading>
+        <Text className="text-zinc-600 dark:text-white/60">
           Decorative background patterns for sections, cards, or entire pages.
         </Text>
       </div>
@@ -14,7 +14,7 @@ export function BackgroundDemo() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Dot Pattern */}
         <div className="space-y-4">
-          <Heading as="h3" className="text-lg font-medium text-white/80">Dot Pattern</Heading>
+          <Heading as="h3" className="text-lg font-medium text-zinc-900 dark:text-white/80">Dot Pattern</Heading>
           <div className="relative h-64 rounded-2xl border border-white/10 overflow-hidden bg-zinc-950 flex items-center justify-center">
             <Background variant="dots" size={20} patternColor="rgba(255,255,255,0.1)" />
             <Surface className="p-6">
@@ -25,7 +25,7 @@ export function BackgroundDemo() {
 
         {/* Grid Pattern */}
         <div className="space-y-4">
-          <Heading as="h3" className="text-lg font-medium text-white/80">Grid Pattern</Heading>
+          <Heading as="h3" className="text-lg font-medium text-zinc-900 dark:text-white/80">Grid Pattern</Heading>
           <div className="relative h-64 rounded-2xl border border-white/10 overflow-hidden bg-zinc-950 flex items-center justify-center">
             <Background variant="grid" size={32} patternColor="rgba(255,255,255,0.05)" />
             <Surface className="p-6">
@@ -36,7 +36,7 @@ export function BackgroundDemo() {
 
         {/* Faded Mask */}
         <div className="space-y-4">
-          <Heading as="h3" className="text-lg font-medium text-white/80">Faded Mask</Heading>
+          <Heading as="h3" className="text-lg font-medium text-zinc-900 dark:text-white/80">Faded Mask</Heading>
           <div className="relative h-64 rounded-2xl border border-white/10 overflow-hidden bg-zinc-950 flex items-center justify-center">
             <Background variant="grid" size={24} mask="fade" patternColor="rgba(59, 130, 246, 0.2)" />
             <Surface className="p-6">
@@ -47,7 +47,7 @@ export function BackgroundDemo() {
 
         {/* Mesh Gradient */}
         <div className="space-y-4">
-          <Heading as="h3" className="text-lg font-medium text-white/80">Mesh Gradient</Heading>
+          <Heading as="h3" className="text-lg font-medium text-zinc-900 dark:text-white/80">Mesh Gradient</Heading>
           <div className="relative h-64 rounded-2xl border border-white/10 overflow-hidden bg-zinc-950 flex items-center justify-center">
             <Background variant="mesh" animate />
             <Surface className="p-6">
@@ -58,7 +58,7 @@ export function BackgroundDemo() {
 
         {/* Interactive Follow */}
         <div className="space-y-4">
-          <Heading as="h3" className="text-lg font-medium text-white/80">Interactive Follow</Heading>
+          <Heading as="h3" className="text-lg font-medium text-zinc-900 dark:text-white/80">Interactive Follow</Heading>
           <div className="relative h-64 rounded-2xl border border-white/10 overflow-hidden bg-zinc-950 flex items-center justify-center">
             <Background variant="gradient" patternColor="rgba(59, 130, 246, 0.15)" followMouse />
             <Surface className="p-6">
@@ -70,7 +70,7 @@ export function BackgroundDemo() {
 
       {/* Full Section Example */}
       <div className="space-y-4">
-        <Heading as="h3" className="text-lg font-medium text-white/80">Full Section Example (Fixed Visibility)</Heading>
+        <Heading as="h3" className="text-lg font-medium text-zinc-900 dark:text-white/80">Full Section Example (Fixed Visibility)</Heading>
         <section className="relative py-24 px-8 rounded-3xl border border-white/10 overflow-hidden text-center">
           <Background 
             variant="dots" 

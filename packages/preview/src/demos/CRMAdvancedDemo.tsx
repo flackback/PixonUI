@@ -21,15 +21,15 @@ export function CRMAdvancedDemo() {
     <div className="space-y-8 pb-20">
       <section>
         <Heading as="h3" className="mb-4">Status de Conexão</Heading>
-        <div className="relative h-24 border border-white/10 rounded-xl overflow-hidden bg-black/20 flex flex-col items-center justify-center">
+        <div className="relative h-24 border border-zinc-200/80 dark:border-white/10 rounded-xl overflow-hidden bg-white/60 dark:bg-black/20 flex flex-col items-center justify-center">
           <ConnectionStatusBanner 
             status={connectionStatus === 'connected' ? 'connecting' : connectionStatus as any} 
             onRetry={() => setConnectionStatus('connecting')}
           />
           <div className="mt-8 flex gap-2">
-            <button onClick={() => setConnectionStatus('disconnected')} className="text-[10px] px-2 py-1 bg-white/5 rounded">Simular Queda</button>
-            <button onClick={() => setConnectionStatus('connecting')} className="text-[10px] px-2 py-1 bg-white/5 rounded">Simular Conexão</button>
-            <button onClick={() => setConnectionStatus('error')} className="text-[10px] px-2 py-1 bg-white/5 rounded">Simular Erro</button>
+            <button onClick={() => setConnectionStatus('disconnected')} className="text-[10px] px-2 py-1 bg-zinc-100 dark:bg-white/5 rounded">Simular Queda</button>
+            <button onClick={() => setConnectionStatus('connecting')} className="text-[10px] px-2 py-1 bg-zinc-100 dark:bg-white/5 rounded">Simular Conexão</button>
+            <button onClick={() => setConnectionStatus('error')} className="text-[10px] px-2 py-1 bg-zinc-100 dark:bg-white/5 rounded">Simular Erro</button>
           </div>
         </div>
       </section>
@@ -38,7 +38,7 @@ export function CRMAdvancedDemo() {
         <Heading as="h3" className="mb-4">CRM & Atendimento</Heading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-4 space-y-4">
-            <Text className="font-bold border-b border-white/5 pb-2 mb-2">Mensagem com Atribuíção</Text>
+            <Text className="font-bold border-b border-zinc-200/70 dark:border-white/5 pb-2 mb-2 text-zinc-900 dark:text-white">Mensagem com Atribuíção</Text>
             <MessageBubble 
               message={{
                 id: '1',
@@ -53,7 +53,7 @@ export function CRMAdvancedDemo() {
               isOwn={false}
             />
             
-            <Text className="font-bold border-b border-white/5 pb-2 mt-4 mb-2">Nota Interna (Rascunho)</Text>
+            <Text className="font-bold border-b border-zinc-200/70 dark:border-white/5 pb-2 mt-4 mb-2 text-zinc-900 dark:text-white">Nota Interna (Rascunho)</Text>
             <MessageBubble 
               message={{
                 id: '2',
@@ -70,15 +70,15 @@ export function CRMAdvancedDemo() {
           </Card>
 
           <Card className="p-4 space-y-4">
-            <Text className="font-bold border-b border-white/5 pb-2 mb-2">Player Waveform (WhatsApp Style)</Text>
-            <div className="bg-white/5 p-4 rounded-xl">
+            <Text className="font-bold border-b border-zinc-200/70 dark:border-white/5 pb-2 mb-2 text-zinc-900 dark:text-white">Player Waveform (WhatsApp Style)</Text>
+            <div className="bg-zinc-100 dark:bg-white/5 p-4 rounded-xl">
               <WaveformAudio 
                 src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
                 duration={180}
                 isMe={false}
               />
             </div>
-            <Text className="text-xs text-white/40">Visualização de ondas dinâmica baseada no áudio ou aleatória para mock.</Text>
+            <Text className="text-xs text-zinc-600 dark:text-white/40">Visualização de ondas dinâmica baseada no áudio ou aleatória para mock.</Text>
           </Card>
         </div>
       </section>
@@ -91,8 +91,8 @@ export function CRMAdvancedDemo() {
             onRegenerate={() => console.log('Regenerate')}
           />
           
-          <div className="p-4 border border-white/5 rounded-2xl bg-white/[0.02]">
-            <Text className="text-xs font-bold text-white/40 mb-3 uppercase tracking-wider">Sugestões de Respostas Rápidas</Text>
+          <div className="p-4 border border-zinc-200/70 dark:border-white/5 rounded-2xl bg-white/60 dark:bg-white/[0.02]">
+            <Text className="text-xs font-bold text-zinc-600 dark:text-white/40 mb-3 uppercase tracking-wider">Sugestões de Respostas Rápidas</Text>
             <SmartReplySuggestions 
               replies={[
                 "Com certeza, vou gerar o link agora mesmo!",
@@ -108,12 +108,12 @@ export function CRMAdvancedDemo() {
 
       <section>
         <Heading as="h3" className="mb-4">Bulk Actions (Seleção em Massa)</Heading>
-        <div className="relative h-48 border border-white/10 rounded-xl bg-black/20 p-8 flex flex-col items-center justify-center gap-4">
+        <div className="relative h-48 border border-zinc-200/80 dark:border-white/10 rounded-xl bg-white/60 dark:bg-black/20 p-8 flex flex-col items-center justify-center gap-4">
           <Text>Selecione itens para ver a barra de ações</Text>
           <div className="flex gap-2">
-            <button onClick={() => setSelectedCount(1)} className="px-3 py-1 bg-white/10 rounded">Selecionar 1</button>
-            <button onClick={() => setSelectedCount(5)} className="px-3 py-1 bg-white/10 rounded">Selecionar 5</button>
-            <button onClick={() => setSelectedCount(0)} className="px-3 py-1 bg-white/20 rounded">Limpar</button>
+            <button onClick={() => setSelectedCount(1)} className="px-3 py-1 bg-zinc-100 dark:bg-white/10 rounded">Selecionar 1</button>
+            <button onClick={() => setSelectedCount(5)} className="px-3 py-1 bg-zinc-100 dark:bg-white/10 rounded">Selecionar 5</button>
+            <button onClick={() => setSelectedCount(0)} className="px-3 py-1 bg-zinc-200/80 dark:bg-white/20 rounded">Limpar</button>
           </div>
 
           <BulkActionBar 

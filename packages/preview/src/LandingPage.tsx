@@ -193,9 +193,7 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-slate-100 text-zinc-900 dark:bg-[#020617] dark:text-white">
-      {/* @ts-expect-error: precedence and href are React 19 specific for style deduplication */}
-      {/* eslint-disable-next-line react/no-unknown-property */}
-      <style precedence="default" href="landing-ssr-v1">{`
+      <style data-style-id="landing-ssr-v1">{`
         .ssr-aurora {
           background:
             radial-gradient(40% 40% at 20% 20%, rgba(34, 211, 238, 0.16), transparent 60%),

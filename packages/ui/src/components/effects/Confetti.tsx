@@ -22,8 +22,8 @@ export interface ConfettiRef {
 }
 
 export interface ConfettiProps {
-  /** Ref to access the fire() method imperatively */
-  ref?: React.Ref<ConfettiRef>;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 const DEFAULT_COLORS = [
@@ -59,7 +59,7 @@ interface Particle {
  * <Confetti ref={confettiRef} />
  * ```
  */
-export const Confetti = forwardRef<ConfettiRef, Record<string, never>>((_props, ref) => {
+export const Confetti = forwardRef<ConfettiRef, ConfettiProps>(({ className, style }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>();
   const particlesRef = useRef<Particle[]>([]);
@@ -170,6 +170,7 @@ export const Confetti = forwardRef<ConfettiRef, Record<string, never>>((_props, 
   return (
     <canvas
       ref={canvasRef}
+      className={className}
       style={{
         position: 'fixed',
         top: 0,
@@ -179,6 +180,7 @@ export const Confetti = forwardRef<ConfettiRef, Record<string, never>>((_props, 
         pointerEvents: 'none',
         zIndex: 9999,
         display: 'none',
+        ...style,
       }}
     />
   );

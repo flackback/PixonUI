@@ -170,6 +170,7 @@ export * from './components/effects/OrbitLoader';
 export * from './components/effects/ScrambleReveal';
 export * from './components/effects/SparkBurst';
 export * from './components/effects/CometLoader';
+export * from './components/effects/AnimationStudio';
 export { MagneticEffect, type MagneticEffectProps } from './components/effects/Magnetic';
 export * from './components/effects/RippleTap';
 export * from './components/shared/TestimonialCard';

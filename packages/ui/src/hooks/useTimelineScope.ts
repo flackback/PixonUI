@@ -3,7 +3,7 @@ import { useCallback, useRef } from 'react';
 import { timeline, type TimelineBuilder, type TimelineFactoryOptions } from '../utils/motion';
 
 export interface UseTimelineScopeReturn<T extends HTMLElement = HTMLDivElement> {
-  ref: RefObject<T | null>;
+  ref: RefObject<T>;
   createTimeline: (options?: TimelineFactoryOptions) => TimelineBuilder;
 }
 
@@ -14,7 +14,7 @@ export interface UseTimelineScopeReturn<T extends HTMLElement = HTMLDivElement> 
 export function useTimelineScope<T extends HTMLElement = HTMLDivElement>(
   defaults?: TimelineFactoryOptions
 ): UseTimelineScopeReturn<T> {
-  const ref = useRef<T | null>(null);
+  const ref = useRef<T>(null as unknown as T);
 
   const createTimeline = useCallback((options?: TimelineFactoryOptions) => {
     const tl = timeline(options ?? defaults);

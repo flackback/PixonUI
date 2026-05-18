@@ -10,4 +10,7 @@ export default defineConfig({
       "@pixonui/react": path.resolve(__dirname, "../ui/src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 4000,
+  },
 })

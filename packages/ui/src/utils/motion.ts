@@ -27,7 +27,9 @@ const warnedRateKeys = new Set<string>();
 
 function isDevRuntime() {
   try {
-    return typeof process !== 'undefined' && process.env.NODE_ENV !== 'production';
+    const nodeEnv = (globalThis as any).process?.env?.NODE_ENV;
+    if (typeof nodeEnv === 'string') return nodeEnv !== 'production';
+    return true;
   } catch {
     return true;
   }

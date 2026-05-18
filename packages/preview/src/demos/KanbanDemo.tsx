@@ -370,6 +370,7 @@ export function KanbanDemo() {
         <Kanban 
           columns={columns}
           tasks={filteredTasks}
+          taskDetails="none"
           onTaskMove={handleTaskMove}
           onColumnMove={handleColumnMove}
           onTaskClick={(task) => setSelectedTask(task)}
@@ -506,7 +507,7 @@ export function KanbanDemo() {
       <Drawer isOpen={!!selectedTask} onClose={() => setSelectedTask(null)}>
         <DrawerHeader>
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="neutral" className="bg-white/5 border-white/10">
+            <Badge variant="neutral" className="bg-zinc-100 dark:bg-white/5 border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-white/80">
               TASK-{selectedTask?.id}
             </Badge>
             <Badge variant={selectedTask?.priority === 'urgent' ? 'danger' : 'info'}>
@@ -519,23 +520,23 @@ export function KanbanDemo() {
 
         <div className="p-6 space-y-8">
           <div className="space-y-3">
-            <Heading as="h4" className="text-sm font-semibold uppercase text-white/40">Description</Heading>
-            <Text className="text-gray-300 leading-relaxed">
+            <Heading as="h4" className="text-sm font-semibold uppercase text-zinc-500 dark:text-white/40">Description</Heading>
+            <Text className="text-zinc-700 dark:text-gray-300 leading-relaxed">
               {selectedTask?.description || 'No description provided.'}
             </Text>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-3">
-              <Heading as="h4" className="text-sm font-semibold uppercase text-white/40">Assignee</Heading>
+              <Heading as="h4" className="text-sm font-semibold uppercase text-zinc-500 dark:text-white/40">Assignee</Heading>
               <div className="flex items-center gap-3">
                 <Avatar src={selectedTask?.assignee?.avatar} fallback={selectedTask?.assignee?.name?.charAt(0) || 'U'} className="h-8 w-8" />
                 <Text className="font-medium">{selectedTask?.assignee?.name}</Text>
               </div>
             </div>
             <div className="space-y-3">
-              <Heading as="h4" className="text-sm font-semibold uppercase text-white/40">Due Date</Heading>
-              <div className="flex items-center gap-2 text-gray-300">
+              <Heading as="h4" className="text-sm font-semibold uppercase text-zinc-500 dark:text-white/40">Due Date</Heading>
+              <div className="flex items-center gap-2 text-zinc-700 dark:text-gray-300">
                 <CalendarIcon className="h-4 w-4 text-cyan-500" />
                 <Text>{selectedTask?.dueDate || 'No date set'}</Text>
               </div>
@@ -544,7 +545,7 @@ export function KanbanDemo() {
 
           {selectedTask?.blockedBy && selectedTask.blockedBy.length > 0 && (
             <div className="space-y-3 p-4 rounded-2xl bg-red-500/5 border border-red-500/20">
-              <div className="flex items-center gap-2 text-red-400">
+              <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                 <Lock className="h-4 w-4" />
                 <Heading as="h4" className="text-sm font-semibold uppercase">Blocked By</Heading>
               </div>
@@ -552,8 +553,8 @@ export function KanbanDemo() {
                 {selectedTask.blockedBy.map((blockId: string) => {
                   const blockingTask = tasks.find(t => t.id === blockId);
                   return (
-                    <div key={blockId} className="flex items-center justify-between text-xs bg-white/5 p-2 rounded-lg">
-                      <span className="text-white/70">{blockingTask?.title || `Task ${blockId}`}</span>
+                    <div key={blockId} className="flex items-center justify-between text-xs bg-zinc-100 dark:bg-white/5 p-2 rounded-lg">
+                      <span className="text-zinc-700 dark:text-white/70">{blockingTask?.title || `Task ${blockId}`}</span>
                       <Badge variant="neutral" className="text-[10px]">{blockingTask?.columnId}</Badge>
                     </div>
                   );
@@ -563,12 +564,12 @@ export function KanbanDemo() {
           )}
 
           <div className="space-y-3">
-            <Heading as="h4" className="text-sm font-semibold uppercase text-white/40">Time Tracking</Heading>
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+            <Heading as="h4" className="text-sm font-semibold uppercase text-zinc-500 dark:text-white/40">Time Tracking</Heading>
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10">
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "p-2 rounded-xl",
-                  activeTimerTaskId === selectedTask?.id ? "bg-cyan-500/20 text-cyan-400" : "bg-white/5 text-white/40"
+                  activeTimerTaskId === selectedTask?.id ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400" : "bg-zinc-200/60 dark:bg-white/5 text-zinc-500 dark:text-white/40"
                 )}>
                   <Clock className="h-5 w-5" />
                 </div>
@@ -578,7 +579,7 @@ export function KanbanDemo() {
                       `${Math.floor(selectedTask.timeSpent / 3600)}h ${Math.floor((selectedTask.timeSpent % 3600) / 60)}m ${selectedTask.timeSpent % 60}s` 
                       : '0h 0m 0s'}
                   </Text>
-                  <Text className="text-[10px] text-white/30 uppercase tracking-widest">Total Time Logged</Text>
+                  <Text className="text-[10px] text-zinc-500 dark:text-white/30 uppercase tracking-widest">Total Time Logged</Text>
                 </div>
               </div>
               <Button 
@@ -598,12 +599,12 @@ export function KanbanDemo() {
 
           {selectedTask?.customFields && Object.keys(selectedTask.customFields).length > 0 && (
             <div className="space-y-3">
-              <Heading as="h4" className="text-sm font-semibold uppercase text-white/40">Custom Fields</Heading>
+              <Heading as="h4" className="text-sm font-semibold uppercase text-zinc-500 dark:text-white/40">Custom Fields</Heading>
               <div className="grid grid-cols-1 gap-2">
                 {Object.entries(selectedTask.customFields).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                    <Text className="text-xs text-white/40 font-medium">{key}</Text>
-                    <Text className="text-xs text-white/80">
+                  <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200/70 dark:border-white/5">
+                    <Text className="text-xs text-zinc-600 dark:text-white/40 font-medium">{key}</Text>
+                    <Text className="text-xs text-zinc-800 dark:text-white/80">
                       {typeof value === 'string' && value.startsWith('http') ? (
                         <a href={value} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">
                           {value.replace('https://', '')}
@@ -617,20 +618,20 @@ export function KanbanDemo() {
           )}
 
           <div className="space-y-4">
-            <Heading as="h4" className="text-sm font-semibold uppercase text-white/40">Tags</Heading>
+            <Heading as="h4" className="text-sm font-semibold uppercase text-zinc-500 dark:text-white/40">Tags</Heading>
             <div className="flex flex-wrap gap-2">
               {selectedTask?.tags?.map((tag: string) => (
                 <Badge key={tag} variant="neutral" className="bg-cyan-500/10 border-cyan-500/20 text-cyan-400">
                   {tag}
                 </Badge>
               ))}
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full border border-dashed border-white/20">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full border border-dashed border-zinc-300 dark:border-white/20">
                 <Plus className="h-3 w-3" />
               </Button>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-white/10 flex gap-3">
+          <div className="pt-6 border-t border-zinc-200 dark:border-white/10 flex gap-3">
             <Button className="flex-1">Save Changes</Button>
             <Button variant="outline" className="h-10 w-10 p-0">
               <Settings className="h-4 w-4" />

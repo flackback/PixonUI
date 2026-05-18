@@ -13,8 +13,8 @@ export function PageLoaderDemo() {
   return (
     <div className="space-y-8">
       <section className="space-y-4">
-        <h3 className="text-lg font-medium text-white">Page Loaders</h3>
-        <p className="text-sm text-white/60">Click to preview fullscreen loaders (auto-closes after 3s)</p>
+        <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Page Loaders</h3>
+        <p className="text-sm text-zinc-600 dark:text-white/60">Click to preview fullscreen loaders (auto-closes after 3s)</p>
         <div className="flex flex-wrap gap-4">
           <Button onClick={() => showLoader('spinner')}>Spinner</Button>
           <Button onClick={() => showLoader('bar')}>Progress Bar</Button>
@@ -34,8 +34,8 @@ export function PageLoaderDemo() {
       <Divider />
 
       <section className="space-y-4">
-        <h3 className="text-lg font-medium text-white">Page Transitions</h3>
-        <p className="text-sm text-white/60">Select a preset to see the entrance animation.</p>
+        <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Page Transitions</h3>
+        <p className="text-sm text-zinc-600 dark:text-white/60">Select a preset to see the entrance animation.</p>
         <TransitionExample />
       </section>
     </div>
@@ -51,30 +51,35 @@ function TransitionExample() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <select 
-          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-          value={preset}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-            setPreset(e.target.value as any);
-            reload();
-          }}
-        >
-          <option value="fade">Fade</option>
-          <option value="slide-up">Slide Up</option>
-          <option value="scale">Scale</option>
-          <option value="blur">Blur</option>
-        </select>
+        <div className="w-[140px]">
+          <Select
+            options={[
+              { label: 'Fade', value: 'fade' },
+              { label: 'Slide Up', value: 'slide-up' },
+              { label: 'Scale', value: 'scale' },
+              { label: 'Blur', value: 'blur' },
+            ]}
+            value={preset}
+            onChange={(v) => {
+              setPreset(v as any);
+              reload();
+            }}
+            variant="glass"
+            size="sm"
+            placeholder="Preset"
+          />
+        </div>
         <Button variant="secondary" onClick={reload} leftIcon={<RefreshCw size={16} />}>
           Replay Animation
         </Button>
       </div>
 
-      <div className="h-[300px] w-full border border-white/10 rounded-lg overflow-hidden bg-white/[0.02] relative">
+      <div className="h-[300px] w-full border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden bg-zinc-50 dark:bg-white/[0.02] relative">
         <PageTransition key={key} preset={preset} className="p-8 h-full w-full flex items-center justify-center">
-          <Card className="w-full max-w-md mx-auto bg-white/10 border-white/10">
+          <Card className="w-full max-w-md mx-auto bg-white/70 dark:bg-white/10 border-zinc-200 dark:border-white/10">
             <CardContent className="p-6 text-center">
-              <h4 className="text-xl font-bold text-white mb-2">Animated Content</h4>
-              <p className="text-white/60">
+              <h4 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Animated Content</h4>
+              <p className="text-zinc-600 dark:text-white/60">
                 This content animates in using the <span className="text-blue-400 font-mono">{preset}</span> preset.
               </p>
             </CardContent>

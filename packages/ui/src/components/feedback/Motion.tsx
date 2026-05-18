@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useId, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 
 const canUseLayoutEffect = (() => {
-  const isNodeRuntime =
-    typeof process !== 'undefined' &&
-    typeof process.versions !== 'undefined' &&
-    !!process.versions.node;
+  const anyProcess = (globalThis as any).process as { versions?: { node?: unknown } } | undefined;
+  const isNodeRuntime = !!anyProcess?.versions?.node;
   if (isNodeRuntime) return false;
   if (typeof window === 'undefined' || typeof document === 'undefined') return false;
   const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
