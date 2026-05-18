@@ -44,7 +44,7 @@ export const HeroText = ({
 }: HeroTextProps) => {
   const content = (
     <div className={cn("flex flex-col items-center text-center space-y-6", className)} {...props}>
-      <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-tight">
+      <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-zinc-900 dark:text-white leading-tight">
         {title}{' '}
         {highlight && (
           <span className="relative inline-block">
@@ -63,7 +63,7 @@ export const HeroText = ({
         )}
       </h1>
       {subtitle && (
-        <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg md:text-xl text-zinc-600 dark:text-white/50 max-w-2xl mx-auto leading-relaxed">
           {subtitle}
         </p>
       )}

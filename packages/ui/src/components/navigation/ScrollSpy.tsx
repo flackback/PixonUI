@@ -46,16 +46,16 @@ export const ScrollSpy = ({
   return (
     <div
       className={cn(
-        'relative flex flex-col gap-1 py-4 px-3 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/5 min-w-[200px]',
+        'relative flex flex-col gap-1 py-4 px-3 rounded-2xl bg-white/70 dark:bg-slate-900/40 backdrop-blur-md border border-zinc-200/80 dark:border-white/5 min-w-[200px] text-zinc-900 dark:text-white',
         className
       )}
       {...props}
     >
-      <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 mb-3 px-2">
+      <div className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-slate-400 mb-3 px-2">
         Nesta Página
       </div>
 
-      <div className="relative flex flex-col gap-1.5 border-l border-white/5 pl-2 ml-1">
+      <div className="relative flex flex-col gap-1.5 border-l border-zinc-200 dark:border-white/5 pl-2 ml-1">
         {items.map((item) => {
           const isActive = activeId === item.id;
 
@@ -67,8 +67,8 @@ export const ScrollSpy = ({
               className={cn(
                 'relative text-sm transition-all duration-300 py-1.5 px-3 rounded-lg flex items-center select-none font-medium',
                 isActive
-                  ? 'text-blue-400 bg-blue-500/10 shadow-sm border border-blue-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+                  ? 'text-blue-700 dark:text-blue-400 bg-blue-500/10 shadow-sm border border-blue-500/10'
+                  : 'text-zinc-600 dark:text-slate-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/80 dark:hover:bg-white/[0.02]'
               )}
             >
               {/* Active neon dot indicator */}

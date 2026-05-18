@@ -38,24 +38,24 @@ export function TimeTracker({ initialSeconds = 0, onTimeUpdate, className }: Tim
 
   return (
     <div className={cn("space-y-3", className)}>
-      <h4 className="text-[10px] text-white/40 uppercase tracking-wider font-bold flex items-center gap-2">
+      <h4 className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-wider font-bold flex items-center gap-2">
         <Timer className="h-3 w-3" />
         Time Tracking
       </h4>
       
-      <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+      <div className="flex items-center gap-4 p-4 rounded-2xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/5">
         <div className="flex-1">
-          <p className="text-2xl font-mono font-bold text-white tracking-tight">
+          <p className="text-2xl font-mono font-bold text-zinc-900 dark:text-white tracking-tight">
             {formatTime(seconds)}
           </p>
-          <p className="text-[10px] text-white/30 uppercase font-bold mt-1">Total Time Spent</p>
+          <p className="text-[10px] text-zinc-500 dark:text-white/30 uppercase font-bold mt-1">Total Time Spent</p>
         </div>
         
         <div className="flex gap-2">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10"
+            className="h-10 w-10 rounded-full bg-white hover:bg-zinc-100 dark:bg-white/5 dark:hover:bg-white/10"
             onClick={() => setSeconds(0)}
           >
             <RotateCcw className="h-4 w-4" />

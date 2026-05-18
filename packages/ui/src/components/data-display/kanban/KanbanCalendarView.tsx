@@ -61,7 +61,7 @@ export function KanbanCalendarView({
     <div className={cn("flex flex-col h-full", className)}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Heading level={3} className="text-white">{monthNames[month]} {year}</Heading>
+          <Heading level={3} className="text-zinc-900 dark:text-white">{monthNames[month]} {year}</Heading>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={prevMonth}>
               <ChevronLeft className="h-4 w-4" />
@@ -76,10 +76,10 @@ export function KanbanCalendarView({
         </Button>
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-white/5 border border-white/5 rounded-2xl overflow-hidden flex-1">
+      <div className="grid grid-cols-7 gap-px bg-zinc-200/70 dark:bg-white/5 border border-zinc-200/80 dark:border-white/5 rounded-2xl overflow-hidden flex-1">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
-          <div key={day} className="bg-white/[0.02] p-3 text-center">
-            <Text size="xs" className="text-white/40 font-medium uppercase tracking-wider">{day}</Text>
+          <div key={day} className="bg-white dark:bg-white/[0.02] p-3 text-center">
+            <Text size="xs" className="text-zinc-500 dark:text-white/40 font-medium uppercase tracking-wider">{day}</Text>
           </div>
         ))}
 
@@ -87,7 +87,7 @@ export function KanbanCalendarView({
           <div 
             key={i} 
             className={cn(
-              "bg-gray-900/50 min-h-[120px] p-2 group transition-colors hover:bg-white/[0.02]",
+              "bg-white dark:bg-gray-900/50 min-h-[120px] p-2 group transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.02]",
               !date && "bg-transparent"
             )}
           >
@@ -98,15 +98,15 @@ export function KanbanCalendarView({
                     "text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full",
                     date.toDateString() === new Date().toDateString() 
                       ? "bg-blue-500 text-white" 
-                      : "text-white/40"
+                      : "text-zinc-500 dark:text-white/40"
                   )}>
                     {date.getDate()}
                   </span>
                   <button 
                     onClick={() => onAddTask?.(date)}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded-lg transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg transition-all"
                   >
-                    <Plus className="h-3 w-3 text-white/40" />
+                    <Plus className="h-3 w-3 text-zinc-500 dark:text-white/40" />
                   </button>
                 </div>
                 <div className="space-y-1">
@@ -116,7 +116,7 @@ export function KanbanCalendarView({
                       onClick={() => onTaskClick?.(task)}
                       className="px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 cursor-pointer hover:bg-blue-500/20 transition-all"
                     >
-                      <Text size="xs" className="text-blue-400 truncate">{task.title}</Text>
+                      <Text size="xs" className="text-blue-700 dark:text-blue-400 truncate">{task.title}</Text>
                     </div>
                   ))}
                 </div>

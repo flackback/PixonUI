@@ -30,7 +30,7 @@ export function TaskComments({ comments, onAddComment, className }: TaskComments
 
   return (
     <div className={cn("space-y-6", className)}>
-      <h4 className="text-[10px] text-white/40 uppercase tracking-wider font-bold">Comments</h4>
+      <h4 className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-wider font-bold">Comments</h4>
       
       <div className="flex gap-3">
         <div className="flex-1">
@@ -38,7 +38,7 @@ export function TaskComments({ comments, onAddComment, className }: TaskComments
             placeholder="Write a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-[80px] bg-white/[0.03] border-white/10 text-sm"
+            className="min-h-[80px] bg-zinc-50 dark:bg-white/[0.03] border-zinc-200 dark:border-white/10 text-sm"
           />
           <div className="flex justify-end mt-2">
             <Button 
@@ -58,12 +58,12 @@ export function TaskComments({ comments, onAddComment, className }: TaskComments
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-3">
             <Avatar src={comment.user.avatar} alt={comment.user.name} size="sm" />
-            <div className="flex-1 bg-white/[0.03] border border-white/5 rounded-2xl p-3">
+            <div className="flex-1 bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/5 rounded-2xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-white">{comment.user.name}</span>
-                <span className="text-[10px] text-white/30">{comment.timestamp.toLocaleString()}</span>
+                <span className="text-xs font-bold text-zinc-900 dark:text-white">{comment.user.name}</span>
+                <span className="text-[10px] text-zinc-500 dark:text-white/30">{comment.timestamp.toLocaleString()}</span>
               </div>
-              <p className="text-sm text-white/70 leading-relaxed">{comment.content}</p>
+              <p className="text-sm text-zinc-700 dark:text-white/70 leading-relaxed">{comment.content}</p>
             </div>
           </div>
         ))}

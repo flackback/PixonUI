@@ -13,7 +13,7 @@ interface LabelPickerProps {
 export function LabelPicker({ labels, selectedIds, onToggle, className }: LabelPickerProps) {
   return (
     <div className={cn("space-y-3", className)}>
-      <h4 className="text-[10px] text-white/40 uppercase tracking-wider font-bold flex items-center gap-2">
+      <h4 className="text-[10px] text-zinc-500 dark:text-white/40 uppercase tracking-wider font-bold flex items-center gap-2">
         <Tag className="h-3 w-3" />
         Labels
       </h4>
@@ -27,8 +27,8 @@ export function LabelPicker({ labels, selectedIds, onToggle, className }: LabelP
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2 border",
                 isSelected 
-                  ? "bg-white/10 border-white/20 text-white" 
-                  : "bg-transparent border-white/5 text-white/40 hover:border-white/10"
+                  ? "bg-zinc-100 border-zinc-300 text-zinc-900 dark:bg-white/10 dark:border-white/20 dark:text-white" 
+                  : "bg-transparent border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:border-white/5 dark:text-white/40 dark:hover:border-white/10"
               )}
             >
               <div 

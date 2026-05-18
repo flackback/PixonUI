@@ -16,15 +16,15 @@ export function KanbanListView({ tasks, columns, onTaskClick, className }: Kanba
   const getColumn = (id: string) => columns.find(c => c.id === id);
 
   return (
-    <div className={cn("bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden", className)}>
+    <div className={cn("bg-white dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/5 rounded-2xl overflow-hidden", className)}>
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent border-white/5">
-            <TableHead className="text-white/40 uppercase text-[10px] font-bold">Task</TableHead>
-            <TableHead className="text-white/40 uppercase text-[10px] font-bold">Status</TableHead>
-            <TableHead className="text-white/40 uppercase text-[10px] font-bold">Priority</TableHead>
-            <TableHead className="text-white/40 uppercase text-[10px] font-bold">Assignee</TableHead>
-            <TableHead className="text-white/40 uppercase text-[10px] font-bold">Due Date</TableHead>
+          <TableRow className="hover:bg-transparent border-zinc-200/70 dark:border-white/5">
+            <TableHead className="text-zinc-500 dark:text-white/40 uppercase text-[10px] font-bold">Task</TableHead>
+            <TableHead className="text-zinc-500 dark:text-white/40 uppercase text-[10px] font-bold">Status</TableHead>
+            <TableHead className="text-zinc-500 dark:text-white/40 uppercase text-[10px] font-bold">Priority</TableHead>
+            <TableHead className="text-zinc-500 dark:text-white/40 uppercase text-[10px] font-bold">Assignee</TableHead>
+            <TableHead className="text-zinc-500 dark:text-white/40 uppercase text-[10px] font-bold">Due Date</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -33,14 +33,14 @@ export function KanbanListView({ tasks, columns, onTaskClick, className }: Kanba
             return (
               <TableRow 
                 key={task.id} 
-                className="border-white/5 hover:bg-white/[0.03] cursor-pointer transition-colors"
+                className="border-zinc-200/70 dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
                 onClick={() => onTaskClick?.(task)}
               >
-                <TableCell className="font-medium text-white">{task.title}</TableCell>
+                <TableCell className="font-medium text-zinc-900 dark:text-white">{task.title}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: column?.color || '#3b82f6' }} />
-                    <span className="text-xs text-white/60">{column?.title}</span>
+                    <span className="text-xs text-zinc-600 dark:text-white/60">{column?.title}</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -55,11 +55,11 @@ export function KanbanListView({ tasks, columns, onTaskClick, className }: Kanba
                   {task.assignee && (
                     <div className="flex items-center gap-2">
                       <Avatar src={task.assignee.avatar} alt={task.assignee.name} size="sm" />
-                      <span className="text-xs text-white/60">{task.assignee.name}</span>
+                      <span className="text-xs text-zinc-600 dark:text-white/60">{task.assignee.name}</span>
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="text-xs text-white/40">
+                <TableCell className="text-xs text-zinc-500 dark:text-white/40">
                   {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}
                 </TableCell>
               </TableRow>
