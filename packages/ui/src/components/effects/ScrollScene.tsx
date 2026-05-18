@@ -83,9 +83,7 @@ export function ScrollScene({
 
   return (
     <>
-      {/* @ts-expect-error: precedence and href are React 19 specific for deduplication */}
-      {/* eslint-disable-next-line react/no-unknown-property */}
-      <style precedence="default" href={`pixon-scroll-scene-${id}`}>{`
+      <style {...({ precedence: 'default', href: `pixon-scroll-scene-${id}` } as any)}>{`
         @keyframes ${animName} {
           from {
             opacity: var(--pixon-init-opacity, 1);

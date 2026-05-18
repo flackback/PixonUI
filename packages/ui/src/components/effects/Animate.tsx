@@ -169,10 +169,10 @@ function requestLayoutProcess() {
  * @deprecated Use `motion.*` (ex: `motion.div`) as the primary API.
  * Planned removal date: after 2026-09-30.
  */
-export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'>(
+export const PixonMotion = React.forwardRef(function PixonMotion<T extends React.ElementType = 'div'>(
   { as, children, initial, animate: targetAnimate, exit, variants, transition, whileHover, whileTap, whileInView, drag, dragConstraints, dragElastic = 0.5, dragMomentum = true, onDragStart, onDrag, onDragEnd, revealOnScroll, parallax, staggerChildren, viewport, layout, layoutId, onAnimationComplete, staggerIdx: propStaggerIdx, ...props }: AnimateProps<T> & { staggerIdx?: number },
   externalRef: React.ForwardedRef<any>
-) => {
+) {
   const Component = (as || 'div') as any;
   const { ref: internalRef, animate: pixonAnimate } = usePixonAnimate<any>();
   const [mountedNode, setMountedNode] = useState<HTMLElement | SVGElement | null>(null);
@@ -998,7 +998,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
   );
 }) as <T extends React.ElementType = 'div'>(props: AnimateProps<T> & { ref?: React.ForwardedRef<any> }) => React.ReactElement;
 
-PixonMotion.displayName = 'PixonMotion';
+ (PixonMotion as any).displayName = 'PixonMotion';
 
 type MotionComponent<K extends keyof React.JSX.IntrinsicElements> = React.ForwardRefExoticComponent<
   AnimateProps<K> & React.RefAttributes<any>
