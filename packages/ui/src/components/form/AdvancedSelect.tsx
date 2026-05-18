@@ -243,9 +243,22 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
     const menuAnimationClasses = {
       none: '',
       fade: 'transition-opacity duration-180 ease-out',
-      scale: 'transition-[opacity,transform] duration-220 ease-out',
-      slide: 'transition-[opacity,transform] duration-260 ease-out',
+      scale: 'transition-[opacity,transform,filter] duration-220 ease-out',
+      slide: 'transition-[opacity,transform,filter] duration-320 ease-[cubic-bezier(.2,.85,.2,1)]',
     } as const;
+
+    const animatedMenuStyle: React.CSSProperties = {
+      transformOrigin: menuState.transformOrigin,
+      opacity: isVisible || menuAnimation === 'none' ? 1 : 0,
+      transform: isVisible || menuAnimation === 'none'
+        ? 'translate3d(0, 0, 0) scale(1)'
+        : menuAnimation === 'slide'
+          ? 'translate3d(0, -16px, 0) scale(0.9)'
+          : menuAnimation === 'scale'
+            ? 'translate3d(0, -8px, 0) scale(0.96)'
+            : 'translate3d(0, 0, 0) scale(1)',
+      filter: isVisible || menuAnimation === 'none' ? 'blur(0px)' : 'blur(6px)',
+    };
 
     const sizeClasses = {
       sm: 'min-h-[2.25rem] px-3 py-1.5 rounded-xl text-xs gap-1.5',
@@ -388,7 +401,7 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
                 top: menuState.top,
                 left: menuState.left,
                 width: menuState.width,
-                transformOrigin: menuState.transformOrigin,
+                ...animatedMenuStyle,
               }}
               className={cn(
                 "fixed z-[140] overflow-hidden rounded-2xl will-change-transform",
@@ -450,13 +463,17 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
                           onClick={() => handleSelectOption(option.value)}
                           onMouseEnter={() => setActiveIndex(index)}
                           className={cn(
-                            'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3 animate-in fade-in slide-in-from-top-1',
+                            'w-full rounded-xl px-3 py-2 text-left transition-all duration-150 cursor-pointer flex items-center gap-3',
                             isSelected 
                               ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 font-semibold' 
                               : 'text-zinc-700 dark:text-zinc-300',
                             isActive && !isSelected && 'bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-white'
                           )}
-                          style={{ animationDelay: `${Math.min(index, 8) * 18}ms` }}
+                          style={{
+                            transitionDelay: isVisible ? `${Math.min(index, 8) * 28}ms` : '0ms',
+                            opacity: isVisible || menuAnimation === 'none' ? 1 : 0,
+                            transform: isVisible || menuAnimation === 'none' ? 'translate3d(0,0,0)' : 'translate3d(0,-6px,0)',
+                          }}
                         >
                           {/* Avatar/Thumbnail */}
                           {option.avatar && (
