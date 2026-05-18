@@ -120,7 +120,8 @@ export function Drawer({
         onMouseEnter={() => spotlight && setIsHovered(true)}
         onMouseLeave={() => spotlight && setIsHovered(false)}
         className={cn(
-          "absolute bg-white dark:bg-[#0A0A0A] border-gray-200 dark:border-white/10 p-6 shadow-2xl transition-transform duration-300 ease-in-out",
+          // Glass treatment (matching DatePicker/Calendar + Modal): translucent surface + strong blur + deep shadow.
+          "absolute border bg-white/95 dark:bg-black/40 border-gray-200 dark:border-white/10 p-6 shadow-2xl shadow-black/10 dark:shadow-black/50 backdrop-blur-xl transition-transform duration-300 ease-in-out text-zinc-900 dark:text-white",
           positionClasses[position],
           translateClasses[position],
           className

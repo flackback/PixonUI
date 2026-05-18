@@ -100,19 +100,19 @@ export function KanbanTaskModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalHeader className="flex items-center justify-between pr-12">
         <ModalTitle>{task ? 'Edit Task' : 'Create New Task'}</ModalTitle>
         <div className="flex items-center gap-2">
           {task && (
             <>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white" onClick={() => onDuplicate?.(task)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:text-white/40 dark:hover:text-white" onClick={() => onDuplicate?.(task)}>
                 <Copy className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white" onClick={() => onArchive?.(task.id)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:text-white/40 dark:hover:text-white" onClick={() => onArchive?.(task.id)}>
                 <Archive className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-red-400" onClick={() => onDelete?.(task.id)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-red-600 dark:text-white/40 dark:hover:text-red-400" onClick={() => onDelete?.(task.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </>
@@ -125,26 +125,26 @@ export function KanbanTaskModal({
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           <div className="space-y-2">
-            <Label htmlFor="task-title" className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Title</Label>
+            <Label htmlFor="task-title" className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-white/40 font-bold">Title</Label>
             <TextInput 
               id="task-title"
               placeholder="What needs to be done?" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-lg font-bold bg-transparent border-white/10 focus:border-blue-500"
+              className="text-lg font-bold bg-transparent border-zinc-200 dark:border-white/10 focus:border-blue-500"
               autoFocus
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-desc" className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Description</Label>
+            <Label htmlFor="task-desc" className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-white/40 font-bold">Description</Label>
             <Textarea 
               id="task-desc"
               placeholder="Add more details..." 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
-              className="bg-white/[0.03] border-white/10 text-sm leading-relaxed"
+              className="bg-zinc-50 dark:bg-white/[0.03] border-zinc-200 dark:border-white/10 text-sm leading-relaxed"
             />
           </div>
 
@@ -162,19 +162,19 @@ export function KanbanTaskModal({
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-8 bg-white/[0.02] p-6 rounded-3xl border border-white/5 h-fit">
+        <div className="space-y-8 bg-zinc-50 dark:bg-white/[0.02] p-6 rounded-3xl border border-zinc-200/70 dark:border-white/5 h-fit">
           <div className="space-y-2">
-            <Label className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Status</Label>
+            <Label className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-white/40 font-bold">Status</Label>
             <Select 
               value={currentColumnId}
               onChange={(val) => setCurrentColumnId(val)}
               options={columns.map(c => ({ label: c.title, value: c.id }))}
-              className="bg-white/5 border-white/10"
+              className="bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Priority</Label>
+            <Label className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-white/40 font-bold">Priority</Label>
             <Select 
               value={priority}
               onChange={(val) => setPriority(val as any)}
@@ -184,7 +184,7 @@ export function KanbanTaskModal({
                 { label: 'High', value: 'high' },
                 { label: 'Urgent', value: 'urgent' },
               ]}
-              className="bg-white/5 border-white/10"
+              className="bg-white dark:bg-white/5 border-zinc-200 dark:border-white/10"
             />
           </div>
 
@@ -210,7 +210,7 @@ export function KanbanTaskModal({
       </div>
     </ScrollArea>
 
-      <ModalFooter className="border-t border-white/5 pt-6">
+      <ModalFooter className="border-t border-zinc-200/70 dark:border-white/5 pt-6">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button onClick={handleSave} className="px-8">Save Changes</Button>
       </ModalFooter>

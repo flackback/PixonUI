@@ -112,7 +112,7 @@ export function Modal({
         onMouseLeave={() => spotlight && setIsHovered(false)}
         className={cn(
           // Glass treatment (matching DatePicker/Calendar): translucent surface + strong blur + deep shadow.
-          "relative w-full scale-100 flex flex-col max-h-[90vh] border border-gray-200 dark:border-white/10 bg-white/95 dark:bg-black/40 p-6 shadow-2xl shadow-black/10 dark:shadow-black/50 backdrop-blur-xl transition-all sm:rounded-2xl",
+          "relative w-full scale-100 flex flex-col max-h-[90vh] border border-gray-200 dark:border-white/10 bg-white/95 dark:bg-black/40 p-6 shadow-2xl shadow-black/10 dark:shadow-black/50 backdrop-blur-xl transition-all sm:rounded-2xl text-zinc-900 dark:text-white",
           sizeClasses[size],
           "animate-in fade-in zoom-in-95 duration-200 slide-in-from-bottom-2"
         )}

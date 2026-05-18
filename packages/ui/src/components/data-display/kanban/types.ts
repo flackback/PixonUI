@@ -112,6 +112,12 @@ export interface KanbanProps {
   showQuickAdd?: boolean;
   enableKeyboardNavigation?: boolean;
   renderCard?: (task: KanbanTask) => ReactNode;
+  /**
+   * Built-in task details UI opened when clicking a card.
+   * - `'modal'` (default): opens `KanbanTaskModal` internally
+   * - `'none'`: does not open any built-in details UI (use `onTaskClick`)
+   */
+  taskDetails?: 'modal' | 'none';
   className?: string;
   columnClassName?: string;
   cardClassName?: string;

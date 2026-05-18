@@ -42,6 +42,7 @@ export function KanbanBoard({
   translations,
   dropZones,
   onDropInZone,
+  taskDetails,
   ...props
 }: KanbanProps) {
   const [internalView, setInternalView] = useState<'board' | 'list' | 'calendar' | 'timeline' | 'table'>(propView || 'board');
@@ -194,10 +195,14 @@ export function KanbanBoard({
     return map;
   }, [columns, sortedTasks]);
 
+  const resolvedTaskDetails: 'modal' | 'none' = taskDetails ?? (onTaskClick ? 'none' : 'modal');
+
   const renderView = () => {
     const handleTaskClick = (task: KanbanTask) => {
-      setSelectedTaskId(task.id);
       onTaskClick?.(task);
+      if (resolvedTaskDetails === 'modal') {
+        setSelectedTaskId(task.id);
+      }
     };
 
     // ─── SKELETON LOADING STATE ───
@@ -367,7 +372,7 @@ export function KanbanBoard({
         {renderView()}
       </div>
 
-      {selectedTask && (
+      {resolvedTaskDetails === 'modal' && selectedTask && (
         <KanbanTaskModal
           isOpen={!!selectedTaskId}
           onClose={() => setSelectedTaskId(null)}
