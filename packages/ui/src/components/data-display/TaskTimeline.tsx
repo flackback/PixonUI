@@ -18,7 +18,7 @@ import {
   Activity
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { 
+import type { 
   TimelineGroup, 
   TaskItem, 
   TaskStatus, 

@@ -22,7 +22,7 @@ export function applyStyleObject(
   channel: TransformChannel
 ): { cleanup: () => void; restStyle: Record<string, any> } {
   ensureTransformChannels();
-  try { el.classList.add('px-transform'); } catch {}
+  try { el.classList.add('px-transform'); } catch { /* noop */ }
 
   const restStyle: Record<string, any> = {};
   const transformish: Record<string, any> = {};
@@ -60,14 +60,14 @@ export function applyStyleObject(
       restStyle[key] = val.get();
       unsubs.push(
         val.on('change', (latest: any) => {
-          try { (el.style as any)[key] = latest; } catch {}
+          try { (el.style as any)[key] = latest; } catch { /* noop */ }
         })
       );
       continue;
     }
 
     restStyle[key] = val;
-    try { (el.style as any)[key] = val; } catch {}
+    try { (el.style as any)[key] = val; } catch { /* noop */ }
   }
 
   const vars = toChannelVars(transformish, channel);
@@ -91,7 +91,7 @@ export function applyStyleObjectImmediate(
   channel: TransformChannel
 ) {
   ensureTransformChannels();
-  try { el.classList.add('px-transform'); } catch {}
+  try { el.classList.add('px-transform'); } catch { /* noop */ }
 
   const transformish: Record<string, any> = {};
   for (const key of Object.keys(style || {})) {
@@ -99,7 +99,7 @@ export function applyStyleObjectImmediate(
     const val = isMotionValue(raw) ? raw.get() : raw;
 
     if (key === 'transform') {
-      if (val != null) el.style.setProperty('--px-raw-transform', String(val));
+      if (val !== null && val !== undefined) el.style.setProperty('--px-raw-transform', String(val));
       continue;
     }
 
@@ -108,7 +108,7 @@ export function applyStyleObjectImmediate(
       continue;
     }
 
-    try { (el.style as any)[key] = val; } catch {}
+    try { (el.style as any)[key] = val; } catch { /* noop */ }
   }
 
   const vars = toChannelVars(transformish, channel);

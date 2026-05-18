@@ -34,7 +34,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
     };
 
     if (hasError && fallback) {
-      return <>{fallback}</>;
+      return fallback as any;
     }
 
     return (

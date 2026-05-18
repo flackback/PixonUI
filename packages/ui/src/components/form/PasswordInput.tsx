@@ -3,7 +3,7 @@ import { TextInput, type TextInputProps } from './TextInput';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '../button/Button';
 
-export interface PasswordInputProps extends Omit<TextInputProps, 'type' | 'rightIcon'> {}
+export type PasswordInputProps = Omit<TextInputProps, 'type' | 'rightIcon'>;
 
 /**
  * A specialized input for passwords with a built-in visibility toggle.

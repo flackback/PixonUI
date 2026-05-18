@@ -30,8 +30,9 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
     );
   }
 );
+Sidebar.displayName = 'Sidebar';
 
-export interface SidebarHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type SidebarHeaderProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const SidebarHeader = React.forwardRef<HTMLDivElement, SidebarHeaderProps>(
   ({ className, children, ...props }, ref) => {
@@ -51,8 +52,9 @@ export const SidebarHeader = React.forwardRef<HTMLDivElement, SidebarHeaderProps
     );
   }
 );
+SidebarHeader.displayName = 'SidebarHeader';
 
-export interface SidebarContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type SidebarContentProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const SidebarContent = React.forwardRef<HTMLDivElement, SidebarContentProps>(
   ({ className, children, ...props }, ref) => {
@@ -67,8 +69,9 @@ export const SidebarContent = React.forwardRef<HTMLDivElement, SidebarContentPro
     );
   }
 );
+SidebarContent.displayName = 'SidebarContent';
 
-export interface SidebarFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type SidebarFooterProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const SidebarFooter = React.forwardRef<HTMLDivElement, SidebarFooterProps>(
   ({ className, children, ...props }, ref) => {
@@ -83,6 +86,7 @@ export const SidebarFooter = React.forwardRef<HTMLDivElement, SidebarFooterProps
     );
   }
 );
+SidebarFooter.displayName = 'SidebarFooter';
 
 export interface SidebarItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
@@ -133,6 +137,7 @@ export const SidebarItem = React.forwardRef<HTMLButtonElement, SidebarItemProps>
     return buttonElement;
   }
 );
+SidebarItem.displayName = 'SidebarItem';
 
 export interface SidebarGroupProps extends React.HTMLAttributes<HTMLDivElement> {
   label?: string;
@@ -153,3 +158,4 @@ export const SidebarGroup = React.forwardRef<HTMLDivElement, SidebarGroupProps>(
     );
   }
 );
+SidebarGroup.displayName = 'SidebarGroup';

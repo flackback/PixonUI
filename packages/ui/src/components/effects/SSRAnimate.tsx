@@ -125,7 +125,8 @@ export function PixonSSRAnimate({
 
   return (
     <>
-      {/* @ts-ignore: precedence and href are React 19 specific for deduplication */}
+      {/* @ts-expect-error: precedence and href are React 19 specific for deduplication */}
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <style precedence="default" href="pixon-ssr-animate">{`
         @keyframes pixon-ssr-kf {
           from {

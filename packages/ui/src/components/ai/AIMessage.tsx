@@ -1,7 +1,9 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
-import { AIResponse, AIResponseSource } from './AIResponse';
-import { AIAttachment, AIAttachmentItem } from './AIAttachment';
+import type { AIResponseSource } from './AIResponse';
+import { AIResponse } from './AIResponse';
+import type { AIAttachmentItem } from './AIAttachment';
+import { AIAttachment } from './AIAttachment';
 import { User } from 'lucide-react';
 
 export interface AIMessageProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'role'> {

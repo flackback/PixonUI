@@ -70,7 +70,7 @@ export function CommandDialog({
 
 export function CommandInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <div className="flex items-center border-b border-gray-200 dark:border-white/10 px-3" cmdk-input-wrapper="">
+    <div className="flex items-center border-b border-gray-200 dark:border-white/10 px-3" data-cmdk-input-wrapper="">
       <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
       <ComboboxInput 
         className={cn(

@@ -4,13 +4,14 @@ import { useScroll, useSpring as useMotionSpring, useTransform } from '../../mot
 import { PresenceContext } from './AnimatePresence';
 import { VariantContext } from './VariantContext';
 import { LayoutGroupContext } from './LayoutGroup';
+import type {
+  Transition,
+  Target} from '../../utils/motion';
 import { 
   captureElementState, 
   calcFlip, 
   calculateStagger, 
   normalizeTimeMs,
-  Transition,
-  Target,
   shouldTrigger,
   elementStateRegistry
 } from '../../utils/motion';
@@ -146,7 +147,7 @@ function processLayoutQueues() {
       if (cb) cb(rects[i]!);
     });
   } catch (e) {
-    console.warn('PixonUI Layout Error:', e);
+    // ignore layout measurement errors
   } finally {
     elementsInQueue.clear();
     rafId = null;
@@ -714,7 +715,7 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
       activeInteractionRef.current = 'drag';
       el.style.cursor = 'grabbing';
       el.style.willChange = 'transform';
-      try { el.setPointerCapture(event.pointerId); } catch {}
+      try { el.setPointerCapture(event.pointerId); } catch { /* noop */ }
       onDragStart?.({ x: state.x, y: state.y });
       emit(true);
     };
@@ -766,8 +767,8 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
         state.vx *= Math.pow(friction, dt / 16);
         state.vy *= Math.pow(friction, dt / 16);
 
-        let nextX = state.x + state.vx * dt;
-        let nextY = state.y + state.vy * dt;
+        const nextX = state.x + state.vx * dt;
+        const nextY = state.y + state.vy * dt;
         const constrained = resolveDragOffset(nextX, nextY, false);
         if (constrained.x !== nextX) state.vx *= -bounce;
         if (constrained.y !== nextY) state.vy *= -bounce;
@@ -996,6 +997,8 @@ export const PixonMotion = React.forwardRef(<T extends React.ElementType = 'div'
     </Component>
   );
 }) as <T extends React.ElementType = 'div'>(props: AnimateProps<T> & { ref?: React.ForwardedRef<any> }) => React.ReactElement;
+
+PixonMotion.displayName = 'PixonMotion';
 
 type MotionComponent<K extends keyof React.JSX.IntrinsicElements> = React.ForwardRefExoticComponent<
   AnimateProps<K> & React.RefAttributes<any>

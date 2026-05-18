@@ -274,7 +274,10 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                 ...animatedMenuStyle,
               }}
               className={cn(
-                'fixed z-[140] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1.5 shadow-xl will-change-transform',
+                'fixed z-[140] overflow-hidden rounded-2xl p-1.5 shadow-xl will-change-transform',
+                variant === 'glass'
+                  ? 'border border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl'
+                  : 'border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A]',
                 menuAnimationClasses[menuAnimation],
                 !menuState.isPositioned && 'opacity-0',
                 !isVisible && menuAnimation !== 'none' && 'opacity-0 translate-y-2 scale-95',

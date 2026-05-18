@@ -64,7 +64,7 @@ export function useVirtualList({
     }
 
     let start = 0;
-    let end = itemCount;
+    const end = itemCount;
 
     // Binary search for start index
     let low = 0;

@@ -64,7 +64,7 @@ export function MessageSearch({
       <div className="flex-1 overflow-y-auto p-2">
         {query && results.length === 0 && !isLoading ? (
           <div className="p-8 text-center text-gray-500 dark:text-white/30">
-            <p className="text-sm">No messages found for "{query}"</p>
+            <p className="text-sm">No messages found for &quot;{query}&quot;</p>
           </div>
         ) : (
           <div className="space-y-1">

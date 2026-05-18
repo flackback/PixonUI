@@ -986,8 +986,8 @@ const { toast } = useToast();
             defaultOpen={true}
           >
             The user wants to retrieve transaction INV-2026-904. I need to:
-            1. Call "retrieve_client_invoice" with invoice_id: "INV-2026-904".
-            2. Extract billing values ($1,450.00), invoice payment state ("paid"), and expiration schedule.
+            1. Call &quot;retrieve_client_invoice&quot; with invoice_id: &quot;INV-2026-904&quot;.
+            2. Extract billing values ($1,450.00), invoice payment state (&quot;paid&quot;), and expiration schedule.
             3. Formulate a friendly, glassmorphic summary showing the transaction timeline.
           </AIReasoningCollapse>
         </div>

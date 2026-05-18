@@ -1,4 +1,5 @@
-import React, { useState, KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
+import React, { useState } from 'react';
 import { cn } from '../../utils/cn';
 import { X } from 'lucide-react';
 import { Badge } from '../../primitives/Badge';

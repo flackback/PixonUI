@@ -509,7 +509,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
           </div>
         );
 
-      case 'link':
+      case 'link': {
         const linkData = file.metadata || {
           title: 'PixonUI Supreme Docs - Interfaces que deslumbram',
           description: 'Explore a biblioteca de design systems brasileira mais inovadora com suporte nativo a mola, glassmorphism de 120Hz e layouts altamente responsivos para os seus apps.',
@@ -555,7 +555,9 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
           </div>
         );
 
-      case 'qrcode':
+      }
+
+      case 'qrcode': {
         const qrValue = file.metadata?.qrcodeValue || '00020126580014BR.GOV.BCB.PIX0136pixonui-supremo-key-payment-address520400005303986540510.005802BR5924PIXONUI ENTERPRISE LTD6009SAO PAULO62070503***6304BF92';
         return (
           <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-blue-500/5 to-purple-500/5 dark:from-zinc-900/50 dark:to-zinc-950/20 rounded-3xl border border-gray-100 dark:border-white/5">
@@ -620,7 +622,9 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
           </div>
         );
 
-      case 'group':
+      }
+
+      case 'group': {
         const groupName = file.metadata?.groupName || '🚀 PixonUI Supremo Core Team';
         const groupDesc = file.metadata?.groupDescription || 'Canal de comunicação interno focado em refactoring arquitetural de alto nível e implantações premium de design system.';
         const mockMembers = [
@@ -709,6 +713,8 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
             </div>
           </div>
         );
+
+      }
 
       default:
         return null;

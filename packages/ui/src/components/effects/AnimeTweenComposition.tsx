@@ -102,7 +102,7 @@ function Square({
         );
         try {
           await a1?.finished;
-        } catch {}
+        } catch { /* noop */ }
         if (aborter.signal.aborted) break;
 
         const a2 = animate(
@@ -111,7 +111,7 @@ function Square({
         );
         try {
           await a2?.finished;
-        } catch {}
+        } catch { /* noop */ }
       }
     };
 

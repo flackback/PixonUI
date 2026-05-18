@@ -193,7 +193,8 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-slate-100 text-zinc-900 dark:bg-[#020617] dark:text-white">
-      {/* @ts-ignore */}
+      {/* @ts-expect-error: precedence and href are React 19 specific for style deduplication */}
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <style precedence="default" href="landing-ssr-v1">{`
         .ssr-aurora {
           background:

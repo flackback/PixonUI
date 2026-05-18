@@ -1,4 +1,4 @@
-import { SSRAnimateProps } from './SSRAnimate';
+import type { SSRAnimateProps } from './SSRAnimate';
 
 export type SSRAnimatePresetConfig = Pick<SSRAnimateProps, 'initial' | 'animate' | 'transition'>;
 

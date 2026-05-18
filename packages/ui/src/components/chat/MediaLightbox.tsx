@@ -24,15 +24,18 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
-      setScale(1);
-      setRotation(0);
-      drag.offset.x = 0; // Reset manually since it's a ref-based state in my hook
-      drag.offset.y = 0;
     }
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [isOpen]);
+
+  const handleClose = () => {
+    setScale(1);
+    setRotation(0);
+    drag.setOffset({ x: 0, y: 0 });
+    onClose();
+  };
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 3));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 0.5));
@@ -45,7 +48,7 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
       <Animate 
         preset="fade"
         className="fixed inset-0 z-[9999] flex flex-col bg-black/95 backdrop-blur-2xl overflow-hidden"
-        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        onKeyDown={(e) => e.key === 'Escape' && handleClose()}
         tabIndex={0}
       >
         {/* Toolbar */}
@@ -62,7 +65,7 @@ export function MediaLightbox({ isOpen, onClose, url, type = 'image', fileName, 
             <button onClick={handleZoomIn} className="p-2.5 rounded-full hover:bg-white/10 text-white transition-all"><ZoomIn size={20} /></button>
             <button onClick={handleRotate} className="p-2.5 rounded-full hover:bg-white/10 text-white transition-all"><RotateCw size={20} /></button>
             <div className="w-px h-6 bg-white/10 mx-1" />
-            <button onClick={onClose} className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 text-white transition-all shadow-xl"><X size={20} /></button>
+            <button onClick={handleClose} className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 text-white transition-all shadow-xl"><X size={20} /></button>
           </div>
         </div>
 

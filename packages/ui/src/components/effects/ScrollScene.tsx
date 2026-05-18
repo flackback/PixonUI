@@ -1,5 +1,5 @@
 import React, { useEffect, useId } from 'react';
-import { SSRAnimateProps } from './SSRAnimate';
+import type { SSRAnimateProps } from './SSRAnimate';
 import { ensureTransformChannels } from '../../motion/transformChannels';
 
 type SafeHTMLTags = 'div' | 'section' | 'article' | 'span' | 'li' | 'ul' | 'main' | 'header' | 'footer' | 'nav';
@@ -83,7 +83,8 @@ export function ScrollScene({
 
   return (
     <>
-      {/* @ts-ignore */}
+      {/* @ts-expect-error: precedence and href are React 19 specific for deduplication */}
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <style precedence="default" href={`pixon-scroll-scene-${id}`}>{`
         @keyframes ${animName} {
           from {

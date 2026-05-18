@@ -151,7 +151,7 @@ const UNIT: Record<string, string> = {
 };
 
 function withUnit(key: string, val: any) {
-  if (val == null) return undefined;
+  if (val === null || val === undefined) return undefined;
   if (typeof val === 'string') return val;
   if (typeof val !== 'number') return undefined;
   const u = UNIT[key] ?? '';
@@ -161,6 +161,7 @@ function withUnit(key: string, val: any) {
 export function toChannelVars(style: Record<string, any>, channel: TransformChannel): Record<string, string> {
   const sfx = CHANNEL_SUFFIX[channel];
   const out: Record<string, string> = {};
+  const isPresent = (v: any) => v !== null && v !== undefined;
 
   const set = (key: string, value: any) => {
     const v = withUnit(key, value);
@@ -169,24 +170,24 @@ export function toChannelVars(style: Record<string, any>, channel: TransformChan
   };
 
   // Shorthands.
-  if (style.translateX != null) set('x', style.translateX);
-  if (style.translateY != null) set('y', style.translateY);
-  if (style.translateZ != null) set('z', style.translateZ);
-  if (style.x != null) set('x', style.x);
-  if (style.y != null) set('y', style.y);
-  if (style.z != null) set('z', style.z);
+  if (isPresent(style.translateX)) set('x', style.translateX);
+  if (isPresent(style.translateY)) set('y', style.translateY);
+  if (isPresent(style.translateZ)) set('z', style.translateZ);
+  if (isPresent(style.x)) set('x', style.x);
+  if (isPresent(style.y)) set('y', style.y);
+  if (isPresent(style.z)) set('z', style.z);
 
-  if (style.rotate != null) set('rotate', style.rotate);
-  if (style.rotateX != null) set('rotateX', style.rotateX);
-  if (style.rotateY != null) set('rotateY', style.rotateY);
-  if (style.rotateZ != null) set('rotateZ', style.rotateZ);
+  if (isPresent(style.rotate)) set('rotate', style.rotate);
+  if (isPresent(style.rotateX)) set('rotateX', style.rotateX);
+  if (isPresent(style.rotateY)) set('rotateY', style.rotateY);
+  if (isPresent(style.rotateZ)) set('rotateZ', style.rotateZ);
 
-  if (style.skewX != null) set('skewX', style.skewX);
-  if (style.skewY != null) set('skewY', style.skewY);
+  if (isPresent(style.skewX)) set('skewX', style.skewX);
+  if (isPresent(style.skewY)) set('skewY', style.skewY);
 
-  if (style.scale != null) set('scale', style.scale);
-  if (style.scaleX != null) set('scaleX', style.scaleX);
-  if (style.scaleY != null) set('scaleY', style.scaleY);
+  if (isPresent(style.scale)) set('scale', style.scale);
+  if (isPresent(style.scaleX)) set('scaleX', style.scaleX);
+  if (isPresent(style.scaleY)) set('scaleY', style.scaleY);
 
   return out;
 }

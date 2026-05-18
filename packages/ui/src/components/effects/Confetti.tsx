@@ -59,7 +59,7 @@ interface Particle {
  * <Confetti ref={confettiRef} />
  * ```
  */
-export const Confetti = forwardRef<ConfettiRef, {}>((_props, ref) => {
+export const Confetti = forwardRef<ConfettiRef, Record<string, never>>((_props, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>();
   const particlesRef = useRef<Particle[]>([]);

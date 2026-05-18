@@ -72,7 +72,7 @@ export function useDrag(
     setIsDragging(false);
     
     if (options?.inertia && (Math.abs(velocity.current.x) > 0.05 || Math.abs(velocity.current.y) > 0.05)) {
-      let currentV = { ...velocity.current };
+      const currentV = { ...velocity.current };
       let currentOffset = { ...offset };
       const friction = options.friction ?? 0.92;
       const bounce = options.bounce ?? 0.4;

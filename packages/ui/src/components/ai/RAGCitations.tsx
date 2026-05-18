@@ -89,7 +89,7 @@ export const RAGInlineCitation: React.FC<RAGInlineCitationProps> = ({
             {/* Snippet Excerpt */}
             {citation.excerpt && (
               <div className="mt-1.5 rounded-lg bg-gray-50 dark:bg-zinc-900/50 p-2 text-xs text-gray-600 dark:text-zinc-400 font-light border border-gray-100 dark:border-white/5 max-h-[80px] overflow-y-auto leading-relaxed scrollbar-thin">
-                "{citation.excerpt}"
+                &quot;{citation.excerpt}&quot;
               </div>
             )}
 

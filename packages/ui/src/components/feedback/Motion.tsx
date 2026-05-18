@@ -17,9 +17,10 @@ import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
 import { useInView } from '../../hooks/useInView';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import type { 
+  SpringConfig} from '../../utils/motion';
 import { 
   generateSpringTrajectory, 
-  SpringConfig, 
   parseStyleShortcuts,
   insertScopedRules,
   cachedSpringKeyframes 
@@ -521,25 +522,8 @@ export function Motion({
   }, [shouldShow, onExitStart]);
 
   // ── Skip animations for reduced motion ────────────────────────────────
-  if (shouldSkipAnimation) {
-    // Show content instantly in final state, no animation
-    const Comp = asChild ? Slot : (as as any);
-    return (
-      <Comp
-        ref={(node: HTMLDivElement | null) => {
-          // Merge refs
-          if (typeof innerRef === 'function') innerRef(node);
-          else if (innerRef) (innerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
-        }}
-        className={className}
-        style={style}
-        {...props}
-      >
-        {children}
-      </Comp>
-    );
-  }
+  // shouldSkipAnimation is handled in the final render branch (after hooks),
+  // so hooks stay unconditionally called for lint correctness.
 
   // ── Resolved spring physical keyframes compiler ──────────────────────
   const isSpringEasing = easing === 'spring' || !!spring || transition?.type === 'spring';
@@ -774,7 +758,7 @@ export function Motion({
     );
 
     if (animation && sigChanged) {
-      try { animation.cancel(); } catch {}
+      try { animation.cancel(); } catch { /* noop */ }
       animation = null;
       animationRef.current = null;
       waapiSigRef.current = null;
@@ -820,7 +804,7 @@ export function Motion({
     return () => {
       const a = animationRef.current;
       if (a) {
-        try { a.cancel(); } catch {}
+        try { a.cancel(); } catch { /* noop */ }
       }
       animationRef.current = null;
       waapiSigRef.current = null;
@@ -1015,9 +999,26 @@ export function Motion({
     return insertScopedRules(rawId, injectedCSS);
   }, [needsStyle, injectedCSS, rawId]);
 
-  return (
-    <>
+  if (shouldSkipAnimation) {
+    return (
       <Comp
+        ref={(node: HTMLDivElement | null) => {
+          // Merge refs: internal IntersectionObserver ref + user innerRef
+          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          if (typeof innerRef === 'function') innerRef(node);
+          else if (innerRef) (innerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        }}
+        className={className}
+        style={style}
+        {...props}
+      >
+        {children}
+      </Comp>
+    );
+  }
+
+  return (
+    <Comp
         data-pixon-id={rawId}
         ref={(node: HTMLDivElement | null) => {
           // Merge refs: internal IntersectionObserver ref + user innerRef
@@ -1034,7 +1035,6 @@ export function Motion({
       >
         {children}
       </Comp>
-    </>
   );
 }
 

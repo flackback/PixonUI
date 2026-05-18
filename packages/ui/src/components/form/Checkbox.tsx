@@ -12,7 +12,8 @@ export interface CheckboxProps extends Omit<React.ButtonHTMLAttributes<HTMLButto
 
 export const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
   ({ className, label, error, id, disabled, checked, defaultChecked, onChange, ...props }, ref) => {
-    const inputId = id || React.useId();
+    const generatedId = React.useId();
+    const inputId = id ?? generatedId;
     const [isChecked, setIsChecked] = React.useState(defaultChecked || checked || false);
 
     React.useEffect(() => {

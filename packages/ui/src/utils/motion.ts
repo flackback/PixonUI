@@ -132,7 +132,7 @@ export function sanitizeKeyframeProps(kf: any): Keyframe {
   const sanitized: any = {};
   const transforms: string[] = [];
   Object.keys(kf).forEach(p => {
-    let prop = p;
+    const prop = p;
     let val = kf[p];
 
     // V4.7 Supreme Clamping: Prevent invalid values that cause browser warnings & main-thread freezing
@@ -300,7 +300,7 @@ export function getSpringVelocityAt(t: number, x0: number, v0: number, w0: numbe
 }
 
 function toInterpolableText(v: any): string {
-  if (v == null) return '';
+  if (v === null || v === undefined) return '';
   if (typeof v === 'string') return v;
   if (typeof v === 'number') return String(v);
   // Handles CSS Typed OM values (e.g. CSSUnitValue) and other stringable objects.
@@ -653,7 +653,7 @@ function rebuildPixonSheet() {
 export function clearStyles() {
   pixonScopedCss.clear();
   if (pixonSheetTag && pixonSheetTag.parentNode) {
-    try { pixonSheetTag.parentNode.removeChild(pixonSheetTag); } catch {}
+    try { pixonSheetTag.parentNode.removeChild(pixonSheetTag); } catch { /* noop */ }
   }
   pixonSheetTag = null;
 }
@@ -704,14 +704,14 @@ export function startPixonTransition(
 
     const cleanup = () => {
       overlay.removeEventListener('transitionend', onEnd);
-      try { overlay.remove(); } catch {}
+      try { overlay.remove(); } catch { /* noop */ }
       resolve();
     };
 
     const onEnd = async () => {
       if (phase === 'in') {
         phase = 'out';
-        try { await update(); } catch {}
+        try { await update(); } catch { /* noop */ }
         requestAnimationFrame(() => {
           overlay.style.opacity = '0';
         });
@@ -852,7 +852,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
     labels: Map<string, number>,
     ctx: { prop: string; source: string }
   ): number => {
-    if (raw == null) return fallback;
+    if (raw === null || raw === undefined) return fallback;
     if (typeof raw === 'number') return normalizeTimeMs(raw, fallback, ctx);
 
     const text = String(raw).trim();
@@ -921,15 +921,15 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
 
           const anim = (el as any).animate(track.keyframes, opts);
           if (anim) {
-            try { (anim as any).playbackRate = playbackRate; } catch {}
+            try { (anim as any).playbackRate = playbackRate; } catch { /* noop */ }
             animations.push(anim);
           }
         });
 
         if (!autoplay) {
           animations.forEach((a) => {
-            try { a.pause(); } catch {}
-            try { (a as any).currentTime = 0; } catch {}
+            try { a.pause(); } catch { /* noop */ }
+            try { (a as any).currentTime = 0; } catch { /* noop */ }
           });
         }
 
@@ -947,14 +947,14 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           setTimeScale: (rate: number) => {
             playbackRate = normalizeTimeScale(rate, playbackRate, { prop: 'timeScale', source: 'timeline(tracks).controller' });
             animations.forEach((a) => {
-              try { (a as any).playbackRate = playbackRate; } catch {}
+              try { (a as any).playbackRate = playbackRate; } catch { /* noop */ }
             });
           },
           scrub: (progress: number) => {
             const normalized = Math.max(0, Math.min(1, Number(progress) || 0));
             const time = totalDuration * normalized;
             animations.forEach((a) => {
-              try { (a as any).currentTime = time; } catch {}
+              try { (a as any).currentTime = time; } catch { /* noop */ }
             });
           },
           bindScrub: (source, bindOptions) => {
@@ -972,17 +972,17 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
               const progress = mapToProgress(Number(latest) || 0);
               const time = totalDuration * progress;
               animations.forEach((a) => {
-                try { (a as any).currentTime = time; } catch {}
+                try { (a as any).currentTime = time; } catch { /* noop */ }
               });
             };
             if (bindOptions?.immediate !== false) {
-              try { apply(Number(source.get()) || 0); } catch {}
+              try { apply(Number(source.get()) || 0); } catch { /* noop */ }
             }
             return source.on('change', (latest) => apply(Number(latest) || 0));
           },
           seek: (t: number) => {
             animations.forEach((a) => {
-              try { (a as any).currentTime = t; } catch {}
+              try { (a as any).currentTime = t; } catch { /* noop */ }
             });
           },
           getDebugSnapshot: () => {
@@ -1005,34 +1005,34 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           },
           play: () => {
             animations.forEach((a) => {
-              try { a.play(); } catch {}
+              try { a.play(); } catch { /* noop */ }
             });
           },
           pause: () => {
             animations.forEach((a) => {
-              try { a.pause(); } catch {}
+              try { a.pause(); } catch { /* noop */ }
             });
           },
           resume: () => {
             animations.forEach((a) => {
-              try { a.play(); } catch {}
+              try { a.play(); } catch { /* noop */ }
             });
           },
           reverse: () => {
             animations.forEach((a) => {
-              try { a.reverse(); } catch {}
+              try { a.reverse(); } catch { /* noop */ }
             });
           },
           finish: () => {
             animations.forEach((a) => {
-              try { a.finish(); } catch {}
+              try { a.finish(); } catch { /* noop */ }
             });
           },
           finished,
           then: (onfulfilled?: any, onrejected?: any) => finished.then(onfulfilled, onrejected),
           cancel: () => {
             animations.forEach((a) => {
-              try { a.cancel(); } catch {}
+              try { a.cancel(); } catch { /* noop */ }
             });
             animations.length = 0;
           },
@@ -1140,7 +1140,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
             try {
               if (activeScope) (nested as any).scope(activeScope);
               (child as (tl: TimelineBuilder) => void)(nested as TimelineBuilder);
-            } catch {}
+            } catch { /* noop */ }
             return nested as TimelineBuilder;
           })()
         : child;
@@ -1212,7 +1212,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
     },
     scrub(enabled = true) {
       defaultScrub = !!enabled;
-      if (enabled && defaults.autoplay == null) defaultAutoplay = false;
+      if (enabled && (defaults.autoplay === null || defaults.autoplay === undefined)) defaultAutoplay = false;
       return api;
     },
     autoplay(enabled = true) {
@@ -1247,7 +1247,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
     chain(compose: (tl: TimelineBuilder) => void) {
       try {
         compose(api as TimelineBuilder);
-      } catch {}
+      } catch { /* noop */ }
       return api;
     },
     play(): TimelineController {
@@ -1312,7 +1312,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
             ...(segOpts as any),
             duration,
             delay: delay + idx * stagger,
-            easing: easing != null ? sanitizeEasing(easing) : undefined,
+            easing: easing !== null && easing !== undefined ? sanitizeEasing(easing) : undefined,
           };
           totalDuration = Math.max(totalDuration, (Number(opts.delay) || 0) + duration);
           delete (opts as any).offset;
@@ -1323,7 +1323,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
 
           const anim = (node as any).animate(keyframes, opts);
           if (anim) {
-            try { (anim as any).playbackRate = callbackRate; } catch {}
+            try { (anim as any).playbackRate = callbackRate; } catch { /* noop */ }
             animations.push(anim);
           }
         });
@@ -1340,7 +1340,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
       const fireCallback = (cb: { fn: () => void; fired: boolean }) => {
         if (cb.fired) return;
         cb.fired = true;
-        try { cb.fn(); } catch {}
+        try { cb.fn(); } catch { /* noop */ }
         if (callbackQueue.every((entry) => entry.fired)) {
           resolveCallbacksDone();
         }
@@ -1372,8 +1372,8 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
       scheduleCallbacksFrom(0);
       if (!autoplay) {
         animations.forEach((a) => {
-          try { a.pause(); } catch {}
-          try { (a as any).currentTime = 0; } catch {}
+          try { a.pause(); } catch { /* noop */ }
+          try { (a as any).currentTime = 0; } catch { /* noop */ }
         });
       }
 
@@ -1398,7 +1398,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           })();
           callbackRate = nextRate;
           animations.forEach((a) => {
-            try { (a as any).playbackRate = nextRate; } catch {}
+            try { (a as any).playbackRate = nextRate; } catch { /* noop */ }
           });
           if (callbackPaused) {
             syncCallbackAnchor(current);
@@ -1410,7 +1410,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           const normalized = Math.max(0, Math.min(1, Number(progress) || 0));
           const time = totalDuration * normalized;
           animations.forEach((a) => {
-            try { (a as any).currentTime = time; } catch {}
+            try { (a as any).currentTime = time; } catch { /* noop */ }
           });
           scheduleCallbacksFrom(time);
         },
@@ -1429,19 +1429,19 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
             const progress = mapToProgress(Number(latest) || 0);
             const time = totalDuration * progress;
             animations.forEach((a) => {
-              try { (a as any).currentTime = time; } catch {}
+              try { (a as any).currentTime = time; } catch { /* noop */ }
             });
             scheduleCallbacksFrom(time);
           };
           if (bindOptions?.immediate !== false) {
-            try { apply(Number(source.get()) || 0); } catch {}
+            try { apply(Number(source.get()) || 0); } catch { /* noop */ }
           }
           return source.on('change', (latest) => apply(Number(latest) || 0));
         },
         seek: (t: number) => {
           const seekMs = Math.max(0, Number(t) || 0);
           animations.forEach((a) => {
-            try { (a as any).currentTime = seekMs; } catch {}
+            try { (a as any).currentTime = seekMs; } catch { /* noop */ }
           });
           scheduleCallbacksFrom(seekMs);
         },
@@ -1464,7 +1464,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           }
           scheduleCallbacksFrom(callbackCursor);
           animations.forEach((a) => {
-            try { a.play(); } catch {}
+            try { a.play(); } catch { /* noop */ }
           });
         },
         pause: () => {
@@ -1476,7 +1476,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           clearCallbackTimers();
           syncCallbackAnchor(callbackCursor);
           animations.forEach((a) => {
-            try { a.pause(); } catch {}
+            try { a.pause(); } catch { /* noop */ }
           });
         },
         resume: () => {
@@ -1487,7 +1487,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           }
           scheduleCallbacksFrom(callbackCursor);
           animations.forEach((a) => {
-            try { a.play(); } catch {}
+            try { a.play(); } catch { /* noop */ }
           });
         },
         reverse: () => {
@@ -1495,7 +1495,7 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           clearCallbackTimers();
           syncCallbackAnchor(callbackCursor);
           animations.forEach((a) => {
-            try { a.reverse(); } catch {}
+            try { a.reverse(); } catch { /* noop */ }
           });
         },
         finish: () => {
@@ -1503,14 +1503,14 @@ export function timeline(tracks?: TimelineTrack[] | TimelineFactoryOptions, opti
           callbackQueue.forEach((cb) => fireCallback(cb));
           resolveCallbacksDone();
           animations.forEach((a) => {
-            try { a.finish(); } catch {}
+            try { a.finish(); } catch { /* noop */ }
           });
         },
         finished,
         then: (onfulfilled?: any, onrejected?: any) => finished.then(onfulfilled, onrejected),
         cancel: () => {
           animations.forEach((a) => {
-            try { a.cancel(); } catch {}
+            try { a.cancel(); } catch { /* noop */ }
           });
           resolveCallbacksDone();
           clearCallbackTimers();
@@ -1618,8 +1618,8 @@ export function attachTimelineDevtools(
   renderText();
   rafId = requestAnimationFrame(update);
   return () => {
-    try { cancelAnimationFrame(rafId); } catch {}
-    try { panel.remove(); } catch {}
+    try { cancelAnimationFrame(rafId); } catch { /* noop */ }
+    try { panel.remove(); } catch { /* noop */ }
   };
 }
 

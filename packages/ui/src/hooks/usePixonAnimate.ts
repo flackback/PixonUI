@@ -1,7 +1,8 @@
 import { useRef, useCallback, useSyncExternalStore, useEffect } from 'react';
-import { 
+import type { 
   SpringConfig, 
-  SpringType, 
+  SpringType} from '../utils/motion';
+import { 
   prepareKeyframes, 
   compileSpringKeyframes, 
   captureElementState, 
@@ -115,17 +116,17 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       const el = activeElementRef.current || ref.current;
       // Cancel everything we created for this element (including additive ones).
       activeAnimsRef.current.forEach((a) => {
-        try { a.cancel(); } catch {}
+        try { a.cancel(); } catch { /* noop */ }
       });
       varTweensRef.current.forEach((t) => {
-        try { t.cancel(); } catch {}
+        try { t.cancel(); } catch { /* noop */ }
       });
       varTweensRef.current.clear();
       activeAnimsRef.current.clear();
       animRef.current = null;
       if (el) {
         updateStore(el, false);
-        try { el.style.willChange = ''; } catch {}
+        try { el.style.willChange = ''; } catch { /* noop */ }
       }
       activeElementRef.current = null;
     };
@@ -146,11 +147,11 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
         lastInterruption.current = { time: performance.now(), velocity: (1 - p) * 10 };
       }
 
-      try { if (a.playState === 'running' && el) a.commitStyles(); } catch {}
-      try { a.cancel(); } catch {}
+      try { if (a.playState === 'running' && el) a.commitStyles(); } catch { /* noop */ }
+      try { a.cancel(); } catch { /* noop */ }
       const vt = varTweensRef.current.get(a);
       if (vt) {
-        try { vt.cancel(); } catch {}
+        try { vt.cancel(); } catch { /* noop */ }
         varTweensRef.current.delete(a);
       }
       if (activeAnimsRef.current.delete(a) && el) bumpStore(el, -1);
@@ -159,7 +160,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
     animRef.current = null;
     channelMainRef.current.clear();
     if (el && getStore(el).activeCount === 0) {
-      try { el.style.willChange = ''; } catch {}
+      try { el.style.willChange = ''; } catch { /* noop */ }
     }
   }, []);
 
@@ -180,7 +181,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
 
     if (wantsChannels) {
       ensureTransformChannels();
-      try { el.classList.add('px-transform'); } catch {}
+      try { el.classList.add('px-transform'); } catch { /* noop */ }
     }
 
     let finalKfs = wantsChannels ? prepareChannelKeyframes(kfs, channel) : prepareKeyframes(kfs);
@@ -279,8 +280,7 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
         });
       } else {
         // Timer-only WAAPI animation so callers can await `.finished`.
-        const opacity = (typeof getComputedStyle === 'function') ? getComputedStyle(el).opacity : '1';
-        a = el.animate([{ opacity }, { opacity }], {
+        a = el.animate([{ opacity: 1 }, { opacity: 1 }], {
           fill: 'both',
           ...waapi,
           duration: dur,
@@ -306,15 +306,16 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
 
     // V4.7 Supreme: Update global registry with final target to avoid DOM reads in next cycle
     const finalState = finalKfs[finalKfs.length - 1] as Keyframe;
-    const cached = elementStateRegistry.get(el) || {};
-    elementStateRegistry.set(el, { ...cached, ...finalState });
+    const cached = elementStateRegistry.get(el);
+    if (cached) Object.assign(cached, finalState);
+    else elementStateRegistry.set(el, { ...finalState });
 
     activeAnimsRef.current.add(a);
     bumpStore(el, +1);
 
     // Hint compositor only when needed, and keep it while any animation is running.
     if (compositorProps.length > 0) {
-      try { el.style.willChange = compositorProps.join(', '); } catch {}
+      try { el.style.willChange = compositorProps.join(', '); } catch { /* noop */ }
     }
 
     if (!isAdditive) {
@@ -323,8 +324,8 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       // Replace semantics: cancel previous main animation after the new one is created
       // to avoid piling up running WAAPI instances on hover-in/out storms.
       if (prevMain && prevMain !== a) {
-        try { if (prevMain.playState === 'running') prevMain.commitStyles(); } catch {}
-        try { prevMain.cancel(); } catch {}
+        try { if (prevMain.playState === 'running') prevMain.commitStyles(); } catch { /* noop */ }
+        try { prevMain.cancel(); } catch { /* noop */ }
         if (activeAnimsRef.current.delete(prevMain)) bumpStore(el, -1);
       }
     }
@@ -341,13 +342,13 @@ export function usePixonAnimate<T extends HTMLElement = HTMLDivElement>(): UsePi
       const vt = varTweensRef.current.get(a);
       if (vt) {
         if (!completed) {
-          try { vt.cancel(); } catch {}
+          try { vt.cancel(); } catch { /* noop */ }
         }
         varTweensRef.current.delete(a);
       }
       if (completed && opts.onComplete) opts.onComplete();
       if (getStore(el).activeCount === 0) {
-        try { el.style.willChange = ''; } catch {}
+        try { el.style.willChange = ''; } catch { /* noop */ }
       }
     };
 

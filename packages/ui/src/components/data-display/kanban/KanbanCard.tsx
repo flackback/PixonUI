@@ -57,8 +57,6 @@ export const KanbanCard = React.memo(({
   isDragOver,
   dropPosition
 }: KanbanCardProps) => {
-  if (renderCard) return <>{renderCard(task)}</>;
-
   const [isHovered, setIsHovered] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -246,7 +244,9 @@ export const KanbanCard = React.memo(({
     window.addEventListener('pointerup', handlePointerUp);
   };
 
-  const cardContent = (
+  const cardContent = renderCard ? (
+    renderCard(task)
+  ) : (
     <PixonMotion 
       as={Surface as any}
       layoutId={task.id}

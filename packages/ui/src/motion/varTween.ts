@@ -3,7 +3,7 @@ type VarKeyframe = Record<string, any>;
 type Parsed = { n: number; unit: string } | { raw: string };
 
 function parseValue(v: any): Parsed {
-  if (v == null) return { raw: '' };
+  if (v === null || v === undefined) return { raw: '' };
   if (typeof v === 'number') return { n: v, unit: '' };
   const s = String(v).trim();
   const m = /^(-?\d+(?:\.\d+)?)([a-zA-Z%]*)$/.exec(s);
@@ -67,7 +67,7 @@ function easingFn(easing: string | undefined): (t: number) => number {
   if (e === 'ease-in') return cubicBezier(0.42, 0, 1, 1);
   if (e === 'ease-out') return cubicBezier(0, 0, 0.58, 1);
   if (e === 'ease-in-out') return cubicBezier(0.42, 0, 0.58, 1);
-  const m = /^cubic-bezier\(\s*([0-9.\-]+)\s*,\s*([0-9.\-]+)\s*,\s*([0-9.\-]+)\s*,\s*([0-9.\-]+)\s*\)$/.exec(e);
+  const m = /^cubic-bezier\(\s*([0-9.-]+)\s*,\s*([0-9.-]+)\s*,\s*([0-9.-]+)\s*,\s*([0-9.-]+)\s*\)$/.exec(e);
   if (m) return cubicBezier(Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4]));
   return (t) => t;
 }
@@ -122,7 +122,7 @@ export function tweenCustomProperties(
     const eased = ease(p);
     for (const k of keys) {
       const v = lerp(fromParsed[k]!, toParsed[k]!, eased);
-      try { el.style.setProperty(k, formatValue(v)); } catch {}
+      try { el.style.setProperty(k, formatValue(v)); } catch { /* noop */ }
     }
   };
 
@@ -164,4 +164,3 @@ export function tweenCustomProperties(
     finished,
   };
 }
-

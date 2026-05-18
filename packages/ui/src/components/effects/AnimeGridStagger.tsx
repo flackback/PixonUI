@@ -71,7 +71,7 @@ export function AnimeGridStagger({
       animationsRef.current.forEach((anim) => {
         try {
           anim.cancel();
-        } catch {}
+        } catch { /* noop */ }
       });
       animationsRef.current.clear();
     };

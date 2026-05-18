@@ -60,30 +60,30 @@ function parseTransformList(transform: string): Record<string, any> {
     const args = m[2]!.split(',').map((s) => s.trim());
 
     if (fn === 'translate' || fn === 'translate3d') {
-      if (args[0] != null) out.x = args[0];
-      if (args[1] != null) out.y = args[1];
-      if (fn === 'translate3d' && args[2] != null) out.z = args[2];
+      if (args[0] !== undefined) out.x = args[0];
+      if (args[1] !== undefined) out.y = args[1];
+      if (fn === 'translate3d' && args[2] !== undefined) out.z = args[2];
       continue;
     }
 
-    if (fn === 'translateX' && args[0] != null) { out.x = args[0]; continue; }
-    if (fn === 'translateY' && args[0] != null) { out.y = args[0]; continue; }
-    if (fn === 'translateZ' && args[0] != null) { out.z = args[0]; continue; }
+    if (fn === 'translateX' && args[0] !== undefined) { out.x = args[0]; continue; }
+    if (fn === 'translateY' && args[0] !== undefined) { out.y = args[0]; continue; }
+    if (fn === 'translateZ' && args[0] !== undefined) { out.z = args[0]; continue; }
 
     if (fn === 'scale') {
-      if (args[0] != null) out.scaleX = args[0];
-      if (args[1] != null) out.scaleY = args[1];
-      else if (args[0] != null) out.scale = args[0];
+      if (args[0] !== undefined) out.scaleX = args[0];
+      if (args[1] !== undefined) out.scaleY = args[1];
+      else if (args[0] !== undefined) out.scale = args[0];
       continue;
     }
-    if (fn === 'scaleX' && args[0] != null) { out.scaleX = args[0]; continue; }
-    if (fn === 'scaleY' && args[0] != null) { out.scaleY = args[0]; continue; }
-    if (fn === 'rotate' && args[0] != null) { out.rotate = args[0]; continue; }
-    if (fn === 'rotateX' && args[0] != null) { out.rotateX = args[0]; continue; }
-    if (fn === 'rotateY' && args[0] != null) { out.rotateY = args[0]; continue; }
-    if (fn === 'rotateZ' && args[0] != null) { out.rotateZ = args[0]; continue; }
-    if (fn === 'skewX' && args[0] != null) { out.skewX = args[0]; continue; }
-    if (fn === 'skewY' && args[0] != null) { out.skewY = args[0]; continue; }
+    if (fn === 'scaleX' && args[0] !== undefined) { out.scaleX = args[0]; continue; }
+    if (fn === 'scaleY' && args[0] !== undefined) { out.scaleY = args[0]; continue; }
+    if (fn === 'rotate' && args[0] !== undefined) { out.rotate = args[0]; continue; }
+    if (fn === 'rotateX' && args[0] !== undefined) { out.rotateX = args[0]; continue; }
+    if (fn === 'rotateY' && args[0] !== undefined) { out.rotateY = args[0]; continue; }
+    if (fn === 'rotateZ' && args[0] !== undefined) { out.rotateZ = args[0]; continue; }
+    if (fn === 'skewX' && args[0] !== undefined) { out.skewX = args[0]; continue; }
+    if (fn === 'skewY' && args[0] !== undefined) { out.skewY = args[0]; continue; }
   }
   return out;
 }

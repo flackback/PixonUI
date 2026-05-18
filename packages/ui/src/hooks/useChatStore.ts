@@ -70,7 +70,7 @@ class ChatStore {
     const allMessages = new Map(this.state.messages);
     allMessages.set(chatId, [...current, message]);
     
-    let newState = {
+    const newState = {
       ...this.state,
       messages: allMessages
     };
@@ -198,7 +198,7 @@ class ChatStore {
   }
 
   setActiveChat(chatId: string | null) {
-    let newState = {
+    const newState = {
       ...this.state,
       activeChatId: chatId
     };

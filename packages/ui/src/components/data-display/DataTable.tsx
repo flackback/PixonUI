@@ -136,7 +136,7 @@ export function DataTable<T extends Record<string, unknown>>({
           {processedData.length === 0 && (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-32 text-center text-white/40">
-                {activeNoResults} "{search}"
+                {activeNoResults} &quot;{search}&quot;
               </TableCell>
             </TableRow>
           )}

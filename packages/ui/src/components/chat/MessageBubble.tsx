@@ -331,7 +331,7 @@ export const MessageBubble = React.memo(
             return <InteractiveMessage data={message.interactive} isOwn={isOwn} onAction={onAction} />;
           }
           return null;
-        default:
+        default: {
           const urlRegex = /(https?:\/\/[^\s]+)/g;
           const urls = message.content.match(urlRegex);
           
@@ -360,6 +360,7 @@ export const MessageBubble = React.memo(
               ))}
             </div>
           );
+        }
       }
     };
 

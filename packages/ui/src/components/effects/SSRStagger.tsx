@@ -1,6 +1,6 @@
 import React from 'react';
 import { PixonSSRAnimate } from './SSRAnimate';
-import { SSR_ANIMATE_PRESETS } from './SSRAnimate.presets';
+import type { SSR_ANIMATE_PRESETS } from './SSRAnimate.presets';
 
 type SafeHTMLTags = 'div' | 'section' | 'article' | 'span' | 'li' | 'ul' | 'main' | 'header' | 'footer' | 'nav';
 

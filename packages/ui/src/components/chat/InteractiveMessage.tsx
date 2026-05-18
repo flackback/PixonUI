@@ -94,7 +94,9 @@ export function InteractiveMessage({ data, isOwn, onAction }: InteractiveMessage
             let params: any = {};
             try {
               params = typeof btn.buttonParamsJson === 'string' ? JSON.parse(btn.buttonParamsJson) : btn.buttonParamsJson;
-            } catch (e) {}
+            } catch (e) {
+              // ignore invalid json
+            }
             
             return (
               <button

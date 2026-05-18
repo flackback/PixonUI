@@ -2,7 +2,8 @@ import React, { createContext, useContext, useRef, useLayoutEffect, useEffect } 
 import { Motion } from '../feedback/Motion';
 import { useDrag } from '../../hooks/useDrag';
 import { cn } from '../../utils/cn';
-import { DragConstraintInput, resolveDragConstraintBounds } from './dragConstraints';
+import type { DragConstraintInput} from './dragConstraints';
+import { resolveDragConstraintBounds } from './dragConstraints';
 
 interface ReorderContextValue {
   axis: 'x' | 'y';

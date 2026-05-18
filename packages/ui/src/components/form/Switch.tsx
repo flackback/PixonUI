@@ -12,7 +12,8 @@ export interface SwitchProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
 
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
   ({ className, label, error, id, disabled, checked, defaultChecked, onChange, ...props }, ref) => {
-    const inputId = id || React.useId();
+    const generatedId = React.useId();
+    const inputId = id ?? generatedId;
     const [isChecked, setIsChecked] = React.useState(defaultChecked || checked || false);
 
     React.useEffect(() => {

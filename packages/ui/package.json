@@ -82,7 +82,7 @@
   "scripts": {
     "build": "tsup",
     "prepare": "npm run build",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build"

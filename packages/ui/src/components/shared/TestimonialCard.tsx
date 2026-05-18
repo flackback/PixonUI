@@ -82,7 +82,7 @@ export function TestimonialCard({
 
       {/* Quote */}
       <blockquote className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed mb-4">
-        "{content}"
+        &quot;{content}&quot;
       </blockquote>
 
       {/* Author */}

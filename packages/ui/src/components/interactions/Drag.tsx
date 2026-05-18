@@ -1,8 +1,10 @@
 import React, { forwardRef, useCallback, useRef } from 'react';
-import { useDrag, DragState } from '../../hooks/useDrag';
+import type { DragState } from '../../hooks/useDrag';
+import { useDrag } from '../../hooks/useDrag';
 import { Slot } from '../../utils/Slot';
 import { cn } from '../../utils/cn';
-import { DragConstraintInput, resolveDragConstraintBounds } from './dragConstraints';
+import type { DragConstraintInput} from './dragConstraints';
+import { resolveDragConstraintBounds } from './dragConstraints';
 
 export interface DragProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd'> {
   children: React.ReactNode;

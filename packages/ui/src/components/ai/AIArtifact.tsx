@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { cn } from '../../utils/cn';
 import { Code, Terminal, Eye, FileCode, CheckCircle2, Copy, Check, RefreshCw } from 'lucide-react';
-import { AIFileTree, FileNode } from './AIFileTree';
-import { AITerminal, AITerminalLine } from './AITerminal';
+import type { FileNode } from './AIFileTree';
+import { AIFileTree } from './AIFileTree';
+import type { AITerminalLine } from './AITerminal';
+import { AITerminal } from './AITerminal';
 
 export interface AIArtifactProps extends React.HTMLAttributes<HTMLDivElement> {
   /** The unique identifier or title of the active artifact block */

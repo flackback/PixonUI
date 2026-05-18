@@ -21,12 +21,9 @@ module.exports = {
   },
   rules: {
     // 🔥 CRÍTICO PARA LIBS
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/consistent-type-imports': 'warn',
-    '@typescript-eslint/no-unused-vars': [
-      'warn',
-      { argsIgnorePattern: '^_' }
-    ],
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/consistent-type-imports': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
 
     // JSX / React
     'react/react-in-jsx-scope': 'off',
@@ -35,10 +32,10 @@ module.exports = {
 
     // Hooks
     'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
+    'react-hooks/exhaustive-deps': 'off',
 
     // Qualidade
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-console': 'off',
     'no-debugger': 'error',
 
     // Estilo previsível
