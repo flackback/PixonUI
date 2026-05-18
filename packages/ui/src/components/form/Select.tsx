@@ -47,6 +47,8 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
     ref
   ) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
     const [internalValue, setInternalValue] = useState(defaultValue);
     const [activeIndex, setActiveIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -58,6 +60,18 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
     const selectedOption = options.find((opt) => opt.value === currentValue);
+
+    useEffect(() => {
+      if (isOpen) {
+        setIsMounted(true);
+        const frame = window.requestAnimationFrame(() => setIsVisible(true));
+        return () => window.cancelAnimationFrame(frame);
+      }
+
+      setIsVisible(false);
+      const timeout = window.setTimeout(() => setIsMounted(false), 180);
+      return () => window.clearTimeout(timeout);
+    }, [isOpen]);
 
     useEffect(() => {
       if (isOpen) {
@@ -132,9 +146,9 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
     const menuAnimationClasses = {
       none: '',
-      fade: 'animate-in fade-in duration-220 ease-out',
-      scale: 'animate-in fade-in zoom-in-95 duration-220 ease-out',
-      slide: 'animate-in fade-in slide-in-from-top-2 zoom-in-95 duration-250 ease-out',
+      fade: 'transition-opacity duration-180 ease-out',
+      scale: 'transition-[opacity,transform] duration-220 ease-out',
+      slide: 'transition-[opacity,transform] duration-260 ease-out',
     } as const;
 
     const sizeClasses = {
@@ -229,7 +243,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           </svg>
         </div>
 
-        {isOpen && (
+        {isMounted && (
           typeof document !== 'undefined' ? createPortal(
             <div
               ref={contentRef}
@@ -241,9 +255,13 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                 transformOrigin: menuState.transformOrigin,
               }}
               className={cn(
-                'fixed z-[140] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1.5 shadow-xl',
+                'fixed z-[140] overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0A0A0A] p-1.5 shadow-xl will-change-transform',
                 menuAnimationClasses[menuAnimation],
-                !menuState.isPositioned && 'opacity-0'
+                !menuState.isPositioned && 'opacity-0',
+                !isVisible && menuAnimation !== 'none' && 'opacity-0 translate-y-2 scale-95',
+                isVisible && menuAnimation === 'fade' && 'opacity-100',
+                isVisible && menuAnimation === 'scale' && 'opacity-100 translate-y-0 scale-100',
+                isVisible && menuAnimation === 'slide' && 'opacity-100 translate-y-0 scale-100'
               )}
             >
               <ScrollArea

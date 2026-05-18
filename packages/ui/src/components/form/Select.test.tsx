@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Select } from './Select';
 import React from 'react';
@@ -30,7 +30,7 @@ describe('Select', () => {
     expect(screen.getByText('Option 1')).toBeInTheDocument();
   });
 
-  it('selects an option and calls onChange', () => {
+  it('selects an option and calls onChange', async () => {
     const handleChange = vi.fn();
     render(<Select options={options} onChange={handleChange} />);
     
@@ -41,8 +41,7 @@ describe('Select', () => {
     fireEvent.click(option);
     
     expect(handleChange).toHaveBeenCalledWith('opt2');
-    // Dropdown should close (not be in document or not visible, but simple check is if it's gone from query if we conditionally render)
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    await waitForElementToBeRemoved(() => screen.queryByRole('listbox'));
   });
 
   it('displays selected value', () => {
