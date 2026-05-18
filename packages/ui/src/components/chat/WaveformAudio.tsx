@@ -93,7 +93,8 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
   return (
     <div 
       className={cn(
-        "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-[320px] group/audio",
+        // Keep a nice desktop minimum width, but never overflow its container (chat bubble, Surface, etc).
+        "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-0 max-w-full w-full sm:min-w-[320px] group/audio",
         isMe ? "bg-white/10 text-white" : "bg-white/[0.03] text-white/90 border border-white/10",
         className
       )} 
@@ -133,7 +134,7 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col gap-1">
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="flex items-end gap-[2px] h-8 w-full cursor-pointer relative" 
              onClick={(e) => {
                if (!audioRef.current || !duration) return;
