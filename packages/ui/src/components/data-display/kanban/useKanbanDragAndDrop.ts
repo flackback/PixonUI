@@ -31,6 +31,16 @@ export function useKanbanDragAndDrop({
   const touchTimeout = useRef<any>(null);
   const lastTouchPos = useRef<{ x: number, y: number } | null>(null);
   const touchMoveRaf = useRef<number | null>(null);
+  const dragOverRaf = useRef<number | null>(null);
+  const pendingDragOver = useRef<null | {
+    isColumnDrag: boolean;
+    columnId: string;
+    taskId?: string;
+    isTargetingContainer: boolean;
+    clientX: number;
+    clientY: number;
+    currentTarget: HTMLElement;
+  }>(null);
 
   const preventDefaultDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -66,6 +76,11 @@ export function useKanbanDragAndDrop({
       document.body.classList.remove('is-dragging-task');
       document.removeEventListener('dragover', preventDefaultDragOver);
     }
+    if (dragOverRaf.current !== null && typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(dragOverRaf.current);
+      dragOverRaf.current = null;
+    }
+    pendingDragOver.current = null;
     setDraggedTaskId(null);
     setDraggedColumnId(null);
     setDragOverColumnId(null);
@@ -73,29 +88,58 @@ export function useKanbanDragAndDrop({
     setDropPosition(null);
   }, [draggedTaskId, onTaskDragEnd, preventDefaultDragOver]);
 
-  const handleDragOver = (e: React.DragEvent, columnId: string, taskId?: string) => {
+  const flushDragOver = useCallback(() => {
+    dragOverRaf.current = null;
+    const pending = pendingDragOver.current;
+    if (!pending) return;
+
+    setDragOverColumnId(pending.columnId);
+
+    const rect = pending.currentTarget.getBoundingClientRect();
+    if (pending.isColumnDrag) {
+      const midpoint = rect.left + rect.width / 2;
+      setDropPosition(pending.clientX < midpoint ? 'left' : 'right');
+      return;
+    }
+
+    if (pending.taskId) {
+      const midpoint = rect.top + rect.height / 2;
+      setDragOverTaskId(pending.taskId);
+      setDropPosition(pending.clientY < midpoint ? 'top' : 'bottom');
+      return;
+    }
+
+    if (pending.isTargetingContainer) {
+      setDragOverTaskId(null);
+      setDropPosition(null);
+    }
+  }, []);
+
+  const scheduleDragOverFlush = useCallback(() => {
+    if (dragOverRaf.current !== null) return;
+    if (typeof requestAnimationFrame !== 'function') {
+      flushDragOver();
+      return;
+    }
+    dragOverRaf.current = requestAnimationFrame(flushDragOver);
+  }, [flushDragOver]);
+
+  const handleDragOver = useCallback((e: React.DragEvent, columnId: string, taskId?: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    
-    if (draggedColumnId) {
-      setDragOverColumnId(columnId);
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const midpoint = rect.left + rect.width / 2;
-      setDropPosition(e.clientX < midpoint ? 'left' : 'right');
-    } else {
-      setDragOverColumnId(columnId);
-      
-      if (taskId) {
-        setDragOverTaskId(taskId);
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const midpoint = rect.top + rect.height / 2;
-        setDropPosition(e.clientY < midpoint ? 'top' : 'bottom');
-      } else if (e.target === e.currentTarget) {
-        setDragOverTaskId(null);
-        setDropPosition(null);
-      }
-    }
-  };
+
+    pendingDragOver.current = {
+      isColumnDrag: Boolean(draggedColumnId),
+      columnId,
+      taskId,
+      isTargetingContainer: e.target === e.currentTarget,
+      clientX: e.clientX,
+      clientY: e.clientY,
+      currentTarget: e.currentTarget as HTMLElement,
+    };
+
+    scheduleDragOverFlush();
+  }, [draggedColumnId, scheduleDragOverFlush]);
 
   const handleDrop = (e: React.DragEvent, toColumnId: string, toTaskId?: string) => {
     e.preventDefault();
