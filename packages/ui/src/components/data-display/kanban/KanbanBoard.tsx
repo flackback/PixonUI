@@ -111,7 +111,7 @@ export function KanbanBoard({
   } = useKanbanDragAndDrop({ 
     columns, 
     tasks, 
-    selectedTaskIds: [], 
+    selectedTaskIds, 
     onTaskDragEnd: () => {
       setDragOverZoneId(null);
     },

@@ -30,6 +30,7 @@ export function useKanbanDragAndDrop({
   
   const touchTimeout = useRef<any>(null);
   const lastTouchPos = useRef<{ x: number, y: number } | null>(null);
+  const touchMoveRaf = useRef<number | null>(null);
 
   const preventDefaultDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -144,32 +145,48 @@ export function useKanbanDragAndDrop({
     const touch = e.touches[0];
     if (!touch) return;
 
-    const target = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (!target) return;
+    lastTouchPos.current = { x: touch.clientX, y: touch.clientY };
+    if (touchMoveRaf.current !== null) return;
 
-    const columnEl = target.closest('[data-column-id]');
-    const taskEl = target.closest('[data-task-id]');
+    touchMoveRaf.current = requestAnimationFrame(() => {
+      touchMoveRaf.current = null;
+      const pos = lastTouchPos.current;
+      if (!pos) return;
 
-    if (columnEl) {
+      const target = document.elementFromPoint(pos.x, pos.y);
+      if (!target) return;
+
+      const columnEl = target.closest('[data-column-id]');
+      const taskEl = target.closest('[data-task-id]');
+
+      if (!columnEl) return;
+
       const columnId = columnEl.getAttribute('data-column-id')!;
       setDragOverColumnId(columnId);
-      
+
       if (draggedColumnId) {
-        const rect = columnEl.getBoundingClientRect();
+        const rect = (columnEl as HTMLElement).getBoundingClientRect();
         const midpoint = rect.left + rect.width / 2;
-        setDropPosition(touch.clientX < midpoint ? 'left' : 'right');
-      } else if (taskEl) {
+        setDropPosition(pos.x < midpoint ? 'left' : 'right');
+        return;
+      }
+
+      if (taskEl) {
         const taskId = taskEl.getAttribute('data-task-id')!;
         setDragOverTaskId(taskId);
-        const rect = taskEl.getBoundingClientRect();
+        const rect = (taskEl as HTMLElement).getBoundingClientRect();
         const midpoint = rect.top + rect.height / 2;
-        setDropPosition(touch.clientY < midpoint ? 'top' : 'bottom');
+        setDropPosition(pos.y < midpoint ? 'top' : 'bottom');
       }
-    }
+    });
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     clearTimeout(touchTimeout.current);
+    if (touchMoveRaf.current !== null) {
+      cancelAnimationFrame(touchMoveRaf.current);
+      touchMoveRaf.current = null;
+    }
     if (draggedTaskId || draggedColumnId) {
       if (dragOverColumnId) {
         const taskId = draggedTaskId;

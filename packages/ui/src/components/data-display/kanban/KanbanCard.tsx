@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Lock, Trash2, GripVertical, MessageSquare, Paperclip, Clock, Play, Pause, CheckSquare } from 'lucide-react';
 import { Surface } from '../../../primitives/Surface';
 import { Badge } from '../../../primitives/Badge';
@@ -58,19 +58,11 @@ export const KanbanCard = React.memo(({
   dropPosition
 }: KanbanCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'));
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
   const cachedRect = useRef<DOMRect | null>(null);
+  const spotlightFrameRef = useRef<number | null>(null);
+  const spotlightPointRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -84,8 +76,16 @@ export const KanbanCard = React.memo(({
     const rect = cachedRect.current;
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    cardRef.current.style.setProperty('--spotlight-x', `${x}px`);
-    cardRef.current.style.setProperty('--spotlight-y', `${y}px`);
+    spotlightPointRef.current = { x, y };
+    if (spotlightFrameRef.current !== null) return;
+    spotlightFrameRef.current = window.requestAnimationFrame(() => {
+      spotlightFrameRef.current = null;
+      const point = spotlightPointRef.current;
+      const el = cardRef.current;
+      if (!point || !el) return;
+      el.style.setProperty('--spotlight-x', `${point.x}px`);
+      el.style.setProperty('--spotlight-y', `${point.y}px`);
+    });
   };
 
   const subtasksCount = task.subtasks?.length || 0;
@@ -151,10 +151,11 @@ export const KanbanCard = React.memo(({
     ghost.style.height = `${rect.height}px`;
     ghost.innerHTML = cardEl.innerHTML;
     
-    // Initial position matching pointer
-    ghost.style.left = `${e.clientX - offsetX}px`;
-    ghost.style.top = `${e.clientY - offsetY}px`;
-    ghost.style.transform = 'scale(1.01)';
+    // Initial position matching pointer (use transform to avoid layout thrash)
+    ghost.style.left = '0px';
+    ghost.style.top = '0px';
+    ghost.style.willChange = 'transform';
+    ghost.style.transform = `translate3d(${e.clientX - offsetX}px, ${e.clientY - offsetY}px, 0) scale(1.01)`;
     ghost.style.opacity = '0.98';
 
     document.body.appendChild(ghost);
@@ -167,12 +168,17 @@ export const KanbanCard = React.memo(({
     cardEl.classList.add('is-being-dragged-snapshot');
     document.body.classList.add('is-dragging-task');
 
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      ghost.style.left = `${moveEvent.clientX - offsetX}px`;
-      ghost.style.top = `${moveEvent.clientY - offsetY}px`;
+    let dragRaf: number | null = null;
+    let lastMove: PointerEvent | null = null;
 
-      // Collision checking using elementFromPoint!
-      // Temporarily hide the ghost to avoid hitting it directly if there's any lag
+    const processMove = () => {
+      dragRaf = null;
+      const moveEvent = lastMove;
+      if (!moveEvent) return;
+
+      ghost.style.transform = `translate3d(${moveEvent.clientX - offsetX}px, ${moveEvent.clientY - offsetY}px, 0) scale(1.01)`;
+
+      // Collision checking using elementFromPoint (hide ghost to avoid hitting itself)
       ghost.style.visibility = 'hidden';
       const hoverEl = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
       ghost.style.visibility = 'visible';
@@ -183,40 +189,48 @@ export const KanbanCard = React.memo(({
       const tEl = hoverEl.closest('[data-task-id]');
       const targetEl = tEl || colEl;
 
-      if (targetEl) {
-        // Dispatch standard dragover Event that bubbles up so React catches it on target column/card
-        const mockDragOverEvent = new Event('dragover', { bubbles: true, cancelable: true });
-        Object.defineProperties(mockDragOverEvent, {
-          clientX: { value: moveEvent.clientX },
-          clientY: { value: moveEvent.clientY },
-          pageX: { value: moveEvent.pageX },
-          pageY: { value: moveEvent.pageY },
-          preventDefault: { value: () => {} },
-          dataTransfer: {
-            value: {
-              dropEffect: 'move',
-              effectAllowed: 'move',
-              getData: (key: string) => (key === 'taskId' ? task.id : '')
-            }
-          },
-          currentTarget: { value: targetEl }
-        });
-        targetEl.dispatchEvent(mockDragOverEvent);
-      }
+      if (!targetEl) return;
+
+      const mockDragOverEvent = new Event('dragover', { bubbles: true, cancelable: true });
+      Object.defineProperties(mockDragOverEvent, {
+        clientX: { value: moveEvent.clientX },
+        clientY: { value: moveEvent.clientY },
+        pageX: { value: moveEvent.pageX },
+        pageY: { value: moveEvent.pageY },
+        preventDefault: { value: () => {} },
+        dataTransfer: {
+          value: {
+            dropEffect: 'move',
+            effectAllowed: 'move',
+            getData: (key: string) => (key === 'taskId' ? task.id : '')
+          }
+        },
+        currentTarget: { value: targetEl }
+      });
+      targetEl.dispatchEvent(mockDragOverEvent);
+    };
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      lastMove = moveEvent;
+      if (dragRaf !== null) return;
+      dragRaf = requestAnimationFrame(processMove);
     };
 
     const handlePointerUp = (upEvent: PointerEvent) => {
+      if (dragRaf !== null) cancelAnimationFrame(dragRaf);
+      dragRaf = null;
+
+      // Hide ghost before hit-test to ensure elementFromPoint sees the real target
+      ghost.style.visibility = 'hidden';
+      const hoverEl = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+      ghost.style.visibility = 'visible';
+
       ghost.remove();
       cardEl.classList.remove('is-being-dragged-snapshot');
       document.body.classList.remove('is-dragging-task');
 
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
-
-      // Find the element under the pointer on release to dispatch drop!
-      ghost.style.visibility = 'hidden';
-      const hoverEl = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
-      ghost.style.visibility = 'visible';
 
       const colEl = hoverEl?.closest('[data-column-id]');
       const tEl = hoverEl?.closest('[data-task-id]');
@@ -258,6 +272,11 @@ export const KanbanCard = React.memo(({
       onMouseLeave={() => {
         setIsHovered(false);
         cachedRect.current = null;
+        spotlightPointRef.current = null;
+        if (spotlightFrameRef.current !== null) {
+          cancelAnimationFrame(spotlightFrameRef.current);
+          spotlightFrameRef.current = null;
+        }
       }}
       onClick={(e: React.MouseEvent) => onTaskClick?.(e, task)}
       draggable={false}
@@ -265,6 +284,7 @@ export const KanbanCard = React.memo(({
       style={{ touchAction: 'none' }}
       className={cn(
         "relative overflow-hidden p-6 rounded-2xl transition-all duration-300 h-full w-full group",
+        "[--px-kanban-spotlight:rgba(0,0,0,0.04)] dark:[--px-kanban-spotlight:rgba(255,255,255,0.06)]",
         isDragged ? (
           "opacity-45 bg-white/20 dark:bg-white/[0.01] backdrop-blur-md border border-dashed border-cyan-500/50 shadow-sm pointer-events-none select-none z-0"
         ) : (
@@ -294,7 +314,7 @@ export const KanbanCard = React.memo(({
           style={{
             opacity: isHovered ? 1 : 0,
             background: `radial-gradient(${spotlightSize}px circle at var(--spotlight-x, 0px) var(--spotlight-y, 0px), ${
-              spotlightColor || (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)')
+              spotlightColor || 'var(--px-kanban-spotlight, rgba(0, 0, 0, 0.04))'
             }, transparent 80%)`,
           }}
         />
