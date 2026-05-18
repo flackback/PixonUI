@@ -74,6 +74,12 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
     }, [isOpen]);
 
     useEffect(() => {
+      if (isOpen && isMounted) {
+        menuState.updatePosition();
+      }
+    }, [isMounted, isOpen, menuState.updatePosition]);
+
+    useEffect(() => {
       if (isOpen) {
         const index = options.findIndex(opt => opt.value === currentValue);
         setActiveIndex(index !== -1 ? index : 0);

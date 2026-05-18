@@ -115,6 +115,12 @@ export const AdvancedSelect = React.forwardRef<HTMLDivElement, AdvancedSelectPro
       return () => window.clearTimeout(timeout);
     }, [isOpen]);
 
+    useEffect(() => {
+      if (isOpen && isMounted) {
+        menuState.updatePosition();
+      }
+    }, [isMounted, isOpen, menuState.updatePosition]);
+
     // Automatically focus search on open
     useEffect(() => {
       if (isOpen && searchable) {

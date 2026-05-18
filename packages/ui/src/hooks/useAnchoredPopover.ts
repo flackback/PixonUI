@@ -85,5 +85,8 @@ export function useAnchoredPopover(
     };
   }, [contentRef, isOpen, triggerRef, updatePosition]);
 
-  return useMemo(() => state, [state]);
+  return useMemo(() => ({
+    ...state,
+    updatePosition,
+  }), [state, updatePosition]);
 }
