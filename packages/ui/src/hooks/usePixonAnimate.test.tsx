@@ -104,7 +104,7 @@ describe('usePixonAnimate', () => {
       );
     });
 
-    const keyframes = animateSpy.mock.calls[0][0] as Keyframe[];
+    const keyframes = animateSpy.mock.calls[0]![0] as Keyframe[];
     const last = keyframes[keyframes.length - 1] as any;
     // In JSDOM, WAAPI keyframes may normalize opacity to `null` when not animating opacity,
     // so we validate only the channel vars for this test.

@@ -10,9 +10,9 @@ function makeInitialClip(): AnimationStudioClip {
         label: 'Position X',
         channel: 'x',
         keyframes: [
-          { id: 'x0', t: 0, v: -140 },
-          { id: 'x1', t: 900, v: 90 },
-          { id: 'x2', t: 2200, v: 0 },
+          { id: 'x0', t: 0, v: -140, easing: 'spring-out' },
+          { id: 'x1', t: 900, v: 90, easing: 'elite-in-out' },
+          { id: 'x2', t: 2200, v: 0, easing: 'linear' },
         ],
       },
       {
@@ -20,9 +20,9 @@ function makeInitialClip(): AnimationStudioClip {
         label: 'Position Y',
         channel: 'y',
         keyframes: [
-          { id: 'y0', t: 0, v: 0 },
-          { id: 'y1', t: 1200, v: -40 },
-          { id: 'y2', t: 2200, v: 0 },
+          { id: 'y0', t: 0, v: 0, easing: 'linear' },
+          { id: 'y1', t: 1200, v: -40, easing: 'soft-bounce' },
+          { id: 'y2', t: 2200, v: 0, easing: 'linear' },
         ],
       },
       {
@@ -30,9 +30,9 @@ function makeInitialClip(): AnimationStudioClip {
         label: 'Rotate',
         channel: 'rotate',
         keyframes: [
-          { id: 'r0', t: 0, v: -8 },
-          { id: 'r1', t: 900, v: 4 },
-          { id: 'r2', t: 2200, v: 0 },
+          { id: 'r0', t: 0, v: -8, easing: 'spring-out' },
+          { id: 'r1', t: 900, v: 4, easing: 'linear' },
+          { id: 'r2', t: 2200, v: 0, easing: 'linear' },
         ],
       },
       {
@@ -40,9 +40,9 @@ function makeInitialClip(): AnimationStudioClip {
         label: 'Opacity',
         channel: 'opacity',
         keyframes: [
-          { id: 'o0', t: 0, v: 0.2 },
-          { id: 'o1', t: 400, v: 1 },
-          { id: 'o2', t: 2200, v: 1 },
+          { id: 'o0', t: 0, v: 0.2, easing: 'elite-in-out' },
+          { id: 'o1', t: 400, v: 1, easing: 'linear' },
+          { id: 'o2', t: 2200, v: 1, easing: 'linear' },
         ],
       },
       {
@@ -50,9 +50,9 @@ function makeInitialClip(): AnimationStudioClip {
         label: 'Scale',
         channel: 'scale',
         keyframes: [
-          { id: 's0', t: 0, v: 0.92 },
-          { id: 's1', t: 1000, v: 1.05 },
-          { id: 's2', t: 2200, v: 1 },
+          { id: 's0', t: 0, v: 0.92, easing: 'spring-out' },
+          { id: 's1', t: 1000, v: 1.05, easing: 'linear' },
+          { id: 's2', t: 2200, v: 1, easing: 'linear' },
         ],
       },
     ],

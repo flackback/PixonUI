@@ -30,7 +30,7 @@ export function ComponentDoc({ title, description, code, componentSource, childr
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-8 max-w-8xl mx-auto animate-in fade-in duration-500">
       
       {/* Title & Description Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
