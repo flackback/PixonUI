@@ -26,6 +26,11 @@ export interface WaveformVisualizerProps extends React.HTMLAttributes<HTMLDivEle
    * @default 40
    */
   barCount?: number;
+  /**
+   * Fallback color used when `isActive` is false and no live stream is present.
+   * When omitted, it adapts to the current document theme (light/dark).
+   */
+  inactiveColor?: string;
 }
 
 export const WaveformVisualizer = ({
@@ -34,6 +39,7 @@ export const WaveformVisualizer = ({
   variant = 'bars',
   color = '#3b82f6',
   barCount = 40,
+  inactiveColor,
   className,
   style,
   ...props
@@ -44,6 +50,7 @@ export const WaveformVisualizer = ({
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const rafId = useRef<number>(0);
+  const isDarkRef = useRef<boolean>(false);
 
   // Initialize Web Audio API analyzer if stream is provided
   useEffect(() => {
@@ -82,6 +89,18 @@ export const WaveformVisualizer = ({
     };
   }, [stream]);
 
+  // Track current theme for correct inactive fallback contrast
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const update = () => {
+      isDarkRef.current = document.documentElement.classList.contains('dark');
+    };
+    update();
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => mo.disconnect();
+  }, []);
+
   // Visual render loop (Canvas Drawing)
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -106,6 +125,9 @@ export const WaveformVisualizer = ({
       ctx.clearRect(0, 0, width, height);
 
       const isLive = !!(stream && analyserRef.current && dataArrayRef.current);
+
+      const resolvedInactiveColor =
+        inactiveColor ?? (isDarkRef.current ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.18)');
 
       if (isLive) {
         // Render based on live Audio Frequency data
@@ -174,7 +196,7 @@ export const WaveformVisualizer = ({
             const x = i * barWidth + spacing / 2;
             const y = (height - barHeight) / 2;
 
-            ctx.fillStyle = isActive ? color : 'rgba(255, 255, 255, 0.2)';
+            ctx.fillStyle = isActive ? color : resolvedInactiveColor;
             ctx.beginPath();
             if (ctx.roundRect) {
               ctx.roundRect(x, y, barWidth - spacing, barHeight, (barWidth - spacing) / 2);
@@ -187,7 +209,7 @@ export const WaveformVisualizer = ({
           // Sine wave mode fallback
           ctx.beginPath();
           ctx.lineWidth = 2.5 * dpr;
-          ctx.strokeStyle = isActive ? color : 'rgba(255, 255, 255, 0.2)';
+          ctx.strokeStyle = isActive ? color : resolvedInactiveColor;
           ctx.lineCap = 'round';
 
           const waveCount = 3;
@@ -196,7 +218,9 @@ export const WaveformVisualizer = ({
             ctx.lineWidth = (3 - w) * dpr;
             ctx.strokeStyle = isActive 
               ? `${color}${w === 0 ? '' : w === 1 ? '99' : '44'}` 
-              : `rgba(255, 255, 255, ${0.3 - w * 0.1})`;
+              : (isDarkRef.current
+                  ? `rgba(255, 255, 255, ${0.3 - w * 0.1})`
+                  : `rgba(0, 0, 0, ${0.22 - w * 0.06})`);
 
             ctx.moveTo(0, height / 2);
             for (let i = 0; i < width; i++) {
@@ -223,7 +247,7 @@ export const WaveformVisualizer = ({
   return (
     <div
       className={cn(
-        'relative h-12 w-full rounded-xl overflow-hidden bg-slate-900/40 backdrop-blur-md border border-white/5 p-1 flex items-center justify-center',
+        'relative h-12 w-full rounded-xl overflow-hidden bg-white/70 dark:bg-slate-900/40 backdrop-blur-md border border-zinc-200/80 dark:border-white/5 p-1 flex items-center justify-center',
         className
       )}
       style={style}

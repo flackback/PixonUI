@@ -95,7 +95,9 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
       className={cn(
         // Keep a nice desktop minimum width, but never overflow its container (chat bubble, Surface, etc).
         "flex items-center gap-4 py-2 px-3 rounded-2xl min-w-0 max-w-full w-full sm:min-w-[320px] group/audio",
-        isMe ? "bg-white/10 text-white" : "bg-white/[0.03] text-white/90 border border-white/10",
+        isMe
+          ? "bg-white/10 text-white"
+          : "bg-white/80 dark:bg-white/[0.03] text-zinc-900 dark:text-white/90 border border-zinc-200/80 dark:border-white/10",
         className
       )} 
       {...props}
@@ -126,8 +128,10 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
         <button
           onClick={togglePlaybackRate}
           className={cn(
-            "text-[10px] font-bold px-1.5 py-1 rounded-full border border-white/20 hover:bg-white/10 transition-colors tabular-nums min-w-[32px] text-center",
-            playbackRate !== 1 ? "bg-blue-500 text-white border-blue-400" : "opacity-60"
+            "text-[10px] font-bold px-1.5 py-1 rounded-full border transition-colors tabular-nums min-w-[32px] text-center",
+            playbackRate !== 1
+              ? "bg-blue-500 text-white border-blue-400"
+              : "opacity-60 border-zinc-300 hover:bg-zinc-100 dark:border-white/20 dark:hover:bg-white/10"
           )}
         >
           {playbackRate}x
@@ -151,7 +155,7 @@ export function WaveformAudio({ src, duration, isMe, bars = 35, className, ...pr
                 "flex-1 rounded-full transition-colors duration-100",
                 i <= activeBars 
                   ? (isMe ? "bg-white" : "bg-blue-500") 
-                  : (isMe ? "bg-white/30" : "bg-white/10")
+                  : (isMe ? "bg-white/30" : "bg-zinc-300 dark:bg-white/10")
               )}
               style={{ height: `${h}%` }}
             />

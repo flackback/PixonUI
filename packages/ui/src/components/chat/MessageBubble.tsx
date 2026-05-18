@@ -115,7 +115,7 @@ export const MessageBubble = React.memo(
                 isMe={isOwn} 
               />
               {(message.transcription || message.isTranscribing || hasAi) && (
-                <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+                <div className="flex flex-col gap-2 pt-2 border-t border-zinc-200/70 dark:border-white/5">
                   {message.isTranscribing ? (
                     <div className="flex items-center gap-2 text-[10px] text-blue-400 animate-pulse font-bold uppercase tracking-wider">
                       <MoreHorizontal className="h-3 w-3" />
@@ -153,7 +153,7 @@ export const MessageBubble = React.memo(
           );
         case 'contact':
           return (
-            <div className="flex items-center gap-3 p-2 rounded-xl bg-black/5 dark:bg-white/10 border border-white/5">
+            <div className="flex items-center gap-3 p-2 rounded-xl bg-black/5 dark:bg-white/10 border border-zinc-200/80 dark:border-white/10">
               <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                 <UserIcon className="h-5 w-5" />
               </div>
@@ -188,7 +188,7 @@ export const MessageBubble = React.memo(
                   size: fileSize
                 });
               }}
-              className="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/10 border border-white/5 hover:bg-black/10 dark:hover:bg-white/20 transition-colors cursor-pointer"
+              className="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/10 border border-zinc-200/80 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors cursor-pointer"
             >
               <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500">
                 <FileText className="h-6 w-6" />
@@ -215,7 +215,7 @@ export const MessageBubble = React.memo(
           return (
             <div className="space-y-2">
               <div 
-                className="relative rounded-2xl overflow-hidden border border-white/5 group/image cursor-pointer"
+                className="relative rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/5 group/image cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   onFileClick?.({
@@ -245,7 +245,7 @@ export const MessageBubble = React.memo(
           return (
             <div className="space-y-2">
               <div 
-                className="relative rounded-2xl overflow-hidden border border-white/5 bg-black/20 aspect-video flex items-center justify-center group/video cursor-pointer"
+                className="relative rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/5 bg-black/20 aspect-video flex items-center justify-center group/video cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   onFileClick?.({

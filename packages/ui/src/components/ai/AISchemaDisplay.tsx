@@ -98,7 +98,7 @@ export const AISchemaDisplay = React.forwardRef<HTMLDivElement, AISchemaDisplayP
         )}>
           <div className="overflow-hidden">
             <div className="border-t border-gray-100 dark:border-white/5 p-4 bg-gray-50/10 dark:bg-black/5">
-              <div className="space-y-1 bg-zinc-950/40 dark:bg-zinc-950/80 rounded-xl p-3 border border-gray-150/40 dark:border-zinc-900/50">
+              <div className="space-y-1 bg-white/70 dark:bg-zinc-950/80 rounded-xl p-3 border border-gray-200/70 dark:border-zinc-900/50">
                 {fields.map((field) => (
                   <SchemaRow key={field.name} field={field} depth={0} />
                 ))}
@@ -132,7 +132,7 @@ function SchemaRow({ field, depth = 0 }: { field: SchemaField; depth: number }) 
     <div className="flex flex-col">
       {/* Field item row */}
       <div 
-        className="flex items-start sm:items-center justify-between gap-4 py-2 px-2.5 rounded-lg hover:bg-white/[0.02] transition-colors group/row"
+        className="flex items-start sm:items-center justify-between gap-4 py-2 px-2.5 rounded-lg hover:bg-gray-100/60 dark:hover:bg-white/[0.02] transition-colors group/row"
         style={{ paddingLeft: `${Math.max(10, depth * 18)}px` }}
       >
         <div className="flex items-start sm:items-center gap-2 min-w-0">
@@ -141,7 +141,7 @@ function SchemaRow({ field, depth = 0 }: { field: SchemaField; depth: number }) 
             <button
               type="button"
               onClick={() => setCollapsed(!collapsed)}
-              className="p-0.5 rounded hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+              className="p-0.5 rounded hover:bg-gray-100/70 dark:hover:bg-white/5 text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
             >
               <ChevronRight className={cn(
                 "h-3 w-3 transition-transform duration-200",
@@ -154,11 +154,11 @@ function SchemaRow({ field, depth = 0 }: { field: SchemaField; depth: number }) 
 
           {/* Name & Type */}
           <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <span className="font-mono text-xs font-bold text-zinc-200 group-hover/row:text-purple-400 transition-colors">
+            <span className="font-mono text-xs font-bold text-zinc-900 dark:text-zinc-200 group-hover/row:text-purple-600 dark:group-hover/row:text-purple-400 transition-colors">
               {field.name}
             </span>
             <span className={cn(
-              "font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded border border-white/5",
+              "font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/5",
               currentTypeStyle
             )}>
               {field.type}
@@ -173,7 +173,7 @@ function SchemaRow({ field, depth = 0 }: { field: SchemaField; depth: number }) 
 
         {/* Right side helper description */}
         {field.description && (
-          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium text-right max-w-sm truncate group-hover/row:text-zinc-300 transition-colors flex items-center gap-1.5">
+          <div className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium text-right max-w-sm truncate group-hover/row:text-zinc-900 dark:group-hover/row:text-zinc-300 transition-colors flex items-center gap-1.5">
             <HelpCircle className="h-3.5 w-3.5 opacity-40 shrink-0 hidden sm:inline" />
             <span className="hidden sm:inline">{field.description}</span>
           </div>
@@ -182,7 +182,7 @@ function SchemaRow({ field, depth = 0 }: { field: SchemaField; depth: number }) 
 
       {/* Recursive Render children */}
       {hasChildren && !collapsed && (
-        <div className="flex flex-col relative before:absolute before:left-3.5 before:top-1 before:bottom-3 before:w-0.5 before:bg-white/5">
+        <div className="flex flex-col relative before:absolute before:left-3.5 before:top-1 before:bottom-3 before:w-0.5 before:bg-zinc-200/70 dark:before:bg-white/5">
           {field.children!.map((child) => (
             <SchemaRow key={child.name} field={child} depth={depth + 1} />
           ))}
