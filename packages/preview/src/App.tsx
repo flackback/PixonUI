@@ -35,6 +35,7 @@ import { ERPView } from './saas/ERPView';
 import { AnalyticsView } from './saas/AnalyticsView';
 import { HelpDeskView } from './saas/HelpDeskView';
 import { ProjectPortalView } from './saas/ProjectPortalView';
+import { AnimationStudioPage } from './AnimationStudioPage';
 
 
 // Import our custom background simulator
@@ -56,11 +57,12 @@ import {
   Terminal,
   Cpu,
   Activity,
-  ChevronDown
+  ChevronDown,
+  Video
 } from 'lucide-react';
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'gallery' | 'saas' | 'motion'>('landing');
+  const [view, setView] = useState<'landing' | 'gallery' | 'saas' | 'motion' | 'studio'>('landing');
   const [activeId, setActiveId] = useState('button');
   const [saasTab, setSaasTab] = useState('dashboard');
   const [commandOpen, setCommandOpen] = useState(false);
@@ -70,6 +72,13 @@ export default function App() {
 
   // Run the background telemetry simulation!
   useSimulator();
+
+  // Listen for decoupled navigation triggers to standalone studio
+  useEffect(() => {
+    const handleNav = () => setView('studio');
+    window.addEventListener('nav-studio', handleNav);
+    return () => window.removeEventListener('nav-studio', handleNav);
+  }, []);
 
   // Handle global keydown ⌘K or Ctrl+K to toggle CommandDialog
   useEffect(() => {
@@ -107,7 +116,7 @@ export default function App() {
     setCommandOpen(false);
 
     if (value.startsWith('view:')) {
-      const targetView = value.split(':')[1] as 'landing' | 'gallery' | 'saas' | 'motion';
+      const targetView = value.split(':')[1] as 'landing' | 'gallery' | 'saas' | 'motion' | 'studio';
       setView(targetView);
       toast({
         title: "Navegação rápida",
@@ -144,6 +153,12 @@ export default function App() {
             onEnterGallery={() => setView('gallery')} 
             onEnterSaaS={() => setView('saas')}
           />
+        </PageTransition>
+      )}
+
+      {view === 'studio' && (
+        <PageTransition key="studio" preset="fade" duration={350}>
+          <AnimationStudioPage onBack={() => setView('gallery')} />
         </PageTransition>
       )}
 
@@ -309,7 +324,11 @@ function GlobalCommandPalette({ open, onOpenChange, onSelect }: GlobalCommandPal
             <span>Entrar no Portal SaaS</span>
             <CommandShortcut>SaaS Admin</CommandShortcut>
           </CommandItem>
-
+          <CommandItem value="view:studio">
+            <Video className="mr-2 h-4 w-4 text-purple-500 animate-pulse" />
+            <span>Animation Studio (Editor Standalone)</span>
+            <CommandShortcut>Studio</CommandShortcut>
+          </CommandItem>
         </CommandGroup>
 
         <CommandGroup heading="Painéis do SaaS">

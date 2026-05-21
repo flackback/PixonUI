@@ -193,3 +193,4 @@ export * from './components/effects/SSRStagger';
 export * from './components/effects/ScrollScene';
 export * from './components/interactions/Drag';
 export * from './components/interactions/Reorder';
+export * from './components/effects/Animotion';
