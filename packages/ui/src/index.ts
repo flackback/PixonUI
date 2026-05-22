@@ -194,3 +194,6 @@ export * from './components/effects/ScrollScene';
 export * from './components/interactions/Drag';
 export * from './components/interactions/Reorder';
 export * from './components/effects/Animotion';
+export * from './components/effects/AnimatedSection';
+export * from './components/effects/AnimatedCard';
+export * from './components/effects/AnimatedLogo';

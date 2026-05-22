@@ -7,6 +7,7 @@ export interface AnimotionProps extends React.HTMLAttributes<HTMLDivElement> {
   tracks: AnimationStudioTrack[];
   durationMs: number;
   loop?: boolean;
+  iterations?: number;
   autoplay?: boolean;
   direction?: 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
   currentTimeMs?: number;
@@ -21,6 +22,7 @@ export function Animotion({
   tracks,
   durationMs,
   loop = false,
+  iterations,
   autoplay = true,
   direction = 'normal',
   currentTimeMs = 0,
@@ -137,7 +139,7 @@ export function Animotion({
     // 4. Create WAAPI Animation
     const animation = el.animate(keyframes, {
       duration: durationMs,
-      iterations: loop ? Infinity : 1,
+      iterations: iterations ?? (loop ? Infinity : 1),
       fill: 'forwards',
       direction: direction,
       // The Supreme Architect specifies 'composite: add' for additive animations
@@ -159,7 +161,7 @@ export function Animotion({
     return () => {
       animation.cancel();
     };
-  }, [tracks, durationMs, loop, autoplay, direction, currentTimeMs, motionPath, motionRotate]);
+  }, [tracks, durationMs, loop, iterations, autoplay, direction, currentTimeMs, motionPath, motionRotate]);
 
   return (
     <div ref={containerRef} className={className} style={style} {...props}>

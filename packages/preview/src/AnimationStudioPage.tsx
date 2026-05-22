@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
 import { 
   AnimationStudio, 
   type AnimationStudioClip, 
   Surface, 
   Text, 
-  Button 
+  Button,
+  CopyBlock
 } from '@pixonui/react';
 import { ArrowLeft, Sparkles, Image, Video, HelpCircle, Layers } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 function makeInitialClip(): AnimationStudioClip {
   return {
@@ -14,6 +15,32 @@ function makeInitialClip(): AnimationStudioClip {
     tracks: [],
   };
 }
+
+const MOTION_QUICK_START_CODE = `import {
+  Animotion,
+  AnimatedSection,
+  AnimatedCard,
+  AnimatedLogo,
+} from '@pixonui/react';
+
+// Elemento único
+<Animotion tracks={tracks} durationMs={2400} autoplay animateOnView>
+  <Logo />
+</Animotion>
+
+// Section exportada pelo Studio
+<AnimatedSection
+  elements={elements}
+  durationMs={4000}
+  autoplay
+  animateOnView
+  yoyo
+/>
+
+// Card e logo com presets simples
+<AnimatedCard tracks={cardTracks} durationMs={1200} autoplay />
+<AnimatedLogo tracks={logoTracks} durationMs={1800} autoplay yoyo />
+`;
 
 interface AnimationStudioPageProps {
   onBack: () => void;
@@ -73,7 +100,6 @@ export function AnimationStudioPage({ onBack }: AnimationStudioPageProps) {
       {/* Main Workspace Frame */}
       <main className="flex-1 overflow-auto p-6 max-w-8xl mx-auto w-full flex flex-col gap-6 animate-in fade-in duration-300">
 
-
         {/* The Full Featured Animation Studio Workspace */}
         <AnimationStudio 
           clip={clip} 
@@ -81,6 +107,48 @@ export function AnimationStudioPage({ onBack }: AnimationStudioPageProps) {
           showStage={true}
           className="w-full flex-1"
         />
+
+        <Surface className="overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.03] p-5">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <Text className="text-base font-bold text-white">Motion quick start</Text>
+              <Text className="text-xs text-zinc-400">
+                Use `Animotion` para um elemento, `AnimatedSection` para export da página e `animateOnView` para disparar ao entrar na tela.
+              </Text>
+            </div>
+            <div className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-cyan-300">
+              docs
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="grid gap-3">
+              {[
+                ['Animotion', 'Use para um bloco único ou uma árvore customizada.'],
+                ['AnimatedSection', 'Use para a section exportada pelo Studio.'],
+                ['AnimatedCard', 'Use para cards, callouts e blocos UI.'],
+                ['AnimatedLogo', 'Use para marca, ícone e identity marks.'],
+                ['animateOnView', 'Dispara quando entrar na viewport.'],
+                ['yoyo', 'Vai e volta sem duplicar lógica no app.'],
+              ].map(([title, text]) => (
+                <div key={title} className="rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3">
+                  <div className="text-sm font-bold text-white">{title}</div>
+                  <div className="text-xs leading-relaxed text-zinc-400">{text}</div>
+                </div>
+              ))}
+            </div>
+
+            <CopyBlock
+              title="Uso básico"
+              language="tsx"
+              code={MOTION_QUICK_START_CODE}
+              lineNumbers
+              maxHeight="320px"
+              variant="terminal"
+              className="h-full border-white/10"
+            />
+          </div>
+        </Surface>
       </main>
     </div>
   );

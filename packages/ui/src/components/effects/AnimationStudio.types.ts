@@ -13,6 +13,7 @@ export type AnimationStudioChannel =
   | 'bgH' | 'bgS' | 'bgL' | 'bgA' | 'bg2H' | 'bg2S' | 'bg2L' | 'bg2A' | 'bgAngle' | 'bgPosX' | 'bgPosY'
   | 'clipTop' | 'clipRight' | 'clipBottom' | 'clipLeft'
   | 'width' | 'height' | 'offsetDistance' | 'offsetRotate'
+  | 'timeScale'
   | 'cameraZoom' | 'cameraPanX' | 'cameraPanY' | 'cameraTilt' | 'd';
 
 export interface AnimationStudioKeyframe {

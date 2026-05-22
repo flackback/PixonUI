@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Activity, Maximize2, Plus, Trash2, X } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import type { AnimationStudioKeyframe, AnimationStudioTrack } from '../AnimationStudio.types';
@@ -153,10 +154,13 @@ export function GraphEditor({ track, keyframe, onChange }: GraphEditorProps) {
         </div>
       )}
 
-      {isExpanded && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={() => setIsExpanded(false)}>
+      {isExpanded && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-3 md:p-6"
+          onClick={() => setIsExpanded(false)}
+        >
           <div
-            className="w-full max-w-4xl rounded-3xl border border-white/10 bg-zinc-950 shadow-2xl"
+            className="flex w-[min(1280px,96vw)] h-[min(860px,92vh)] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -184,9 +188,9 @@ export function GraphEditor({ track, keyframe, onChange }: GraphEditorProps) {
               </div>
             </div>
 
-            <div className="grid gap-4 p-4 lg:grid-cols-[1fr_280px]">
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
-                <svg viewBox="0 0 200 120" className="h-[420px] w-full touch-none">
+            <div className="grid min-h-0 flex-1 gap-4 p-4 lg:grid-cols-[1fr_320px]">
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-3 min-h-0">
+                <svg viewBox="0 0 200 120" className="h-full min-h-[420px] w-full touch-none">
                   <line x1="12" y1="108" x2="188" y2="108" className="stroke-white/10" />
                   <line x1="12" y1="20" x2="188" y2="20" className="stroke-white/10" />
                   <polyline points={Array.from({ length: 65 }, (_, idx) => {
@@ -194,6 +198,26 @@ export function GraphEditor({ track, keyframe, onChange }: GraphEditorProps) {
                     const v = easingFn(t);
                     return `${12 + t * 176},${108 - v * 88}`;
                   }).join(' ')} fill="none" className="stroke-purple-400" strokeWidth="2.75" strokeLinecap="round" />
+                  <rect
+                    x="12"
+                    y="20"
+                    width="176"
+                    height="88"
+                    fill="transparent"
+                    style={{ cursor: 'copy' }}
+                    onPointerDown={(e) => {
+                      if (!(e.ctrlKey || e.metaKey) || e.button !== 0) return;
+                      const svg = e.currentTarget.ownerSVGElement;
+                      if (!svg) return;
+                      const rect = svg.getBoundingClientRect();
+                      const x = Math.max(0, Math.min(1, ((((e.clientX - rect.left) / rect.width) * 200) - 12) / 176));
+                      const y = Math.max(-2, Math.min(3, (108 - (((e.clientY - rect.top) / rect.height) * 120)) / 88));
+                      const nextPoints = [...points, { x, y }].sort((a, b) => a.x - b.x);
+                      setPoints(nextPoints);
+                      setSelectedPoint(nextPoints.findIndex((p) => Math.abs(p.x - x) < 0.0001 && Math.abs(p.y - y) < 0.0001));
+                      onChange({ easing: serializeCustomCurve(nextPoints) });
+                    }}
+                  />
                   {points.map((point, index) => (
                     <g key={`${index}-${point.x}-${point.y}`}>
                       <line
@@ -212,6 +236,8 @@ export function GraphEditor({ track, keyframe, onChange }: GraphEditorProps) {
                         strokeWidth="1.5"
                         style={{ cursor: 'grab' }}
                         onPointerDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           const svg = e.currentTarget.ownerSVGElement;
                           if (!svg) return;
                           const rect = svg.getBoundingClientRect();
@@ -237,33 +263,13 @@ export function GraphEditor({ track, keyframe, onChange }: GraphEditorProps) {
                       />
                     </g>
                   ))}
-                  <rect
-                    x="12"
-                    y="20"
-                    width="176"
-                    height="88"
-                    fill="transparent"
-                    style={{ cursor: 'crosshair' }}
-                    onPointerDown={(e) => {
-                      if (e.button !== 0) return;
-                      const svg = e.currentTarget.ownerSVGElement;
-                      if (!svg) return;
-                      const rect = svg.getBoundingClientRect();
-                      const x = Math.max(0, Math.min(1, ((((e.clientX - rect.left) / rect.width) * 200) - 12) / 176));
-                      const y = Math.max(-2, Math.min(3, (108 - (((e.clientY - rect.top) / rect.height) * 120)) / 88));
-                      const nextPoints = [...points, { x, y }].sort((a, b) => a.x - b.x);
-                      setPoints(nextPoints);
-                      setSelectedPoint(nextPoints.findIndex((p) => Math.abs(p.x - x) < 0.0001 && Math.abs(p.y - y) < 0.0001));
-                      onChange({ easing: serializeCustomCurve(nextPoints) });
-                    }}
-                  />
                 </svg>
               </div>
 
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="space-y-3 min-h-0 overflow-hidden">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-full min-h-0 overflow-hidden flex flex-col">
                   <div className="mb-2 text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">Points</div>
-                  <div className="space-y-2 max-h-[360px] overflow-auto pr-1">
+                  <div className="space-y-2 flex-1 min-h-0 overflow-auto pr-1">
                     {points.map((point, index) => (
                       <div key={`${index}`} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center rounded-xl border border-white/10 bg-white/5 px-2 py-2">
                         <label className="text-[10px] font-bold text-zinc-400">
@@ -306,7 +312,8 @@ export function GraphEditor({ track, keyframe, onChange }: GraphEditorProps) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

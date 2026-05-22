@@ -177,17 +177,72 @@ export function serializeCustomCurve(points: CustomCurvePoint[]) {
 export function evaluateCustomCurve(points: CustomCurvePoint[], t: number) {
   if (points.length === 0) return t;
   const sorted = [...points].sort((a, b) => a.x - b.x);
+  if (sorted.length === 1) return sorted[0]!.y;
   if (t <= sorted[0]!.x) return sorted[0]!.y;
   if (t >= sorted[sorted.length - 1]!.x) return sorted[sorted.length - 1]!.y;
+
+  const slopes: number[] = [];
+  const tangents: number[] = new Array(sorted.length).fill(0);
+
   for (let i = 0; i < sorted.length - 1; i++) {
     const a = sorted[i]!;
     const b = sorted[i + 1]!;
-    if (t >= a.x && t <= b.x) {
-      const span = Math.max(1e-6, b.x - a.x);
-      const p = (t - a.x) / span;
-      return a.y + (b.y - a.y) * p;
+    const span = Math.max(1e-6, b.x - a.x);
+    slopes.push((b.y - a.y) / span);
+  }
+
+  tangents[0] = slopes[0] ?? 0;
+  tangents[tangents.length - 1] = slopes[slopes.length - 1] ?? 0;
+
+  for (let i = 1; i < sorted.length - 1; i++) {
+    const prev = slopes[i - 1] ?? 0;
+    const next = slopes[i] ?? 0;
+    if (prev === 0 || next === 0 || Math.sign(prev) !== Math.sign(next)) {
+      tangents[i] = 0;
+    } else {
+      tangents[i] = (prev + next) / 2;
     }
   }
+
+  for (let i = 0; i < slopes.length; i++) {
+    const slope = slopes[i]!;
+    if (slope === 0) {
+      tangents[i] = 0;
+      tangents[i + 1] = 0;
+      continue;
+    }
+
+    const a = (tangents[i] ?? 0) / slope;
+    const b = (tangents[i + 1] ?? 0) / slope;
+    const magnitude = Math.hypot(a, b);
+    if (magnitude > 3) {
+      const scale = 3 / magnitude;
+      tangents[i] = scale * a * slope;
+      tangents[i + 1] = scale * b * slope;
+    }
+  }
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const start = sorted[i]!;
+    const end = sorted[i + 1]!;
+    if (t >= start.x && t <= end.x) {
+      const span = Math.max(1e-6, end.x - start.x);
+      const u = (t - start.x) / span;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      const h00 = 2 * u3 - 3 * u2 + 1;
+      const h10 = u3 - 2 * u2 + u;
+      const h01 = -2 * u3 + 3 * u2;
+      const h11 = u3 - u2;
+      return (
+        h00 * start.y +
+        h10 * span * tangents[i]! +
+        h01 * end.y +
+        h11 * span * tangents[i + 1]!
+      );
+    }
+  }
+
   return t;
 }
 
@@ -307,6 +362,7 @@ export function valueAt(track: AnimationStudioTrack, t: number): number | string
     if (track.channel === 'borderColorA' || track.channel === 'bgA') return 1;
     if (track.channel === 'd') return "M 0 0 L 100 0 L 100 100 L 0 100 Z";
     if (track.channel === 'cameraZoom') return 1;
+    if (track.channel === 'timeScale') return 1;
     return 0;
   }
   if (t <= kfs[0]!.t) return kfs[0]!.v;
@@ -491,6 +547,7 @@ export function compileKeyframes(clip: AnimationStudioClip, el?: AnimationStudio
     height: 0,
     offsetDistance: 0,
     offsetRotate: 0,
+    timeScale: 1,
     d: "M 0 0 L 100 0 L 100 100 L 0 100 Z",
     cameraZoom: 1,
     cameraPanX: 0,
@@ -528,6 +585,8 @@ export function compileKeyframes(clip: AnimationStudioClip, el?: AnimationStudio
         } else if (ch === 'bgAngle') {
           channels[ch] = 135;
         } else if (ch === 'cameraZoom') {
+          channels[ch] = 1;
+        } else if (ch === 'timeScale') {
           channels[ch] = 1;
         } else if (ch === 'cameraPanX' || ch === 'cameraPanY' || ch === 'cameraTilt') {
           channels[ch] = 0;

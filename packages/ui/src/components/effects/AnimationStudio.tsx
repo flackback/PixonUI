@@ -407,6 +407,10 @@ export function AnimationStudio({
       }
     }
   };
+  const clearKeyframeSelection = () => {
+    setSelectedKeyframeId(null);
+    setSelectedKeyframeIds([]);
+  };
   const [copied, setCopied] = useState(false);
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
@@ -806,6 +810,11 @@ export function AnimationStudio({
     setTimeMs((t) => clamp(t, 0, durationMs));
   }, [durationMs]);
 
+  const timelineSpeedTrack = useMemo(() => {
+    const speedLayer = elements.find((el) => el.id === 'el-speed');
+    return speedLayer?.tracks.find((track) => track.channel === 'timeScale');
+  }, [elements]);
+
   // Keep ref synchronized with state when not playing
   useEffect(() => {
     if (!isPlaying) {
@@ -832,14 +841,19 @@ export function AnimationStudio({
 
     lastTsRef.current = performance.now();
     const tick = (ts: number) => {
-      const dt = (ts - lastTsRef.current) * playbackRate;
+      const speedFactor = timelineSpeedTrack
+        ? Math.max(0, Math.min(2, Number(valueAt(timelineSpeedTrack, playheadTimeRef.current)) || 0))
+        : 1;
+      const dt = (ts - lastTsRef.current) * playbackRate * speedFactor;
       lastTsRef.current = ts;
       
       let next = playheadTimeRef.current + (playDirection === 'forward' ? dt : -dt);
       
       // Sincronização impecável baseada no tempo do hardware de áudio!
-      if (audioRef.current && audioUrl && !audioRef.current.paused) {
+      if (audioRef.current && audioUrl && !audioRef.current.paused && !timelineSpeedTrack) {
         next = audioRef.current.currentTime * 1000;
+      } else if (audioRef.current && audioUrl) {
+        audioRef.current.playbackRate = Math.max(0.05, playbackRate * speedFactor);
       }
       
       let endReached = false;
@@ -881,6 +895,7 @@ export function AnimationStudio({
       }
 
       playheadTimeRef.current = next;
+      setTimeMs(next);
       
       // Imperative update to avoid React re-renders during playback!
       if (playheadLineRef.current) {
@@ -900,7 +915,7 @@ export function AnimationStudio({
       if (playRafRef.current !== null) cancelAnimationFrame(playRafRef.current);
       playRafRef.current = null;
     };
-  }, [isPlaying, durationMs, playDirection, loop, yoyo, pxPerMs, audioUrl, playbackRate]);
+  }, [isPlaying, durationMs, playDirection, loop, yoyo, pxPerMs, audioUrl, playbackRate, timelineSpeedTrack]);
 
   // Audio Scrub Sincronizador
   useEffect(() => {
@@ -1209,6 +1224,7 @@ export function AnimationStudio({
       height: 'Height',
       offsetDistance: 'Motion Path Distance',
       offsetRotate: 'Motion Path Rotate Offset',
+      timeScale: 'Time Scale',
       d: 'SVG Path (d)',
       cameraZoom: 'Camera Zoom',
       cameraPanX: 'Camera Pan X',
@@ -1273,6 +1289,7 @@ export function AnimationStudio({
       height: 150,
       offsetDistance: 0,
       offsetRotate: 0,
+      timeScale: 1,
       d: "M 10 10 L 90 10 L 90 90 L 10 90 Z",
       cameraZoom: 1,
       cameraPanX: 0,
@@ -1349,9 +1366,21 @@ export function AnimationStudio({
           keyframes: [...track.keyframes, { id: uid(), t: keyframeTime, v: hit.value, easing: 'linear' }],
         };
       });
+      const channelLabels: Partial<Record<AnimationStudioChannel, string>> = {
+        x: 'Position X',
+        y: 'Position Y',
+        scale: 'Scale',
+        scaleX: 'Scale X',
+        scaleY: 'Scale Y',
+        rotate: 'Rotate',
+        opacity: 'Opacity',
+        width: 'Width',
+        height: 'Height',
+        timeScale: 'Time Scale',
+      };
       const missingTracks = channels.filter((entry) => !el.tracks.some((track) => track.channel === entry.channel)).map((entry) => ({
         id: `tr-${entry.channel}-${uid()}`,
-        label: channelLabels[entry.channel],
+        label: channelLabels[entry.channel] || String(entry.channel),
         channel: entry.channel,
         keyframes: [{ id: uid(), t: Math.round(timeMs / snapMs) * snapMs, v: entry.value, easing: 'linear' }],
       }));
@@ -1714,21 +1743,25 @@ export function AnimationStudio({
       if (e.key === 'Delete' || e.code === 'Delete') {
         if (!isTyping) {
           e.preventDefault();
-          if (selectedKeyframeIds.length > 0) {
+          const keyframeIdsToDelete = selectedKeyframeIds.length > 0
+            ? selectedKeyframeIds
+            : selectedKeyframeId
+              ? [selectedKeyframeId]
+              : [];
+
+          if (keyframeIdsToDelete.length > 0) {
             updateElementsState((prev) =>
               prev.map((el) => {
-                if (el.id !== activeElementId) return el;
                 return {
                   ...el,
                   tracks: el.tracks.map((tr) => ({
                     ...tr,
-                    keyframes: tr.keyframes.filter((k) => !selectedKeyframeIds.includes(k.id))
+                    keyframes: tr.keyframes.filter((k) => !keyframeIdsToDelete.includes(k.id))
                   }))
                 };
               })
             );
-            setSelectedKeyframeId(null);
-            setSelectedKeyframeIds([]);
+            clearKeyframeSelection();
             return;
           }
           const isTrackActiveOnElement = activeElement?.tracks.some((tr) => tr.id === activeTrackId);
@@ -1818,6 +1851,7 @@ export function AnimationStudio({
 
   const onTimelineTrackAreaPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
+    clearKeyframeSelection();
     const rect = e.currentTarget.getBoundingClientRect();
     const startX = e.clientX - rect.left;
     const startY = e.clientY - rect.top;
@@ -1954,6 +1988,7 @@ export function AnimationStudio({
 
     // Default select tool marquee selection
     if (e.target !== e.currentTarget) return;
+    clearKeyframeSelection();
 
     const rect = e.currentTarget.getBoundingClientRect();
     const startX = (e.clientX - rect.left) / previewZoom;
@@ -2315,82 +2350,20 @@ export function AnimationStudio({
 
     const generateReactCode = () => {
       const elementsData = JSON.stringify(elements, null, 2);
-      const hasCamera = elements.some((el) => el.id === 'el-camera');
 
-    return `import React from 'react';
-import { Animotion, type AnimationStudioElement } from '@pixonui/react';
+      return `import React from 'react';
+import { AnimatedSection, type AnimationStudioElement } from '@pixonui/react';
 
 const elements = ${elementsData} satisfies AnimationStudioElement[];
 
-export function MyTimelineAnimation() {
-  const camera = elements.find((el) => el.id === 'el-camera');
-  const stageElements = elements.filter((el) => el.id !== 'el-camera');
+export function MyAnimatedSection() {
   return (
-    <div className="relative w-full h-[300px] bg-zinc-950 flex items-center justify-center overflow-hidden rounded-3xl">
-      ${hasCamera ? `
-      {camera ? (
-        <Animotion
-          tracks={camera.tracks}
-          durationMs={${durationMs}}
-          loop={${loop}}
-          autoplay
-          camera
-          className="absolute inset-0 pointer-events-none"
-        >
-          {stageElements.map((el) => (
-            <Animotion
-              key={el.id}
-              tracks={el.tracks}
-              durationMs={${durationMs}}
-              loop={${loop}}
-              autoplay
-              motionPath={el.motionPath}
-              motionRotate={el.motionRotate}
-              className="absolute left-0 top-0"
-            >
-              <div className={\`flex h-full w-full items-center justify-center px-6 py-4 rounded-3xl \${el.color}\`}>
-                {el.text}
-              </div>
-            </Animotion>
-          ))}
-        </Animotion>
-      ) : (
-        stageElements.map((el) => (
-          <Animotion
-            key={el.id}
-            tracks={el.tracks}
-            durationMs={${durationMs}}
-            loop={${loop}}
-            autoplay
-            motionPath={el.motionPath}
-            motionRotate={el.motionRotate}
-            className="absolute left-0 top-0"
-          >
-            <div className={\`flex h-full w-full items-center justify-center px-6 py-4 rounded-3xl \${el.color}\`}>
-              {el.text}
-            </div>
-          </Animotion>
-        ))
-      )}
-      ` : `
-      {stageElements.map((el) => (
-        <Animotion
-          key={el.id}
-          tracks={el.tracks}
-          durationMs={${durationMs}}
-          loop={${loop}}
-          autoplay
-          motionPath={el.motionPath}
-          motionRotate={el.motionRotate}
-          className="absolute left-0 top-0"
-        >
-          <div className={\`flex h-full w-full items-center justify-center px-6 py-4 rounded-3xl \${el.color}\`}>
-            {el.text}
-          </div>
-        </Animotion>
-      ))}
-      `}
-    </div>
+    <AnimatedSection
+      elements={elements}
+      durationMs={${durationMs}}
+      loop={${loop}}
+      className="relative w-full h-[300px] bg-zinc-950 overflow-hidden rounded-3xl"
+    />
   );
 }`;
     };
@@ -2817,6 +2790,43 @@ export function MyTimelineAnimation() {
     updateElementsState((prev) => [cameraElement, ...prev.filter((el) => el.id !== 'el-camera')]);
     setActiveElementId(cameraElement.id);
     setSelectedElementIds([cameraElement.id]);
+    setSelectedKeyframeId(null);
+  };
+
+  const createTimelineSpeedLayer = () => {
+    const existing = elements.find((el) => el.id === 'el-speed');
+    if (existing) {
+      setActiveElementId(existing.id);
+      setSelectedElementIds([existing.id]);
+      setSelectedKeyframeId(null);
+      return;
+    }
+
+    const speedElement: AnimationStudioElement = {
+      id: 'el-speed',
+      name: '⏱ Timeline Speed',
+      type: 'box',
+      text: 'Speed Control',
+      color: 'text-cyan-400',
+      locked: true,
+      visible: false,
+      collapsed: true,
+      tracks: [
+        {
+          id: `tr-speed-${uid()}`,
+          label: 'Time Scale',
+          channel: 'timeScale',
+          keyframes: [
+            { id: `kf-ts-${uid()}`, t: 0, v: 1, easing: 'linear' },
+            { id: `kf-ts-${uid()}`, t: durationMs, v: 1, easing: 'linear' },
+          ],
+        },
+      ],
+    };
+
+    updateElementsState((prev) => [speedElement, ...prev.filter((el) => el.id !== 'el-speed')]);
+    setActiveElementId(speedElement.id);
+    setSelectedElementIds([speedElement.id]);
     setSelectedKeyframeId(null);
   };
 
@@ -3672,6 +3682,7 @@ export function MyTimelineAnimation() {
   };
 
   const isCameraActive = activeElementId === 'el-camera';
+  const isTimelineSpeedActive = activeElementId === 'el-speed';
 
   const summaryKeyframeTimes = useMemo(() => {
     const times = new Set<number>();
@@ -4632,7 +4643,7 @@ export function MyTimelineAnimation() {
                       }}
                     >
                       {getRootElements(elements).filter((el) => el.visible !== false).map((el) => {
-                        if (el.id === 'el-camera') return null; // Hide camera layer visually!
+                        if (el.id === 'el-camera' || el.id === 'el-speed') return null;
                         const isElActive = el.id === activeElementId;
                         const isElSelected = selectedElementIds.includes(el.id);
                     const isSelected = isElSelected;
@@ -5370,6 +5381,9 @@ export function MyTimelineAnimation() {
                   <button onClick={createVirtualCamera} className="w-full px-3 py-1.5 text-xs text-left hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 text-cyan-700 dark:text-cyan-300 font-semibold">
                     <Camera className="h-3.5 w-3.5 text-cyan-500" /> Virtual Camera
                   </button>
+                  <button onClick={createTimelineSpeedLayer} className="w-full px-3 py-1.5 text-xs text-left hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 text-cyan-700 dark:text-cyan-300 font-semibold">
+                    <Activity className="h-3.5 w-3.5 text-cyan-500" /> Timeline Speed
+                  </button>
                   <button onClick={() => addNewElement('box')} className="w-full px-3 py-1.5 text-xs text-left hover:bg-zinc-50 dark:hover:bg-white/5 flex items-center gap-2 text-zinc-700 dark:text-white font-semibold">
                     <Square className="h-3.5 w-3.5 text-purple-500" /> Rectangle
                   </button>
@@ -5639,6 +5653,7 @@ export function MyTimelineAnimation() {
                           {el.type === 'text' && <Type className="h-4 w-4 text-emerald-500" />}
                           {el.type === 'image' && <Image className="h-4 w-4 text-rose-500" />}
                           {el.type === 'star' && <Star className="h-4 w-4 text-amber-500" />}
+                          {el.id === 'el-speed' && <Activity className="h-4 w-4 text-cyan-500" />}
                           {el.type === 'group' && <Box className="h-4 w-4 text-purple-500" />}
                           {editingElementId === el.id ? (
                           <input
@@ -6094,6 +6109,24 @@ export function MyTimelineAnimation() {
 
 
               <div className="space-y-2">
+                {isTimelineSpeedActive && (
+                  <div className="border border-zinc-200/50 dark:border-white/[0.04] rounded-2xl overflow-hidden bg-zinc-50/50 dark:bg-black/10">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSections((s) => ({ ...s, transform: !s.transform }))}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50 dark:hover:bg-white/[0.02]"
+                    >
+                      <span className="flex items-center gap-2">⏱ Timeline Speed</span>
+                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openSections.transform && "rotate-180")} />
+                    </button>
+                    {openSections.transform && (
+                      <div className="px-3.5 pb-3.5 pt-1 space-y-1">
+                        {renderDrawerPropertyRow('Speed', 'timeScale', 0, 2, 0.01, 'x')}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {isCameraActive && (
                   <div className="border border-zinc-200/50 dark:border-white/[0.04] rounded-2xl overflow-hidden bg-zinc-50/50 dark:bg-black/10">
                     <button

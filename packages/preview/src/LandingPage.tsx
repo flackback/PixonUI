@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   CopyBlock,
+  AnimatedSection,
   Container,
   DotGrid,
   GlowButton,
@@ -24,7 +25,9 @@ import {
   useTransform,
   useTheme,
   createTimelineComposer,
+  type AnimationStudioElement,
 } from '@pixonui/react';
+import { AnimationStudioDemo } from './demos/AnimationStudioDemo';
 
 interface LandingPageProps {
   onEnterGallery: () => void;
@@ -55,6 +58,36 @@ const FEATURES = [
     text: 'Transições declarativas com presets e stagger sem event-bus manual, reduzindo código e chance de regressão.',
   },
 ];
+
+const HERO_SECTION_ELEMENTS = [
+  {
+    id: 'hero-card',
+    name: 'Hero Card',
+    type: 'box',
+    text: '',
+    color: 'bg-white/10',
+    backgroundColor: '#0f172a',
+    tracks: [
+      { id: 'hero-card-x', label: 'Position X', channel: 'x', keyframes: [{ id: 'hero-card-x-0', t: 0, v: 40, easing: 'spring-out' }, { id: 'hero-card-x-1', t: 1400, v: 0, easing: 'elite-in-out' }] },
+      { id: 'hero-card-y', label: 'Position Y', channel: 'y', keyframes: [{ id: 'hero-card-y-0', t: 0, v: 24, easing: 'spring-out' }, { id: 'hero-card-y-1', t: 1400, v: 0, easing: 'elite-in-out' }] },
+      { id: 'hero-card-s', label: 'Scale', channel: 'scale', keyframes: [{ id: 'hero-card-s-0', t: 0, v: 0.96, easing: 'spring-out' }, { id: 'hero-card-s-1', t: 1400, v: 1, easing: 'linear' }] },
+      { id: 'hero-card-o', label: 'Opacity', channel: 'opacity', keyframes: [{ id: 'hero-card-o-0', t: 0, v: 0, easing: 'linear' }, { id: 'hero-card-o-1', t: 400, v: 1, easing: 'linear' }] },
+    ],
+  },
+  {
+    id: 'hero-pill',
+    name: 'Hero Pill',
+    type: 'circle',
+    text: '',
+    color: 'bg-cyan-400/20',
+    backgroundColor: '#22d3ee',
+    tracks: [
+      { id: 'hero-pill-x', label: 'Position X', channel: 'x', keyframes: [{ id: 'hero-pill-x-0', t: 0, v: 320, easing: 'elite-out' }, { id: 'hero-pill-x-1', t: 1400, v: 300, easing: 'linear' }] },
+      { id: 'hero-pill-y', label: 'Position Y', channel: 'y', keyframes: [{ id: 'hero-pill-y-0', t: 0, v: -60, easing: 'spring-out' }, { id: 'hero-pill-y-1', t: 1400, v: -30, easing: 'linear' }] },
+      { id: 'hero-pill-s', label: 'Scale', channel: 'scale', keyframes: [{ id: 'hero-pill-s-0', t: 0, v: 0.6, easing: 'spring-out' }, { id: 'hero-pill-s-1', t: 1400, v: 1, easing: 'linear' }] },
+    ],
+  },
+] satisfies AnimationStudioElement[];
 
 const ANIME_GRID_CODE = `import { AnimeGridStagger, Surface } from '@pixonui/react';
 
@@ -300,6 +333,45 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
               </PixonSSRAnimate>
               </Stack>
             </ScrollScene>
+          </Container>
+        </section>
+
+        <section className="pb-14 md:pb-20">
+          <Container>
+            <Grid className="gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <Surface className="overflow-hidden rounded-3xl border border-slate-300/50 bg-white/80 p-4 dark:border-white/10 dark:bg-[#061333]/70">
+                <div className="mb-4 flex items-center justify-between px-2 pt-1">
+                  <div>
+                    <Heading as="h3" className="text-xl font-semibold">Animated Section Preview</Heading>
+                    <Text className="text-sm text-zinc-600 dark:text-white/60">Wrapper simples para sections, cards e logos.</Text>
+                  </div>
+                  <Badge variant="neutral" className="border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
+                    animateOnView
+                  </Badge>
+                </div>
+                <AnimatedSection
+                  elements={HERO_SECTION_ELEMENTS}
+                  durationMs={1800}
+                  loop
+                  autoplay
+                  animateOnView
+                  yoyo
+                  className="relative h-[320px] rounded-[24px] bg-[#030816] shadow-inner"
+                />
+              </Surface>
+
+              <Surface className="overflow-hidden rounded-3xl border border-slate-300/50 bg-white/80 p-4 dark:border-white/10 dark:bg-[#061333]/70">
+                <div className="mb-4 px-2 pt-1">
+                  <Heading as="h3" className="text-xl font-semibold">Animation Studio Preview</Heading>
+                  <Text className="text-sm text-zinc-600 dark:text-white/60">Preview embutido da interface do editor.</Text>
+                </div>
+                <div className="h-[420px] overflow-hidden rounded-[24px] border border-white/10 bg-black/30 p-2">
+                  <div className="pointer-events-none origin-top-left scale-[0.42] transform-gpu w-[238%] h-[238%]">
+                    <AnimationStudioDemo />
+                  </div>
+                </div>
+              </Surface>
+            </Grid>
           </Container>
         </section>
 
