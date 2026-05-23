@@ -398,6 +398,42 @@ function ContainerInteractionCard() {
   );
 }
 
+function HeroMotionPanel() {
+  return (
+    <Surface className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#05050A]/60 p-4 sm:p-5 shadow-2xl backdrop-blur-xl">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#7B61FF] block mb-1">// RUNTIME PANEL</span>
+          <Heading as="h3" className="text-xl sm:text-2xl font-sora font-extrabold tracking-tight text-white">
+            Movimento que parece interface, não mockup.
+          </Heading>
+          <Text className="mt-1 max-w-md text-xs sm:text-sm text-[#F0EFF4]/62 font-medium leading-relaxed">
+            A abertura deixa claro o que o motor faz: composição, telemetria e resposta visual sem depender de render loops pesados.
+          </Text>
+        </div>
+        <div className="hidden sm:flex flex-wrap justify-end gap-2 max-w-[220px]">
+          {['SSR-safe', 'WAAPI', '0 jank', 'Theme-aware'].map((label) => (
+            <span
+              key={label}
+              className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-fira font-bold uppercase tracking-wider text-[#F0EFF4]/70"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <DiagnosticShuffler />
+        </div>
+        <TelemetryTypewriter />
+        <CursorProtocolScheduler />
+      </div>
+    </Surface>
+  );
+}
+
 const METRICS = [
   { value: '120fps', label: 'Compositor First' },
   { value: '0 jank', label: 'Frame Stability' },
@@ -466,53 +502,70 @@ export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
       </nav>
 
       {/* ─── B. HERO SECTION: "A Cena de Abertura" ─────────────────────────────── */}
-      <header className="relative w-full h-[100dvh] flex flex-col justify-end z-10 px-6 sm:px-12 md:px-20 pb-16 sm:pb-24">
+      <header className="relative z-10 px-6 sm:px-12 md:px-20 pt-28 sm:pt-32 pb-16 sm:pb-20">
         {/* Subtle grid mesh background */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none z-0" />
         
-        <div className="relative z-10 max-w-4xl space-y-6">
-          <PixonSSRAnimate preset="scaleInBounce" transition={{ duration: 700 }}>
-            <Badge variant="neutral" className="border-[#7B61FF]/30 bg-[#7B61FF]/10 px-4 py-1 text-[#7B61FF] font-fira font-bold uppercase tracking-widest text-[9px] shadow-[0_0_15px_rgba(123,97,255,0.15)]">
-              <Sparkles className="mr-2 inline h-3 w-3" />
-              PHYSICS & WAAPI ENGINE v2.0
-            </Badge>
-          </PixonSSRAnimate>
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 lg:min-h-[calc(100dvh-14rem)] lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="max-w-2xl space-y-6">
+            <PixonSSRAnimate preset="scaleInBounce" transition={{ duration: 700 }}>
+              <Badge variant="neutral" className="border-[#7B61FF]/30 bg-[#7B61FF]/10 px-4 py-1 text-[#7B61FF] font-fira font-bold uppercase tracking-widest text-[9px] shadow-[0_0_15px_rgba(123,97,255,0.15)]">
+                <Sparkles className="mr-2 inline h-3 w-3" />
+                Physics & WAAPI engine v2.0
+              </Badge>
+            </PixonSSRAnimate>
 
-          <PixonSSRAnimate preset="blurInUp" transition={{ duration: 880, delay: 300 }}>
-            <Heading as="h1" className="text-4xl sm:text-6xl md:text-7xl font-sora font-extrabold tracking-tighter leading-[0.9] text-white">
-              Sinta a interface.
-              <span className="block font-instrument italic text-[#7B61FF] capitalize font-light mt-2 tracking-normal drop-shadow-[0_0_15px_rgba(123,97,255,0.1)]">
-                Fluidez física de alta fidelidade.
-              </span>
-            </Heading>
-          </PixonSSRAnimate>
+            <PixonSSRAnimate preset="blurInUp" transition={{ duration: 880, delay: 200 }}>
+              <Heading as="h1" className="text-4xl sm:text-6xl md:text-7xl font-sora font-extrabold tracking-tighter leading-[0.9] text-white">
+                Sinta a interface.
+                <span className="block font-instrument italic text-[#7B61FF] capitalize font-light mt-2 tracking-normal drop-shadow-[0_0_15px_rgba(123,97,255,0.1)]">
+                  Fluidez física de alta fidelidade.
+                </span>
+              </Heading>
+            </PixonSSRAnimate>
 
-          <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 820, delay: 520 }}>
-            <Text className="max-w-xl text-sm sm:text-base leading-relaxed text-[#F0EFF4]/70 font-medium">
-              Interfaces digitais refinadas como instrumentos científicos. Construído do zero para rodar a 120fps nativos no motor WAAPI sem re-renders imperativos, loops de jank ou overhead de pacotes.
-            </Text>
-          </PixonSSRAnimate>
+            <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 820, delay: 400 }}>
+              <Text className="max-w-xl text-sm sm:text-base leading-relaxed text-[#F0EFF4]/70 font-medium">
+                Interfaces digitais refinadas como instrumentos científicos. Construído do zero para rodar a 120fps nativos no motor WAAPI sem re-renders imperativos, loops de jank ou overhead de pacotes.
+              </Text>
+            </PixonSSRAnimate>
 
-          <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 860, delay: 760 }} className="flex flex-col items-start gap-4 sm:flex-row pt-4">
-            <GlowButton 
-              aria-label="Abrir galeria"
-              className="h-12 px-8 rounded-full font-sora font-extrabold text-xs tracking-wider active:scale-[0.98] transition-all bg-gradient-to-r from-[#7B61FF] to-[#00FF66] text-[#05050A]" 
-              onClick={onEnterGallery}
-            >
-              Explore Components
-              <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
-            </GlowButton>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="h-12 border-white/10 bg-white/5 px-8 rounded-full font-sora font-extrabold text-xs tracking-wider text-white hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all" 
-              onClick={onEnterSaaS}
-              aria-label="View SaaS Demo"
-            >
-              <Rocket className="mr-2 h-4 w-4 text-[#00FF66]" />
-              View SaaS Demo
-            </Button>
-          </PixonSSRAnimate>
+            <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 860, delay: 580 }} className="flex flex-col items-start gap-4 sm:flex-row pt-4">
+              <GlowButton 
+                aria-label="Abrir galeria"
+                className="h-12 px-8 rounded-full font-sora font-extrabold text-xs tracking-wider active:scale-[0.98] transition-all bg-gradient-to-r from-[#7B61FF] to-[#00FF66] text-[#05050A]" 
+                onClick={onEnterGallery}
+              >
+                Explore Components
+                <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
+              </GlowButton>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-12 border-white/10 bg-white/5 px-8 rounded-full font-sora font-extrabold text-xs tracking-wider text-white hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all" 
+                onClick={onEnterSaaS}
+                aria-label="View SaaS Demo"
+              >
+                <Rocket className="mr-2 h-4 w-4 text-[#00FF66]" />
+                View SaaS Demo
+              </Button>
+            </PixonSSRAnimate>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
+              {METRICS.map((item) => (
+                <Surface key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 shadow-none">
+                  <div className="text-sm sm:text-base font-sora font-extrabold text-white">{item.value}</div>
+                  <Text className="mt-1 text-[10px] font-fira font-bold uppercase tracking-[0.16em] text-[#F0EFF4]/45">
+                    {item.label}
+                  </Text>
+                </Surface>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative lg:pt-8">
+            <HeroMotionPanel />
+          </div>
         </div>
       </header>
 
