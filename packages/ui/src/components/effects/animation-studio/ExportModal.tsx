@@ -3,6 +3,7 @@ import { Copy, Check } from 'lucide-react';
 import { Button } from '../../button/Button';
 import { cn } from '../../../utils/cn';
 import { useAnimationStudio } from './AnimationStudioContext';
+import { ScrollArea } from '../../data-display/ScrollArea';
 
 export function ExportModal() {
   const {
@@ -108,9 +109,9 @@ export function ExportModal() {
             </Button>
           </div>
 
-          <div className="flex-1 overflow-auto p-5 font-mono text-xs text-zinc-300 select-all leading-relaxed whitespace-pre scrollbar-thin text-left">
+          <ScrollArea scrollbarSize="sm" orientation="both" className="flex-1 p-5 font-mono text-xs text-zinc-300 select-all leading-relaxed whitespace-pre text-left">
             {getExportCode()}
-          </div>
+          </ScrollArea>
         </div>
 
         {/* Modal Footer */}

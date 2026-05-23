@@ -219,6 +219,11 @@ export function PropertiesPanel() {
       bgS: 'BG Saturation',
       bgL: 'BG Lightness',
       bgA: 'BG Alpha',
+      bg2H: 'Gradient Hue 2',
+      bg2S: 'Gradient Saturation 2',
+      bg2L: 'Gradient Lightness 2',
+      bg2A: 'Gradient Alpha 2',
+      bgAngle: 'Gradient Angle',
       bgPosX: 'BG Position X',
       bgPosY: 'BG Position Y',
       clipTop: 'Clip Inset Top',
@@ -279,6 +284,11 @@ export function PropertiesPanel() {
       bgS: 80,
       bgL: 50,
       bgA: 1,
+      bg2H: 220,
+      bg2S: 80,
+      bg2L: 50,
+      bg2A: 1,
+      bgAngle: 135,
       bgPosX: 0,
       bgPosY: 0,
       clipTop: 0,
@@ -950,7 +960,7 @@ export function PropertiesPanel() {
                           let foundTrackId = selectedKeyframe.trackId;
                           if (activeElement) {
                             for (const tr of activeElement.tracks) {
-                              if (tr.keyframes.some((k) => k.id === id)) {
+                              if (tr.keyframes.some((k: AnimationStudioKeyframe) => k.id === id)) {
                                 foundTrackId = tr.id;
                                 break;
                               }

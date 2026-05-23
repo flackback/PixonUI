@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, useId } from 'react';
 import { cn } from '../../utils/cn';
 import { Check, Copy } from 'lucide-react';
+import { ScrollArea } from './ScrollArea';
 
 export interface CopyBlockProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onCopy'> {
   /** Code content to display and copy */
@@ -131,8 +132,10 @@ export function CopyBlock({
       )}
 
       {/* Code area */}
-      <div
-        className="relative overflow-auto"
+      <ScrollArea
+        scrollbarSize="sm"
+        orientation="both"
+        className="relative"
         style={{ maxHeight }}
       >
         {/* Copy button (floating, when no header) */}
@@ -142,7 +145,7 @@ export function CopyBlock({
           </div>
         )}
 
-        <pre className="p-4 m-0 overflow-x-auto">
+        <pre className="p-4 m-0 overflow-visible">
           <code className={cn(vs.text, 'text-[13px] leading-6')}>
             {lines.map((line, i) => {
               const lineNum = i + 1;
@@ -170,7 +173,7 @@ export function CopyBlock({
             })}
           </code>
         </pre>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

@@ -98,14 +98,14 @@ export function AnimationStudioPage({ onBack }: AnimationStudioPageProps) {
       </header>
 
       {/* Main Workspace Frame */}
-      <main className="flex-1 overflow-auto p-6 max-w-8xl mx-auto w-full flex flex-col gap-6 animate-in fade-in duration-300">
+      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden max-w-8xl mx-auto w-full flex flex-col p-6 gap-6 animate-in fade-in duration-300">
 
         {/* The Full Featured Animation Studio Workspace */}
         <AnimationStudio 
           clip={clip} 
           onClipChange={setClip} 
           showStage={true}
-          className="w-full flex-1"
+          className="w-full min-h-0 flex-1"
         />
 
         <Surface className="overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.03] p-5">

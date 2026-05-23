@@ -34,6 +34,7 @@ import {
   DownloadCloud
 } from 'lucide-react';
 import { Motion } from '../feedback/Motion';
+import { ScrollArea } from '../data-display/ScrollArea';
 
 export interface FileAttachment {
   name: string;
@@ -297,7 +298,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
             </div>
 
             {/* Document Content Box */}
-            <div className="flex-1 overflow-y-auto p-8 bg-gray-100/50 dark:bg-black/20 flex justify-center">
+            <ScrollArea scrollbarSize="sm" className="flex-1 p-8 bg-gray-100/50 dark:bg-black/20 flex justify-center">
               <div 
                 style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
                 className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-lg p-10 min-h-[842px] transition-transform duration-200"
@@ -315,7 +316,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
                     <p>Emissão: 10 de Maio de 2026</p>
                   </div>
                 </div>
-
+ 
                 <div className="space-y-6">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                     1. Visão Geral e Alinhamento de Metas (Página {currentPage})
@@ -323,7 +324,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
                   <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                     Este documento detalha os relatórios consolidados de desempenho e os novos padrões arquiteturais de UI do ecossistema PixonUI. Focamos no desenvolvimento de interfaces com taxas de atualização de 120Hz nativas, usando buffers assíncronos e renderizadores virtuais no lado do cliente.
                   </p>
-
+ 
                   <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 space-y-2">
                     <h4 className="text-sm font-bold text-blue-500 flex items-center gap-1.5">
                       <Sparkles className="h-4 w-4" /> Destaque de Desempenho do Kanban Supremo
@@ -332,18 +333,18 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
                       O novo sistema de WIP limits com alarme visual degradê dinâmico e o tracker de tempo dinâmico em segundos integrados reduziram o tempo médio de trânsito de tarefas em 24,8% no primeiro lote de validações.
                     </p>
                   </div>
-
+ 
                   <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                     Nossa equipe tem o orgulho de disponibilizar este conjunto premium de componentes que não só atende às demandas clássicas de software corporativo (como filtros robustos e exportação de planilhas), mas também traz a fluidez das animações por física de mola e o design de glassmorphism premium para o dia-a-dia do desenvolvedor.
                   </p>
-
+ 
                   <div className="pt-8 border-t border-gray-100 dark:border-white/5 flex justify-between text-[10px] text-gray-400">
                     <span>PixonUI Enterprise • Confidencial</span>
                     <span>Página {currentPage} de {pdfPagesCount}</span>
                   </div>
                 </div>
               </div>
-            </div>
+            </ScrollArea>
           </div>
         );
 
@@ -364,7 +365,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-10 bg-gray-100/30 dark:bg-black/20 flex justify-center">
+            <ScrollArea scrollbarSize="sm" className="flex-1 p-10 bg-gray-100/30 dark:bg-black/20 flex justify-center">
               <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-xl shadow-lg p-10 min-h-[600px] text-left space-y-6">
                 <div className="border-b border-gray-200 dark:border-white/10 pb-4">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Proposta Comercial - PixonUI Supremo</h1>
@@ -393,7 +394,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
                   </p>
                 </div>
               </div>
-            </div>
+            </ScrollArea>
           </div>
         );
 
@@ -431,7 +432,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
             </div>
 
             {/* Table Frame Grid */}
-            <div className="flex-1 overflow-auto">
+            <ScrollArea scrollbarSize="sm" orientation="both" className="flex-1">
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead className="sticky top-0 bg-gray-50 dark:bg-zinc-900 border-b border-gray-100 dark:border-white/5 text-[10px] text-gray-400 uppercase font-bold tracking-wider z-10">
                   <tr>
@@ -493,7 +494,7 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
                   )}
                 </tbody>
               </table>
-            </div>
+            </ScrollArea>
 
             {/* Bottom aggregate formulas bar */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-zinc-900/40 text-xs font-semibold text-gray-600 dark:text-white/60 gap-3">
@@ -678,36 +679,38 @@ export function UnifiedPreviewModal({ isOpen, onClose, file }: UnifiedPreviewMod
               <div className="flex-1 p-6 text-left flex flex-col h-full overflow-hidden">
                 <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-4">Membros Ativos ({mockMembers.length})</span>
                 
-                <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                  {mockMembers.map((member, idx) => (
-                    <div 
-                      key={idx}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.02] border border-transparent hover:border-gray-100 dark:hover:border-white/5 transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${member.color} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
-                          {member.name[0]}
+                <ScrollArea scrollbarSize="sm" className="flex-1 pr-2">
+                  <div className="space-y-3">
+                    {mockMembers.map((member, idx) => (
+                      <div 
+                        key={idx}
+                        className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.02] border border-transparent hover:border-gray-100 dark:hover:border-white/5 transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${member.color} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
+                            {member.name[0]}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-950 dark:text-white flex items-center gap-1.5">
+                              {member.name}
+                              {member.role.includes('Administradora') || member.role.includes('Criador') ? (
+                                <span className="text-[9px] font-bold text-blue-500 px-1.5 py-0.5 rounded bg-blue-500/10 uppercase">Admin</span>
+                              ) : null}
+                            </p>
+                            <p className="text-[10px] text-gray-400">{member.status}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-950 dark:text-white flex items-center gap-1.5">
-                            {member.name}
-                            {member.role.includes('Administradora') || member.role.includes('Criador') ? (
-                              <span className="text-[9px] font-bold text-blue-500 px-1.5 py-0.5 rounded bg-blue-500/10 uppercase">Admin</span>
-                            ) : null}
-                          </p>
-                          <p className="text-[10px] text-gray-400">{member.status}</p>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          "h-2 w-2 rounded-full",
-                          member.status === 'Online' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-gray-300"
-                        )} />
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "h-2 w-2 rounded-full",
+                            member.status === 'Online' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-gray-300"
+                          )} />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
 
             </div>

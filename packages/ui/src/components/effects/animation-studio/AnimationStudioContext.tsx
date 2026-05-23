@@ -192,10 +192,10 @@ export interface AnimationStudioContextProps {
   playheadTimeRef: React.MutableRefObject<number>;
   playRafRef: React.MutableRefObject<number | null>;
   lastTsRef: React.MutableRefObject<number>;
-  resizeRef: React.MutableRef<{ startX: number; startWidth: number } | null>;
-  previewResizeRef: React.MutableRef<{ startY: number; startHeight: number } | null>;
-  previousToolRef: React.MutableRef<'select' | 'hand' | 'brush'>;
-  spacePressedRef: React.MutableRef<boolean>;
+  resizeRef: React.MutableRefObject<{ startX: number; startWidth: number } | null>;
+  previewResizeRef: React.MutableRefObject<{ startY: number; startHeight: number } | null>;
+  previousToolRef: React.MutableRefObject<'select' | 'hand' | 'brush'>;
+  spacePressedRef: React.MutableRefObject<boolean>;
 
   // Elements Handlers
   addNewElement: (type: 'box' | 'circle' | 'text' | 'image' | 'star' | 'group') => void;

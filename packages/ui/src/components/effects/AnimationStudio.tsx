@@ -204,63 +204,87 @@ export function AnimationStudio({
     const initialElements = [
       {
         id: 'el-bg',
-        name: 'Background Glow',
+        name: 'Quantum Glow Dome',
         type: 'circle' as const,
         text: '',
         color: 'rounded-full',
         tracks: [
-          { id: 'tr-width-' + uid(), label: 'Width', channel: 'width' as const, keyframes: [{ id: 'kf-w-0', t: 0, v: 400 }] },
-          { id: 'tr-height-' + uid(), label: 'Height', channel: 'height' as const, keyframes: [{ id: 'kf-h-0', t: 0, v: 400 }] },
-          { id: 'tr-bg-h-' + uid(), label: 'BG Hue', channel: 'bgH' as const, keyframes: [{ id: 'kf-bg-h-0', t: 0, v: 274 }] },
-          { id: 'tr-bg-s-' + uid(), label: 'BG Saturation', channel: 'bgS' as const, keyframes: [{ id: 'kf-bg-s-0', t: 0, v: 78 }] },
-          { id: 'tr-bg-l-' + uid(), label: 'BG Lightness', channel: 'bgL' as const, keyframes: [{ id: 'kf-bg-l-0', t: 0, v: 54 }] },
-          { id: 'tr-bg-a-' + uid(), label: 'BG Alpha', channel: 'bgA' as const, keyframes: [{ id: 'kf-bg-a-0', t: 0, v: 0.26 }] },
-          { id: 'tr-bg2-h-' + uid(), label: 'Gradient Hue', channel: 'bg2H' as const, keyframes: [{ id: 'kf-bg2-h-0', t: 0, v: 226 }] },
-          { id: 'tr-bg2-s-' + uid(), label: 'Gradient Saturation', channel: 'bg2S' as const, keyframes: [{ id: 'kf-bg2-s-0', t: 0, v: 82 }] },
-          { id: 'tr-bg2-l-' + uid(), label: 'Gradient Lightness', channel: 'bg2L' as const, keyframes: [{ id: 'kf-bg2-l-0', t: 0, v: 48 }] },
-          { id: 'tr-bg2-a-' + uid(), label: 'Gradient Alpha', channel: 'bg2A' as const, keyframes: [{ id: 'kf-bg2-a-0', t: 0, v: 0.10 }] },
-          { id: 'tr-bg-angle-' + uid(), label: 'Gradient Angle', channel: 'bgAngle' as const, keyframes: [{ id: 'kf-bg-angle-0', t: 0, v: 135 }] },
-          { id: 'tr-blur-' + uid(), label: 'Blur Filter', channel: 'blur' as const, keyframes: [{ id: 'kf-blur-0', t: 0, v: 28 }] },
+          { id: 'tr-width-' + uid(), label: 'Width', channel: 'width' as const, keyframes: [{ id: 'kf-w-0', t: 0, v: 480 }] },
+          { id: 'tr-height-' + uid(), label: 'Height', channel: 'height' as const, keyframes: [{ id: 'kf-h-0', t: 0, v: 480 }] },
+          { id: 'tr-bg-h-' + uid(), label: 'BG Hue', channel: 'bgH' as const, keyframes: [
+            { id: 'kf-bgh-0', t: 0, v: 274, easing: 'linear' },
+            { id: 'kf-bgh-1', t: 2000, v: 330, easing: 'linear' },
+            { id: 'kf-bgh-2', t: 4000, v: 274, easing: 'linear' }
+          ] },
+          { id: 'tr-bg-s-' + uid(), label: 'BG Saturation', channel: 'bgS' as const, keyframes: [{ id: 'kf-bgs-0', t: 0, v: 85 }] },
+          { id: 'tr-bg-l-' + uid(), label: 'BG Lightness', channel: 'bgL' as const, keyframes: [{ id: 'kf-bgl-0', t: 0, v: 55 }] },
+          { id: 'tr-bg-a-' + uid(), label: 'BG Alpha', channel: 'bgA' as const, keyframes: [{ id: 'kf-bga-0', t: 0, v: 0.32 }] },
+          { id: 'tr-bg2-h-' + uid(), label: 'Gradient Hue', channel: 'bg2H' as const, keyframes: [
+            { id: 'kf-bg2h-0', t: 0, v: 226, easing: 'linear' },
+            { id: 'kf-bg2h-1', t: 2000, v: 190, easing: 'linear' },
+            { id: 'kf-bg2h-2', t: 4000, v: 226, easing: 'linear' }
+          ] },
+          { id: 'tr-bg2-s-' + uid(), label: 'Gradient Saturation', channel: 'bg2S' as const, keyframes: [{ id: 'kf-bg2s-0', t: 0, v: 90 }] },
+          { id: 'tr-bg2-l-' + uid(), label: 'Gradient Lightness', channel: 'bg2L' as const, keyframes: [{ id: 'kf-bg2l-0', t: 0, v: 50 }] },
+          { id: 'tr-bg2-a-' + uid(), label: 'Gradient Alpha', channel: 'bg2A' as const, keyframes: [{ id: 'kf-bg2a-0', t: 0, v: 0.15 }] },
+          { id: 'tr-bg-angle-' + uid(), label: 'Gradient Angle', channel: 'bgAngle' as const, keyframes: [
+            { id: 'kf-bgang-0', t: 0, v: 135, easing: 'linear' },
+            { id: 'kf-bgang-1', t: 2000, v: 315, easing: 'linear' },
+            { id: 'kf-bgang-2', t: 4000, v: 135, easing: 'linear' }
+          ] },
+          { id: 'tr-blur-' + uid(), label: 'Blur Filter', channel: 'blur' as const, keyframes: [{ id: 'kf-blur-0', t: 0, v: 35 }] },
           { id: 'tr-scale-' + uid(), label: 'Scale', channel: 'scale' as const, keyframes: [
             { id: 'kf-s-0', t: 0, v: 0.8, easing: 'linear' },
-            { id: 'kf-s-1', t: 2000, v: 1.2, easing: 'linear' },
+            { id: 'kf-s-1', t: 2000, v: 1.25, easing: 'linear' },
             { id: 'kf-s-2', t: 4000, v: 0.8, easing: 'linear' }
           ]},
-          { id: 'tr-opacity-' + uid(), label: 'Opacity', channel: 'opacity' as const, keyframes: [{ id: 'kf-o-0', t: 0, v: 0.6 }] },
+          { id: 'tr-opacity-' + uid(), label: 'Opacity', channel: 'opacity' as const, keyframes: [{ id: 'kf-o-0', t: 0, v: 0.7 }] },
         ],
       },
       {
         id: 'el-1',
-        name: 'Pixon Card',
+        name: 'Cyber-Glass Card',
         type: 'box' as const,
-        text: 'Pixon Motion',
-        color: 'from-purple-500 to-indigo-600 bg-gradient-to-br text-white shadow-2xl shadow-purple-500/20 rounded-2xl border border-white/10',
+        text: 'Pixon Studio',
+        color: 'bg-white/[0.06] dark:bg-white/[0.04] backdrop-blur-md border border-white/15 dark:border-white/10 text-white shadow-[0_20px_50px_rgba(168,85,247,0.18)] rounded-3xl',
         tracks: [
-          { id: 'tr-width-' + uid(), label: 'Width', channel: 'width' as const, keyframes: [{ id: 'kf-width-0', t: 0, v: 180 }] },
+          { id: 'tr-width-' + uid(), label: 'Width', channel: 'width' as const, keyframes: [{ id: 'kf-width-0', t: 0, v: 200 }] },
           { id: 'tr-height-' + uid(), label: 'Height', channel: 'height' as const, keyframes: [{ id: 'kf-height-0', t: 0, v: 140 }] },
           { id: 'tr-x-' + uid(), label: 'Position X', channel: 'x' as const, keyframes: [
-            { id: 'kf-x-0', t: 0, v: -250, easing: 'spring-out' },
+            { id: 'kf-x-0', t: 0, v: -280, easing: 'spring-out' },
             { id: 'kf-x-1', t: 1200, v: 0, easing: 'linear' },
             { id: 'kf-x-2', t: 2800, v: 0, easing: 'elite-in-out' },
-            { id: 'kf-x-3', t: 4000, v: 250, easing: 'linear' },
+            { id: 'kf-x-3', t: 4000, v: 280, easing: 'linear' },
           ]},
           { id: 'tr-y-' + uid(), label: 'Position Y', channel: 'y' as const, keyframes: [
-            { id: 'kf-y-0', t: 0, v: 50, easing: 'spring-out' },
-            { id: 'kf-y-1', t: 1500, v: -20, easing: 'soft-bounce' },
+            { id: 'kf-y-0', t: 0, v: 60, easing: 'spring-out' },
+            { id: 'kf-y-1', t: 1500, v: -15, easing: 'soft-bounce' },
             { id: 'kf-y-2', t: 2800, v: 0, easing: 'elite-in-out' },
-            { id: 'kf-y-3', t: 4000, v: -50, easing: 'linear' },
+            { id: 'kf-y-3', t: 4000, v: -60, easing: 'linear' },
           ]},
           { id: 'tr-rotate-' + uid(), label: 'Rotate', channel: 'rotate' as const, keyframes: [
-            { id: 'kf-r-0', t: 0, v: -15, easing: 'spring-out' },
-            { id: 'kf-r-1', t: 1200, v: 5, easing: 'linear' },
-            { id: 'kf-r-2', t: 2800, v: -5, easing: 'elite-in-out' },
-            { id: 'kf-r-3', t: 4000, v: 15, easing: 'linear' },
+            { id: 'kf-r-0', t: 0, v: -20, easing: 'spring-out' },
+            { id: 'kf-r-1', t: 1200, v: 4, easing: 'linear' },
+            { id: 'kf-r-2', t: 2800, v: -4, easing: 'elite-in-out' },
+            { id: 'kf-r-3', t: 4000, v: 20, easing: 'linear' },
+          ]},
+          { id: 'tr-rotateX-' + uid(), label: 'Rotate X (3D)', channel: 'rotateX' as const, keyframes: [
+            { id: 'kf-rx-0', t: 0, v: 30, easing: 'spring-out' },
+            { id: 'kf-rx-1', t: 1200, v: -5, easing: 'linear' },
+            { id: 'kf-rx-2', t: 2800, v: 5, easing: 'elite-in-out' },
+            { id: 'kf-rx-3', t: 4000, v: -30, easing: 'linear' },
+          ]},
+          { id: 'tr-rotateY-' + uid(), label: 'Rotate Y (3D)', channel: 'rotateY' as const, keyframes: [
+            { id: 'kf-ry-0', t: 0, v: -60, easing: 'spring-out' },
+            { id: 'kf-ry-1', t: 1200, v: 12, easing: 'linear' },
+            { id: 'kf-ry-2', t: 2800, v: -12, easing: 'elite-in-out' },
+            { id: 'kf-ry-3', t: 4000, v: 60, easing: 'linear' },
           ]},
           { id: 'tr-scale-' + uid(), label: 'Scale', channel: 'scale' as const, keyframes: [
-            { id: 'kf-s-0', t: 0, v: 0.5, easing: 'spring-out' },
+            { id: 'kf-s-0', t: 0, v: 0.4, easing: 'spring-out' },
             { id: 'kf-s-1', t: 1200, v: 1.05, easing: 'linear' },
             { id: 'kf-s-2', t: 2800, v: 1, easing: 'elite-in-out' },
-            { id: 'kf-s-3', t: 4000, v: 0.5, easing: 'linear' },
+            { id: 'kf-s-3', t: 4000, v: 0.4, easing: 'linear' },
           ]},
           { id: 'tr-opacity-' + uid(), label: 'Opacity', channel: 'opacity' as const, keyframes: [
             { id: 'kf-o-0', t: 0, v: 0, easing: 'linear' },
@@ -268,34 +292,101 @@ export function AnimationStudio({
             { id: 'kf-o-2', t: 3400, v: 1, easing: 'linear' },
             { id: 'kf-o-3', t: 4000, v: 0, easing: 'linear' },
           ]},
+          { id: 'tr-borderRadius-' + uid(), label: 'Border Radius', channel: 'borderRadius' as const, keyframes: [
+            { id: 'kf-br-0', t: 0, v: 24 }
+          ]},
         ],
       },
       {
-        id: 'el-sparkle',
-        name: 'Floating Sparkle',
-        type: 'text' as const,
-        text: '✨',
-        color: 'text-4xl drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]',
+        id: 'el-orb',
+        name: 'Cyber Sphere',
+        type: 'circle' as const,
+        text: 'WAAPI',
+        color: 'bg-gradient-to-tr from-cyan-400 to-emerald-400 text-cyan-950 font-extrabold flex items-center justify-center shadow-[0_0_25px_rgba(34,211,238,0.4)] rounded-full border border-cyan-300/30 text-xs tracking-wider uppercase',
         tracks: [
+          { id: 'tr-width-' + uid(), label: 'Width', channel: 'width' as const, keyframes: [{ id: 'kf-orbw-0', t: 0, v: 60 }] },
+          { id: 'tr-height-' + uid(), label: 'Height', channel: 'height' as const, keyframes: [{ id: 'kf-orbh-0', t: 0, v: 60 }] },
           { id: 'tr-x-' + uid(), label: 'Position X', channel: 'x' as const, keyframes: [
-            { id: 'kf-x-0', t: 0, v: 150, easing: 'linear' },
-            { id: 'kf-x-1', t: 2000, v: 180, easing: 'linear' },
-            { id: 'kf-x-2', t: 4000, v: 150, easing: 'linear' },
+            { id: 'kf-orbx-0', t: 0, v: 260, easing: 'spring-out' },
+            { id: 'kf-orbx-1', t: 1500, v: -140, easing: 'linear' },
+            { id: 'kf-orbx-2', t: 2600, v: -140, easing: 'elite-in-out' },
+            { id: 'kf-orbx-3', t: 4000, v: -260, easing: 'linear' },
           ]},
           { id: 'tr-y-' + uid(), label: 'Position Y', channel: 'y' as const, keyframes: [
-            { id: 'kf-y-0', t: 0, v: -80, easing: 'linear' },
-            { id: 'kf-y-1', t: 2000, v: -110, easing: 'linear' },
-            { id: 'kf-y-2', t: 4000, v: -80, easing: 'linear' },
-          ]},
-          { id: 'tr-rotate-' + uid(), label: 'Rotate', channel: 'rotate' as const, keyframes: [
-            { id: 'kf-r-0', t: 0, v: 0, easing: 'linear' },
-            { id: 'kf-r-1', t: 4000, v: 360, easing: 'linear' },
+            { id: 'kf-orby-0', t: 0, v: -150, easing: 'spring-out' },
+            { id: 'kf-orby-1', t: 1500, v: 40, easing: 'soft-bounce' },
+            { id: 'kf-orby-2', t: 2600, v: 80, easing: 'elite-in-out' },
+            { id: 'kf-orby-3', t: 4000, v: 150, easing: 'linear' },
           ]},
           { id: 'tr-scale-' + uid(), label: 'Scale', channel: 'scale' as const, keyframes: [
-            { id: 'kf-s-0', t: 0, v: 0, easing: 'spring-out' },
-            { id: 'kf-s-1', t: 1000, v: 1.5, easing: 'linear' },
-            { id: 'kf-s-2', t: 3000, v: 1.5, easing: 'elite-in-out' },
-            { id: 'kf-s-3', t: 4000, v: 0, easing: 'linear' },
+            { id: 'kf-orbs-0', t: 0, v: 0, easing: 'spring-out' },
+            { id: 'kf-orbs-1', t: 1000, v: 1.2, easing: 'linear' },
+            { id: 'kf-orbs-2', t: 2800, v: 1.0, easing: 'elite-in-out' },
+            { id: 'kf-orbs-3', t: 4000, v: 0, easing: 'linear' },
+          ]},
+          { id: 'tr-opacity-' + uid(), label: 'Opacity', channel: 'opacity' as const, keyframes: [
+            { id: 'kf-orbo-0', t: 0, v: 0, easing: 'linear' },
+            { id: 'kf-orbo-1', t: 500, v: 1, easing: 'linear' },
+            { id: 'kf-orbo-2', t: 3500, v: 1, easing: 'linear' },
+            { id: 'kf-orbo-3', t: 4000, v: 0, easing: 'linear' },
+          ]},
+        ],
+      },
+      {
+        id: 'el-sparkle-1',
+        name: 'Quantum Sparkle 1',
+        type: 'text' as const,
+        text: '✨',
+        color: 'text-3xl drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]',
+        tracks: [
+          { id: 'tr-sp1x-' + uid(), label: 'Position X', channel: 'x' as const, keyframes: [
+            { id: 'kf-sp1x-0', t: 0, v: 140, easing: 'linear' },
+            { id: 'kf-sp1x-1', t: 2000, v: 170, easing: 'linear' },
+            { id: 'kf-sp1x-2', t: 4000, v: 140, easing: 'linear' },
+          ]},
+          { id: 'tr-sp1y-' + uid(), label: 'Position Y', channel: 'y' as const, keyframes: [
+            { id: 'kf-sp1y-0', t: 0, v: -90, easing: 'linear' },
+            { id: 'kf-sp1y-1', t: 2000, v: -120, easing: 'linear' },
+            { id: 'kf-sp1y-2', t: 4000, v: -90, easing: 'linear' },
+          ]},
+          { id: 'tr-sp1r-' + uid(), label: 'Rotate', channel: 'rotate' as const, keyframes: [
+            { id: 'kf-sp1r-0', t: 0, v: 0, easing: 'linear' },
+            { id: 'kf-sp1r-1', t: 4000, v: 360, easing: 'linear' },
+          ]},
+          { id: 'tr-sp1s-' + uid(), label: 'Scale', channel: 'scale' as const, keyframes: [
+            { id: 'kf-sp1s-0', t: 0, v: 0, easing: 'spring-out' },
+            { id: 'kf-sp1s-1', t: 1000, v: 1.4, easing: 'linear' },
+            { id: 'kf-sp1s-2', t: 3000, v: 1.4, easing: 'elite-in-out' },
+            { id: 'kf-sp1s-3', t: 4000, v: 0, easing: 'linear' },
+          ]},
+        ],
+      },
+      {
+        id: 'el-sparkle-2',
+        name: 'Quantum Sparkle 2',
+        type: 'text' as const,
+        text: '⚡',
+        color: 'text-2xl drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]',
+        tracks: [
+          { id: 'tr-sp2x-' + uid(), label: 'Position X', channel: 'x' as const, keyframes: [
+            { id: 'kf-sp2x-0', t: 0, v: -160, easing: 'linear' },
+            { id: 'kf-sp2x-1', t: 2000, v: -190, easing: 'linear' },
+            { id: 'kf-sp2x-2', t: 4000, v: -160, easing: 'linear' },
+          ]},
+          { id: 'tr-sp2y-' + uid(), label: 'Position Y', channel: 'y' as const, keyframes: [
+            { id: 'kf-sp2y-0', t: 0, v: 100, easing: 'linear' },
+            { id: 'kf-sp2y-1', t: 2000, v: 70, easing: 'linear' },
+            { id: 'kf-sp2y-2', t: 4000, v: 100, easing: 'linear' },
+          ]},
+          { id: 'tr-sp2r-' + uid(), label: 'Rotate', channel: 'rotate' as const, keyframes: [
+            { id: 'kf-sp2r-0', t: 0, v: 0, easing: 'linear' },
+            { id: 'kf-sp2r-1', t: 4000, v: -360, easing: 'linear' },
+          ]},
+          { id: 'tr-sp2s-' + uid(), label: 'Scale', channel: 'scale' as const, keyframes: [
+            { id: 'kf-sp2s-0', t: 0, v: 0, easing: 'spring-out' },
+            { id: 'kf-sp2s-1', t: 1200, v: 1.2, easing: 'linear' },
+            { id: 'kf-sp2s-2', t: 3200, v: 1.2, easing: 'elite-in-out' },
+            { id: 'kf-sp2s-3', t: 4000, v: 0, easing: 'linear' },
           ]},
         ],
       },
@@ -310,13 +401,25 @@ export function AnimationStudio({
         collapsed: true,
         tracks: [
           { id: 'tr-cameraZoom-' + uid(), label: 'Camera Zoom', channel: 'cameraZoom' as const, keyframes: [
-            { id: 'kf-cz-0', t: 0, v: 0.9, easing: 'linear' },
-            { id: 'kf-cz-1', t: 2000, v: 1.05, easing: 'linear' },
-            { id: 'kf-cz-2', t: 4000, v: 0.9, easing: 'linear' },
+            { id: 'kf-cz-0', t: 0, v: 0.94, easing: 'linear' },
+            { id: 'kf-cz-1', t: 2000, v: 1.06, easing: 'linear' },
+            { id: 'kf-cz-2', t: 4000, v: 0.94, easing: 'linear' },
           ] },
-          { id: 'tr-cameraPanX-' + uid(), label: 'Camera Pan X', channel: 'cameraPanX' as const, keyframes: [{ id: 'kf-cpx-0', t: 0, v: 0 }] },
-          { id: 'tr-cameraPanY-' + uid(), label: 'Camera Pan Y', channel: 'cameraPanY' as const, keyframes: [{ id: 'kf-cpy-0', t: 0, v: 0 }] },
-          { id: 'tr-cameraTilt-' + uid(), label: 'Camera Tilt', channel: 'cameraTilt' as const, keyframes: [{ id: 'kf-ct-0', t: 0, v: 0 }] },
+          { id: 'tr-cameraPanX-' + uid(), label: 'Camera Pan X', channel: 'cameraPanX' as const, keyframes: [
+            { id: 'kf-cpx-0', t: 0, v: -15, easing: 'linear' },
+            { id: 'kf-cpx-1', t: 2000, v: 15, easing: 'linear' },
+            { id: 'kf-cpx-2', t: 4000, v: -15, easing: 'linear' },
+          ] },
+          { id: 'tr-cameraPanY-' + uid(), label: 'Camera Pan Y', channel: 'cameraPanY' as const, keyframes: [
+            { id: 'kf-cpy-0', t: 0, v: 8, easing: 'linear' },
+            { id: 'kf-cpy-1', t: 2000, v: -8, easing: 'linear' },
+            { id: 'kf-cpy-2', t: 4000, v: 8, easing: 'linear' },
+          ] },
+          { id: 'tr-cameraTilt-' + uid(), label: 'Camera Tilt', channel: 'cameraTilt' as const, keyframes: [
+            { id: 'kf-ct-0', t: 0, v: 3, easing: 'linear' },
+            { id: 'kf-ct-1', t: 2000, v: -3, easing: 'linear' },
+            { id: 'kf-ct-2', t: 4000, v: 3, easing: 'linear' },
+          ] },
         ],
       }
     ];
@@ -475,7 +578,7 @@ export function AnimationStudio({
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const previewResizeRef = useRef<{ startY: number; startHeight: number } | null>(null);
 
-  const [stageBg, setStageBg] = useState<'dark' | 'light' | 'purple' | 'slate' | 'transparent'>('dark');
+  const [stageBg, setStageBg] = useState<'dark' | 'light' | 'purple' | 'slate' | 'transparent'>('transparent');
   const [stageGrid, setStageGrid] = useState<'grid' | 'dots' | 'none'>('none');
   const [stageContextMenu, setStageContextMenu] = useState<{
     visible: boolean;
@@ -4254,10 +4357,7 @@ export function MyAnimatedSection() {
       case 'slate':
         return { background: 'linear-gradient(135deg, #0f172a 0%, #020617 100%)' };
       case 'transparent':
-        return {
-          background: 'conic-gradient(#e4e4e7 0.25turn, #ffffff 0.25turn 0.5turn, #e4e4e7 0.5turn 0.75turn, #ffffff 0.75turn)',
-          backgroundSize: '20px 20px',
-        };
+        return { background: 'transparent' };
       case 'dark':
       default:
         return { background: 'linear-gradient(135deg, #09090b 0%, #000000 100%)' };
@@ -4311,7 +4411,7 @@ export function MyAnimatedSection() {
             {renderTopToolbar()}
           </div>
           <div
-            className="stage-canvas-container relative rounded-3xl border border-zinc-200/80 dark:border-white/10 overflow-hidden shadow-inner select-none"
+            className="stage-canvas-container relative rounded-3xl border border-zinc-200/80 dark:border-white/10 shadow-inner select-none overflow-hidden"
             style={{ ...getStageBgStyle(), height: `${previewHeight}px` }}
             onContextMenu={(e) => {
               e.preventDefault();
@@ -4384,7 +4484,12 @@ export function MyAnimatedSection() {
             >
               {stage ?? (
                 <div 
-                  className="relative w-[800px] h-[500px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl transition-transform duration-150 ease-out"
+                  className={cn(
+                    "relative w-[800px] h-[500px] rounded-2xl transition-transform duration-150 ease-out",
+                    stageBg === 'transparent'
+                      ? "bg-transparent border border-white/10 shadow-none"
+                      : "bg-zinc-950 border border-white/10 shadow-2xl"
+                  )}
                   onPointerDown={onStagePointerDown}
                   style={{ 
                     transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${previewZoom})`, 
@@ -4738,7 +4843,7 @@ export function MyAnimatedSection() {
                     const valShadowY = trackShadowY ? valueAt(trackShadowY, timeMs) : 0;
                     const valShadowBlur = trackShadowBlur ? valueAt(trackShadowBlur, timeMs) : 0;
                     const valShadowSpread = trackShadowSpread ? valueAt(trackShadowSpread, timeMs) : 0;
-                    const valShadowOpacity = trackShadowOpacity ? valueAt(trackShadowOpacity, timeMs) : 0;
+                    const valShadowOpacity = Number(trackShadowOpacity ? valueAt(trackShadowOpacity, timeMs) : 0);
                     const valBorderRadius = trackBorderRadius ? valueAt(trackBorderRadius, timeMs) : 0;
                     const valBorderTopWidth = trackBorderTopWidth ? valueAt(trackBorderTopWidth, timeMs) : 0;
                     const valBorderRightWidth = trackBorderRightWidth ? valueAt(trackBorderRightWidth, timeMs) : 0;
@@ -4787,32 +4892,13 @@ export function MyAnimatedSection() {
                     const hasShadowTrack = trackShadowX || trackShadowY || trackShadowBlur || trackShadowSpread || trackShadowOpacity;
                     const hasClipTrack = trackClipTop || trackClipRight || trackClipBottom || trackClipLeft;
 
-                    const containerStyle: React.CSSProperties = {
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      transform: `translate3d(${valX}px, ${valY}px, 0px) scale(${valScale * valScaleX}, ${valScale * valScaleY}) rotate(${valRotate}deg) rotateX(${valRotateX}deg) rotateY(${valRotateY}deg)`,
-                      transformOrigin: `${valOriginX}% ${valOriginY}%`,
-                      zIndex: valZIndex,
-                      cursor: isPlaying ? 'default' : 'move',
-                      ...(valWidth > 0 ? { width: `${valWidth}px` } : {}),
-                      ...(valHeight > 0 ? { height: `${valHeight}px` } : {}),
-                      ...(el.motionPath ? {
-                        offsetPath: el.motionPath,
-                        offsetDistance: `${valOffsetDistance}%`,
-                        offsetRotate: formatMotionOffsetRotate(el.motionRotate, Number(valOffsetRotate)),
-                      } : {}),
-                    };
-
                     const visualStyle: React.CSSProperties = {
                       opacity: valOpacity,
                       filter: filterString,
                       ...(hasBgTrack ? {
                         backgroundColor: `hsla(${valBgH}, ${valBgS}%, ${valBgL}%, ${valBgA})`,
-                        ...(Number(valBg2A) > 0 ? {
-                          backgroundImage: `linear-gradient(${valBgAngle}deg, hsla(${valBgH}, ${valBgS}%, ${valBgL}%, ${valBgA}), hsla(${valBg2H}, ${valBg2S}%, ${valBg2L}%, ${valBg2A}))`,
-                        } : {}),
-                        backgroundPosition: `${valBgPosX}px ${valBgPosY}px`,
+                        backgroundImage: `linear-gradient(${valBgAngle}deg, hsla(${valBgH}, ${valBgS}%, ${valBgL}%, ${valBgA}), hsla(${valBg2H}, ${valBg2S}%, ${valBg2L}%, ${valBg2A}))`,
+                        backgroundPosition: `${valBgPosX}% ${valBgPosY}%`,
                       } : {}),
                       ...(hasBorderTrack ? {
                         borderStyle: 'solid',
@@ -4829,27 +4915,34 @@ export function MyAnimatedSection() {
                         borderBottomLeftRadius: `${valBorderBottomLeft}px`,
                       } : {}),
                       ...(hasShadowTrack ? {
-                        boxShadow: `${valShadowX}px ${valShadowY}px ${valShadowBlur}px ${valShadowSpread}px rgba(0, 0, 0, ${valShadowOpacity})`,
+                        boxShadow: `${valShadowX}px ${valShadowY}px ${valShadowBlur}px ${valShadowSpread}px rgba(0, 0, 0, ${Math.max(0, Math.min(1, valShadowOpacity))})`
                       } : {}),
                       ...(hasClipTrack ? {
-                        clipPath: `inset(${valClipTop}% ${valClipRight}% ${valClipBottom}% ${valClipLeft}%)`,
+                        clipPath: `inset(${valClipTop}% ${valClipRight}% ${valClipBottom}% ${valClipLeft}%)`
+                      } : {})
+                    };
+
+                    const containerStyle: React.CSSProperties = {
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      transform: `translate3d(${valX}px, ${valY}px, 0px) scale(${valScale * valScaleX}, ${valScale * valScaleY}) rotate(${valRotate}deg) rotateX(${valRotateX}deg) rotateY(${valRotateY}deg)`,
+                      transformOrigin: `${valOriginX}% ${valOriginY}%`,
+                      zIndex: valZIndex,
+                      cursor: isPlaying ? 'default' : 'move',
+                      ...(valWidth > 0 ? { width: `${valWidth}px` } : {}),
+                      ...(valHeight > 0 ? { height: `${valHeight}px` } : {}),
+                      ...(el.motionPath ? {
+                        offsetPath: el.motionPath,
+                        offsetDistance: `${valOffsetDistance}%`,
+                        offsetRotate: formatMotionOffsetRotate(el.motionRotate, Number(valOffsetRotate)),
                       } : {}),
+                      ...visualStyle,
                     };
 
                     const playbackStyle: React.CSSProperties = {
                       ...containerStyle,
                       overflow: 'visible',
-                      backgroundColor: visualStyle.backgroundColor || el.backgroundColor,
-                      backgroundImage: visualStyle.backgroundImage,
-                      backgroundPosition: visualStyle.backgroundPosition,
-                      borderStyle: visualStyle.borderStyle,
-                      borderTopWidth: visualStyle.borderTopWidth,
-                      borderRightWidth: visualStyle.borderRightWidth,
-                      borderBottomWidth: visualStyle.borderBottomWidth,
-                      borderLeftWidth: visualStyle.borderLeftWidth,
-                      borderColor: visualStyle.borderColor,
-                      boxShadow: visualStyle.boxShadow,
-                      clipPath: visualStyle.clipPath,
                     };
 
                     const childStyle: React.CSSProperties = {
@@ -5104,7 +5197,11 @@ export function MyAnimatedSection() {
                             ? (playDirection === 'reverse' ? 'alternate-reverse' : 'alternate') 
                             : (playDirection === 'reverse' ? 'reverse' : 'normal')
                         }
-                        className="will-change-transform pointer-events-auto"
+                        className={cn(
+                          "will-change-transform pointer-events-auto",
+                          el.type === 'circle' ? 'rounded-full' : 
+                          ((el.type === 'box' || el.type === 'image') && !hasBorderRadiusTrack ? 'rounded-2xl' : '')
+                        )}
                         motionPath={el.motionPath}
                         motionRotate={el.motionRotate}
                         style={isPlaying ? playbackStyle : containerStyle}
@@ -5364,7 +5461,7 @@ export function MyAnimatedSection() {
 
       <div className="flex gap-4 w-full items-stretch min-h-[350px]">
         <Surface className="flex flex-1 overflow-hidden bg-white/70 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/10 rounded-3xl shadow-sm">
-          <div className="flex flex-col py-4" style={{ width: sidebarWidth }}>
+          <div className="flex flex-col py-4 h-full" style={{ width: sidebarWidth }}>
             <div className="px-4 flex items-center justify-between mb-3 relative overflow-visible">
               <Text className="text-sm font-extrabold text-zinc-900 dark:text-white">Layers</Text>
               <div className="relative group shrink-0">
@@ -5426,7 +5523,7 @@ export function MyAnimatedSection() {
 
           </div>
 
-          <ScrollArea scrollbarSize="sm" className="flex-grow max-h-[350px] pr-1">
+          <ScrollArea scrollbarSize="sm" className="flex-1 min-h-0 pr-1">
               <div className="flex flex-col">
                 <div style={{ height: 40 }} className="w-full shrink-0 border-b border-transparent" />
                 {cameraElement && (
@@ -5722,7 +5819,7 @@ export function MyAnimatedSection() {
                       </button>
                     </div>
 
-                    {isElActive && !el.collapsed && (
+                    {!el.collapsed && (
                       <div className="flex flex-col bg-zinc-50/50 dark:bg-black/10">
                         {el.tracks.map((tr) => {
                           const isActiveTrack = tr.id === activeTrack?.id;
@@ -7544,12 +7641,12 @@ export function MyAnimatedSection() {
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-auto p-5 font-mono text-xs text-zinc-300 select-all leading-relaxed whitespace-pre scrollbar-thin text-left">
+              <ScrollArea scrollbarSize="sm" orientation="both" className="flex-1 p-5 font-mono text-xs text-zinc-300 select-all leading-relaxed whitespace-pre text-left">
                 {exportTab === 'waapi' && generateWAAPICode()}
                 {exportTab === 'react' && generateReactCode()}
                 {exportTab === 'css' && generateCSSKeyframes()}
                 {exportTab === 'lottie' && generateLottieJSON()}
-              </div>
+              </ScrollArea>
             </div>
 
             {/* Modal Footer */}
