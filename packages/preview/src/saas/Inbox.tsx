@@ -883,7 +883,7 @@ export function Inbox() {
                 setReplyToMessage(null);
                 setIsRecording(false);
               }}
-              placeholder="Digite sua mensagem rica aqui... Ex: *negrito*, _itálico_, ~riscado~ ou `/ai`"
+              placeholder="Digite sua mensagem rica aqui..."
               className="bg-gray-100 dark:bg-white/5 border-none rounded-3xl px-4 py-3 focus-within:ring-2 focus-within:ring-cyan-500/30 transition-all shadow-lg shadow-black/[0.02]"
             />
           </div>

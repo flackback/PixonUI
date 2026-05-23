@@ -215,8 +215,6 @@ export function useScroll(options: UseScrollOptions = {}) {
   useEffect(() => {
     if (!enabled) return;
 
-    let ticking = false;
-
     const read = () => {
       const target = container?.current || window;
       const isWindow = target === window;
@@ -246,25 +244,47 @@ export function useScroll(options: UseScrollOptions = {}) {
     };
 
     const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        ticking = false;
-        read();
-      });
+      read();
     };
+
+    const targetEl = container?.current || window;
+    targetEl.addEventListener('scroll', onScroll, { passive: true });
 
     // Capture scroll from nested containers (matches previous usePixonScroll behavior).
     window.addEventListener('scroll', onScroll, { capture: true, passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
+    
+    let boundContainer: HTMLElement | null = null;
+    if (container?.current) {
+      boundContainer = container.current;
+      boundContainer.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    // Periodically sync scroll target in case it changes dynamically or mounts late
+    const intervalId = setInterval(() => {
+      if (container?.current && boundContainer !== container.current) {
+        if (boundContainer) {
+          boundContainer.removeEventListener('scroll', onScroll);
+        }
+        boundContainer = container.current;
+        boundContainer.addEventListener('scroll', onScroll, { passive: true });
+        read();
+      }
+    }, 100);
+
     read();
 
     return () => {
+      targetEl.removeEventListener('scroll', onScroll);
       window.removeEventListener('scroll', onScroll, { capture: true } as any);
       window.removeEventListener('resize', onScroll as any);
+      if (boundContainer) {
+        boundContainer.removeEventListener('scroll', onScroll);
+      }
+      clearInterval(intervalId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [container, axis, enabled]);
+  }, [container, container?.current, axis, enabled]);
 
   return { scrollX, scrollY, scrollXProgress, scrollYProgress };
 }

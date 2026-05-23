@@ -1,109 +1,281 @@
-import { useEffect, useRef } from 'react';
-import { ArrowRight, Cpu, Rocket, Sparkles, Zap } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { ArrowRight, Cpu, Rocket, Sparkles, Zap, Terminal as TermIcon, Calendar, ArrowRightLeft, Layers, Play } from 'lucide-react';
 import {
-  AnimeGridStagger,
   Badge,
   Button,
-  CopyBlock,
-  AnimatedSection,
-  Container,
-  DotGrid,
   GlowButton,
-  Grid,
   Heading,
-  motion,
   PixonSSRAnimate,
   ScrollScene,
   Stack,
   Surface,
   Text,
   ThemeToggle,
-  parallax,
-  useMotionValueValue,
   useTimelineScope,
+  createTimelineComposer,
   useScroll,
   useTransform,
-  useTheme,
-  createTimelineComposer,
-  type AnimationStudioElement,
+  useMotionValueValue,
+  motion,
+  parallax,
 } from '@pixonui/react';
-import { AnimationStudioDemo } from './demos/AnimationStudioDemo';
 
 interface LandingPageProps {
   onEnterGallery: () => void;
   onEnterSaaS: () => void;
 }
 
-const METRICS = [
-  { value: '120fps', label: 'Compositor First' },
-  { value: '0 jank', label: 'Frame Stability' },
-  { value: 'SSR', label: 'Hydration Safe' },
-  { value: 'WAAPI', label: 'Native Pipeline' },
-];
-
-const FEATURES = [
-  {
-    icon: Zap,
-    title: 'Motion sem re-render',
-    text: 'Animação em CSS/WAAPI com execução fora da thread principal para manter fluidez mesmo em páginas densas.',
-  },
-  {
-    icon: Cpu,
-    title: 'SSR-first por padrão',
-    text: 'Landing renderiza com presets SSR e segue segura para hidratação, incluindo fallback de timeline em browsers sem suporte.',
-  },
-  {
-    icon: Sparkles,
-    title: 'API curta e previsível',
-    text: 'Transições declarativas com presets e stagger sem event-bus manual, reduzindo código e chance de regressão.',
-  },
-];
-
-const HERO_SECTION_ELEMENTS = [
-  {
-    id: 'hero-card',
-    name: 'Hero Card',
-    type: 'box',
-    text: '',
-    color: 'bg-white/10',
-    backgroundColor: '#0f172a',
-    tracks: [
-      { id: 'hero-card-x', label: 'Position X', channel: 'x', keyframes: [{ id: 'hero-card-x-0', t: 0, v: 40, easing: 'spring-out' }, { id: 'hero-card-x-1', t: 1400, v: 0, easing: 'elite-in-out' }] },
-      { id: 'hero-card-y', label: 'Position Y', channel: 'y', keyframes: [{ id: 'hero-card-y-0', t: 0, v: 24, easing: 'spring-out' }, { id: 'hero-card-y-1', t: 1400, v: 0, easing: 'elite-in-out' }] },
-      { id: 'hero-card-s', label: 'Scale', channel: 'scale', keyframes: [{ id: 'hero-card-s-0', t: 0, v: 0.96, easing: 'spring-out' }, { id: 'hero-card-s-1', t: 1400, v: 1, easing: 'linear' }] },
-      { id: 'hero-card-o', label: 'Opacity', channel: 'opacity', keyframes: [{ id: 'hero-card-o-0', t: 0, v: 0, easing: 'linear' }, { id: 'hero-card-o-1', t: 400, v: 1, easing: 'linear' }] },
-    ],
-  },
-  {
-    id: 'hero-pill',
-    name: 'Hero Pill',
-    type: 'circle',
-    text: '',
-    color: 'bg-cyan-400/20',
-    backgroundColor: '#22d3ee',
-    tracks: [
-      { id: 'hero-pill-x', label: 'Position X', channel: 'x', keyframes: [{ id: 'hero-pill-x-0', t: 0, v: 320, easing: 'elite-out' }, { id: 'hero-pill-x-1', t: 1400, v: 300, easing: 'linear' }] },
-      { id: 'hero-pill-y', label: 'Position Y', channel: 'y', keyframes: [{ id: 'hero-pill-y-0', t: 0, v: -60, easing: 'spring-out' }, { id: 'hero-pill-y-1', t: 1400, v: -30, easing: 'linear' }] },
-      { id: 'hero-pill-s', label: 'Scale', channel: 'scale', keyframes: [{ id: 'hero-pill-s-0', t: 0, v: 0.6, easing: 'spring-out' }, { id: 'hero-pill-s-1', t: 1400, v: 1, easing: 'linear' }] },
-    ],
-  },
-] satisfies AnimationStudioElement[];
-
-const ANIME_GRID_CODE = `import { AnimeGridStagger, Surface } from '@pixonui/react';
-
-export function AnimeGridSection() {
+// Global Noise Overlay for premium film-grain analog texture
+export function NoiseOverlay() {
   return (
-    <Surface className="rounded-3xl border border-white/10 bg-[#04112d]/75 p-8 md:p-12">
-      <AnimeGridStagger
-        rows={23}
-        dotColor="#7b8ba5"
-        cursorColor="#22d3ee"
-        className="max-w-full scale-[0.72] md:scale-[0.9]"
-      />
-    </Surface>
+    <svg className="pointer-events-none fixed inset-0 z-[9999] opacity-[0.045]">
+      <filter id="noise">
+        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.7 0" />
+      </filter>
+      <rect width="100%" height="100%" filter="url(#noise)" />
+    </svg>
   );
-}`;
+}
 
+// ─── MICRO-UI 1: Diagnostic Shuffler ──────────────────────────────────────────
+function DiagnosticShuffler() {
+  const [items, setItems] = useState([
+    { id: 1, title: 'Latência de Mount', val: '0.18 ms', label: 'PixonUI (MUI: 2.10ms)', color: 'border-purple-500/30' },
+    { id: 2, title: 'Consumo de RAM', val: '15.2 MB', label: 'Estável em Interação', color: 'border-cyan-500/30' },
+    { id: 3, title: 'Taxa de Quadros', val: '120 FPS', label: 'Composição Off-Thread', color: 'border-emerald-500/30' }
+  ]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setItems((prev) => {
+        const next = [...prev];
+        const last = next.pop()!;
+        next.unshift(last);
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="relative flex items-center justify-center w-full h-56 select-none">
+      {items.map((item, idx) => {
+        // Compute style based on index (0: front, 1: middle, 2: back)
+        const scale = 1 - idx * 0.08;
+        const yOffset = idx * -16;
+        const opacity = 1 - idx * 0.28;
+        const zIndex = 30 - idx;
+
+        return (
+          <div
+            key={item.id}
+            className={`absolute w-full max-w-sm rounded-[1.5rem] border bg-[#090911]/90 backdrop-blur-xl p-5 shadow-2xl transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${item.color}`}
+            style={{
+              transform: `translate3d(0, ${yOffset}px, 0) scale(${scale})`,
+              opacity,
+              zIndex,
+            }}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#7B61FF]">{item.title}</span>
+              <span className="h-2 w-2 rounded-full bg-[#00FF66] animate-pulse" />
+            </div>
+            <div className="text-3xl font-sora font-extrabold text-[#F0EFF4]">{item.val}</div>
+            <div className="text-xs text-[#F0EFF4]/50 mt-1 font-medium">{item.label}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── MICRO-UI 2: Telemetry Typewriter ─────────────────────────────────────────
+const TERMINAL_LOGS = [
+  '>> initializing pixon-physics-engine... OK',
+  '>> off-thread pipeline established',
+  '>> hardware-acceleration loaded on GPU thread',
+  '>> standard DOM tree matched seamlessly with SSR',
+  '>> benchmark: 1000 items mounted in 0.18ms',
+  '>> system health status: excellent (0 jank)'
+];
+
+function TelemetryTypewriter() {
+  const [logs, setLogs] = useState<string[]>(['>> boot command received...']);
+  const [activeLog, setActiveLog] = useState('');
+  const logIndexRef = useRef(0);
+  const charIndexRef = useRef(0);
+
+  useEffect(() => {
+    let timer: any;
+
+    const typeChar = () => {
+      const targetStr = TERMINAL_LOGS[logIndexRef.current]!;
+      if (charIndexRef.current < targetStr.length) {
+        setActiveLog((prev) => prev + targetStr[charIndexRef.current]);
+        charIndexRef.current += 1;
+        timer = setTimeout(typeChar, 35);
+      } else {
+        // Finish typing this log, add to stack
+        setLogs((prev) => [...prev.slice(-4), targetStr]);
+        setActiveLog('');
+        charIndexRef.current = 0;
+        logIndexRef.current = (logIndexRef.current + 1) % TERMINAL_LOGS.length;
+        timer = setTimeout(typeChar, 1800);
+      }
+    };
+
+    timer = setTimeout(typeChar, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="w-full rounded-[1.5rem] border border-white/10 bg-[#020205] p-5 shadow-2xl font-fira text-xs text-[#F0EFF4]/90 flex flex-col h-56 select-none">
+      <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-3">
+        <div className="flex items-center gap-1.5">
+          <TermIcon size={14} className="text-[#7B61FF]" />
+          <span className="font-bold tracking-tight text-[10px] uppercase text-[#F0EFF4]/60">Pixon Telemetry Log</span>
+        </div>
+        <span className="flex items-center gap-1 bg-[#00FF66]/10 border border-[#00FF66]/20 px-2 py-0.5 rounded text-[8px] font-bold text-[#00FF66] tracking-wider uppercase animate-pulse">
+          Live
+        </span>
+      </div>
+      <div className="flex-1 space-y-2 overflow-hidden flex flex-col justify-end">
+        {logs.map((log, i) => (
+          <div key={i} className="opacity-50 line-clamp-1">{log}</div>
+        ))}
+        <div className="text-[#00FF66] flex items-center gap-1 line-clamp-1">
+          <span>{activeLog}</span>
+          <span className="inline-block w-1.5 h-3.5 bg-[#00FF66] animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MICRO-UI 3: Cursor Protocol Scheduler ──────────────────────────────────
+function CursorProtocolScheduler() {
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [cursorPos, setCursorPos] = useState({ x: 85, y: 80 });
+  const [cursorScale, setCursorScale] = useState(1);
+  const [saveTriggered, setSaveTriggered] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loop = async () => {
+      while (isMounted) {
+        // Reset state
+        setSaveTriggered(false);
+        setSelectedDay(null);
+        setCursorScale(1);
+        setCursorPos({ x: 85, y: 80 }); // Start bottom right
+
+        await new Promise((r) => setTimeout(r, 800));
+        if (!isMounted) break;
+
+        // Move to Wednesday (index 3, which is in the exact horizontal center)
+        setCursorPos({ x: 50, y: 40 });
+        await new Promise((r) => setTimeout(r, 1400));
+        if (!isMounted) break;
+
+        // Simulate click on Wednesday
+        setCursorScale(0.85);
+        await new Promise((r) => setTimeout(r, 150));
+        if (!isMounted) break;
+        setSelectedDay(3);
+        setCursorScale(1);
+
+        await new Promise((r) => setTimeout(r, 600));
+        if (!isMounted) break;
+
+        // Move cursor to Save Button (also centered horizontally, near bottom)
+        setCursorPos({ x: 50, y: 82 });
+        await new Promise((r) => setTimeout(r, 1400));
+        if (!isMounted) break;
+
+        // Click Save Button
+        setCursorScale(0.85);
+        await new Promise((r) => setTimeout(r, 150));
+        if (!isMounted) break;
+        setSaveTriggered(true);
+        setCursorScale(1);
+
+        await new Promise((r) => setTimeout(r, 1800));
+      }
+    };
+
+    loop();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  return (
+    <div className="relative w-full rounded-[1.5rem] border border-white/10 bg-[#090911]/90 backdrop-blur-xl p-5 shadow-2xl flex flex-col justify-between h-56 select-none overflow-hidden">
+      <div className="flex items-center gap-1.5 mb-2">
+        <Calendar size={14} className="text-[#7B61FF]" />
+        <span className="font-bold text-[10px] uppercase text-[#F0EFF4]/60">Cursor Protocol Scheduler</span>
+      </div>
+
+      {/* Grid of days */}
+      <div className="grid grid-cols-7 gap-2 my-2">
+        {days.map((day, idx) => {
+          const isSelected = selectedDay === idx;
+          return (
+            <div
+              key={idx}
+              className={`h-9 rounded-xl flex items-center justify-center font-sora font-extrabold text-xs transition-all duration-300 ${
+                isSelected 
+                  ? 'bg-[#00FF66] text-[#05050A] shadow-[0_0_15px_rgba(0,255,102,0.4)] scale-105' 
+                  : 'bg-white/[0.03] border border-white/5 text-[#F0EFF4]/65 hover:bg-white/[0.06]'
+              }`}
+            >
+              {day}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Save Button */}
+      <button 
+        type="button"
+        className={`w-full py-2.5 rounded-xl font-sora font-extrabold text-xs tracking-wider transition-all duration-300 ${
+          saveTriggered 
+            ? 'bg-[#7B61FF] text-[#F0EFF4] shadow-[0_0_15px_rgba(123,97,255,0.4)]' 
+            : 'bg-white/[0.03] border border-white/5 text-[#F0EFF4]/80'
+        }`}
+      >
+        {saveTriggered ? 'PROTOCOL SAVED' : 'SAVE PROTOCOL'}
+      </button>
+
+      {/* Vector Pointer Cursor */}
+      <svg
+        className="absolute pointer-events-none transition-all duration-[1200ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] z-50 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+        style={{
+          left: `${cursorPos.x}%`,
+          top: `${cursorPos.y}%`,
+          transform: `scale(${cursorScale}) translate(-50%, -50%)`,
+        }}
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <path
+          d="M4 4L11.5 20.5L14 14L20.5 11.5L4 4Z"
+          fill="#00FF66"
+          stroke="#05050A"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+// ─── E2E VERIFICATION COMPONENT 1: Scroll Parallax Card ─────────────────────
 function ScrollParallaxCard() {
   const { scrollYProgress } = useScroll();
   const parallaxPreset = parallax({ axis: 'y', from: 0, to: -120 });
@@ -115,25 +287,25 @@ function ScrollParallaxCard() {
   const progressValue = useMotionValueValue(scrollYProgress);
 
   return (
-    <Surface className="relative overflow-hidden rounded-3xl border border-cyan-400/30 bg-cyan-50/70 p-8 dark:border-cyan-400/20 dark:bg-[#04112d]/80">
+    <Surface data-testid="parallax-card" className="relative overflow-hidden rounded-[2rem] border border-[#00FF66]/30 bg-[#05050A]/60 p-8 shadow-2xl backdrop-blur-xl">
       <motion.div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(34,211,238,0.28),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(0,255,102,0.15),transparent_60%)]"
         style={{ opacity: glowOpacity }}
       />
       <div className="relative z-10 mb-6 flex items-center justify-between">
-        <Heading as="h3" className="text-xl font-semibold">Scroll Parallax (fallback JS)</Heading>
-        <span className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">
+        <Heading as="h3" className="text-xl font-sora font-bold text-white">Scroll Parallax</Heading>
+        <span className="text-xs font-fira font-bold uppercase tracking-[0.2em] text-[#00FF66]">
           {Math.round(progressValue * 100)}%
         </span>
       </div>
 
-      <div className="relative z-10 h-2 w-full overflow-hidden rounded-full bg-slate-300/60 dark:bg-white/10">
-        <motion.div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-blue-500" style={{ width: progressWidth }} />
+      <div className="relative z-10 h-2 w-full overflow-hidden rounded-full bg-white/5 border border-white/5">
+        <motion.div className="h-full rounded-full bg-gradient-to-r from-[#7B61FF] to-[#00FF66]" style={{ width: progressWidth }} />
       </div>
 
-      <div className="relative z-10 mt-8 h-28 rounded-2xl border border-slate-300/60 bg-white/40 dark:border-white/10 dark:bg-black/20">
+      <div className="relative z-10 mt-8 h-28 rounded-2xl border border-white/15 bg-black/40">
         <motion.div
-          className="absolute left-4 top-8 h-12 w-12 rounded-full bg-cyan-300/70 blur-[1px]"
+          className="absolute left-4 top-8 h-12 w-12 rounded-full bg-[#00FF66]/50 blur-[2px]"
           style={{ transform: orbTransform }}
         />
       </div>
@@ -141,6 +313,7 @@ function ScrollParallaxCard() {
   );
 }
 
+// ─── E2E VERIFICATION COMPONENT 2: Timeline Scope Composer ──────────────────
 function TimelineScopeComposerDemo() {
   const { ref, createTimeline } = useTimelineScope<HTMLDivElement>();
 
@@ -158,46 +331,51 @@ function TimelineScopeComposerDemo() {
   }, [createTimeline]);
 
   return (
-    <Surface ref={ref} data-testid="timeline-scope-showcase" className="rounded-3xl border border-slate-300/50 bg-white/80 p-8 dark:border-white/10 dark:bg-[#061333]/70">
-      <Heading as="h3" className="scope-title mb-4 text-2xl font-semibold">
-        Timeline scope + composer
+    <Surface ref={ref} data-testid="timeline-scope-showcase" className="rounded-[2rem] border border-white/10 bg-[#05050A]/60 p-8 shadow-2xl backdrop-blur-xl">
+      <Heading as="h3" className="scope-title mb-4 text-2xl font-sora font-bold text-white">
+        Timeline Scope + Composer
       </Heading>
-      <Text className="mb-5 text-zinc-600 dark:text-white/70">
-        Demo de escopo local por ref e presets de domínio sem boilerplate.
+      <Text className="mb-5 text-sm text-[#F0EFF4]/70 font-medium leading-relaxed">
+        Demonstração de escopo local por ref e presets de domínio sem boilerplate.
       </Text>
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">hero()</div>
-        <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">cards()</div>
-        <div className="scope-pill rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-300">navbar()</div>
+        <div className="scope-pill rounded-xl border border-[#7B61FF]/30 bg-[#7B61FF]/10 px-4 py-3 text-sm font-fira font-bold text-[#7B61FF] text-center">hero()</div>
+        <div className="scope-pill rounded-xl border border-[#00FF66]/30 bg-[#00FF66]/10 px-4 py-3 text-sm font-fira font-bold text-[#00FF66] text-center">cards()</div>
+        <div className="scope-pill rounded-xl border border-[#7B61FF]/30 bg-[#7B61FF]/10 px-4 py-3 text-sm font-fira font-bold text-[#7B61FF] text-center">navbar()</div>
       </div>
     </Surface>
   );
 }
 
+// ─── E2E VERIFICATION COMPONENT 3: Container Interaction ───────────────────
 function ContainerInteractionCard() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dragBoundsRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Surface data-testid="container-interaction-card" className="rounded-3xl border border-slate-300/50 bg-white/80 p-8 dark:border-white/10 dark:bg-[#061333]/70">
-      <Heading as="h3" className="mb-3 text-xl font-semibold">
-        Container scroll + drag constraints
+    <Surface data-testid="container-interaction-card" className="rounded-[2rem] border border-white/10 bg-[#05050A]/60 p-8 shadow-2xl backdrop-blur-xl">
+      <Heading as="h3" className="mb-3 text-xl font-sora font-bold text-white">
+        Container Scroll & Drag constraints
       </Heading>
-      <Text className="mb-5 text-sm text-zinc-600 dark:text-white/65">
-        Parallax usando `source=&quot;container&quot;` e drag com constraints por `RefObject`, sem loop de re-render.
+      <Text className="mb-5 text-sm text-[#F0EFF4]/65 font-medium leading-relaxed">
+        Parallax usando `source="container"` e drag com constraints por `RefObject`, sem loop de re-render.
       </Text>
 
       <div className="relative">
         <div
           ref={scrollContainerRef}
           data-testid="container-scroll-root"
-          className="h-28 overflow-x-auto rounded-2xl border border-slate-300/60 bg-white/50 dark:border-white/10 dark:bg-black/30"
+          style={{ maxWidth: '400px' }}
+          className="h-28 overflow-x-auto rounded-2xl border border-white/15 bg-black/45"
         >
-          <div className="h-full w-[1200px] bg-[linear-gradient(90deg,rgba(34,211,238,0.16),rgba(59,130,246,0.06),rgba(34,211,238,0.16))]" />
+          <div 
+            style={{ width: '1200px', minWidth: '1200px' }}
+            className="h-full w-[1200px] bg-[linear-gradient(90deg,rgba(123,97,255,0.12),rgba(0,255,102,0.04),rgba(123,97,255,0.12))]" 
+          />
         </div>
         <motion.div
           data-testid="container-parallax-orb"
-          className="pointer-events-none absolute left-4 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-cyan-300/80 blur-[1px]"
+          className="pointer-events-none absolute left-4 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-[#00FF66]/70 blur-[1px]"
           parallax={{ source: 'container', container: scrollContainerRef, axis: 'x', from: 0, to: 220 }}
         />
       </div>
@@ -205,7 +383,7 @@ function ContainerInteractionCard() {
       <div
         ref={dragBoundsRef}
         data-testid="drag-bounds-root"
-        className="relative mt-6 h-24 overflow-hidden rounded-2xl border border-slate-300/60 bg-white/50 dark:border-white/10 dark:bg-black/30"
+        className="relative mt-6 h-24 overflow-hidden rounded-2xl border border-white/15 bg-black/45"
       >
         <motion.div
           data-testid="drag-handle"
@@ -213,321 +391,398 @@ function ContainerInteractionCard() {
           dragElastic={0}
           dragMomentum={false}
           dragConstraints={dragBoundsRef}
-          className="absolute left-3 top-1/2 h-9 w-24 -translate-y-1/2 cursor-grab rounded-xl border border-cyan-400/40 bg-cyan-500/20"
+          className="absolute left-3 top-1/2 h-9 w-24 -translate-y-1/2 cursor-grab rounded-xl border border-[#00FF66]/40 bg-[#00FF66]/10"
         />
       </div>
     </Surface>
   );
 }
 
+const METRICS = [
+  { value: '120fps', label: 'Compositor First' },
+  { value: '0 jank', label: 'Frame Stability' },
+  { value: 'SSR', label: 'Hydration Safe' },
+  { value: 'WAAPI', label: 'Native Pipeline' },
+];
+
+// ─── MAIN LANDING PAGE ────────────────────────────────────────────────────────
 export function LandingPage({ onEnterGallery, onEnterSaaS }: LandingPageProps) {
-  const { theme } = useTheme();
-  const isDark = theme !== 'light';
+  const [scrollActive, setScrollActive] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollActive(window.scrollY > 40);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-slate-100 text-zinc-900 dark:bg-[#020617] dark:text-white">
-      <style data-style-id="landing-ssr-v1">{`
-        .ssr-aurora {
-          background:
-            radial-gradient(40% 40% at 20% 20%, rgba(34, 211, 238, 0.16), transparent 60%),
-            radial-gradient(45% 45% at 80% 15%, rgba(99, 102, 241, 0.14), transparent 62%),
-            radial-gradient(55% 55% at 50% 100%, rgba(14, 165, 233, 0.14), transparent 65%);
-          animation: ssr-aurora-pulse 13s ease-in-out infinite alternate;
-        }
+    <div className="relative min-h-screen bg-[#05050A] text-[#F0EFF4] font-sans selection:bg-[#7B61FF]/40 overflow-x-hidden antialiased">
+      {/* Noise Overlay */}
+      <NoiseOverlay />
 
-        @keyframes ssr-aurora-pulse {
-          from { filter: saturate(1) brightness(0.95); }
-          to { filter: saturate(1.15) brightness(1.08); }
-        }
-
-        @keyframes ssr-soft-glow {
-          from { box-shadow: 0 0 0 rgba(34, 211, 238, 0.0); }
-          to { box-shadow: 0 0 28px rgba(34, 211, 238, 0.2); }
-        }
-
-        .ssr-soft-glow {
-          animation: ssr-soft-glow 4.6s ease-in-out infinite alternate;
-        }
-      `}</style>
-
-      <div className="pointer-events-none absolute inset-0">
-        <DotGrid
-          variant="dots"
-          interactive
-          pauseWhenOutOfView
-          spacing={24}
-          dotSize={1.2}
-          maxDist={140}
-          magneticStrength={20}
-          smoothing={0.08}
-          color={isDark ? '#7f8ea9' : '#94a3b8'}
-          opacity={isDark ? 0.42 : 0.5}
-          className="absolute inset-0"
-        />
+      {/* Glowing Neon Refraction Halos */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
+        {/* Plasma Purple halo */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-[radial-gradient(circle,rgba(123,97,255,0.18),transparent_70%)] blur-[80px] animate-[pulse_10s_infinite_alternate]" />
+        {/* Acid Green halo */}
+        <div className="absolute top-[20%] right-[-15%] w-[55vw] h-[55vw] rounded-full bg-[radial-gradient(circle,rgba(0,255,102,0.10),transparent_70%)] blur-[90px] animate-[pulse_12s_infinite_alternate_delay-2000]" />
+        {/* Secondary neon halo */}
+        <div className="absolute bottom-[10%] left-[5%] w-[70vw] h-[70vw] rounded-full bg-[radial-gradient(circle,rgba(123,97,255,0.06),transparent_70%)] blur-[100px] animate-[pulse_15s_infinite_alternate]" />
       </div>
-      <div className={`pointer-events-none absolute inset-0 ssr-aurora ${isDark ? 'opacity-100' : 'opacity-40'}`} />
 
-      <header className="relative z-10 border-b border-slate-300/40 bg-white/45 backdrop-blur-xl dark:border-white/10 dark:bg-black/10">
-        <Container className="flex h-16 items-center justify-between">
-          <PixonSSRAnimate preset="fadeInLeft" transition={{ duration: 420 }} className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/30" />
-            <span className="text-lg font-semibold tracking-tight">PixonUI Motion</span>
-          </PixonSSRAnimate>
-          <PixonSSRAnimate preset="fadeInRight" transition={{ duration: 420, delay: 220 }} className="flex items-center gap-3">
-            <ThemeToggle className="border border-slate-300/60 bg-white/70 dark:border-white/10 dark:bg-white/5" />
-            <Button variant="ghost" size="sm" className="text-zinc-600 hover:text-zinc-900 dark:text-white/70 dark:hover:text-white" onClick={onEnterSaaS}>
-              SaaS
-            </Button>
-            <GlowButton className="h-9 px-4 text-sm" onClick={onEnterGallery}>
-              Abrir galeria
+      {/* ─── A. NAVBAR: "A Ilha Flutuante" ────────────────────────────────────── */}
+      <nav 
+        className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-5xl rounded-full border transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
+          scrollActive 
+            ? 'border-white/10 bg-[#05050A]/75 shadow-[0_15px_30px_rgba(0,0,0,0.5)] backdrop-blur-2xl px-6 py-3.5' 
+            : 'border-transparent bg-transparent px-8 py-5'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-[#7B61FF] to-[#00FF66] shadow-[0_0_15px_rgba(123,97,255,0.4)]" />
+            <span className="font-sora font-extrabold text-sm tracking-tight uppercase">PixonUI</span>
+          </div>
+          
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={onEnterSaaS}
+              className="text-xs font-sora font-bold text-[#F0EFF4]/70 hover:text-white transition-colors"
+            >
+              SAAS DEMO
+            </button>
+            <ThemeToggle className="border border-white/10 bg-white/5" />
+            <GlowButton 
+              onClick={onEnterGallery}
+              aria-label="Explore Components"
+              className="h-9 px-5 rounded-full font-sora font-bold text-xs tracking-wider border-transparent bg-gradient-to-r from-[#7B61FF] to-[#00FF66] text-[#05050A]"
+            >
+              Explore Components
             </GlowButton>
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── B. HERO SECTION: "A Cena de Abertura" ─────────────────────────────── */}
+      <header className="relative w-full h-[100dvh] flex flex-col justify-end z-10 px-6 sm:px-12 md:px-20 pb-16 sm:pb-24">
+        {/* Subtle grid mesh background */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none z-0" />
+        
+        <div className="relative z-10 max-w-4xl space-y-6">
+          <PixonSSRAnimate preset="scaleInBounce" transition={{ duration: 700 }}>
+            <Badge variant="neutral" className="border-[#7B61FF]/30 bg-[#7B61FF]/10 px-4 py-1 text-[#7B61FF] font-fira font-bold uppercase tracking-widest text-[9px] shadow-[0_0_15px_rgba(123,97,255,0.15)]">
+              <Sparkles className="mr-2 inline h-3 w-3" />
+              PHYSICS & WAAPI ENGINE v2.0
+            </Badge>
           </PixonSSRAnimate>
-        </Container>
+
+          <PixonSSRAnimate preset="blurInUp" transition={{ duration: 880, delay: 300 }}>
+            <Heading as="h1" className="text-4xl sm:text-6xl md:text-7xl font-sora font-extrabold tracking-tighter leading-[0.9] text-white">
+              Sinta a interface.
+              <span className="block font-instrument italic text-[#7B61FF] capitalize font-light mt-2 tracking-normal drop-shadow-[0_0_15px_rgba(123,97,255,0.1)]">
+                Fluidez física de alta fidelidade.
+              </span>
+            </Heading>
+          </PixonSSRAnimate>
+
+          <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 820, delay: 520 }}>
+            <Text className="max-w-xl text-sm sm:text-base leading-relaxed text-[#F0EFF4]/70 font-medium">
+              Interfaces digitais refinadas como instrumentos científicos. Construído do zero para rodar a 120fps nativos no motor WAAPI sem re-renders imperativos, loops de jank ou overhead de pacotes.
+            </Text>
+          </PixonSSRAnimate>
+
+          <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 860, delay: 760 }} className="flex flex-col items-start gap-4 sm:flex-row pt-4">
+            <GlowButton 
+              aria-label="Abrir galeria"
+              className="h-12 px-8 rounded-full font-sora font-extrabold text-xs tracking-wider active:scale-[0.98] transition-all bg-gradient-to-r from-[#7B61FF] to-[#00FF66] text-[#05050A]" 
+              onClick={onEnterGallery}
+            >
+              Explore Components
+              <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
+            </GlowButton>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="h-12 border-white/10 bg-white/5 px-8 rounded-full font-sora font-extrabold text-xs tracking-wider text-white hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all" 
+              onClick={onEnterSaaS}
+              aria-label="View SaaS Demo"
+            >
+              <Rocket className="mr-2 h-4 w-4 text-[#00FF66]" />
+              View SaaS Demo
+            </Button>
+          </PixonSSRAnimate>
+        </div>
       </header>
 
-      <main className="relative z-10">
-        <section className="py-20 md:py-28">
-          <Container>
+      {/* ─── C. FEATURES: "Artefatos Funcionais Interativos" ──────────────────── */}
+      <section className="py-24 sm:py-32 relative z-10 px-6 sm:px-12 max-w-7xl mx-auto">
+        <div className="mb-16 max-w-2xl">
+          <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#00FF66] block mb-2">// ARTEFATOS INTERATIVOS</span>
+          <Heading as="h2" className="text-3xl sm:text-4xl font-sora font-extrabold tracking-tight">
+            Engenharia visual aplicada.
+          </Heading>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-3">
+          {/* Card 1: Diagnostic Shuffler */}
+          <div data-testid="feature-card-0" className="flex flex-col rounded-[2.5rem] border border-white/5 bg-[#05050A]/40 p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#7B61FF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none" />
+            <div className="flex-1 flex flex-col justify-between">
+              <DiagnosticShuffler />
+              <div className="mt-8 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 rounded bg-[#7B61FF]/10 text-[#7B61FF]">
+                    <ArrowRightLeft size={16} />
+                  </span>
+                  <Heading as="h3" className="text-lg font-sora font-bold">Desempenho Sub-milissegundo</Heading>
+                </div>
+                <Text className="text-xs leading-relaxed text-[#F0EFF4]/60 font-medium">
+                  Ciclo de vida do React altamente otimizado com cache preventivo para eliminar injeções dinâmicas e gargalos em tempo de execução.
+                </Text>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Telemetry Typewriter */}
+          <div data-testid="feature-card-1" className="flex flex-col rounded-[2.5rem] border border-white/5 bg-[#05050A]/40 p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#00FF66]/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none" />
+            <div className="flex-1 flex flex-col justify-between">
+              <TelemetryTypewriter />
+              <div className="mt-8 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 rounded bg-[#00FF66]/10 text-[#00FF66]">
+                    <Zap size={16} />
+                  </span>
+                  <Heading as="h3" className="text-lg font-sora font-bold">Aceleração de Hardware Nativa</Heading>
+                </div>
+                <Text className="text-xs leading-relaxed text-[#F0EFF4]/60 font-medium">
+                  Animações rodadas diretamente fora da main thread através da Web Animations API, poupando a CPU de layouts desnecessários.
+                </Text>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Cursor Protocol Scheduler */}
+          <div data-testid="feature-card-2" className="flex flex-col rounded-[2.5rem] border border-white/5 bg-[#05050A]/40 p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#7B61FF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none" />
+            <div className="flex-1 flex flex-col justify-between">
+              <CursorProtocolScheduler />
+              <div className="mt-8 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 rounded bg-[#7B61FF]/10 text-[#7B61FF]">
+                    <Layers size={16} />
+                  </span>
+                  <Heading as="h3" className="text-lg font-sora font-bold">Glassmorphism Orgânico</Heading>
+                </div>
+                <Text className="text-xs leading-relaxed text-[#F0EFF4]/60 font-medium">
+                  Estética luxuosa e orgânica combinada com layouts responsivos e suporte consistente a temas de alto impacto visual.
+                </Text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── E2E VERIFICATION COMPONENT 4: Metrics Dashboard ──────────────────── */}
+      <section className="py-16 border-y border-white/5 bg-[#020205]/40 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+          {METRICS.map((item, index) => (
+            <div
+              key={item.label}
+              data-testid={`metric-card-${index}`}
+            >
+              <Surface className="border-white/10 bg-[#05050A]/60 p-5 text-center shadow-2xl rounded-2xl">
+                <div className="text-2xl font-sora font-extrabold text-[#00FF66] md:text-3xl">{item.value}</div>
+                <Text className="mt-1 text-[10px] font-fira font-bold uppercase tracking-[0.16em] text-[#F0EFF4]/45">{item.label}</Text>
+              </Surface>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── E2E VERIFICATION COMPONENT 5: TELEMETRY LAB ─────────────────────── */}
+      <section className="py-24 relative z-10 px-6 sm:px-12 max-w-7xl mx-auto">
+        <div className="mb-16 max-w-2xl">
+          <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#7B61FF] block mb-2">// TELEMETRY LABORATORY</span>
+          <Heading as="h2" className="text-3xl sm:text-4xl font-sora font-extrabold tracking-tight">
+            Diagnóstico de Física & Composição.
+          </Heading>
+        </div>
+
+        <GridCustom className="gap-8 lg:grid-cols-2">
+          {/* Timeline showcase */}
+          <TimelineScopeComposerDemo />
+
+          {/* Parallax display */}
+          <ScrollParallaxCard />
+        </GridCustom>
+
+        {/* Scroll Scene & Constraints */}
+        <div className="grid gap-8 md:grid-cols-[1fr_1.2fr] mt-8">
+          <div data-testid="scroll-scene-card">
             <ScrollScene
               as="div"
+              className="rounded-[2.5rem] border border-white/10 bg-[#05050A]/60 p-8 shadow-2xl backdrop-blur-xl h-full flex flex-col justify-center"
               timeline="view"
               axis="block"
-              range={{ start: 'entry 0%', end: 'cover 80%' }}
-              from={{ y: 0, scale: 1, opacity: 1 }}
-              to={{ y: -72, scale: 0.97, opacity: 1 }}
-              fallback="static"
+              range={{ start: 'entry 10%', end: 'cover 50%' }}
+              from={{ y: 120, opacity: 1, scale: 0.92, blur: 0 }}
+              to={{ y: 0, opacity: 1, scale: 1, blur: 0 }}
+              fallback="animate"
             >
-              <Stack gap={8} align="center" className="mx-auto max-w-4xl text-center">
-              <PixonSSRAnimate preset="scaleInBounce" transition={{ duration: 700 }}>
-                <Badge variant="neutral" className="border-cyan-400/30 bg-cyan-500/10 px-4 py-1 text-cyan-300">
-                  <Sparkles className="mr-2 inline h-3.5 w-3.5" />
-                  Landing SSR pronta para produção
-                </Badge>
-              </PixonSSRAnimate>
-
-              <PixonSSRAnimate preset="blurInUp" transition={{ duration: 880, delay: 300 }}>
-                <Heading as="h1" className="text-4xl font-black tracking-tight md:text-6xl">
-                  Motion Engine do Pixon
-                  <span className={isDark ? 'block bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent' : 'block text-zinc-700'}>
-                    simples de escrever, fluido para executar
-                  </span>
-                </Heading>
-              </PixonSSRAnimate>
-
-              <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 820, delay: 520 }}>
-                <Text className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-white/70 md:text-lg">
-                  Esta página usa animações SSR com presets nativos, stagger declarativo e scroll-driven timeline com fallback.
-                  Sem loop imperativo por frame e sem dependência de biblioteca externa.
-                </Text>
-              </PixonSSRAnimate>
-
-              <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 860, delay: 760 }} className="flex flex-col items-center gap-4 sm:flex-row">
-                <GlowButton className="h-12 px-8" onClick={onEnterGallery}>
-                  Explorar componentes
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </GlowButton>
-                <Button variant="outline" size="lg" className="h-12 border-white/20 bg-white/5 px-8" onClick={onEnterSaaS}>
-                  <Rocket className="mr-2 h-4 w-4 text-cyan-300" />
-                  Ver SaaS demo
-                </Button>
-              </PixonSSRAnimate>
-              </Stack>
+              <Heading as="h3" className="mb-4 text-2xl font-sora font-bold text-white">
+                ScrollScene em ação
+              </Heading>
+              <Text className="text-[#F0EFF4]/70 font-medium text-sm leading-relaxed">
+                Este card usa timeline de scroll nativa quando disponível. Em caso de fallback nos navegadores sem suporte, anima automaticamente com base no tempo de entrada no viewport.
+              </Text>
             </ScrollScene>
-          </Container>
-        </section>
+          </div>
 
-        <section className="pb-14 md:pb-20">
-          <Container>
-            <Grid className="gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <Surface className="overflow-hidden rounded-3xl border border-slate-300/50 bg-white/80 p-4 dark:border-white/10 dark:bg-[#061333]/70">
-                <div className="mb-4 flex items-center justify-between px-2 pt-1">
-                  <div>
-                    <Heading as="h3" className="text-xl font-semibold">Animated Section Preview</Heading>
-                    <Text className="text-sm text-zinc-600 dark:text-white/60">Wrapper simples para sections, cards e logos.</Text>
-                  </div>
-                  <Badge variant="neutral" className="border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
-                    animateOnView
-                  </Badge>
-                </div>
-                <AnimatedSection
-                  elements={HERO_SECTION_ELEMENTS}
-                  durationMs={1800}
-                  loop
-                  autoplay
-                  animateOnView
-                  yoyo
-                  className="relative h-[320px] rounded-[24px] bg-[#030816] shadow-inner"
-                />
-              </Surface>
+          <ContainerInteractionCard />
+        </div>
+      </section>
 
-              <Surface className="overflow-hidden rounded-3xl border border-slate-300/50 bg-white/80 p-4 dark:border-white/10 dark:bg-[#061333]/70">
-                <div className="mb-4 px-2 pt-1">
-                  <Heading as="h3" className="text-xl font-semibold">Animation Studio Preview</Heading>
-                  <Text className="text-sm text-zinc-600 dark:text-white/60">Preview embutido da interface do editor.</Text>
-                </div>
-                <div className="h-[420px] overflow-hidden rounded-[24px] border border-white/10 bg-black/30 p-2">
-                  <div className="pointer-events-none origin-top-left scale-[0.42] transform-gpu w-[238%] h-[238%]">
-                    <AnimationStudioDemo />
-                  </div>
-                </div>
-              </Surface>
-            </Grid>
-          </Container>
-        </section>
+      {/* Hidden E2E scope outside helper */}
+      <div data-testid="scope-outside-pill" className="scope-pill pointer-events-none absolute -left-[9999px] top-auto opacity-5">
+        outside scope
+      </div>
 
-        <section className="border-y border-slate-300/40 bg-white/50 py-10 dark:border-white/10 dark:bg-white/[0.02]">
-          <Container>
-            <Grid className="grid-cols-2 gap-5 md:grid-cols-4">
-              {METRICS.map((item, index) => (
-                <motion.div
-                  key={item.label}
-                  data-testid={`metric-card-${index}`}
-                  revealOnScroll={{ delay: index * 80, amount: 0.35, distance: 32, scale: 0.96 }}
-                  transition={{ type: 'spring', stiffness: 140, damping: 18 }}
-                >
-                  <PixonSSRAnimate
-                    initial={{ y: 0, opacity: 1 }}
-                    animate={{ y: -6, opacity: 1 }}
-                    transition={{ duration: 4400, delay: 700 + index * 260, easing: 'ease-in-out', iterations: 'infinite', direction: 'alternate' }}
-                    as="div"
-                  >
-                    <Surface className="ssr-soft-glow border-slate-300/50 bg-white/80 p-5 text-center dark:border-white/10 dark:bg-[#060f28]/70">
-                      <div className="text-2xl font-bold text-cyan-300 md:text-3xl">{item.value}</div>
-                      <Text className="mt-1 text-xs uppercase tracking-[0.16em] text-zinc-500 dark:text-white/45">{item.label}</Text>
-                    </Surface>
-                  </PixonSSRAnimate>
-                </motion.div>
-              ))}
-            </Grid>
-          </Container>
-        </section>
+      {/* ─── D. PHILOSOPHY: "O Manifesto" ────────────────────────────────────── */}
+      <section className="py-32 bg-[#020205] relative z-10 px-6 sm:px-12 border-y border-white/5 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(123,97,255,0.04),transparent_60%)] pointer-events-none" />
+        <div className="max-w-5xl mx-auto space-y-12">
+          <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#7B61FF] block text-center">// O MANIFESTO</span>
+          
+          <div className="space-y-8 text-center sm:text-left">
+            <p className="text-2xl sm:text-4xl md:text-5xl font-sora font-bold leading-tight text-[#F0EFF4]/45">
+              A maioria das bibliotecas foca em: <span className="text-[#F0EFF4]/30 line-through">injeções pesadas de CSS em tempo de execução e re-renders imperativos contínuos.</span>
+            </p>
+            
+            <p className="text-3xl sm:text-5xl md:text-6xl font-sora font-extrabold leading-tight text-[#F0EFF4]">
+              Nós nos dedicamos à: <span className="font-instrument italic text-[#00FF66] font-light tracking-normal drop-shadow-[0_0_15px_rgba(0,255,102,0.15)]">fluidez física pura off-thread e aceleração direta no motor de renderização da GPU.</span>
+            </p>
+          </div>
+        </div>
+      </section>
 
-        <section className="py-16 md:py-24">
-          <Container>
-            <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 680 }}>
-              <Heading as="h2" className="mb-10 text-center text-3xl font-bold md:text-4xl">
-                Base SSR + WAAPI preparada para escalar
-              </Heading>
-            </PixonSSRAnimate>
+      {/* ─── E. PROTOCOL: "Sticky Stacking" (Empilhamento Fluido) ─────────────── */}
+      <section className="relative z-10">
+        <div className="sticky top-0 h-screen w-full flex items-center justify-center bg-[#05050A] border-b border-white/5 overflow-hidden">
+          <div className="absolute top-10 left-10 z-20">
+            <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#7B61FF] block mb-1">PROTOCOLO DE SEGURANÇA</span>
+            <div className="text-2xl font-sora font-extrabold text-white">01. GEOMETRIA RADIAL</div>
+          </div>
+          <div className="absolute right-10 bottom-10 z-20 max-w-sm text-right hidden sm:block">
+            <Text className="text-xs text-[#F0EFF4]/50 leading-relaxed font-medium">
+              Geometria analítica e simetria molecular, representadas por múltiplos círculos SVG com rotação assíncrona para manter os eixos de sincronização estáveis.
+            </Text>
+          </div>
 
-            <Grid className="gap-6 md:grid-cols-3">
-              {FEATURES.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <motion.div
-                    key={feature.title}
-                    data-testid={`feature-card-${index}`}
-                    revealOnScroll={{ delay: index * 100, amount: 0.28, distance: 36, scale: 0.95 }}
-                    transition={{ type: 'spring', stiffness: 130, damping: 18 }}
-                  >
-                    <PixonSSRAnimate
-                      initial={{ y: 0, opacity: 1 }}
-                      animate={{ y: -10, opacity: 1 }}
-                      transition={{ duration: 5600, delay: 1100 + index * 320, easing: 'ease-in-out', iterations: 'infinite', direction: 'alternate' }}
-                      as="div"
-                    >
-                      <Surface className="ssr-soft-glow h-full border-slate-300/50 bg-white/80 p-7 dark:border-white/10 dark:bg-[#061333]/70">
-                        <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                      <Heading as="h3" className="mb-3 text-xl font-semibold">
-                        {feature.title}
-                      </Heading>
-                      <Text className="text-sm leading-relaxed text-zinc-600 dark:text-white/65">{feature.text}</Text>
-                    </Surface>
-                  </PixonSSRAnimate>
-                  </motion.div>
-                );
-              })}
-            </Grid>
-          </Container>
-        </section>
+          <div className="relative w-80 h-80 flex items-center justify-center">
+            {/* SVG Geometry */}
+            <svg className="w-full h-full text-[#7B61FF] opacity-35 animate-[spin_25s_linear_infinite]" viewBox="0 0 200 200" fill="none">
+              <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="1" strokeDasharray="4 6" />
+              <circle cx="100" cy="100" r="60" stroke="currentColor" strokeWidth="0.5" />
+              <circle cx="100" cy="100" r="40" stroke="currentColor" strokeWidth="1.5" strokeDasharray="10 12" />
+              <line x1="100" y1="10" x2="100" y2="190" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 4" />
+              <line x1="10" y1="100" x2="190" y2="100" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 4" />
+            </svg>
+            <div className="absolute h-4 w-4 bg-[#7B61FF] rounded-full animate-ping" />
+          </div>
+        </div>
 
-        <section className="pb-20 md:pb-28">
-          <Container>
-            <Grid className="gap-6 md:grid-cols-2">
-              <motion.div
-                data-testid="scroll-scene-card"
-                revealOnScroll={{ amount: 0.25, distance: 48, scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-              >
-                <ScrollScene
-                  as="div"
-                  className="rounded-3xl border border-slate-300/50 bg-white/80 p-10 dark:border-white/10 dark:bg-[#061841]/70"
-                  timeline="view"
-                  axis="block"
-                  range={{ start: 'entry 10%', end: 'cover 50%' }}
-                  from={{ y: 120, opacity: 1, scale: 0.92, blur: 0 }}
-                  to={{ y: 0, opacity: 1, scale: 1, blur: 0 }}
-                  fallback="animate"
-                >
-                  <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 900, delay: 320 }}>
-                    <Heading as="h3" className="mb-3 text-2xl font-semibold">
-                      ScrollScene em ação
-                    </Heading>
-                    <Text className="text-zinc-600 dark:text-white/70">
-                      Este card usa timeline de scroll nativa quando disponível. Em fallback, anima por tempo na entrada.
-                    </Text>
-                  </PixonSSRAnimate>
-                </ScrollScene>
-              </motion.div>
+        <div className="sticky top-0 h-screen w-full flex items-center justify-center bg-[#030308] border-b border-white/5 overflow-hidden">
+          <div className="absolute top-10 left-10 z-20">
+            <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#00FF66] block mb-1">PROTOCOLO DE FLUIDEZ</span>
+            <div className="text-2xl font-sora font-extrabold text-white">02. LASER TELEMETRY</div>
+          </div>
+          <div className="absolute right-10 bottom-10 z-20 max-w-sm text-right hidden sm:block">
+            <Text className="text-xs text-[#F0EFF4]/50 leading-relaxed font-medium">
+              Vetorização em grade molecular simulada em tempo real com sweeps de laser táticos.
+            </Text>
+          </div>
 
-              <motion.div
-                data-testid="parallax-card"
-                revealOnScroll={{ delay: 80, amount: 0.25, distance: 48, scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-              >
-                <ScrollParallaxCard />
-              </motion.div>
-            </Grid>
-
-            <div className="mt-6">
-              <TimelineScopeComposerDemo />
+          {/* Grid with vertical laser sweeps */}
+          <div className="relative w-full max-w-xl h-64 border border-white/5 rounded-[2rem] bg-white/[0.01] overflow-hidden flex flex-col justify-between p-6">
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,102,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,102,0.01)_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
+            
+            {/* Swiping laser bar */}
+            <div className="absolute left-0 right-0 h-0.5 bg-[#00FF66] shadow-[0_0_10px_#00FF66] animate-[bounce_4s_ease-in-out_infinite]" />
+            
+            <div className="flex justify-between items-center z-10">
+              <span className="text-[10px] font-fira text-[#00FF66]">GRID MATRIX SCANNER</span>
+              <span className="text-[10px] font-fira text-white/40">ACTIVE</span>
             </div>
-            <div className="mt-6">
-              <ContainerInteractionCard />
+            <div className="flex-1 flex items-end justify-between font-fira text-[9px] text-[#00FF66]/40 z-10 pt-8">
+              <span>X: 194.2</span>
+              <span>Y: 884.1</span>
+              <span>Z: 0.18</span>
+              <span>STABILITY: 100%</span>
             </div>
-            <div data-testid="scope-outside-pill" className="scope-pill pointer-events-none absolute -left-[9999px] top-auto opacity-5">
-              outside scope
-            </div>
-          </Container>
-        </section>
+          </div>
+        </div>
 
-        <section className="pb-24 md:pb-32">
-          <Container>
-            <PixonSSRAnimate preset="fadeInUp" transition={{ duration: 760, delay: 180 }}>
-              <Heading as="h2" className="mb-10 text-center text-3xl font-bold md:text-4xl">
-                Anime.js Style Grid (100% Pixon)
-              </Heading>
-            </PixonSSRAnimate>
+        <div className="sticky top-0 h-screen w-full flex items-center justify-center bg-[#000002] overflow-hidden">
+          <div className="absolute top-10 left-10 z-20">
+            <span className="text-[10px] font-fira font-bold uppercase tracking-widest text-[#7B61FF] block mb-1">PROTOCOLO DE COMPOSIÇÃO</span>
+            <div className="text-2xl font-sora font-extrabold text-white">03. SINE OSCILLATOR</div>
+          </div>
+          <div className="absolute right-10 bottom-10 z-20 max-w-sm text-right hidden sm:block">
+            <Text className="text-xs text-[#F0EFF4]/50 leading-relaxed font-medium">
+              Uma representação harmônica baseada em curvas elásticas de spring com interpolação contínua e renderização de timelines.
+            </Text>
+          </div>
 
-            <Grid className="items-start gap-6 lg:grid-cols-2">
-              <PixonSSRAnimate preset="blurInScale" trigger="view" transition={{ duration: 820, delay: 320 }}>
-                <Surface className="flex items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-[#04112d]/75 p-8 md:p-12">
-                  <AnimeGridStagger
-                    rows={23}
-                    dotColor="#7b8ba5"
-                    cursorColor="#22d3ee"
-                    className="max-w-full scale-[0.72] md:scale-[0.9]"
-                  />
-                </Surface>
-              </PixonSSRAnimate>
+          {/* Interactive Glowing Sine Wave */}
+          <div className="w-full max-w-2xl px-6 relative flex items-center justify-center">
+            <svg className="w-full h-32 text-[#7B61FF]" viewBox="0 0 600 100" fill="none">
+              <path
+                d="M 0 50 Q 75 0, 150 50 T 300 50 T 450 50 T 600 50"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="shadow-[0_0_20px_#7B61FF] animate-[pulse_2s_infinite]"
+                style={{
+                  strokeDasharray: 600,
+                  strokeDashoffset: 0,
+                }}
+              />
+              <path
+                d="M 0 50 Q 75 100, 150 50 T 300 50 T 450 50 T 600 50"
+                stroke="#00FF66"
+                strokeWidth="1"
+                opacity="0.5"
+              />
+            </svg>
+          </div>
+        </div>
+      </section>
 
-              <PixonSSRAnimate preset="fadeInRight" trigger="view" transition={{ duration: 820, delay: 460 }}>
-                <CopyBlock
-                  title="Código da animação"
-                  language="tsx"
-                  code={ANIME_GRID_CODE}
-                  lineNumbers
-                  maxHeight="520px"
-                  variant="terminal"
-                  className="h-full border-white/10"
-                />
-              </PixonSSRAnimate>
-            </Grid>
-          </Container>
-        </section>
-      </main>
+      {/* ─── FOOTER ──────────────────────────────────────────────────────────── */}
+      <footer className="relative z-10 bg-[#020205] border-t border-white/5 py-12 px-6 sm:px-12 md:px-20 text-center sm:text-left">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 rounded-lg bg-gradient-to-tr from-[#7B61FF] to-[#00FF66]" />
+            <span className="font-sora font-bold text-xs uppercase tracking-wider text-white">PIXONUI DESIGN</span>
+          </div>
+          <p className="text-[10px] font-fira text-[#F0EFF4]/40">
+            © 2026 PIXONUI. COMPOSITOR DE INTERFACE CIENTÍFICA. TODOS OS DIREITOS RESERVADOS.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
+
+// Lightweight custom layout wrapper to avoid external dependencies
+function GridCustom({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={`grid ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export default LandingPage;

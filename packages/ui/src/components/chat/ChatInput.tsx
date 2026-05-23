@@ -137,6 +137,12 @@ export const ChatInput = React.memo(function ChatInput({
     if (editor.innerHTML !== nextHtml) editor.innerHTML = nextHtml;
   }, [content]);
 
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.setAttribute('placeholder', activePlaceholder);
+    }
+  }, [activePlaceholder]);
+
   const syncEditorContent = () => {
     const editor = editorRef.current;
     if (!editor) return;

@@ -121,60 +121,26 @@ export const KanbanCard = React.memo(({
     // Only left click triggers dragging
     if (e.button !== 0) return;
 
-    // Prevent propagation and default actions so board scrolling and native column dragging are not triggered
+    // Prevent propagation so board scrolling and native column dragging are not triggered
     e.stopPropagation();
-    e.preventDefault();
 
     const cardEl = e.currentTarget;
-    const isDarkMode = document.documentElement.classList.contains('dark');
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let hasDragged = false;
+    let ghost: HTMLDivElement | null = null;
+    let dragRaf: number | null = null;
+    let lastMove: PointerEvent | null = null;
 
     // Get exact offsets relative to card container
     const rect = cardEl.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-
-    // Create the premium glass drag ghost
-    const ghost = document.createElement('div');
-    ghost.id = 'pixon-drag-ghost';
-    ghost.className = cn(
-      "fixed pointer-events-none z-[9999] rounded-2xl p-6 border flex flex-col justify-between transition-transform duration-100 ease-out",
-      isDarkMode 
-        ? "bg-zinc-950/90 border-white/10 text-white shadow-xl" 
-        : "bg-white/90 border-zinc-200 text-zinc-900 shadow-xl",
-      cardClassName
-    );
-    
-    // Apply heavy dropdown-like premium blur, dimensions and content
-    ghost.style.backdropFilter = 'blur(24px)';
-    (ghost.style as any).webkitBackdropFilter = 'blur(24px)';
-    ghost.style.width = `${rect.width}px`;
-    ghost.style.height = `${rect.height}px`;
-    ghost.innerHTML = cardEl.innerHTML;
-    
-    // Initial position matching pointer (use transform to avoid layout thrash)
-    ghost.style.left = '0px';
-    ghost.style.top = '0px';
-    ghost.style.willChange = 'transform';
-    ghost.style.transform = `translate3d(${e.clientX - offsetX}px, ${e.clientY - offsetY}px, 0) scale(1.01)`;
-    ghost.style.opacity = '0.98';
-
-    document.body.appendChild(ghost);
-
-    // Call state-updater in KanbanBoard through onDragStart prop
-    onDragStart?.({
-      dataTransfer: { setData: () => {}, effectAllowed: 'move' }
-    } as any);
-
-    cardEl.classList.add('is-being-dragged-snapshot');
-    document.body.classList.add('is-dragging-task');
-
-    let dragRaf: number | null = null;
-    let lastMove: PointerEvent | null = null;
+    const offsetX = startX - rect.left;
+    const offsetY = startY - rect.top;
 
     const processMove = () => {
       dragRaf = null;
       const moveEvent = lastMove;
-      if (!moveEvent) return;
+      if (!moveEvent || !ghost) return;
 
       ghost.style.transform = `translate3d(${moveEvent.clientX - offsetX}px, ${moveEvent.clientY - offsetY}px, 0) scale(1.01)`;
 
@@ -211,6 +177,46 @@ export const KanbanCard = React.memo(({
     };
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (!hasDragged) {
+        const dist = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
+        if (dist < 5) return; // Haven't moved enough yet to distinguish drag from click
+
+        // We crossed the threshold! Initialize drag!
+        hasDragged = true;
+
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        ghost = document.createElement('div');
+        ghost.id = 'pixon-drag-ghost';
+        ghost.className = cn(
+          "fixed pointer-events-none z-[9999] rounded-2xl p-6 border flex flex-col justify-between transition-transform duration-100 ease-out",
+          isDarkMode 
+            ? "bg-zinc-950/90 border-white/10 text-white shadow-xl" 
+            : "bg-white/90 border-zinc-200 text-zinc-900 shadow-xl",
+          cardClassName
+        );
+        
+        ghost.style.backdropFilter = 'blur(24px)';
+        (ghost.style as any).webkitBackdropFilter = 'blur(24px)';
+        ghost.style.width = `${rect.width}px`;
+        ghost.style.height = `${rect.height}px`;
+        ghost.innerHTML = cardEl.innerHTML;
+        
+        ghost.style.left = '0px';
+        ghost.style.top = '0px';
+        ghost.style.willChange = 'transform';
+        ghost.style.transform = `translate3d(${moveEvent.clientX - offsetX}px, ${moveEvent.clientY - offsetY}px, 0) scale(1.01)`;
+        ghost.style.opacity = '0.98';
+
+        document.body.appendChild(ghost);
+
+        onDragStart?.({
+          dataTransfer: { setData: () => {}, effectAllowed: 'move' }
+        } as any);
+
+        cardEl.classList.add('is-being-dragged-snapshot');
+        document.body.classList.add('is-dragging-task');
+      }
+
       lastMove = moveEvent;
       if (dragRaf !== null) return;
       dragRaf = requestAnimationFrame(processMove);
@@ -220,18 +226,27 @@ export const KanbanCard = React.memo(({
       if (dragRaf !== null) cancelAnimationFrame(dragRaf);
       dragRaf = null;
 
-      // Hide ghost before hit-test to ensure elementFromPoint sees the real target
-      ghost.style.visibility = 'hidden';
-      const hoverEl = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
-      ghost.style.visibility = 'visible';
-
-      ghost.remove();
-      cardEl.classList.remove('is-being-dragged-snapshot');
-      document.body.classList.remove('is-dragging-task');
-
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
 
+      if (!hasDragged) {
+        // It was a simple click! No dragging occurred, let the browser fire click natively.
+        return;
+      }
+
+      if (ghost) {
+        // Hide ghost before hit-test to ensure elementFromPoint sees the real target
+        ghost.style.visibility = 'hidden';
+        const hoverEl = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+        ghost.style.visibility = 'visible';
+
+        ghost.remove();
+      }
+
+      cardEl.classList.remove('is-being-dragged-snapshot');
+      document.body.classList.remove('is-dragging-task');
+
+      const hoverEl = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
       const colEl = hoverEl?.closest('[data-column-id]');
       const tEl = hoverEl?.closest('[data-task-id]');
       const targetEl = tEl || colEl || cardEl.closest('[data-column-id]');
