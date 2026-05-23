@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "total": 2,
+    "success": 2,
+    "failed": 0,
+    "total_duration_seconds": 0.016
+  },
+  "tasks": {
+    "test1": {
+      "name": "test1",
+      "command": "echo Hello",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 0.016,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\test1.log",
+      "error_snippet": ""
+    },
+    "test2": {
+      "name": "test2",
+      "command": "echo World",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 0.016,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\test2.log",
+      "error_snippet": ""
+    }
+  }
+}

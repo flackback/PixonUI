@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "total": 2,
+    "success": 2,
+    "failed": 0,
+    "total_duration_seconds": 26.109
+  },
+  "tasks": {
+    "vitest_spring": {
+      "name": "vitest_spring",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/spring.test.ts",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 26.109,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\vitest_spring.log",
+      "error_snippet": ""
+    },
+    "vitest_stylesheet": {
+      "name": "vitest_stylesheet",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/styleSheet.test.ts",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 26.109,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\vitest_stylesheet.log",
+      "error_snippet": ""
+    }
+  }
+}
