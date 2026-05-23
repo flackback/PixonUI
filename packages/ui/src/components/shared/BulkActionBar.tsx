@@ -29,17 +29,17 @@ export function BulkActionBar({
         preset="slide-bottom"
         className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4"
       >
-        <div className="bg-[#1a1a1a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-3 flex items-center justify-between gap-4">
+        <div className="bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-2xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl p-3 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 pl-2">
               <button 
                 onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all"
+                className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-zinc-400 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white transition-all"
               >
                 <X size={18} />
               </button>
               <div className="flex flex-col">
-                <span className="text-white font-bold text-sm">{selectedCount} selecionados</span>
-                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Ações em massa</span>
+                <span className="text-zinc-900 dark:text-white font-bold text-sm">{selectedCount} selecionados</span>
+                <span className="text-zinc-400 dark:text-white/40 text-[10px] font-bold uppercase tracking-widest">Ações em massa</span>
               </div>
             </div>
 
@@ -62,7 +62,7 @@ export function BulkActionBar({
                 onClick={onMarkRead} 
                 variant="ghost"
               />
-              <div className="w-px h-8 bg-white/10 mx-1" />
+              <div className="w-px h-8 bg-zinc-200 dark:bg-white/10 mx-1" />
               <ActionButton 
                 icon={<Trash2 size={18} />} 
                 label="Excluir" 
@@ -93,8 +93,8 @@ function ActionButton({
       className={cn(
         "flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all group active:scale-95",
         variant === 'ghost' 
-          ? "text-white/60 hover:text-white hover:bg-white/5" 
-          : "text-rose-500 hover:text-rose-400 hover:bg-rose-500/10"
+          ? "text-zinc-600 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5" 
+          : "text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 dark:hover:bg-rose-500/15"
       )}
     >
       {icon}

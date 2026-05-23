@@ -98,7 +98,7 @@ export function DataTable<T extends Record<string, unknown>>({
             placeholder={activePlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            leftIcon={<Search className="w-4 h-4 text-white/40" />}
+            leftIcon={<Search className="w-4 h-4 text-zinc-400 dark:text-white/40" />}
           />
         </div>
       )}
@@ -124,7 +124,7 @@ export function DataTable<T extends Record<string, unknown>>({
             <TableRow 
               key={idx} 
               onClick={() => onRowClick?.(item)}
-              className={cn(onRowClick && "cursor-pointer hover:bg-white/[0.03] transition-colors group")}
+              className={cn(onRowClick && "cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors group")}
             >
               {columns.map((col) => (
                 <TableCell key={String(col.key)} className={col.className}>
@@ -135,7 +135,7 @@ export function DataTable<T extends Record<string, unknown>>({
           ))}
           {processedData.length === 0 && (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-32 text-center text-white/40">
+              <TableCell colSpan={columns.length} className="h-32 text-center text-zinc-400 dark:text-white/40">
                 {activeNoResults} &quot;{search}&quot;
               </TableCell>
             </TableRow>

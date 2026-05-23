@@ -60,15 +60,16 @@ export function OrbitLoader({
               { opacity: 0.35, scale: 0.65 },
               { opacity: 1, scale: 1 },
             ]}
-            className="absolute left-1/2 top-1/2"
+            className="absolute"
             style={{
               width: dotSize,
               height: dotSize,
+              left: `calc(50% + ${x}px)`,
+              top: `calc(50% + ${y}px)`,
               marginLeft: -dotSize / 2,
               marginTop: -dotSize / 2,
               borderRadius: 9999,
               backgroundColor: color,
-              transform: `translate3d(${x}px, ${y}px, 0)`,
               willChange: 'transform, opacity',
             }}
           >

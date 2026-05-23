@@ -125,17 +125,19 @@ export function VoiceRecorder({ onSend, onCancel, className, ...props }: VoiceRe
             <span>{formatTime(duration)}</span>
           </div>
 
-          <div className="flex-1 h-8 flex items-center gap-1.5 px-3">
+          <div className="flex-1 h-8 flex items-center justify-center gap-1.5 px-3">
             {/* Waveform Animation (freezes if paused) */}
             {[...Array(18)].map((_, i) => (
               <div 
                 key={i} 
                 className={cn(
-                  "w-1 rounded-full transition-all duration-150 shrink-0",
+                  "w-1 h-6 rounded-full shrink-0 transform-gpu",
                   isPaused ? "bg-amber-500/30" : "bg-red-500/40"
                 )}
                 style={{ 
-                  height: (isRecording && !isPaused) ? `${20 + Math.random() * 80}%` : '20%',
+                  transform: (isRecording && !isPaused) ? `scaleY(${0.2 + Math.random() * 0.8})` : 'scaleY(0.2)',
+                  transformOrigin: 'center',
+                  transition: 'transform 150ms ease',
                   animationDelay: `${i * 0.04}s`
                 }}
               />

@@ -14,6 +14,12 @@ export function AudioPlayer({ src, duration, isMe, className, ...props }: AudioP
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
   const togglePlay = async () => {
     if (audioRef.current) {
       if (isPlaying) {
