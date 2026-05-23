@@ -24,16 +24,16 @@ export interface CopyBlockProps extends Omit<React.HTMLAttributes<HTMLDivElement
 
 const variantStyles = {
   default: {
-    container: 'bg-zinc-950 border-zinc-800/50',
-    header: 'bg-zinc-900/80 border-zinc-800/50',
-    text: 'text-zinc-300',
-    lineNum: 'text-zinc-600',
+    container: 'bg-white/95 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800/50',
+    header: 'bg-zinc-50 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800/50',
+    text: 'text-zinc-800 dark:text-zinc-300',
+    lineNum: 'text-zinc-400 dark:text-zinc-600',
   },
   glass: {
-    container: 'bg-zinc-900/60 backdrop-blur-xl border-white/[0.08]',
-    header: 'bg-white/[0.03] border-white/[0.06]',
-    text: 'text-zinc-300',
-    lineNum: 'text-zinc-600',
+    container: 'bg-white/85 dark:bg-zinc-900/60 backdrop-blur-xl border-zinc-200 dark:border-white/[0.08]',
+    header: 'bg-white/60 dark:bg-white/[0.03] border-zinc-200 dark:border-white/[0.06]',
+    text: 'text-zinc-800 dark:text-zinc-300',
+    lineNum: 'text-zinc-400 dark:text-zinc-600',
   },
   terminal: {
     container: 'bg-[#0d1117] border-[#30363d]',
@@ -183,11 +183,11 @@ function CopyButton({ copied, onClick }: { copied: boolean; onClick: () => void 
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-all duration-200',
-        copied
-          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
-          : 'bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white border border-white/[0.08]',
+        className={cn(
+          'inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-all duration-200',
+          copied
+            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+          : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-950 border border-zinc-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] dark:text-zinc-400 dark:hover:text-white dark:border-white/[0.08]',
       )}
     >
       {copied ? (
