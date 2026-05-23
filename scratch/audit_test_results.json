@@ -1,0 +1,64 @@
+{
+  "summary": {
+    "total": 6,
+    "success": 6,
+    "failed": 0,
+    "total_duration_seconds": 24.485
+  },
+  "tasks": {
+    "motion_willchange": {
+      "name": "motion_willchange",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/Motion.willChange.test.tsx",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 24.485,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\motion_willchange.log",
+      "error_snippet": ""
+    },
+    "ssr_presets": {
+      "name": "ssr_presets",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/SSRAnimate.presets.test.ts",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 23.782,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\ssr_presets.log",
+      "error_snippet": ""
+    },
+    "ssr_stagger": {
+      "name": "ssr_stagger",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/SSRStagger.test.tsx",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 24.25,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\ssr_stagger.log",
+      "error_snippet": ""
+    },
+    "timeline": {
+      "name": "timeline",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/timeline.test.ts",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 23.844,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\timeline.log",
+      "error_snippet": ""
+    },
+    "chat_controller": {
+      "name": "chat_controller",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/useChatController.test.tsx",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 24.266,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\chat_controller.log",
+      "error_snippet": ""
+    },
+    "view_transition": {
+      "name": "view_transition",
+      "command": "pnpm -F @pixonui/react exec vitest run src/__tests__/viewTransition.test.ts",
+      "status": "success",
+      "exit_code": 0,
+      "duration_seconds": 23.844,
+      "log_file": "C:\\PROJETOS\\PixonUI\\scratch\\logs\\view_transition.log",
+      "error_snippet": ""
+    }
+  }
+}

@@ -103,7 +103,7 @@ describe('timeline() factory and PixonTimeline', () => {
     const ctrl = tl.play();
     ctrl.seek(500);
     const anim = ctrl.getAnimations()[0];
-    expect(anim.currentTime).toBe(500);
+    expect(anim!.currentTime).toBe(500);
   });
 
   it('cancel() releases will-change and active animations', () => {
@@ -542,7 +542,7 @@ describe('timeline() factory and PixonTimeline', () => {
     it('cleanup de listeners happens during abort', () => {
       const tl = timeline([{ target: el, keyframes: [{ opacity: 1 }] }]);
       const ctrl = tl.play();
-      const anim = ctrl.getAnimations()[0];
+      const anim = ctrl.getAnimations()[0] as any;
       const cancelSpy = vi.spyOn(anim, 'cancel');
       ctrl.cancel(); 
       expect(cancelSpy).toHaveBeenCalled(); // assert 3 for abort

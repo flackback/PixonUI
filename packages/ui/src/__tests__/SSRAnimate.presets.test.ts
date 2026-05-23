@@ -15,11 +15,11 @@ describe('SSRAnimate Presets', () => {
   });
 
   test('specific presets exist and have correct values', () => {
-    expect(SSR_ANIMATE_PRESETS.fadeIn.initial?.opacity).toBe(0);
-    expect(SSR_ANIMATE_PRESETS.fadeIn.animate?.opacity).toBe(1);
+    expect(SSR_ANIMATE_PRESETS.fadeIn!.initial?.opacity).toBe(0);
+    expect(SSR_ANIMATE_PRESETS.fadeIn!.animate?.opacity).toBe(1);
     
-    expect(SSR_ANIMATE_PRESETS.slideInUp.initial?.y).toBe('100%');
-    expect(SSR_ANIMATE_PRESETS.slideInUp.animate?.y).toBe('0%');
+    expect(SSR_ANIMATE_PRESETS.slideInUp!.initial?.y).toBe('100%');
+    expect(SSR_ANIMATE_PRESETS.slideInUp!.animate?.y).toBe('0%');
   });
 
   test('snapshot of presets', () => {

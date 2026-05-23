@@ -9,7 +9,7 @@ describe('Motion willChange behavior', () => {
 
   beforeEach(() => {
     // Standard mock that does nothing
-    window.IntersectionObserver = vi.fn().mockImplementation(function() {
+    window.IntersectionObserver = vi.fn().mockImplementation(function(this: any) {
       this.observe = vi.fn();
       this.unobserve = vi.fn();
       this.disconnect = vi.fn();
@@ -46,9 +46,9 @@ describe('Motion willChange behavior', () => {
       expect(mockAnimate).toHaveBeenCalled();
     });
 
-    const animationInstance = mockAnimate.mock.results[0].value;
+    const animationInstance = mockAnimate.mock.results[0]?.value;
     await act(async () => {
-      if (animationInstance.onfinish) {
+      if (animationInstance && animationInstance.onfinish) {
         animationInstance.onfinish();
       }
     });
@@ -62,7 +62,7 @@ describe('Motion willChange behavior', () => {
     let observers: any[] = [];
     
     // Proper constructor mock for IntersectionObserver
-    window.IntersectionObserver = vi.fn().mockImplementation(function(cb) {
+    window.IntersectionObserver = vi.fn().mockImplementation(function(this: any, cb) {
       this.observe = vi.fn();
       this.unobserve = vi.fn();
       this.disconnect = vi.fn();
@@ -82,7 +82,7 @@ describe('Motion willChange behavior', () => {
     const { unmount } = render(
       <Motion 
         data-testid="motion-infinite" 
-        animate={{ x: [0, 100] }} 
+        animate={{ x: [0, 100] as any }} 
         transition={{ repeat: 'infinite', type: 'spring' }}
       >
         Infinite

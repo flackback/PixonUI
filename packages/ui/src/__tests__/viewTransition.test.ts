@@ -37,7 +37,7 @@ describe('viewTransition', () => {
     const transitionPromise = startPixonTransition(cb);
 
     // Should have created an overlay
-    const overlay = document.querySelector('[data-pixon-transition-overlay]');
+    const overlay = document.querySelector('[data-pixon-transition-overlay]') as HTMLElement | null;
     expect(overlay).not.toBeNull();
     expect(overlay?.style.position).toBe('fixed');
 

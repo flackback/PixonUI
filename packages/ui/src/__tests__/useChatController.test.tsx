@@ -34,7 +34,7 @@ describe('useChatController', () => {
         content: input.content,
         senderId: input.senderId,
         timestamp: new Date('2026-01-01T10:04:00Z'),
-        status: 'sent',
+        status: 'sent' as const,
       })),
     };
 

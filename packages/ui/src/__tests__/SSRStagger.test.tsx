@@ -21,9 +21,9 @@ describe('SSRStagger', () => {
     // Second element: 100 + 1 * 50 = 150
     // Third element: 100 + 2 * 50 = 200
 
-    expect(wrappers[0].getAttribute('style')).toContain('--pixon-delay: 100ms');
-    expect(wrappers[1].getAttribute('style')).toContain('--pixon-delay: 150ms');
-    expect(wrappers[2].getAttribute('style')).toContain('--pixon-delay: 200ms');
+    expect(wrappers[0]!.getAttribute('style')).toContain('--pixon-delay: 100ms');
+    expect(wrappers[1]!.getAttribute('style')).toContain('--pixon-delay: 150ms');
+    expect(wrappers[2]!.getAttribute('style')).toContain('--pixon-delay: 200ms');
   });
 
   test('honors the as prop for the wrapper', () => {
